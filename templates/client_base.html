@@ -1,1 +1,13 @@
 {% extends 'base.html' %}
+
+{% block content %}
+<div id="nav">
+{% load menu %}
+{% client_menu current_action %}
+</div>
+
+<div id="main">
+<h1>{% block page_title %}{% endblock %}</h1>
+{% block page_content %}{% endblock %}
+</div>
+{% endblock %}
