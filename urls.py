@@ -9,7 +9,10 @@ urlpatterns = patterns('',
 )
 
 urlpatterns += patterns('cp.views',
-     (r'^cp/', 'index'),
+    (r'^cp/', 'index'),
 )
 
 
+urlpatterns += patterns('client.views',
+    (r'^client/','index'),
+)
