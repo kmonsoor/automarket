@@ -7,3 +7,9 @@ urlpatterns = patterns('',
     # Uncomment this for admin:
      (r'^admin/', include('django.contrib.admin.urls')),
 )
+
+urlpatterns += patterns('cp.views',
+     (r'^cp/', 'index'),
+)
+
+

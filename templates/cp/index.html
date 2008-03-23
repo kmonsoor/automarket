@@ -1,0 +1,26 @@
+{% extends 'cp_base.html' %}
+
+{% block content %}
+{% if items %}
+<table class="items_table">
+<tr>
+<th>Order</th>
+<th>Side</th>
+<th>Brand</th>
+<th>Part #</th>
+<th>Superseded</th>
+<th>Price</th>
+<th>Quantity</th>
+<th>Status</th>
+<th></th>
+</tr>
+{% for i in items %}
+<tr>
+<td>{{ i.order.po }}</td>
+</tr>
+{% endfor %}
+</table>
+{% else %}
+Нет ни одной записи
+{% endif %}
+{% endblock %}

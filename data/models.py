@@ -37,7 +37,7 @@ class Order(models.Model):
     po = models.CharField(maxlength=255)
     created = models.DateTimeField()
     modified = models.DateTimeField(auto_now=True, editable=False)
-    
+
     class Admin:
         pass
 
@@ -51,7 +51,7 @@ ORDER_ITEM_STATUSES = (('on_order','On order'),
 )
     
 class OrderedItem(models.Model):
-    order = models.ForeignKey(to=Order, edit_inline=models.TABULAR)
+    order = models.ForeignKey(to=Order, edit_inline=models.TABULAR, core=True)
     # car details
     car_model = models.ForeignKey(to=CarModel)
     year = models.IntegerField(maxlength=4)
