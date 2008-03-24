@@ -1,5 +1,9 @@
+# -*- coding=UTF-8 -*-
+
 from django.db import models
 from django.contrib.auth.models import User
+
+import datetime, time
 
 # car maker
 class Vendor(models.Model):
@@ -68,4 +72,7 @@ class OrderedItem(models.Model):
     
     class Admin:
         pass
-        
+
+
+def generatePo(user_obj):
+    return "%s-%d" % (user_obj.id, int(time.time()))     

@@ -1,0 +1,138 @@
+{% extends 'client_base.html' %}
+
+{% block page_title %}Новый заказ{% endblock %}
+
+{% block page_content %}
+
+<h3>Заказ #{{ po }}</h3>
+<h3 class="date">{% now "d.M.Y" %}}</h3>
+
+<fieldset>
+<legend>Добавить позицию в заказ</legend>
+
+<table width="100%">
+<tr>
+
+<td width="30%" valign="top">
+<table width="99%">
+
+<tr>
+<td width="20%">Производитель</td>
+<td width="80%">
+<select>
+<option>Dodge</option>
+<option>Dodge</option>
+<option>Dodge</option>
+<option>Dodge</option>
+</select>
+</td>
+</tr>
+
+<tr>
+<td width="20%">Модель</td>
+<td width="80%">
+<select>
+<option>Caravan</option>
+<option>Caravan</option>
+<option>Caravan</option>
+<option>Caravan</option>
+</select>
+</td>
+</tr>
+
+<tr>
+<td width="20%">Объем двигателя</td>
+<td width="80%"><input type="text" value="2.5"></td>
+</tr>
+
+<tr>
+<td width="20%">Год выпуска</td>
+<td width="80%"><select>
+<option>1999</option>
+<option>2000</option>
+<option>2001</option>
+<option>2002</option>
+</select>
+</td>
+</tr>
+
+</table>
+</td>
+
+<td width="50" valign="top">
+<table width="99%">
+<tr>
+<td width="20%">Производитель запчасти</td>
+<td width="80%">
+<select>
+<option>mopar</option>
+<option>mitsubishi</option>
+<option>mopar</option>
+<option>mitsubishi</option>
+</select>
+</td>
+</tr>
+
+<tr>
+<td width="20%">Описание</td>
+<td width="80%"><input type="text" value="название запчасти" size="80"></td>
+</tr>
+
+<tr>
+<td width="20%">Side</td>
+<td width="80%"><input type="text" value="" size="20"></td>
+</tr>
+
+<tr>
+<td width="20%">VIN #</td>
+<td width="80%"><input type="text" value="UQ651L5AA" size="60"></td>
+</tr>
+
+<tr>
+<td width="20%">Количество</td>
+<td width="80%"><input type="text" value="1" size="5"></td>
+</tr>
+
+</table>
+</td>
+
+</tr>
+</table>
+
+</fieldset>
+
+<fieldset>
+<legend>Позиции текущего заказа</legend>
+<table cellpadding="5">
+<thead>
+<th>Авто</th>
+<th>Описание</th>
+<th>Производитель</th>
+<th>Side</th>
+<th>VIN #</th>
+<th>Количество</th>
+<th>Удалить</th>
+
+</thead>
+
+<tbody>
+
+<tr class="row1">
+<td>Dodge Caravan 2001 (3.3)</td>
+<td>блок переключателей</td>
+<td>mopar</td>
+<td></td>
+<td>UQ651L5AA</td>
+<td><input type="text" size="3" value="1"></td>
+<td><input type="checkbox" size="1"></td>
+</tr>
+</tbody>
+
+</table>
+</fieldset>
+
+<div class="submit-row">
+<button>Отправить заказ</button>&nbsp;&nbsp;&nbsp;<button class="delete">Удалить отмеченные</button>
+</div>
+
+{% endblock %}
