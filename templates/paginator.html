@@ -1,0 +1,23 @@
+{% ifnotequal paginator.pages 1 %}
+<div id="pagination">
+<table width="100%">
+<tr>
+<td>
+		{% if paginator.previous_link %}
+		    <a href="{{ paginator.previous_link }}">&#8592;</a>
+		{% endif %}
+		    Страница {{ paginator.current_page }} из {{ paginator.pages }}
+		{% if paginator.next_link %}
+		    <a href="{{ paginator.next_link }}">&#8594;</a>
+		{% endif %}
+</td><td align="right">
+		{% for group in paginator.windowed_page_links %}
+		{% for p in group %}
+		<a href="{{p.link}}" {% if p.current %}class="current"{% endif %}>{{ p.page }}</a>&nbsp;
+		{% endfor %}{% if not forloop.last %}...{% endif %}
+		{% endfor %}
+</td>
+</tr>
+</table>
+</div>
+{% endifnotequal %}
