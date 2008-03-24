@@ -5,4 +5,4 @@ from data.models import *
 
 
 class OrderItemForm(forms.Form):
-    pass
+    producer = 

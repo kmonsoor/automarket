@@ -53,7 +53,7 @@ class JQueryAutoComplete(forms.TextInput):
         }
 
 # views.py - sample view
-
+"""
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.cache import cache_page
 from apps.foo.models import Foo
@@ -78,3 +78,4 @@ def autocomplete(request):
     return HttpResponse(iter_results(foos), mimetype='text/plain')
 
 autocomplete = cache_page(autocomplete, 60 * 60)
+"""
