@@ -42,17 +42,13 @@
 
 <tr>
 <td width="20%">Объем двигателя</td>
-<td width="80%"><input type="text" value="2.5"></td>
+<td width="80%">{{ form.engine_volume }}</td>
 </tr>
 
 <tr>
 <td width="20%">Год выпуска</td>
-<td width="80%"><select>
-<option>1999</option>
-<option>2000</option>
-<option>2001</option>
-<option>2002</option>
-</select>
+<td width="80%">
+{{ form.year }}
 </td>
 </tr>
 
@@ -75,17 +71,17 @@
 
 <tr>
 <td width="20%">Описание</td>
-<td width="80%"><input type="text" value="название запчасти" size="80"></td>
+<td width="80%">{{ form.description }}</td>
 </tr>
 
 <tr>
 <td width="20%">Side</td>
-<td width="80%"><input type="text" value="" size="20"></td>
+<td width="80%">{{ form.side }}</td>
 </tr>
 
 <tr>
 <td width="20%">VIN #</td>
-<td width="80%"><input type="text" value="UQ651L5AA" size="60"></td>
+<td width="80%">{{ form.part_number }}</td>
 </tr>
 
 <tr>

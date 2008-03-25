@@ -41,11 +41,13 @@ class Order(models.Model):
     po = models.CharField(maxlength=255)
     created = models.DateTimeField()
     modified = models.DateTimeField(auto_now=True, editable=False)
-
+    
+    confirmed = models.BooleanField(default=False)
+    
     class Admin:
         pass
 
-CAR_SIDES = (('R','right'),('L','left'))
+CAR_SIDES = (('R','right'),('L','left'),)
 
 ORDER_ITEM_STATUSES = (('on_order','On order'),
                        ('out_of_stock','Out of stock'),
@@ -69,6 +71,8 @@ class OrderedItem(models.Model):
     
     status = models.CharField(maxlength=50, choices=ORDER_ITEM_STATUSES, default='on_order')
     description = models.TextField()
+    
+    confirmed = models.BooleanField(default=False)
     
     class Admin:
         pass

@@ -12,7 +12,9 @@ class JQueryAutoComplete(forms.TextInput):
         string containing the url used for the XHR request.
         
         For available options see the autocomplete sample page::
-        http://jquery.bassistance.de/autocomplete/"""
+        sources: http://bassistance.de/jquery-plugins/jquery-plugin-autocomplete/
+        demo: http://jquery.bassistance.de/autocomplete/
+        """
         
         self.options = None
         self.attrs = {'autocomplete': 'off'}
