@@ -46,6 +46,9 @@ class Order(models.Model):
     
     class Admin:
         pass
+    
+    def __str__(self):
+        return u"%s" % self.po
 
 CAR_SIDES = (('R','right'),('L','left'),)
 
@@ -71,11 +74,16 @@ class OrderedItem(models.Model):
     
     status = models.CharField(maxlength=50, choices=ORDER_ITEM_STATUSES, default='on_order')
     description = models.TextField()
+    #brand = models.ForeignKey(Brand, null=True, blank=True)
+    brand = models.CharField(maxlength=50, null=True, blank=True)
     
     confirmed = models.BooleanField(default=False)
     
     class Admin:
         pass
+    
+    def __str__(self):
+        return "%s-%s" % (self.order.po, self.id)
 
 
 def generatePo(user_obj):
