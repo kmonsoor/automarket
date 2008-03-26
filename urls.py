@@ -1,11 +1,8 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',
-    # Example:
-    # (r'^automarket/', include('automarket.foo.urls')),
-
-    # Uncomment this for admin:
-     (r'^admin/', include('django.contrib.admin.urls')),
+    (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': 'd:/projects/automarket/media'}),
+    (r'^admin/', include('django.contrib.admin.urls')),
 )
 
 urlpatterns += patterns('cp.views',
