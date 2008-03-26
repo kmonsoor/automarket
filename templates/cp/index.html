@@ -1,8 +1,21 @@
 {% extends 'cp_base.html' %}
 
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">
+<script>
+function editQuantity(id) {
+    if (jQuery('#quantity_'+id).attr('class') == 'editable') return;
+    val = jQuery('#quantity_'+id).html();
+    jQuery('#quantity_'+id).html('<input id="quantity_input_{{ i.id }}" type="text" value="' + val + '"><button>');
+    jQuery('#quantity_'+id).attr('class','editable');
+}
+</script>
+{% endblock %}
+
 {% block content %}
 {% if items %}
-<table class="items_table">
+<table class="admin_table">
 <tr>
 <th>Order</th>
 <th>Side</th>
@@ -12,11 +25,21 @@
 <th>Price</th>
 <th>Quantity</th>
 <th>Status</th>
-<th></th>
+<th>&nbsp;</th>
 </tr>
 {% for i in items %}
 <tr>
 <td>{{ i.order.po }}</td>
+<td>{{ i.side|default:"&nbsp;" }}</td>
+<td>{{ i.brand|default:"&nbsp;" }}</td>
+<td>{{ i.part_number|default:"&nbsp;" }}</td>
+<td>{{ i.part_number_superseded|default:"&nbsp;" }}</td>
+<td>{{ i.price|default:"&nbsp;" }}</td>
+<td><div id="quantity_{{ i.id }}" onclick="editQuantity({{ i.id }})">{{ i.quantity|default:"&nbsp;" }}</div>
+<button onclick="alert(document.getElementById('quantity_input_{{ i.id }}').value)">OK</button>
+</td>
+<td>{{ i.status|default:"&nbsp;" }}</td>
+<td><a href="/cp/position/edit/{{ i.id }}">Edit</a></td>
 </tr>
 {% endfor %}
 </table>
