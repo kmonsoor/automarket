@@ -1,0 +1,43 @@
+/* Tables in user profile used for editing data */
+
+.admin_table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	width: 100%;
+	margin: 0 0 30px 0;
+}
+.admin_table TH, TD {
+	padding: 5px;
+}
+.admin_table TH {
+	background: #0190BF;
+	color: white;
+	border-right: solid 1px #159fcc;
+	border-left: solid 1px #1284a9;
+}
+
+.admin_table TD {
+	background: #f5f5f5;
+	border: solid 1px #eaeaea;
+}
+
+
+.admin_table2 {
+	border-collapse: collapse;
+	border-spacing: 0;
+	width: 100%;
+	margin: 20px 0 20px 0;
+}
+.admin_table2 TH, TD {
+	padding: 5px;
+	vertical-align: middle;
+}
+.admin_table2 TH {
+	border: solid 1px #eaeaea;
+	background: #f5f5f5;
+}
+
+.admin_table2 TD {
+	border: solid 1px #eaeaea;
+}
+
