@@ -17,7 +17,7 @@ class JQueryAutoComplete(forms.TextInput):
         """
         
         self.options = None
-        self.attrs = {'autocomplete': 'off'}
+        self.attrs = {'autocomplete': 'on'}
         self.source = source
         if len(options) > 0:
             self.options = JSONEncoder().encode(options)
