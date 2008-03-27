@@ -4,11 +4,25 @@
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">
 <script>
+//var used = new Array();
+var current_id;
+var current_val;
+function saveQuantity(id) {
+    current_id = id;
+    current_val = jQuery('#quantity_input_'+id).val();
+    closeQuantityBox(id);
+    
+}
+
+function closeQuantityBox(id) {
+    jQuery('#quantity_'+id).html(current_val);
+}
 function editQuantity(id) {
-    if (jQuery('#quantity_'+id).attr('class') == 'editable') return;
-    val = jQuery('#quantity_'+id).html();
-    jQuery('#quantity_'+id).html('<input id="quantity_input_{{ i.id }}" type="text" value="' + val + '"><button>');
-    jQuery('#quantity_'+id).attr('class','editable');
+    if (current_id == id) return;
+    if (current_id) closeQuantityBox(current_id);
+    current_val = jQuery('#quantity_'+id).html();
+    jQuery('#quantity_'+id).html('<input id="quantity_input_' + id + '" type="text" value="' + current_val + '">');
+    current_id = id;
 }
 </script>
 {% endblock %}
@@ -36,7 +50,7 @@ function editQuantity(id) {
 <td>{{ i.part_number_superseded|default:"&nbsp;" }}</td>
 <td>{{ i.price|default:"&nbsp;" }}</td>
 <td><div id="quantity_{{ i.id }}" onclick="editQuantity({{ i.id }})">{{ i.quantity|default:"&nbsp;" }}</div>
-<button onclick="alert(document.getElementById('quantity_input_{{ i.id }}').value)">OK</button>
+<button onclick="saveQuantity({{ i.id }})">OK</button>
 </td>
 <td>{{ i.status|default:"&nbsp;" }}</td>
 <td><a href="/cp/position/edit/{{ i.id }}">Edit</a></td>

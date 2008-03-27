@@ -27,7 +27,7 @@ class Order(models.Model):
         pass
     
     def __str__(self):
-        return u"%s" % self.po
+        return "%s" % self.po
 
 CAR_SIDES = (('R','right'),('L','left'),)
 
