@@ -15,7 +15,7 @@ class OrderItemForm(forms.Form):
     engine_volume = forms.CharField(widget=forms.TextInput(attrs={'size':4}))
     year = forms.DateField(input_formats="%Y", widget=forms.TextInput(attrs={'size':4}))
     # TODO - jquery etc.
-    brand = JQueryAutoComplete(source=data)
+    brand = forms.CharField(widget=JQueryAutoComplete(source=data))
     #
     description = forms.CharField(max_length=255, widget=forms.TextInput(attrs={'size':'80'}))
     side = forms.CharField(widget=forms.Select(choices=CH), required=False)

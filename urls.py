@@ -13,4 +13,5 @@ urlpatterns += patterns('cp.views',
 urlpatterns += patterns('client.views',
     (r'^client/$','index'),
     (r'^client/order/','order'),
+    (r'^client/help/brands.html', 'help_brand_list'),
 )

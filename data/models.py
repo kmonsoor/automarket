@@ -11,7 +11,43 @@ class Brand(models.Model):
     parent = models.ForeignKey('self',null=True,blank=True)
     
     class Admin:
-        pass
+        list_display = ('name','_parents_repr')
+    
+    def __str__(self):
+        p_list = self._recurse_for_parents(self)
+        p_list.append(self.name)
+        return self.get_separator().join(p_list)
+    
+    def _recurse_for_parents(self, cat_obj):
+        p_list = []
+        if cat_obj.parent_id:
+            p = cat_obj.parent
+            p_list.append(p.name)
+            more = self._recurse_for_parents(p)
+            p_list.extend(more)
+        if cat_obj == self and p_list:
+            p_list.reverse()
+        return p_list
+        
+    def get_separator(self):
+        return ' :: '
+    
+    def _parents_repr(self):
+        p_list = self._recurse_for_parents(self)
+        return self.get_separator().join(p_list)
+    _parents_repr.short_description = "Parents"
+    
+    def save(self):
+        p_list = self._recurse_for_parents(self)
+        if self.name in p_list:
+            raise validators.ValidationError(u"You can not add Brand into itself!")
+        super(Brand, self).save()
+    
+    def unify(self):
+        if self.parent != None:
+            return self.parent
+        else:
+            return self
 
 
 class Order(models.Model):

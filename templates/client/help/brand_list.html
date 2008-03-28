@@ -1,0 +1,22 @@
+<html>
+<head>
+<style>
+ul li {
+	list-style: none;
+}
+</style>
+<script type="text/javascript">
+function selectBrand(value ) {
+    window.opener.setBrand(value);
+    window.close();
+}
+</script>
+</head>
+<body>
+<ul>
+{% for l in list %}
+<li><a href="javascript:void(0)" onclick="selectBrand('{{ l.name }}')">{{ l.name }}</a></li>
+{% endfor %}
+</ul>
+</body>
+</html>

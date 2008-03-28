@@ -4,6 +4,17 @@
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
 <title>{% block page_title %}{% endblock %}</title>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/jquery.js"></script>
+<script type="text/javascript">
+function showPopUp( url, winx, winy, name, scroll ) {
+
+        scrx=window.screen.availWidth;
+        scry=window.screen.availHeight;
+        vleft=(scrx-winx)/2;
+        vtop=(scry-winy)/2;
+        window.open(url, name, "width="+winx+",height="+winy+",left="+vleft+",top="+vtop+",modal=1,fullscreen=0,directories=0,location=0, menubar=0,resizable=1,scrollbars="+scroll+",status=0,toolbar=0");
+}
+</script>
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/action_links.css" />
 {% block extrahead %}{% endblock %}
 </head>
 <body>

@@ -1,5 +1,15 @@
 {% extends 'client_base.html' %}
 
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript">
+function setBrand(value) {
+	document.getElementById('id_brand').value = value;
+}
+</script>
+
+{% endblock %}
+
 {% block page_title %}Новый заказ{% endblock %}
 
 {% block page_content %}
@@ -48,9 +58,9 @@
 <td width="50" valign="top">
 <table width="99%">
 <tr>
-<td width="20%">Производитель запчасти</td>
+<td width="20%">Производитель запчасти &nbsp;&nbsp;</td>
 <td width="80%">
-{{ form.brand }}
+{{ form.brand }}<a class="help" href="javascript:void(0);" onclick="showPopUp('/client/help/brands.html',200, 600, 'brands',1)">Весь список</a>
 </td>
 </tr>
 

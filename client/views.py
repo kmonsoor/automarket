@@ -3,7 +3,7 @@ from lib.decorators import render_to
 from django.contrib.auth.models import User
 
 from data.models import OrderedItem
-from data.models import Order
+from data.models import Order, Brand
 from data.models import generatePo
 
 from client.forms import OrderItemForm
@@ -30,4 +30,8 @@ def order(request):
         po = generatePo(request.user)
     
     return {'current_action':'order','form': form, 'po':po}
-        
+
+@render_to('client/help/brand_list.html')
+def help_brand_list(request):
+    brands = Brand.objects.all().order_by('name')
+    return {'list':brands}        
