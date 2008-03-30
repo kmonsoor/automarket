@@ -54,7 +54,7 @@ class Order(models.Model):
     # user and order data
     user = models.ForeignKey(to=User)
     po = models.CharField(maxlength=255)
-    created = models.DateTimeField()
+    created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True, editable=False)
     
     confirmed = models.BooleanField(default=False)

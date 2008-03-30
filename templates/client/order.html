@@ -6,7 +6,10 @@
 function setBrand(value) {
 	document.getElementById('id_brand').value = value;
 }
+
 </script>
+
+
 
 {% endblock %}
 
@@ -14,9 +17,9 @@ function setBrand(value) {
 
 {% block page_content %}
 
-<h3>Заказ #{{ po }}</h3>
-<h3 class="date">{% now "d.M.Y" %}}</h3>
-
+<h3>Заказ #{{ order.po }}</h3>
+<h3 class="date">{{ order.created|date:"d.m.Y" }}</h3>
+<form action="/client/order/{{ order.po }}">
 <fieldset>
 <legend>Добавить позицию в заказ</legend>
 
@@ -91,7 +94,11 @@ function setBrand(value) {
 </table>
 
 </fieldset>
-
+<p>
+<input type="submit" name="add_item" value="Добавить позицию в заказ">
+</p>
+</form>
+<form method="post" action="/client/order/{{ order.po }}">
 <fieldset>
 <legend>Позиции текущего заказа</legend>
 <table cellpadding="5">
@@ -123,7 +130,8 @@ function setBrand(value) {
 </fieldset>
 
 <div class="submit-row">
-<button>Отправить заказ</button>&nbsp;&nbsp;&nbsp;<button class="delete">Удалить отмеченные</button>
+<input type="submit" name="save_order" value="Отправить заказ" />&nbsp;&nbsp;&nbsp;
+<input type="submit" class="delete" name="delete_items" value="Удалить выбранные позиции" />
 </div>
 
 {% endblock %}

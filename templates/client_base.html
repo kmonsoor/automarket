@@ -6,11 +6,11 @@
 <script type="text/javascript" src="{{ MEDIA_URL }}js/jquery-autocomplete/jquery.autocomplete.js"></script>
 
 {% endblock %}
-{% block content %}
-<div id="nav">
+{% block header %}
 {% load menu %}
 {% client_menu current_action %}
-</div>
+{% endblock %}
+{% block content %}
 
 <div id="main">
 <h1>{% block page_title %}{% endblock %}</h1>

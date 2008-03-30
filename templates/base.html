@@ -14,10 +14,21 @@ function showPopUp( url, winx, winy, name, scroll ) {
         window.open(url, name, "width="+winx+",height="+winy+",left="+vleft+",top="+vtop+",modal=1,fullscreen=0,directories=0,location=0, menubar=0,resizable=1,scrollbars="+scroll+",status=0,toolbar=0");
 }
 </script>
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/global.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/layout.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/action_links.css" />
 {% block extrahead %}{% endblock %}
 </head>
 <body>
+<div id="container">
+<div id="header">{% block header %}{% endblock %}</div>
+<div id="content">
 {% block content %}{% endblock %}
+</div>
+</div>
+<div id="footer">
+{% block footer %}{% endblock %}
+<span class="copy">ISD Studio (c) 2008</span> 
+</div>
 </body>
 </html>

@@ -2,6 +2,8 @@
 from lib.decorators import render_to
 from django.contrib.auth.models import User
 
+from django.contrib.auth.decorators import login_required
+
 from data.models import OrderedItem
 from data.models import Order, Brand
 from data.models import generatePo
@@ -16,8 +18,9 @@ def index(request):
     
     return response
 
+@login_required
 @render_to('client/order.html')
-def order(request):
+def order(request, po=None):
     
     if request.method == 'POST' :
         form = OrderItemForm(request.POST.copy())
@@ -27,11 +30,20 @@ def order(request):
             print 'fooo!'
     else :
         form = OrderItemForm()
-        po = generatePo(request.user)
-    
-    return {'current_action':'order','form': form, 'po':po}
+        if not po :
+            # New order
+            po = generatePo(request.user)
+            order = Order(po=po, confirmed=False, user=request.user)
+            order.save()
+        else :
+            order = Order.objects.get_or_create(po=po)
+            order_items = OrderedItem.objects.filter(order=order)
+            
+    return {'current_action':'order','form': form, 'order':order, 'items':order_items, 'created':created}
 
 @render_to('client/help/brand_list.html')
 def help_brand_list(request):
     brands = Brand.objects.all().order_by('name')
-    return {'list':brands}        
+    return {'list':brands}
+
+            
