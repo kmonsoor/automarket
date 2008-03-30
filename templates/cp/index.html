@@ -9,19 +9,39 @@ var current_id;
 var current_val;
 function saveQuantity(id) {
     current_id = id;
-    current_val = jQuery('#quantity_input_'+id).val();
-    closeQuantityBox(id);
+    val = jQuery('#quantity_input_'+id).val();
+    container_content = jQuery('#quantity_'+id).html();
+    jQuery('#quantity_'+id).html('<img src="{{ MEDIA_URL }}img/icons/ajax-loader.gif">')
+    jQuery.ajax(
+        {
+            type: 'POST',
+            url: '/cp/position/edit/' + id + '/',
+            data: {
+                   'quantity':val
+                   },
+            success: function(response) {
+	            r = eval('['+response+']');
+                current_val = r[0]['quantity'];
+                closeQuantityBox();
+            }
+        });
     
 }
 
 function closeQuantityBox(id) {
+    if (!id) {
+        id = current_id;
+    }
     jQuery('#quantity_'+id).html(current_val);
+    jQuery('#quantity_save_btn_'+id).css("display","none");
+    current_id = null;
 }
 function editQuantity(id) {
     if (current_id == id) return;
     if (current_id) closeQuantityBox(current_id);
     current_val = jQuery('#quantity_'+id).html();
     jQuery('#quantity_'+id).html('<input id="quantity_input_' + id + '" type="text" value="' + current_val + '">');
+    jQuery('#quantity_save_btn_'+id).css("display","inline");
     current_id = id;
 }
 </script>
@@ -50,7 +70,7 @@ function editQuantity(id) {
 <td>{{ i.part_number_superseded|default:"&nbsp;" }}</td>
 <td>{{ i.price|default:"&nbsp;" }}</td>
 <td><div id="quantity_{{ i.id }}" onclick="editQuantity({{ i.id }})">{{ i.quantity|default:"&nbsp;" }}</div>
-<button onclick="saveQuantity({{ i.id }})">OK</button>
+<button id="quantity_save_btn_{{ i.id }}" style="display: none" onclick="saveQuantity({{ i.id }})">Save</button>
 </td>
 <td>{{ i.status|default:"&nbsp;" }}</td>
 <td><a href="/cp/position/edit/{{ i.id }}">Edit</a></td>

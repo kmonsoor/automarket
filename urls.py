@@ -12,7 +12,8 @@ urlpatterns += patterns('common.views',
 
 
 urlpatterns += patterns('cp.views',
-    (r'^cp/', 'index'),
+    (r'^cp/$', 'index'),
+    (r'^cp/position/edit/(?P<id>\d+)/$', 'position_edit'),
 )
 
 
