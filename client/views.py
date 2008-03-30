@@ -61,7 +61,6 @@ def order(request, po=None):
                     pass
                 
             quantity = [get_quantity(key, value) for key,value in request.POST.items()]
-            print quantity
             
             for i in quantity:
                 if i is not None:
