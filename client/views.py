@@ -56,7 +56,6 @@ def order(request, po=None):
             # Save items
             def get_quantity(k,v):
                 if k[0:8] == 'quantity' :
-                    print k,v
                     return {'id':k.split('_')[1],'value':v}
                 else:
                     pass
@@ -65,11 +64,12 @@ def order(request, po=None):
             print quantity
             
             for i in quantity:
-                item = OrderedItem.objects.get(id=i['id'])
-                item.quantity = i['value']
-                item.order = order
-                item.confirmed = True
-                item.save()
+                if i is not None:
+                    item = OrderedItem.objects.get(id=i['id'])
+                    item.quantity = i['value']
+                    item.order = order
+                    item.confirmed = True
+                    item.save()
             return HttpResponseRedirect('/client/')
     else :
         form = OrderItemForm()

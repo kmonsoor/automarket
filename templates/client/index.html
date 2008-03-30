@@ -15,7 +15,16 @@
 	<th>Статус</th>
     </thead>
 	<tbody>
-	{% for i in o.ordered_items_set.all %}
+	{% for i in o.ordereditems_set.all %} 
+	<tr class="{% cycle 'row1','row2' %}">
+	<td>{{ i.car_maker }} {{ i.car_model }} {{ i.year }} ({{ i.engine_volume }})</td>
+	<td>{{ i.description }}</td>
+	<td>{{ i.brand.name }}</td>
+	<td>{% if i.side %}{{ i.side }}{% endif %}</td>
+	<td>{{ i.part_number }}</td>
+	<td><input type="text" name="quantity_{{ i.id }}" size="3" value="{{ i.quantity }}"></td>
+	<td><a class="delete_link" href="/client/order/{{ order.po }}/delete/{{ i.id }}">Удалить</a></td>
+	</tr>
 	{% endfor %}
 	</tbody>
 	</table>
