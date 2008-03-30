@@ -91,6 +91,7 @@ INSTALLED_APPS = (
     'data',
     'client',
     'cp',
+    'common',
 )
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True

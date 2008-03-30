@@ -1,5 +1,23 @@
 {% extends 'client_base.html' %}
 {% block page_title %}Последние заказы{% endblock %}
 {% block page_content %}
-hhh
+{% for o in orders %}
+<h3>{{ o.po }} | {{ o.created|date:"d.m.Y" }}</h3>
+	<table>
+	<thead>
+	<th>Авто</th>
+	<th>Описание</th>
+	<th>Производитель</th>
+	<th>Side</th>
+	<th>VIN #</th>
+	<th>Количество</th>
+	<th>Замена</th>
+	<th>Статус</th>
+    </thead>
+	<tbody>
+	{% for i in o.ordered_items_set.all %}
+	{% endfor %}
+	</tbody>
+	</table>
+{% endfor %}
 {% endblock %}

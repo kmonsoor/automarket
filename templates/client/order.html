@@ -1,4 +1,6 @@
 {% extends 'client_base.html' %}
+{% load forms %}
+
 
 {% block extrahead %}
 {{ block.super }}
@@ -9,8 +11,6 @@ function setBrand(value) {
 
 </script>
 
-
-
 {% endblock %}
 
 {% block page_title %}Новый заказ{% endblock %}
@@ -19,9 +19,11 @@ function setBrand(value) {
 
 <h3>Заказ #{{ order.po }}</h3>
 <h3 class="date">{{ order.created|date:"d.m.Y" }}</h3>
-<form action="/client/order/{{ order.po }}">
+<form action="/client/order/{{ order.po }}/" method="post">
 <fieldset>
 <legend>Добавить позицию в заказ</legend>
+
+<div class="error">{{ message }}</div>
 
 <table width="100%">
 <tr>
@@ -31,27 +33,32 @@ function setBrand(value) {
 
 <tr>
 <td width="20%">Производитель</td>
-<td width="80%">
+<td width="80%" {% if form.car_maker.errors %}class="error"{% endif %}>
 {{ form.car_maker }}
+{% field_error form.car_maker %}
 </td>
 </tr>
 
 <tr>
 <td width="20%">Модель</td>
-<td width="80%">
+<td width="80%" {% if form.car_model.errors %}class="error"{% endif %}>
 {{ form.car_model }}
+{% field_error form.car_model %}
 </td>
 </tr>
 
 <tr>
 <td width="20%">Объем двигателя</td>
-<td width="80%">{{ form.engine_volume }}</td>
+<td width="80%" {% if form.engine_volume.errors %}class="error"{% endif %}>{{ form.engine_volume }}
+{% field_error form.engine_volume %}
+</td>
 </tr>
 
 <tr>
 <td width="20%">Год выпуска</td>
-<td width="80%">
+<td width="80%" {% if form.year.errors %}class="error"{% endif %}>
 {{ form.year }}
+{% field_error form.year %}
 </td>
 </tr>
 
@@ -62,29 +69,41 @@ function setBrand(value) {
 <table width="99%">
 <tr>
 <td width="20%">Производитель запчасти &nbsp;&nbsp;</td>
-<td width="80%">
+<td width="80%" {% if form.brand.errors %}class="error"{% endif %}>
 {{ form.brand }}<a class="help" href="javascript:void(0);" onclick="showPopUp('/client/help/brands.html',200, 600, 'brands',1)">Весь список</a>
+{% field_error form.brand %}
 </td>
 </tr>
 
 <tr>
 <td width="20%">Описание</td>
-<td width="80%">{{ form.description }}</td>
+<td width="80%" {% if form.description.errors %}class="error"{% endif %}>
+{{ form.description }}
+{% field_error form.description %}
+</td>
 </tr>
 
 <tr>
 <td width="20%">Side</td>
-<td width="80%">{{ form.side }}</td>
+<td width="80%" {% if form.side.errors %}class="error"{% endif %}>{{ form.side }}
+{% field_error form.side %}
+</td>
 </tr>
 
 <tr>
 <td width="20%">VIN #</td>
-<td width="80%">{{ form.part_number }}</td>
+<td width="80%" {% if form.part_number.errors %}class="error"{% endif %}>
+{{ form.part_number }}
+{% field_error form.side %}
+</td>
 </tr>
 
 <tr>
 <td width="20%">Количество</td>
-<td width="80%"><input type="text" value="1" size="5"></td>
+<td width="80%" {% if form.part_number.errors %}class="error"{% endif %}>
+{{ form.quantity }}
+{% field_error form.quantity %}
+</td>
 </tr>
 
 </table>
@@ -98,7 +117,7 @@ function setBrand(value) {
 <input type="submit" name="add_item" value="Добавить позицию в заказ">
 </p>
 </form>
-<form method="post" action="/client/order/{{ order.po }}">
+<form method="post" action="/client/order/{{ order.po }}/">
 <fieldset>
 <legend>Позиции текущего заказа</legend>
 <table cellpadding="5">
@@ -114,16 +133,17 @@ function setBrand(value) {
 </thead>
 
 <tbody>
-
-<tr class="row1">
-<td>Dodge Caravan 2001 (3.3)</td>
-<td>блок переключателей</td>
-<td>mopar</td>
-<td></td>
-<td>UQ651L5AA</td>
-<td><input type="text" size="3" value="1"></td>
-<td><input type="checkbox" size="1"></td>
+{% for i in items %}
+<tr class="{% cycle 'row1','row2' %}">
+<td>{{ i.car_maker }} {{ i.car_model }} {{ i.year }} ({{ i.engine_volume }})</td>
+<td>{{ i.description }}</td>
+<td>{{ i.brand.name }}</td>
+<td>{% if i.side %}{{ i.side }}{% endif %}</td>
+<td>{{ i.part_number }}</td>
+<td><input type="text" name="quantity_{{ i.id }}" size="3" value="{{ i.quantity }}"></td>
+<td><a class="delete_link" href="/client/order/{{ order.po }}/delete/{{ i.id }}">Удалить</a></td>
 </tr>
+{% endfor %}
 </tbody>
 
 </table>
@@ -131,7 +151,6 @@ function setBrand(value) {
 
 <div class="submit-row">
 <input type="submit" name="save_order" value="Отправить заказ" />&nbsp;&nbsp;&nbsp;
-<input type="submit" class="delete" name="delete_items" value="Удалить выбранные позиции" />
 </div>
 
 {% endblock %}

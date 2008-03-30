@@ -44,6 +44,13 @@ class Brand(models.Model):
         super(Brand, self).save()
     
     def unify(self):
+        p_list = self._recurse_for_parents(self)
+        if len(p_list) > 0:
+            return p_list[len(p_list-1)]
+        else :
+            return self            
+    
+    def unify(self):
         if self.parent != None:
             return self.parent
         else:
@@ -60,12 +67,13 @@ class Order(models.Model):
     confirmed = models.BooleanField(default=False)
     
     class Admin:
+        list_display = ('po','user','created','confirmed')
         pass
     
     def __str__(self):
         return "%s" % self.po
 
-CAR_SIDES = (('R','right'),('L','left'),)
+CAR_SIDES = (('R','R'),('L','L'),)
 
 ORDER_ITEM_STATUSES = (('on_order','On order'),
                        ('out_of_stock','Out of stock'),
@@ -77,10 +85,10 @@ ORDER_ITEM_STATUSES = (('on_order','On order'),
 class OrderedItem(models.Model):
     order = models.ForeignKey(to=Order, edit_inline=models.TABULAR, core=True)
     # car details
-    car_maker = models.CharField(maxlength=255)
-    car_model = models.CharField(maxlength=255)
-    year = models.IntegerField(maxlength=4)
-    engine_volume = models.FloatField(max_digits=2, decimal_places=1)
+    car_maker = models.CharField(maxlength=255, null=True, blank=True)
+    car_model = models.CharField(maxlength=255, null=True, blank=True)
+    year = models.IntegerField(maxlength=4, null=True, blank=True)
+    engine_volume = models.FloatField(max_digits=2, decimal_places=1, null=True, blank=True)
     side = models.CharField(maxlength=1, choices=CAR_SIDES, blank=True, null=True)
     # item details
     part_number = models.CharField(maxlength=255)
@@ -90,8 +98,7 @@ class OrderedItem(models.Model):
     
     status = models.CharField(maxlength=50, choices=ORDER_ITEM_STATUSES, default='on_order')
     description = models.TextField()
-    #brand = models.ForeignKey(Brand, null=True, blank=True)
-    brand = models.CharField(maxlength=50, null=True, blank=True)
+    brand = models.ForeignKey(Brand, null=True, blank=True)
     
     confirmed = models.BooleanField(default=False)
     
@@ -100,6 +107,10 @@ class OrderedItem(models.Model):
     
     def __str__(self):
         return "%s-%s" % (self.order.po, self.id)
+    
+    def save(self):
+        self.brand = self.brand.unify()
+        super(OrderedItem, self).save()
 
 
 def generatePo(user_obj):
