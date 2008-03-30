@@ -18,6 +18,14 @@ def index(request):
 @ajax_request
 def position_edit(request, id):
     item = get_object_or_404(OrderedItem, id=id)
-    item.quantity = request.POST['quantity']
+    response = {}
+    try:
+        item.__dict__[request.POST['type']]
+    except:
+        response['error'] = 'Attribute %s does not exist' % request.POST['type']
+        return response 
+        
+    item.__dict__[request.POST['type']] = request.POST['value']
     item.save()
-    return {'quantity':item.quantity}
+    response['value'] = item.__dict__[request.POST['type']]
+    return response

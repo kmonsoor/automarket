@@ -7,42 +7,44 @@
 //var used = new Array();
 var current_id;
 var current_val;
-function saveQuantity(id) {
-    current_id = id;
-    val = jQuery('#quantity_input_'+id).val();
-    container_content = jQuery('#quantity_'+id).html();
-    jQuery('#quantity_'+id).html('<img src="{{ MEDIA_URL }}img/icons/ajax-loader.gif">')
+var current = new Array();
+function save() {
+    value = jQuery('#' + type + '_input_' + current['id']).val();
+    jQuery('#' + type + '_' + id).html('<img src="{{ MEDIA_URL }}img/icons/ajax-loader.gif">')
     jQuery.ajax(
         {
             type: 'POST',
-            url: '/cp/position/edit/' + id + '/',
+            url: '/cp/position/edit/' + current['id'] + '/',
             data: {
-                   'quantity':val
+                    'type':current['type'],
+                    'value':value
                    },
             success: function(response) {
 	            r = eval('['+response+']');
-                current_val = r[0]['quantity'];
-                closeQuantityBox();
+                current['value'] = r[0]['value'];
+                close();
             }
         });
     
 }
 
-function closeQuantityBox(id) {
-    if (!id) {
-        id = current_id;
-    }
-    jQuery('#quantity_'+id).html(current_val);
-    jQuery('#quantity_save_btn_'+id).css("display","none");
-    current_id = null;
+function close() {
+    if (!current.length) return;
+    jQuery('#' + current['type'] + '_' + id).html(current['value']);
+    jQuery('#quantity_save_btn_' + current['id']).css("display","none");
+    current = new Array();
 }
 function editQuantity(id) {
-    if (current_id == id) return;
-    if (current_id) closeQuantityBox(current_id);
-    current_val = jQuery('#quantity_'+id).html();
-    jQuery('#quantity_'+id).html('<input id="quantity_input_' + id + '" type="text" value="' + current_val + '">');
+    alert(current['id'] == id);
+    alert(current['type'] == 'quantity');
+    alert(current.length);
+    if (current.length > 0 && current['id'] == id && current['type'] == 'quantity') return;
+    if (current.length) close();
+    current = {'type':'quantity', 'value':jQuery('#quantity_'+id).html(),'id':id};
+    
+    jQuery('#quantity_'+id).html('<input id="quantity_input_' + id + '" type="text" value="' + current['value'] + '">');
     jQuery('#quantity_save_btn_'+id).css("display","inline");
-    current_id = id;
+    
 }
 </script>
 {% endblock %}
@@ -70,7 +72,7 @@ function editQuantity(id) {
 <td>{{ i.part_number_superseded|default:"&nbsp;" }}</td>
 <td>{{ i.price|default:"&nbsp;" }}</td>
 <td><div id="quantity_{{ i.id }}" onclick="editQuantity({{ i.id }})">{{ i.quantity|default:"&nbsp;" }}</div>
-<button id="quantity_save_btn_{{ i.id }}" style="display: none" onclick="saveQuantity({{ i.id }})">Save</button>
+<button id="quantity_save_btn_{{ i.id }}" style="display: none" onclick="save()">Save</button>
 </td>
 <td>{{ i.status|default:"&nbsp;" }}</td>
 <td><a href="/cp/position/edit/{{ i.id }}">Edit</a></td>
