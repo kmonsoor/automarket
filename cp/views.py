@@ -24,8 +24,8 @@ def position_edit(request, id):
     except:
         response['error'] = 'Attribute %s does not exist' % request.POST['type']
         return response 
-        
-    item.__dict__[request.POST['type']] = request.POST['value']
+
+    setattr(item, request.POST['type'], int(request.POST['value']))
     item.save()
-    response['value'] = item.__dict__[request.POST['type']]
+    response['value'] = getattr(item, request.POST['type'])
     return response

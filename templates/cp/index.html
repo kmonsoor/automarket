@@ -4,24 +4,21 @@
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">
 <script>
-//var used = new Array();
-var current_id;
-var current_val;
-var current = new Array();
+var current = {'id':null,'type':null,'value':null};
 function save() {
-    value = jQuery('#' + type + '_input_' + current['id']).val();
-    jQuery('#' + type + '_' + id).html('<img src="{{ MEDIA_URL }}img/icons/ajax-loader.gif">')
+    value = jQuery('#' + current.type + '_input_' + current.id).val();
+    jQuery('#' + current.type + '_' + current.id).html('<img src="{{ MEDIA_URL }}img/icons/ajax-loader.gif">')
     jQuery.ajax(
         {
             type: 'POST',
-            url: '/cp/position/edit/' + current['id'] + '/',
+            url: '/cp/position/edit/' + current.id + '/',
             data: {
-                    'type':current['type'],
+                    'type':current.type,
                     'value':value
                    },
             success: function(response) {
 	            r = eval('['+response+']');
-                current['value'] = r[0]['value'];
+                current.value = r[0]['value'];
                 close();
             }
         });
@@ -29,20 +26,18 @@ function save() {
 }
 
 function close() {
-    if (!current.length) return;
-    jQuery('#' + current['type'] + '_' + id).html(current['value']);
-    jQuery('#quantity_save_btn_' + current['id']).css("display","none");
-    current = new Array();
+    jQuery('#' + current.type + '_' + current.id).html(current.value);
+    jQuery('#quantity_save_btn_' + current.id).css("display","none");
+    current = {'id':null,'type':null,'value':null};
 }
 function editQuantity(id) {
-    alert(current['id'] == id);
-    alert(current['type'] == 'quantity');
-    alert(current.length);
-    if (current.length > 0 && current['id'] == id && current['type'] == 'quantity') return;
-    if (current.length) close();
-    current = {'type':'quantity', 'value':jQuery('#quantity_'+id).html(),'id':id};
+    if (current.id == id && current.type == 'quantity') return;
+    if (current.id) close();
+    current.type = 'quantity'; 
+    current.value = jQuery('#quantity_'+id).html();
+    current.id = id;
     
-    jQuery('#quantity_'+id).html('<input id="quantity_input_' + id + '" type="text" value="' + current['value'] + '">');
+    jQuery('#quantity_'+id).html('<input id="quantity_input_' + id + '" type="text" value="' + current.value + '">');
     jQuery('#quantity_save_btn_'+id).css("display","inline");
     
 }
