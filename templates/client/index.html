@@ -1,5 +1,5 @@
 {% extends 'client_base.html' %}
-{% block page_title %}Последние заказы{% endblock %}
+{% block page_title %}Мои заказы{% endblock %}
 {% block page_content %}
 {% for o in orders %}
 <h3>{{ o.po }} | {{ o.created|date:"d.m.Y" }}</h3>
@@ -13,17 +13,20 @@
 	<th>Количество</th>
 	<th>Замена</th>
 	<th>Статус</th>
+	<th>Комментарий</th>
     </thead>
 	<tbody>
-	{% for i in o.ordereditems_set.all %} 
+	{% for i in o.ordereditem_set.all %} 
 	<tr class="{% cycle 'row1','row2' %}">
 	<td>{{ i.car_maker }} {{ i.car_model }} {{ i.year }} ({{ i.engine_volume }})</td>
 	<td>{{ i.description }}</td>
 	<td>{{ i.brand.name }}</td>
-	<td>{% if i.side %}{{ i.side }}{% endif %}</td>
+	<td>{% if i.side %}{{ i.side }}{% else %}-{% endif %}</td>
 	<td>{{ i.part_number }}</td>
-	<td><input type="text" name="quantity_{{ i.id }}" size="3" value="{{ i.quantity }}"></td>
-	<td><a class="delete_link" href="/client/order/{{ order.po }}/delete/{{ i.id }}">Удалить</a></td>
+	<td>{{ i.quantity }}</td>
+	<td>{% if i.superseded %}{{ i.superseded }}{% else %}-{% endif %}</td>
+	<td>{{ i.status_verbose }}</td>
+	<td>{{ i.comments }}</td>
 	</tr>
 	{% endfor %}
 	</tbody>

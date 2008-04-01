@@ -102,6 +102,8 @@ class OrderedItem(models.Model):
     
     confirmed = models.BooleanField(default=False)
     
+    comments = models.TextField(blank=True, null=True)
+    
     class Admin:
         pass
     
@@ -111,7 +113,11 @@ class OrderedItem(models.Model):
     def save(self):
         self.brand = self.brand.unify()
         super(OrderedItem, self).save()
-
-
+    
+    def status_verbose(self):
+        return dict(ORDER_ITEM_STATUSES).get(self.status,self.status)
+    
+    
+    
 def generatePo(user_obj):
     return "%s-%d" % (user_obj.id, int(time.time()))     

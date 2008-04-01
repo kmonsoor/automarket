@@ -81,4 +81,15 @@ def help_brand_list(request):
     brands = Brand.objects.all().order_by('name')
     return {'list':brands}
 
+@login_required
+def delete_item(request, po, item_id):
+    try:
+        item = OrderedItem.objects.get(pk=item_id)
+        item.delete()
+    except Exception, e:
+        pass
+    url = '/client/order/%s/' % po
+    return HttpResponseRedirect(url)
+    
+
             
