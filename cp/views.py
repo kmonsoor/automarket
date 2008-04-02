@@ -15,6 +15,20 @@ def index(request):
     items = paginator.get_page();
     return {'items':items,'paginator':paginator}
 
+@render_to('cp/groups.html')
+def groups(request):
+    items = OrderedItem.objects.all().order_by('brand')
+    brands = {}
+    current_brand = None
+    for i in items:
+        if i.brand.name != current_brand:
+            current_brand = i.brand.name
+        if not brands.has_key(current_brand):
+            brands[current_brand] = []
+        brands[current_brand].append(i)
+ 
+    return {'brands':brands}
+
 @ajax_request
 def position_edit(request, id):
     item = get_object_or_404(OrderedItem, id=id)
