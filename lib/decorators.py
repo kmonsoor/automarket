@@ -22,7 +22,7 @@ def ajax_request(func):
     If view returned dict, returns JsonResponse with this dict as content.
     """
     def wrapper(request, *args, **kwargs):
-        if request.method == 'POST':
+        if request.method == 'POST' or request.method == 'GET':
             response = func(request, *args, **kwargs)
         else:
             response = {'error': {'type': 403, 'message': 'Accepts only POST request'}}

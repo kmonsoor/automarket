@@ -10,7 +10,7 @@ from data.models import OrderedItem
 @render_to('cp/index.html')
 def index(request):
     current_page = request.GET.get('page', 1)
-    paginator = SimplePaginator(OrderedItem.objects.all(), 25, '?page=%s')
+    paginator = SimplePaginator(OrderedItem.objects.all(), 5, '?page=%s')
     paginator.set_page(current_page)
     items = paginator.get_page();
     return {'items':items,'paginator':paginator}
@@ -24,8 +24,37 @@ def position_edit(request, id):
     except:
         response['error'] = 'Attribute %s does not exist' % request.POST['type']
         return response 
-
-    setattr(item, request.POST['type'], int(request.POST['value']))
-    item.save()
-    response['value'] = getattr(item, request.POST['type'])
+    
+    old_value = str(getattr(item, request.POST['type']))
+    setattr(item, request.POST['type'], request.POST['value'])
+    try:
+        item.save()
+        response['value'] = str(getattr(item, request.POST['type']))
+    except:
+        response['value'] = old_value or ''
+        response['error'] = 'Wrong value for attribute %s' % request.POST['type']
+    
     return response
+
+#===============================================================================
+# @ajax_request
+# def position_edit(request, id):
+#    item = get_object_or_404(OrderedItem, id=id)
+#    response = {}
+#    try:
+#        item.__dict__[request.GET['type']]
+#    except:
+#        response['error'] = 'Attribute %s does not exist' % request.GET['type']
+#        return response 
+#    
+#    old_value = str(getattr(item, request.GET['type']))
+#    setattr(item, request.GET['type'], request.GET['value'])
+#    try:
+#        item.save()
+#        response['value'] = str(getattr(item, request.GET['type']))
+#    except:
+#        response['value'] = old_value
+#        response['error'] = 'Wrong value for attribute %s' % request.GET['type']
+#    
+#    return response
+#===============================================================================
