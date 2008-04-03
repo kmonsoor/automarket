@@ -18,15 +18,11 @@ def index(request):
 @render_to('cp/groups.html')
 def groups(request):
     items = OrderedItem.objects.all().order_by('brand')
-    brands = {}
-    current_brand = None
+    brands = []
     for i in items:
-        if i.brand.name != current_brand:
-            current_brand = i.brand.name
-        if not brands.has_key(current_brand):
-            brands[current_brand] = []
-        brands[current_brand].append(i)
- 
+        if not i.brand.id in brands:
+            brands.append(i.brand.id)
+    print brands
     return {'brands':brands}
 
 @ajax_request
