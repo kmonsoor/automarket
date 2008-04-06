@@ -5,6 +5,10 @@ from django.contrib.auth.models import User
 
 import datetime, time
 
+class UserProfile(models.Model):
+    user = models.ForeignKey(User, unique=True)
+    po = models.CharField(maxlength=255)
+
 # part maker
 class Brand(models.Model):
     name = models.CharField(maxlength=255)
@@ -57,33 +61,22 @@ class Brand(models.Model):
             return self
 
 
-class Order(models.Model):
-    # user and order data
-    user = models.ForeignKey(to=User)
-    po = models.CharField(maxlength=255)
-    created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now=True, editable=False)
-    
-    confirmed = models.BooleanField(default=False)
-    
-    class Admin:
-        list_display = ('po','user','created','confirmed')
-        pass
-    
-    def __str__(self):
-        return "%s" % self.po
-
 CAR_SIDES = (('R','R'),('L','L'),)
 
-ORDER_ITEM_STATUSES = (('on_order','On order'),
-                       ('out_of_stock','Out of stock'),
-                       ('back_order','Back order'),
-                       ('wrong_number', 'Wrong number'),
-                       ('not_produce','Not produce'),
+ORDER_ITEM_STATUSES = (
+                       ('order','Новый заказ'),
+                       ('in_processing','В обработке'),
+                       ('superseded','Замена'),
+                       ('out_of_stock','Нет на складе'),
+                       ('back_order','Остаток'),
+                       ('wrong_number', 'Неверный номер'),
+                       ('not_produce','Не производится'),
+                       ('on_stock','На складе'),
 )
     
 class OrderedItem(models.Model):
-    order = models.ForeignKey(to=Order, edit_inline=models.TABULAR, core=True)
+
+    user = models.ForeignKey(User)
     # car details
     car_maker = models.CharField(maxlength=255, null=True, blank=True)
     car_model = models.CharField(maxlength=255, null=True, blank=True)
@@ -96,7 +89,7 @@ class OrderedItem(models.Model):
     price = models.FloatField(max_digits=15, decimal_places=2,  null=True, blank=True)
     quantity = models.IntegerField()
     
-    status = models.CharField(maxlength=50, choices=ORDER_ITEM_STATUSES, default='on_order')
+    status = models.CharField(maxlength=50, choices=ORDER_ITEM_STATUSES, default='order')
     description = models.TextField()
     brand = models.ForeignKey(Brand, null=True, blank=True)
     
