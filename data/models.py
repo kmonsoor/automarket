@@ -88,7 +88,8 @@ class OrderedItem(models.Model):
     part_number_superseded = models.CharField(maxlength=255, null=True, blank=True)
     price = models.FloatField(max_digits=15, decimal_places=2,  null=True, blank=True)
     quantity = models.IntegerField()
-    
+    quantity_backorder = models.IntegerField()
+    quantity_ship = models.IntegerField()
     status = models.CharField(maxlength=50, choices=ORDER_ITEM_STATUSES, default='order')
     description = models.TextField()
     brand = models.ForeignKey(Brand, null=True, blank=True)

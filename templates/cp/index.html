@@ -21,6 +21,7 @@ function save() {
                 current.value = r[0]['value'];
                 if (r[0]['error']) alert(r[0]['error']);
                 close();
+                
             }
         });
     
@@ -29,6 +30,14 @@ function save() {
 function close() {
     jQuery('#' + current.type + '_' + current.id).html(current.value);
     jQuery('#' + current.type + '_buttons_' + current.id).css("display","none");
+    if (current.type == 'part_number_superseded') {
+        if (current.value.toString().length > 0) {
+            editStatus(current.id, 'superseded');
+        }
+        else if (jQuery('#status_input_' + current.id).val() == 'superseded') {
+            alert('Статус для этой позиции установлен как "Замена", однако поле "Superseded" не заполнено. Заполните это поле, или установите другой статус  для этой позиции');
+        }
+    } 
     current = {'id':null,'type':null,'value':null};
 }
 
@@ -56,42 +65,45 @@ function editPrice(id) {
     
 }
 
-function editQuantity(id) {
-    if (current.id == id && current.type == 'quantity') return;
+function editQuantityShip(id) {
+    if (current.id == id && current.type == 'quantity_ship') return;
     if (current.id) close();
-    current.type = 'quantity'; 
-    current.value = jQuery('#quantity_'+id).html();
+    current.type = 'quantity_ship'; 
+    current.value = jQuery('#quantity_ship_'+id).html();
     current.id = id;
     
-    jQuery('#quantity_'+id).html('<input id="quantity_input_' + id + '" type="text" value="' + current.value + '">');
-    jQuery('#quantity_buttons_'+id).css("display","inline");
+    jQuery('#quantity_ship_'+id).html('<input id="quantity_ship_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#quantity_ship_buttons_'+id).css("display","inline");
     
 }
 
-function editStatus(id) {
-    if (current.id == id && current.type == 'status') return;
-    if (current.id) close();
-    current.type = 'status'; 
-    current.value = jQuery('#status_'+id).html();
-    current.id = id;
-    html = '<select id="status_input_' + id + '">';
-    options = {'on_order':'On order',
-              'out_of_stock':'Out of stock',
-              'back_order':'Back order',
-              'wrong_number':'Wrong number',
-              'not_produce':'Not produce'}
-    for (i in options) {
-        option_html = '<option value="' + i + '"';
-        if (current.value == i) option_html += ' selected';
-        option_html += '>' + options[i] + '</option';
-        html += option_html;
+function editStatus(id, value) {
+    if (value != 'superseded' && jQuery('#part_number_superseded_'+id).html() != '') {
+        alert('Не забудьте про superseded');
     }
-    html += '</select>';
-      
-    jQuery('#status_'+id).html(html);
-    jQuery('#status_buttons_'+id).css("display","inline");
+    if (value == 'superseded' && jQuery('#part_number_superseded_'+id).html() == '') {
+        alert('Не забудьте про superseded');
+    }
+    jQuery('#status_input_' + id).attr('disabled',1)
+    jQuery.ajax(
+        {
+            type: 'POST',
+            url: '/cp/position/edit/' + id + '/',
+            data: {
+                    'type':'status',
+                    'value':value
+                   },
+            success: function(response) {
+                r = eval('['+response+']');
+                jQuery('#status_input_' + id).val(r[0]['value']);
+                jQuery('#status_input_' + id).attr('disabled',false)
+                if (r[0]['error']) alert(r[0]['error']);
+                close();
+            }
+        });
     
 }
+
 </script>
 {% endblock %}
 
@@ -101,32 +113,40 @@ function editStatus(id) {
 {% if items %}
 <table class="admin_table">
 <tr>
-<th>Order</th>
 <th>Side</th>
 <th>Brand</th>
 <th>Part #</th>
 <th>Superseded</th>
 <th>Price</th>
 <th>Quantity</th>
+<th>QTY backorder</th>
+<th>QTY shipy</th>
 <th>Status</th>
 </tr>
 {% for i in items %}
 <tr>
-<td>{{ i.order.po }}</td>
 <td>{{ i.side|default:"&nbsp;" }}</td>
 <td>{{ i.brand|default:"&nbsp;" }}</td>
 <td>{{ i.part_number|default:"&nbsp;" }}</td>
-<td><div id="part_number_superseded_{{ i.id }}" style="cursor: pointer" onclick="editSuperseded({{ i.id }})">{{ i.part_number_superseded|default:"&nbsp;" }}</div>
+<td style="cursor: pointer" onclick="editSuperseded({{ i.id }})"><div id="part_number_superseded_{{ i.id }}"  >{{ i.part_number_superseded }}</div>
 <span id="part_number_superseded_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
 </td>
 <td><div id="price_{{ i.id }}" style="cursor: pointer" onclick="editPrice({{ i.id }})">{{ i.price|default:"&nbsp;" }}</div>
 <span id="price_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
 </td>
-<td><div id="quantity_{{ i.id }}" style="cursor: pointer" onclick="editQuantity({{ i.id }})">{{ i.quantity|default:"&nbsp;" }}</div>
-<span id="quantity_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
+<td><div id="quantity_{{ i.id }}">{{ i.quantity|default:"&nbsp;" }}</div>
 </td>
-<td><div id="status_{{ i.id }}" style="cursor: pointer" onclick="editStatus({{ i.id }})">{{ i.status|default:"&nbsp;" }}</div>
-<span id="status_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
+<td><div id="quantity_backorder_{{ i.id }}">{{ i.quantity_backorder }}</div>
+</td>
+<td><div id="quantity_ship_{{ i.id }}" style="cursor: pointer" onclick="editQuantityShip({{ i.id }})">{{ i.quantity_ship }}</div>
+<span id="quantity_ship_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
+</td>
+<td>
+<select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
+{% for opt in status_options %}
+<option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option }}</option>
+{% endfor %}
+</select>
 </td>
 </tr>
 {% endfor %}

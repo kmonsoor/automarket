@@ -4,16 +4,30 @@ from django.shortcuts import get_object_or_404
 from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 
-from data.models import OrderedItem
+from data.models import OrderedItem, ORDER_ITEM_STATUSES
 
 #@login_required
 @render_to('cp/index.html')
 def index(request):
+    context = {}
     current_page = request.GET.get('page', 1)
     paginator = SimplePaginator(OrderedItem.objects.all(), 5, '?page=%s')
     paginator.set_page(current_page)
-    items = paginator.get_page();
-    return {'items':items,'paginator':paginator}
+    context['items'] = paginator.get_page();
+    context['paginator'] = paginator
+    status_options_str = '{';
+    status_options = []
+    k = 0
+    for i in ORDER_ITEM_STATUSES:
+        k += 1
+        status_options_str += '"%s":"%s"' % (i[0], i[1])
+        status_options.append({'value':i[0],'option':i[1]})
+        if k < len(ORDER_ITEM_STATUSES):
+            status_options_str += ','
+    status_options_str += '}'
+    context['status_options_str'] = status_options_str
+    context['status_options'] = status_options
+    return context
 
 @render_to('cp/groups.html')
 def groups(request):
