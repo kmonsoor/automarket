@@ -6,8 +6,8 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 
 from data.models import OrderedItem
-from data.models import Order, Brand
-from data.models import generatePo
+from data.models import Brand
+
 
 from client.forms import OrderItemForm
 
@@ -15,66 +15,34 @@ from client.forms import OrderItemForm
 def index(request):
     response = {}
     response['current_action'] = 'index'
-    response['orders'] = Order.objects.filter(user=request.user, confirmed=True).order_by('-created')[:3]
+    response['orders'] = OrderedItem.objects.filter(user=request.user).order_by('-created')
     
     return response
 
 @login_required
 @render_to('client/order.html')
-def order(request, po=None):
+def order(request):
     message = ''
-    if not po :
-        # New order
-        po = generatePo(request.user)
-        order = Order(po=po, confirmed=False, user=request.user)
-        order.save()
-    else :
-        order,created = Order.objects.get_or_create(po=po)
-    
+    response = {}
     if request.method == 'POST' :
-        if request.POST.has_key('add_item') :
-            # Add item
-
-            form = OrderItemForm(request.POST.copy())
-            if form.is_valid() :
-                item = OrderedItem()
-                item.order = order
-                item.confirmed = False
-                for key,value in form.clean_data.items() :
-                    if key == 'brand':
-                        brand = Brand.objects.get(name__iexact=value)
-                        value = brand
-                    setattr(item, key, value)
-                print item
-                item.save()
-            else:
-                message = 'Исправьте ошибки заполнения формы!'
-        if request.POST.has_key('save_order') :
-            # Save order
-            order.confirmed = True
-            order.save()
-            # Save items
-            def get_quantity(k,v):
-                if k[0:8] == 'quantity' :
-                    return {'id':k.split('_')[1],'value':v}
-                else:
-                    pass
-                
-            quantity = [get_quantity(key, value) for key,value in request.POST.items()]
-            
-            for i in quantity:
-                if i is not None:
-                    item = OrderedItem.objects.get(id=i['id'])
-                    item.quantity = i['value']
-                    item.order = order
-                    item.confirmed = True
-                    item.save()
-            return HttpResponseRedirect('/client/')
-    else :
-        form = OrderItemForm()
+        item_forms = OrderItemForm.get_forms(request)
+        item_data = [item_form.render_js('from_template') for item_form in item_forms]
+        if item_forms.are_valid():
+            for form in item_forms:
+                # Do something with your data here
+                print form.id, form.cleaned_data
+            return HttpResponseRedirect('.')
+        else:
+            print 'dd'
     
-    order_items = OrderedItem.objects.filter(order=order) or []   
-    return {'current_action':'order','form': form, 'order':order, 'items':order_items, 'message':message}
+    else :
+        item_data = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
+        item_data = []
+    response['page_template'] = OrderItemForm().render_js('from_template')
+    response['page_data'] = item_data
+    response['message'] = message
+    response['current_action'] = 'order'  
+    return response
 
 @render_to('client/help/brand_list.html')
 def help_brand_list(request):

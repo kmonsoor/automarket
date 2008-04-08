@@ -115,3 +115,8 @@ class OrderedItem(models.Model):
     
 def generatePo(user_obj):
     return "%s-%d" % (user_obj.id, int(time.time()))     
+
+
+class UserProfile(models.Model):
+    user = models.ForeignKey(User, unique=True)
+    po = models.CharField(maxlength=255)

@@ -1,0 +1,60 @@
+<table width="100%">
+<tr>
+
+<td width="5%" {% if form.car_maker.errors %}class="error"{% endif %}>
+Производитель<br /><br />
+{{ form.car_maker }}
+</td>
+
+<td width="5%" {% if form.car_model.errors %}class="error"{% endif %}>
+Модель<br /><br />
+{{ form.car_model }}
+</td>
+
+<td width="2%" {% if form.engine_volume.errors %}class="error"{% endif %}>
+Объем двигателя<br />
+{{ form.engine_volume }}
+</td>
+
+<td width="2%" {% if form.year.errors %}class="error"{% endif %}>
+Год выпуска<br />
+{{ form.year }}
+</td>
+
+
+<td width="10%" {% if form.brand.errors %}class="error"{% endif %}>
+Производитель запчасти<br />
+{{ form.brand }}<br /><a class="help" id="c.#" href="javascript:void(0);" onclick="showList(this)">Список</a><br />
+{% if form.brand.errors %}
+<span>{{ form.brand.errors }}</span>
+{% endif %}
+</td>
+
+<td width="10%">
+Описание<br /><br />
+{{ form.description }}
+</td>
+
+<td width="10%" {% if form.side.errors %}class="error"{% endif %}>
+Сторона<br /><br />
+{{ form.side }}
+</td>
+
+<td width="10%" {% if form.part_number.errors %}class="error"{% endif %}>
+OEM #<br /><br />
+{{ form.part_number }}
+{% if form.part_number.errors %}
+<span>{{ form.part_number.errors }}</span>
+{% endif %}
+</td>
+
+<td width="10%" {% if form.quantity.errors %}class="error"{% endif %}>
+Количество<br /><br />
+{{ form.quantity }}
+{% if form.quantity.errors %}
+<span>{{ form.quantity.errors }}</span>
+{% endif %}
+</td>
+
+</tr>
+</table>

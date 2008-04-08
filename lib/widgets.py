@@ -36,7 +36,7 @@ class JQueryAutoComplete(forms.TextInput):
         if self.options:
             options += ',%s' % self.options
 
-        return u'$(\'#%s\').autocomplete(%s%s);' % (field_id, source, options)
+        return u"""jQuery('#%s').autocomplete(%s%s);""" % (field_id, source, options)
 
     def render(self, name, value=None, attrs=None):
         final_attrs = self.build_attrs(attrs, name=name)
@@ -47,11 +47,10 @@ class JQueryAutoComplete(forms.TextInput):
             final_attrs['id'] = 'id_%s' % name    
         
         return u'''<input type="text" %(attrs)s/>
-        <script type="text/javascript"><!--//
-        %(js)s//--></script>
+        <script type="text/javascript">%(js)s</script>
         ''' % {
-            'attrs' : flatatt(final_attrs),
-            'js' : self.render_js(final_attrs['id']),
+                'attrs' : flatatt(final_attrs),
+                'js' : self.render_js(final_attrs['id']),
         }
 
 # views.py - sample view
