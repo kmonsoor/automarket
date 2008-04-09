@@ -93,7 +93,7 @@ class OrderedItem(models.Model):
     status = models.CharField(maxlength=50, choices=ORDER_ITEM_STATUSES, default='order')
     description = models.TextField()
     brand = models.ForeignKey(Brand, null=True, blank=True)
-    
+    created = models.DateTimeField(auto_now=True)
     confirmed = models.BooleanField(default=False)
     
     comments = models.TextField(blank=True, null=True)
@@ -102,9 +102,10 @@ class OrderedItem(models.Model):
         pass
     
     def __str__(self):
-        return "%s-%s" % (self.order.po, self.id)
+        return "%s-%s" % (self.created, self.id)
     
     def save(self):
+        
         self.brand = self.brand.unify()
         super(OrderedItem, self).save()
     

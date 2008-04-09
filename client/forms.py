@@ -31,3 +31,4 @@ class OrderItemForm(Form):
         if 'brand' in self.clean_data.keys() :
             if self.clean_data['brand'] not in data :
                 raise forms.ValidationError("Такого производителя нет!")
+        return self.clean_data['brand']

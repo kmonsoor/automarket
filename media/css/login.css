@@ -1,0 +1,12 @@
+#login {
+    margin: 15% 0 0 30%;
+    padding: 100px 0 0 120px;
+    width:500px;
+    height:400px; background: url('../img/design/login_back.png') no-repeat top;
+}
+
+#login label {
+    color: #fff;
+    font-weight: 700;
+    line-height: 20px;
+}

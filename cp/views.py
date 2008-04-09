@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 
-from data.models import OrderedItem, ORDER_ITEM_STATUSES
+from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES
 
 #@login_required
 @render_to('cp/index.html')

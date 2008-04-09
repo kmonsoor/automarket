@@ -48,13 +48,14 @@ class BaseForm(forms.BaseForm):
 
     @classmethod
     def get_forms(cls, request, kwargs={}):
+       
         form = cls(request.POST, **kwargs)
         id_name = form.add_prefix('id')
 
         form_ids = [key[len(id_name)-1:] for key in request.POST.keys() if key.startswith(id_name[:-1])]
 
         forms = FormCollection()
-
+        form_ids.sort()
         for form_id in form_ids:
             new_kwargs = dict(kwargs.items() + 
                     [('postfix', form_id), ('id', request.POST[id_name[:-1]+form_id])])

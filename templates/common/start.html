@@ -1,10 +1,18 @@
 {% extends 'base.html' %}
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/login.css" />
+{% endblock %}
 {% block content %}
-{% if message %}
-<div class="error">{{ message }}</div>
-{% endif %}
-<form action="" method="post">
-{{ form.as_p }}
-<input type="submit" value="Вход" />
+<div id="login">
+<div id="error" style="color:red">{% if message %}{{ message }}{% endif %}</div>
+<br />
+<form action="" method="post" class="niceform">
+        <label for="textinput">Логин:</label><br />
+        <input type="text" id="textinput" name="username" size="40" value="" /><br /><br />
+        <label for="passwordinput">Пароль:</label><br />
+        <input type="password" id="passwordinput" name="password" value size="40" value="" /><br />
+        <br /><br />
+        <input type="submit" value="Вход" />
 </form>
+</div>
 {% endblock %}
