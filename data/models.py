@@ -105,7 +105,7 @@ class OrderedItem(models.Model):
         return "%s-%s" % (self.created, self.id)
     
     def save(self):
-        
+        self.quantity_backorder = int(self.quantity) - int(self.quantity_ship)
         self.brand = self.brand.unify()
         super(OrderedItem, self).save()
     

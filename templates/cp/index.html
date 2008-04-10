@@ -1,4 +1,5 @@
 {% extends 'cp_base.html' %}
+{% load lib_tags %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -38,6 +39,9 @@ function close() {
             alert('Статус для этой позиции установлен как "Замена", однако поле "Superseded" не заполнено. Заполните это поле, или установите другой статус  для этой позиции');
         }
     } 
+    if (current.type == 'quantity_ship') {
+        jQuery('#quantity_backorder_' + current.id).html(parseInt(jQuery('#quantity_' + current.id).html()) - parseInt(jQuery('#quantity_ship_' + current.id).html()));
+    }
     current = {'id':null,'type':null,'value':null};
 }
 
@@ -84,6 +88,12 @@ function editStatus(id, value) {
     if (value == 'superseded' && jQuery('#part_number_superseded_'+id).html() == '') {
         alert('Не забудьте про superseded');
     }
+    if (value == 'superseded') {
+        jQuery('#number_' + id).attr('class', 'cross_out');
+    }
+    else {
+        jQuery('#number_' + id).attr('class', 'default');
+    }
     jQuery('#status_input_' + id).attr('disabled',1)
     jQuery.ajax(
         {
@@ -113,21 +123,13 @@ function editStatus(id, value) {
 {% if items %}
 <table class="admin_table">
 <tr>
-<th>Side</th>
-<th>Brand</th>
-<th>Part #</th>
-<th>Superseded</th>
-<th>Price</th>
-<th>Quantity</th>
-<th>QTY backorder</th>
-<th>QTY shipy</th>
-<th>Status</th>
+{% table_header_sort headers %}
 </tr>
 {% for i in items %}
 <tr>
 <td>{{ i.side|default:"&nbsp;" }}</td>
 <td>{{ i.brand|default:"&nbsp;" }}</td>
-<td>{{ i.part_number|default:"&nbsp;" }}</td>
+<td id="number_{{ i.id }}"{% ifequal i.status "superseded" %} class="cross_out"{% endifequal %}>{{ i.part_number|default:"&nbsp;" }}</td>
 <td style="cursor: pointer" onclick="editSuperseded({{ i.id }})"><div id="part_number_superseded_{{ i.id }}"  >{{ i.part_number_superseded }}</div>
 <span id="part_number_superseded_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
 </td>

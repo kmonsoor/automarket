@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
+from lib.sort import SortHeaders
 
 from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES
 
@@ -10,6 +11,19 @@ from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES
 @render_to('cp/index.html')
 def index(request):
     context = {}
+    LIST_HEADERS = (
+                    ('Side', None),
+                    ('Brand', 'brand'),
+                    ('Part #', 'part_number'),
+                    ('Superseded', 'superseded'),
+                    ('Price', 'price'),
+                    ('Quantity', 'quantity'),
+                    ('QTY backorder', 'quantity_backorder'),
+                    ('QTY ship', 'quantity_ship'),
+                    ('Status', 'status')
+                    )
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    context['headers'] = list(sort_headers.headers())
     current_page = request.GET.get('page', 1)
     paginator = SimplePaginator(OrderedItem.objects.all(), 5, '?page=%s')
     paginator.set_page(current_page)

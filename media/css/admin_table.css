@@ -40,4 +40,6 @@
 .admin_table2 TD {
 	border: solid 1px #eaeaea;
 }
-
+.cross_out{
+	text-decoration: line-through;
+}
