@@ -98,8 +98,12 @@ class OrderedItem(models.Model):
     
     comments = models.TextField(blank=True, null=True)
     
+    
+    
     class Admin:
-        pass
+        list_display =('__str__','created','user','part_number','part_number_superseded','quantity')
+        list_filter = ('created',)
+        search_fields = ('part_number',)
     
     def __str__(self):
         return "%s-%s" % (self.created, self.id)
@@ -112,7 +116,8 @@ class OrderedItem(models.Model):
     def status_verbose(self):
         return dict(ORDER_ITEM_STATUSES).get(self.status,self.status)
     
-    
+    class Meta:
+        pass
     
 def generatePo(user_obj):
     return "%s-%d" % (user_obj.id, int(time.time()))     

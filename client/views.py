@@ -9,6 +9,7 @@ from data.models import OrderedItem
 from data.models import Brand
 
 from lib.paginator import SimplePaginator
+from lib.sort import SortHeaders
 
 from client.forms import OrderItemForm
 
@@ -17,9 +18,40 @@ from client.forms import OrderItemForm
 def index(request):
     response = {}
     response['current_action'] = 'index'
+    
+    LIST_HEADERS = (
+                ('Дата', 'created'),
+                ('Авто', None),
+                ('Описание', None),
+                ('Сторона', None),
+                ('Производитель', 'brand'),
+                ('OEM #', 'part_number'),
+                ('Замена', 'superseded'),
+                ('Цена', 'price'),
+                ('QTY order', 'quantity'),
+                ('QTY backorder', 'quantity_backorder'),
+                ('QTY ship', 'quantity_ship'),
+                ('Статус', 'status'),
+                )
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    response['headers'] = list(sort_headers.headers())
+    field = LIST_HEADERS[int(request.GET.get('o',0))][1]
+    direction = request.GET.get('ot','desc')
+    directions = {'asc':'', 'desc':'-'}
+    field_order = '%s%s' % (directions[direction], field)
+
     current_page = request.GET.get('page',1)
-    paginator = SimplePaginator(OrderedItem.objects.filter(user=request.user).order_by('-created'), 25, '?page=%s')
+    qs = OrderedItem.objects.filter(user=request.user).order_by(field_order)
+    # Filter
+    q = request.GET.get('q','').strip()
+    if len(q) > 0 :
+        qs = qs.filter(part_number__iexact=q)
+    
+    paginator = SimplePaginator(qs, 25, '?page=%s')
     paginator.set_page(current_page)
+    
+    response['field'] = field
+    response['direction'] = direction    
     response['orders'] = paginator.get_page()
     response['paginator'] = paginator
     return response
@@ -41,6 +73,8 @@ def order(request):
 
                 for key, value in form.clean_data.items() :
                     item.__dict__[key] = value
+                
+                item.brand = Brand.objects.get(name=form.clean_data['brand'])
                 
                 item.user = request.user
                 item.quantity_backorder = 0

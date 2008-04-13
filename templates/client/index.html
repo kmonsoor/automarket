@@ -1,35 +1,82 @@
 {% extends 'client_base.html' %}
+
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/hangelists.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />
+
+{% endblock %}
+
+{% load lib_tags %}
+
 {% block page_title %}Мои заказы{% endblock %}
 {% block page_content %}
-{% for o in orders %}
-<h3>{{ o.po }} | {{ o.created|date:"d.m.Y" }}</h3>
-	<table>
+<div class="module filtered" id="changelist">
+<div id="toolbar"><form id="changelist-search" action="" method="get">
+<div><!-- DIV needed for valid HTML -->
+<label for="searchbar">&nbsp;Поиск по OEM #</label>
+<input type="text" size="40" name="q" value="" id="searchbar" />
+<input type="submit" value="Вперёд" />
+
+
+</div>
+</form>
+</div>
+<script type="text/javascript">document.getElementById("searchbar").focus();</script>
+<p>&nbsp;</p>
+<table width="100%">
 	<thead>
-	<th>Авто</th>
-	<th>Описание</th>
-	<th>Производитель</th>
-	<th>Side</th>
-	<th>VIN #</th>
-	<th>Количество</th>
-	<th>Замена</th>
-	<th>Статус</th>
-	<th>Комментарий</th>
+    {% table_header_sort headers %}
     </thead>
 	<tbody>
-	{% for i in o.ordereditem_set.all %} 
+	{% for i in orders %}
 	<tr class="{% cycle 'row1','row2' %}">
+	<td>{{ i.created|date:"d.m.Y" }}</td>
 	<td>{{ i.car_maker }} {{ i.car_model }} {{ i.year }} ({{ i.engine_volume }})</td>
 	<td>{{ i.description }}</td>
-	<td>{{ i.brand.name }}</td>
 	<td>{% if i.side %}{{ i.side }}{% else %}-{% endif %}</td>
-	<td>{{ i.part_number }}</td>
+	<td>{{ i.brand.name }}</td>
+	<td>
+	{% ifequal status 'superseded' %}<s>{% endifequal %}
+	{{ i.part_number }}
+	{% ifequal status 'superseded' %}</s>{% endifequal %}
+	</td>
+	<td>
+	{% if i.superseded %}
+	{{ i.superseded }}
+	<a class="add_link" href="/client/order/superseded/accept/{{ i.id }}">Принять замену</a>
+	<a class="delete_link" href="/client/order/superseded/decline/{{ i.id }}">Отказаться</a>
+	{% else %}
+	-
+	{% endif %}
+	</td>
+	<td>
+	{% ifnotequal i.price 0.00 %}
+	{{ i.price }}
+	{% else %}
+	-
+	{% endifnotequal %}
+	
 	<td>{{ i.quantity }}</td>
-	<td>{% if i.superseded %}{{ i.superseded }}{% else %}-{% endif %}</td>
+	<td>
+	{% ifnotequal i.status 'order' %}
+	{{ i.quantity_backorder }}
+	{% else %}
+	-
+	{% endifnotequal %}
+	</td>
+	<td>
+	{% ifnotequal i.status 'order' %}
+	{{ i.quantity_ship }}
+    {% else %}
+    -
+    {% endifnotequal %}	
+	</td>
 	<td>{{ i.status_verbose }}</td>
-	<td>{{ i.comments }}</td>
 	</tr>
 	{% endfor %}
+
 	</tbody>
 	</table>
-{% endfor %}
+
 {% endblock %}
