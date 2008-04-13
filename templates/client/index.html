@@ -37,13 +37,13 @@
 	<td>{% if i.side %}{{ i.side }}{% else %}-{% endif %}</td>
 	<td>{{ i.brand.name }}</td>
 	<td>
-	{% ifequal status 'superseded' %}<s>{% endifequal %}
+	{% ifequal i.status 'superseded' %}<s>{% endifequal %}
 	{{ i.part_number }}
-	{% ifequal status 'superseded' %}</s>{% endifequal %}
+	{% ifequal i.status 'superseded' %}</s>{% endifequal %}
 	</td>
 	<td>
-	{% if i.superseded %}
-	{{ i.superseded }}
+	{% if i.part_number_superseded %}
+	{{ i.part_number_superseded }}<br />
 	<a class="add_link" href="/client/order/superseded/accept/{{ i.id }}">Принять замену</a>
 	<a class="delete_link" href="/client/order/superseded/decline/{{ i.id }}">Отказаться</a>
 	{% else %}

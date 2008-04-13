@@ -2,7 +2,7 @@
 from lib.decorators import render_to
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
-
+from datetime import datetime
 from django.contrib.auth.decorators import login_required
 
 from data.models import OrderedItem
@@ -45,7 +45,7 @@ def index(request):
     # Filter
     q = request.GET.get('q','').strip()
     if len(q) > 0 :
-        qs = qs.filter(part_number__iexact=q)
+        qs = qs.filter(part_number__icontains=q)
     
     paginator = SimplePaginator(qs, 25, '?page=%s')
     paginator.set_page(current_page)
@@ -86,14 +86,40 @@ def order(request):
                 
             return HttpResponseRedirect('/client/')
     else :
-        #item_data = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
-        item_data = []
+        item_data = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
+        #item_data = []
     response['page_template'] = OrderItemForm().render_js('from_template')
     
     response['page_data'] = item_data
     response['message'] = message
  
     return response
+
+def superseded(request, action, item_id):
+    
+    next = request.GET.get('next','/client/')
+    
+    try:
+        item = OrderedItem.objects.get(id=item_id)
+    except:
+        return HttpResponseRedirect(next)
+    if action == 'accept' :
+        new_item = OrderedItem()
+        # Populate item dict
+        for key, value in item.__dict__.items() :
+            if key not in ('id','created',) :
+                new_item.__dict__[key] = value
+        # Rewrite values
+        new_item.part_number_superseded = None
+        new_item.part_number = item.part_number_superseded
+        new_item.status = 'order'
+        new_item.save()
+        # Delete old item
+        item.delete()
+    if action == 'decline' :
+        item.delete()
+    
+    return HttpResponseRedirect(next)
 
 @render_to('client/help/brand_list.html')
 def help_brand_list(request):
@@ -107,8 +133,7 @@ def delete_item(request, po, item_id):
         item.delete()
     except Exception, e:
         pass
-    url = '/client/order/%s/' % po
-    return HttpResponseRedirect(url)
+    return HttpResponseRedirect('/client/order/')
     
 
             

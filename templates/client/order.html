@@ -48,7 +48,13 @@ Window.onDomReady(function() {
 {% block page_title %}Заказ{% endblock %}
 
 {% block page_content %}
-
+<div class="system-message">
+<p>
+Для добавления позиции в заказ нажмите "Добавить позицию". 
+Для удаления позиции из заказа оставьте поле "OEM #" пустым. Заказы с пустым полем "OEM #" не учитываются при сохранении.
+Ошибки заполенения формы будут показаны здесь же.
+</p>
+</div>
 <h3 class="date">{{ order.created|date:"d.m.Y" }}</h3>
 <form action="" method="post">
 
