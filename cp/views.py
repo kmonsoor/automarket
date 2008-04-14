@@ -24,7 +24,7 @@ def index(request):
               {'name':'quantity_backorder', 'verbose':u'quantity_backorder', 'type':u'char'},
               {'name':'quantity_ship', 'verbose':u'quantity_ship', 'type':u'char'},
               {'name':'brand__name', 'verbose':u'brand', 'type':u'char'},
-              {'name':'created', 'verbose':u'created', 'type':u'char'},
+              #{'name':'created', 'verbose':u'created', 'type':u'char'},
               {'name':'year', 'verbose':u'Год выпуска', 'type':u'char'},
               {'name':'status','verbose':u'Статус', 'type':u'select', 'choices':ORDER_ITEM_STATUSES}
               )
@@ -85,7 +85,7 @@ def index(request):
 
 @render_to('cp/groups.html')
 def groups(request):
-    items = OrderedItem.objects.all().order_by('brand')
+    items = OrderedItem.objects.filter(status='order').order_by('brand')
     brands = []
     for i in items:
         if not i.brand.id in brands:
