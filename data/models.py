@@ -61,7 +61,7 @@ class Brand(models.Model):
             return self
 
 
-CAR_SIDES = (('R','R'),('L','L'),)
+CAR_SIDES = ((None,''),('R','R'),('L','L'),)
 
 ORDER_ITEM_STATUSES = (
                        ('order',u'Новый заказ'),
@@ -111,6 +111,7 @@ class OrderedItem(models.Model):
     def save(self):
         self.quantity_backorder = int(self.quantity) - int(self.quantity_ship)
         self.brand = self.brand.unify()
+
         super(OrderedItem, self).save()
     
     def status_verbose(self):

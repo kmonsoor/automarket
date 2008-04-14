@@ -72,7 +72,11 @@ def order(request):
                 item = OrderedItem()
 
                 for key, value in form.clean_data.items() :
-                    item.__dict__[key] = value
+                    if not key in ('brand','side',):
+                        item.__dict__[key] = value
+                print form.clean_data['side']
+                if form.clean_data['side'] != 'None' and form.clean_data['side'] is not None :
+                    item.side = form.clean_data['side']
                 
                 item.brand = Brand.objects.get(name=form.clean_data['brand'])
                 

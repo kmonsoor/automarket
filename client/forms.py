@@ -6,7 +6,7 @@ from data.models import *
 
 from lib.widgets import JQueryAutoComplete
 from lib.dynamicforms import Form
-CH = ((None,''),)+CAR_SIDES
+CH = CAR_SIDES
 
 data = [x.name for x in Brand.objects.all()]
 
