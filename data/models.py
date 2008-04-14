@@ -64,14 +64,14 @@ class Brand(models.Model):
 CAR_SIDES = (('R','R'),('L','L'),)
 
 ORDER_ITEM_STATUSES = (
-                       ('order','Новый заказ'),
-                       ('in_processing','В обработке'),
-                       ('superseded','Замена'),
-                       ('out_of_stock','Нет на складе'),
-                       ('back_order','Остаток'),
-                       ('wrong_number', 'Неверный номер'),
-                       ('not_produce','Не производится'),
-                       ('on_stock','На складе'),
+                       ('order',u'Новый заказ'),
+                       ('in_processing',u'В обработке'),
+                       ('superseded',u'Замена'),
+                       ('out_of_stock',u'Нет на складе'),
+                       ('back_order',u'Остаток'),
+                       ('wrong_number', u'Неверный номер'),
+                       ('not_produce',u'Не производится'),
+                       ('on_stock',u'На складе'),
 )
     
 class OrderedItem(models.Model):

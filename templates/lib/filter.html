@@ -1,0 +1,9 @@
+<form method="post">
+<input type="hidden" name="filter" value="1">
+<table>
+{% for field in form %}
+{{ field }}
+{% endfor %}
+</table>
+<input type="submit" value="Фильтр"><input name="clear_filter" type="submit" value="Очистить">
+</form>

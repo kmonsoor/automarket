@@ -21,6 +21,15 @@
 	border: solid 1px #eaeaea;
 }
 
+.admin_table A {
+	color: white;
+}
+
+.admin_table TD.editable{
+	background: #DCDCDC;
+	cursor: pointer;
+}
+
 
 .admin_table2 {
 	border-collapse: collapse;
@@ -30,7 +39,7 @@
 }
 .admin_table2 TH, TD {
 	padding: 5px;
-	vertical-align: middle;
+	/* vertical-align: middle; */
 }
 .admin_table2 TH {
 	border: solid 1px #eaeaea;
