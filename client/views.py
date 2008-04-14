@@ -26,7 +26,7 @@ def index(request):
                 ('Сторона', None),
                 ('Производитель', 'brand'),
                 ('OEM #', 'part_number'),
-                ('Замена', 'superseded'),
+                ('Замена', 'part_number_superseded'),
                 ('Цена', 'price'),
                 ('QTY order', 'quantity'),
                 ('QTY backorder', 'quantity_backorder'),

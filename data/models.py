@@ -80,8 +80,8 @@ class OrderedItem(models.Model):
     # car details
     car_maker = models.CharField(maxlength=255, null=True, blank=True)
     car_model = models.CharField(maxlength=255, null=True, blank=True)
-    year = models.IntegerField(maxlength=4, null=True, blank=True)
-    engine_volume = models.FloatField(max_digits=2, decimal_places=1, null=True, blank=True)
+    year = models.CharField(maxlength=4, null=True, blank=True)
+    engine_volume = models.CharField(maxlength=10, null=True, blank=True)
     side = models.CharField(maxlength=1, choices=CAR_SIDES, blank=True, null=True)
     # item details
     part_number = models.CharField(maxlength=255)
