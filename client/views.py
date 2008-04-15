@@ -1,5 +1,6 @@
 ﻿# -*- coding=UTF-8 -*-
 from lib.decorators import render_to
+from django.db.models import Q
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from datetime import datetime
@@ -28,12 +29,12 @@ def index(request):
                 ('OEM #', 'part_number'),
                 ('Замена', 'part_number_superseded'),
                 ('Цена', 'price'),
-                ('QTY order', 'quantity'),
-                ('QTY backorder', 'quantity_backorder'),
-                ('QTY ship', 'quantity_ship'),
+                ('QTY<br>ORD', 'quantity'),
+                ('QTY<br>BO', 'quantity_backorder'),
+                ('QTY<br>SH', 'quantity_ship'),
                 ('Статус', 'status'),
                 )
-    sort_headers = SortHeaders(request, LIST_HEADERS)
+    sort_headers = SortHeaders(request, LIST_HEADERS, default_order_field='created', default_order_type='desc')
     response['headers'] = list(sort_headers.headers())
     field = LIST_HEADERS[int(request.GET.get('o',0))][1]
     direction = request.GET.get('ot','desc')
@@ -45,7 +46,7 @@ def index(request):
     # Filter
     q = request.GET.get('q','').strip()
     if len(q) > 0 :
-        qs = qs.filter(part_number__icontains=q)
+        qs = qs.filter(Q(part_number__icontains=q) | Q(brand__name__icontains=q))
     
     paginator = SimplePaginator(qs, 25, '?page=%s')
     paginator.set_page(current_page)

@@ -14,9 +14,10 @@
 <div class="module filtered" id="changelist">
 <div id="toolbar"><form id="changelist-search" action="" method="get">
 <div><!-- DIV needed for valid HTML -->
-<label for="searchbar">&nbsp;Поиск по OEM #</label>
+<label for="searchbar">&nbsp;</label>
 <input type="text" size="40" name="q" value="" id="searchbar" />
 <input type="submit" value="Вперёд" />
+<p class="help">&nbsp;&nbsp;Поиск по OEM #, Производителю запчасти</p>
 
 
 </div>
@@ -24,15 +25,21 @@
 </div>
 <script type="text/javascript">document.getElementById("searchbar").focus();</script>
 <p>&nbsp;</p>
-<table width="100%">
+<table width="98%">
 	<thead>
+	<th>PO #</th>
     {% table_header_sort headers %}
     </thead>
 	<tbody>
 	{% for i in orders %}
 	<tr class="{% cycle 'row1','row2' %}">
-	<td>{{ i.created|date:"d.m.Y" }}</td>
-	<td>{{ i.car_maker }} {{ i.car_model }} {{ i.year }} ({{ i.engine_volume }})</td>
+	<td>{{ i.user }}</td>
+	<td>{{ i.created|date:"m/d/Y" }}</td>
+	<td>
+		{{ i.year }} <br />
+		{{ i.car_maker }}<br />
+		{{ i.car_model }}<br />
+		{{ i.engine_volume }}</td>
 	<td>{{ i.description }}</td>
 	<td>{% if i.side %}{{ i.side }}{% else %}-{% endif %}</td>
 	<td>{{ i.brand.name }}</td>
