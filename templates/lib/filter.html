@@ -1,9 +1,12 @@
 <form method="post">
 <input type="hidden" name="filter" value="1">
-<table>
 {% for field in form %}
+<div style="width: 150px; float: left;">
 {{ field }}
+</div>
 {% endfor %}
-</table>
-<input type="submit" value="Фильтр"><input name="clear_filter" type="submit" value="Очистить">
+<div style="clear: both">&nbsp;</div>
+<div>
+<input type="submit" value="Фильтр"> <input name="clear_filter" type="submit" value="Очистить">
+</div>
 </form>

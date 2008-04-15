@@ -59,7 +59,7 @@ class Filter(object):
     
     def get_filter_char(self, data, item, value):
         if value:
-            data["%s__contains" % item['name']] = value
+            data["%s__icontains" % item['name']] = value
         return data
     
     def get_filter_select(self, data, item, value):

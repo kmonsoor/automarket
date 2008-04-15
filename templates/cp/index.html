@@ -118,10 +118,11 @@ function editStatus(id, value) {
 {% endblock %}
 
 {% block content %}
-<table cellpadding=0 cellspacing=0 border=1>
-<tr valign="top">
-<td valign="top">
 <div style="font-size: 16px; margin: 0 0 10px 0"><b><a href="/cp/">В виде таблицы</a></b> | <a href="/cp/groups/">По группам</a></div>
+<div style="padding: 5px; border: solid 1px #0190BF; margin: 0 0 10px 0; background: #F5F5F5">
+{{ filter.render }}
+<div style="clear: both">&nbsp;</div>
+</div>
 {% if items %}
 <table class="admin_table">
 <tr>
@@ -131,24 +132,20 @@ function editStatus(id, value) {
 <tr>
 <td>{{ i.user.username|default:"&nbsp;" }}</td>
 <td>{{ i.created|date }}</td>
-<td>{{ i.car_maker|default:"&nbsp;" }}</td>
-<td>{{ i.car_model|default:"&nbsp;" }}</td>
-<td>{{ i.year|default:"&nbsp;" }}</td>
-<td>{{ i.engine_volume|default:"&nbsp;" }}</td>
 <td>{{ i.side|default:"&nbsp;" }}</td>
 <td>{{ i.brand|default:"&nbsp;" }}</td>
 <td id="number_{{ i.id }}"{% ifequal i.status "superseded" %} class="cross_out"{% endifequal %}>{{ i.part_number|default:"&nbsp;" }}</td>
-<td class="editable" onclick="editSuperseded({{ i.id }})"><div id="part_number_superseded_{{ i.id }}"  >{{ i.part_number_superseded }}</div>
+<td class="editable" onclick="editSuperseded({{ i.id }})"><div id="part_number_superseded_{{ i.id }}"  >{{ i.part_number_superseded|default:"" }}</div>
 <span id="part_number_superseded_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
 </td>
 <td class="editable" onclick="editPrice({{ i.id }})"><div id="price_{{ i.id }}">{{ i.price|default:"&nbsp;" }}</div>
 <span id="price_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
 </td>
-<td><div id="quantity_{{ i.id }}">{{ i.quantity|default:"&nbsp;" }}</div>
+<td><div id="quantity_{{ i.id }}">{{ i.quantity|default:"" }}</div>
 </td>
-<td><div id="quantity_backorder_{{ i.id }}">{{ i.quantity_backorder }}</div>
+<td><div id="quantity_backorder_{{ i.id }}">{{ i.quantity_backorder|default:"" }}</div>
 </td>
-<td class="editable" onclick="editQuantityShip({{ i.id }})"><div id="quantity_ship_{{ i.id }}">{{ i.quantity_ship }}</div>
+<td class="editable" onclick="editQuantityShip({{ i.id }})"><div id="quantity_ship_{{ i.id }}">{{ i.quantity_ship|default:"" }}</div>
 <span id="quantity_ship_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
 </td>
 <td class="editable">
@@ -165,13 +162,5 @@ function editStatus(id, value) {
 {% else %}
 Нет ни одной записи
 {% endif %}
-</td>
-<td>
-<div style="border: solid 1px; padding: 20px">
-{{ filter.render }}
-</div>
-</td>
-</tr>
-</table>
 {% include "paginator.html" %}
 {% endblock %}
