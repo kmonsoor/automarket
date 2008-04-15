@@ -32,7 +32,7 @@
     </thead>
 	<tbody>
 	{% for i in orders %}
-	<tr class="{% cycle 'row1','row2' %}">
+	<tr class="{% cycle row1,row2 %}">
 	<td>{{ i.user }}</td>
 	<td>{{ i.created|date:"m/d/Y" }}</td>
 	<td>

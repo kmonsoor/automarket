@@ -65,13 +65,13 @@ CAR_SIDES = ((None,''),('R','R'),('L','L'),)
 
 ORDER_ITEM_STATUSES = (
                        ('order',u'Новый заказ'),
-                       ('in_processing',u'В обработке'),
+                       ('in_processing',u'В работе'),
                        ('superseded',u'Замена'),
                        ('out_of_stock',u'Нет на складе'),
                        ('back_order',u'Остаток'),
                        ('wrong_number', u'Неверный номер'),
                        ('not_produce',u'Не производится'),
-                       ('on_stock',u'На складе'),
+                       ('on_stock',u'Получено'),
 )
     
 class OrderedItem(models.Model):
