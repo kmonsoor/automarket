@@ -33,6 +33,7 @@ def index(request):
     LIST_HEADERS = (
                     ('PO', 'auth_user.username'),
                     ('Дата', 'created'),
+                    ('Описание', None),
                     ('Side', None),
                     ('Brand', 'brand'),
                     ('Part #', 'part_number'),
@@ -42,7 +43,6 @@ def index(request):
                     ('QTY BO', 'quantity_backorder'),
                     ('QTY SH', 'quantity_ship'),
                     ('Status', 'status'),
-                    ('Описание', None),
                     )
     sort_headers = SortHeaders(request, LIST_HEADERS)
     order_field = request.GET.get('o', None)
