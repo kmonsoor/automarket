@@ -86,7 +86,6 @@ def groups(request):
     for i in items:
         if not i.brand.id in brands:
             brands.append(i.brand.id)
-    print brands
     return {'brands':brands}
 
 @ajax_request

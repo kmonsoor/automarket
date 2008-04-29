@@ -1,34 +1,17 @@
 {% if items %}
 <table class="admin_table">
-<tr>
-<th>Order</th>
-<th>Side</th>
-<th>Brand</th>
-<th>Part #</th>
-<th>Superseded</th>
-<th>Price</th>
-<th>Quantity</th>
-<th>Status</th>
-</tr>
+<tr><th colspan="2">{{ brand.name }}</th></tr>
 {% for i in items %}
+{% ifchanged %}
+<tr><td colspan="2" style="background: #dbdbdb"><b>{{ i.user.username }}</b></td></tr>
+{% endifchanged %}
 <tr>
-<td>{{ i.order.po }}</td>
-<td>{{ i.side|default:"&nbsp;" }}</td>
-<td>{{ i.brand|default:"&nbsp;" }}</td>
-<td>{{ i.part_number|default:"&nbsp;" }}</td>
-<td><div id="part_number_superseded_{{ i.id }}" style="cursor: pointer" onclick="editSuperseded({{ i.id }})">{{ i.part_number_superseded|default:"&nbsp;" }}</div>
-<span id="part_number_superseded_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
-</td>
-<td><div id="price_{{ i.id }}" style="cursor: pointer" onclick="editPrice({{ i.id }})">{{ i.price|default:"&nbsp;" }}</div>
-<span id="price_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
-</td>
-<td><div id="quantity_{{ i.id }}" style="cursor: pointer" onclick="editQuantity({{ i.id }})">{{ i.quantity|default:"&nbsp;" }}</div>
-<span id="quantity_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
-</td>
-<td><div id="status_{{ i.id }}" style="cursor: pointer" onclick="editStatus({{ i.id }})">{{ i.status|default:"&nbsp;" }}</div>
-<span id="status_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="close()">Cancel</button></span>
-</td>
+<td>{{ i.part_number }}</td>
+<td>{{ i.quantity }}</td>
 </tr>
 {% endfor %}
+<tr>
+<td colspan="2" align="right" style="background: #ffffff"><b><a href="/cp/export/{{ brand.id }}/" style="color: #0190bf">Экспорт</a></b></td>
+</tr>
 </table>
 {% endif %}
