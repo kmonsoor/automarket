@@ -131,7 +131,8 @@ function editStatus(id, value) {
 {% for i in items %}
 <tr>
 <td>{{ i.user.username|default:"&nbsp;" }}</td>
-<td>{{ i.created|date }}</td>
+<td>{{ i.created|date:"m/d/Y" }}</td>
+<td>{{ i.description|default:"&nbsp;" }}</td>
 <td>{{ i.side|default:"&nbsp;" }}</td>
 <td>{{ i.brand|default:"&nbsp;" }}</td>
 <td id="number_{{ i.id }}"{% ifequal i.status "superseded" %} class="cross_out"{% endifequal %}>{{ i.part_number|default:"&nbsp;" }}</td>
@@ -155,7 +156,6 @@ function editStatus(id, value) {
 {% endfor %}
 </select>
 </td>
-<td>{{ i.description|default:"&nbsp;" }}</td>
 </tr>
 {% endfor %}
 </table>
