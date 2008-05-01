@@ -10,6 +10,9 @@ CH = CAR_SIDES
 
 data = [x.name for x in Brand.objects.all()]
 
+def pos(user):
+    return ((x.id, x.po) for x in Po.objects.filter(user=user))
+
 class OrderItemForm(Form):
     
     TEMPLATE = 'client/ordereditem_form.html'
@@ -32,3 +35,13 @@ class OrderItemForm(Form):
             if self.clean_data['brand'] not in data :
                 raise forms.ValidationError("Такого производителя нет!")
         return self.clean_data['brand']
+
+class PoForm(Form):
+    
+    def __init__(self, *ar, **kw):
+        if 'user' in kw :
+            self.user = kw.pop('user')
+        self.base_fields['po'].widget.choices = pos(self.user)
+        super(PoForm, self).__init__(*ar, **kw)
+    
+    po = forms.ChoiceField()

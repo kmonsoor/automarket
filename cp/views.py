@@ -109,25 +109,26 @@ def position_edit(request, id):
     
     return response
 
-#===============================================================================
-# @ajax_request
-# def position_edit(request, id):
-#    item = get_object_or_404(OrderedItem, id=id)
-#    response = {}
-#    try:
-#        item.__dict__[request.GET['type']]
-#    except:
-#        response['error'] = 'Attribute %s does not exist' % request.GET['type']
-#        return response 
-#    
-#    old_value = str(getattr(item, request.GET['type']))
-#    setattr(item, request.GET['type'], request.GET['value'])
-#    try:
-#        item.save()
-#        response['value'] = str(getattr(item, request.GET['type']))
-#    except:
-#        response['value'] = old_value
-#        response['error'] = 'Wrong value for attribute %s' % request.GET['type']
-#    
-#    return response
-#===============================================================================
+#@render_to_excel
+def export(request, group_id):
+    brand = Brand.objects.get(id=group_id)
+    items = OrderedItem.objects.filter(brand__id=group_id, status='order').order_by("po")
+    
+    import pyExcelerator as xl
+    import StringIO
+    import datetime
+    # Open new workbook
+    book = xl.Workbook()
+    writer = StringIO.StringIO()
+    # Add a worksheet
+    sheet = book.add_sheet(str(datetime.datetime.now()))
+    # write headers
+    header_font = xl.Font() #make a font object
+    header_font.bold = True
+    header_font.italic = True
+    # font needs to be style actually
+    sheet.write(0,0,"Luke Auto Parts International, Inc")
+    book.save(writer)
+    content = writer.getvalue()
+    print content
+    

@@ -8,7 +8,7 @@ register = template.Library()
 @register.inclusion_tag('cp/items_by_brand.html')
 def ordereditems_by_brand(brand_id):
     brand = Brand.objects.get(id=brand_id)
-    items = OrderedItem.objects.filter(brand__id=brand_id, status='order').order_by("user")
+    items = OrderedItem.objects.filter(brand__id=brand_id, status='order').order_by("po")
 
     return {
             'brand':brand,

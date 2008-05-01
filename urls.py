@@ -15,6 +15,7 @@ urlpatterns += patterns('cp.views',
     (r'^cp/$', 'index'),
     (r'^cp/groups/$', 'groups'),
     (r'^cp/position/edit/(?P<id>\d+)/$', 'position_edit'),
+    (r'^cp/export/(?P<group_id>\d+)/$', 'export'),
 )
 
 

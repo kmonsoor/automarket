@@ -6,13 +6,14 @@ from django.http import HttpResponseRedirect
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 
+from data.models import Po
 from data.models import OrderedItem
 from data.models import Brand
 
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 
-from client.forms import OrderItemForm
+from client.forms import OrderItemForm, PoForm
 
 @login_required
 @render_to('client/index.html')
@@ -42,7 +43,8 @@ def index(request):
     field_order = '%s%s' % (directions[direction], field)
 
     current_page = request.GET.get('page',1)
-    qs = OrderedItem.objects.filter(user=request.user).order_by(field_order)
+    po_list = [x.id for x in Po.objects.filter(user=request.user)]
+    qs = OrderedItem.objects.filter(po__in=po_list).order_by(field_order)
     # Filter
     q = request.GET.get('q','').strip()
     if len(q) > 0 :
@@ -65,36 +67,45 @@ def order(request):
     response['current_action'] = 'order'
     
     if request.method == 'POST' :
+        po_form = PoForm(request.POST.copy(), user=request.user)
+        po_id = int(po_form.data['po.#'][0])
+       
+        dict = request.POST.copy()
+        del(dict['po.#'])
+        request.POST = dict
         item_forms = OrderItemForm.get_forms(request)
         item_data = [item_form.render_js('from_template') for item_form in item_forms]
+        
         if item_forms.are_valid():
             for form in item_forms:
                 # Do something with your data here
                 item = OrderedItem()
 
                 for key, value in form.clean_data.items() :
-                    if not key in ('brand','side',):
+                    if not key in ('brand','side','po'):
                         item.__dict__[key] = value
-                print form.clean_data['side']
+
                 if form.clean_data['side'] != 'None' and form.clean_data['side'] is not None :
                     item.side = form.clean_data['side']
                 
                 item.brand = Brand.objects.get(name=form.clean_data['brand'])
                 
-                item.user = request.user
+                item.po = Po.objects.get(pk=po_id)
                 item.quantity_backorder = 0
                 item.quantity_ship = 0
                 item.status = 'order'
                 item.confirmed = True
+                
+                print item.__dict__
                 
                 item.save()
                 
             return HttpResponseRedirect('/client/')
     else :
         item_data = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
-        #item_data = []
+        po_form = PoForm(user=request.user)
     response['page_template'] = OrderItemForm().render_js('from_template')
-    
+    response['po_form'] = po_form
     response['page_data'] = item_data
     response['message'] = message
  

@@ -130,7 +130,7 @@ function editStatus(id, value) {
 </tr>
 {% for i in items %}
 <tr>
-<td>{{ i.user.username|default:"&nbsp;" }}</td>
+<td>{{ i.po|default:"&nbsp;" }}</td>
 <td>{{ i.created|date:"m/d/Y" }}</td>
 <td>{{ i.description|default:"&nbsp;" }}</td>
 <td>{{ i.side|default:"&nbsp;" }}</td>

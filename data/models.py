@@ -5,10 +5,16 @@ from django.contrib.auth.models import User
 
 import datetime, time
 
-class UserProfile(models.Model):
-    user = models.ForeignKey(User, unique=True)
+class Po(models.Model):
+    user = models.ForeignKey(User)
     po = models.CharField(maxlength=255)
-
+    class Meta:
+        verbose_name = 'PO'
+        verbose_name_plural = 'PO'
+    class Admin:
+        pass
+    def __str__(self):
+        return '%s: %s' % (self.user.username, self.po)
 # part maker
 class Brand(models.Model):
     name = models.CharField(maxlength=255)
@@ -76,7 +82,7 @@ ORDER_ITEM_STATUSES = (
     
 class OrderedItem(models.Model):
 
-    user = models.ForeignKey(User)
+    po = models.ForeignKey(Po)
     # car details
     car_maker = models.CharField(maxlength=255, null=True, blank=True)
     car_model = models.CharField(maxlength=255, null=True, blank=True)
@@ -99,9 +105,11 @@ class OrderedItem(models.Model):
     comments = models.TextField(blank=True, null=True)
     
     
+    def user(self):
+        return self.po.user
     
     class Admin:
-        list_display =('__str__','created','user','part_number','part_number_superseded','quantity')
+        list_display =('__str__','created', 'user', 'po','part_number','part_number_superseded','quantity')
         list_filter = ('created',)
         search_fields = ('part_number',)
     
@@ -119,11 +127,3 @@ class OrderedItem(models.Model):
     
     class Meta:
         pass
-    
-def generatePo(user_obj):
-    return "%s-%d" % (user_obj.id, int(time.time()))     
-
-
-class UserProfile(models.Model):
-    user = models.ForeignKey(User, unique=True)
-    po = models.CharField(maxlength=255)
