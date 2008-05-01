@@ -109,26 +109,85 @@ def position_edit(request, id):
     
     return response
 
-#@render_to_excel
+from lib.decorators import render_as
+
+
+class groupby(dict):
+    def __init__(self, seq, key=lambda x:x):
+        for value in seq:
+            k = key(value)
+            self.setdefault(k, []).append(value)
+    def __iter__(self):
+        keys = self.keys()
+        keys.sort()
+        for k in keys:
+            yield k, self[k]
+
 def export(request, group_id):
     brand = Brand.objects.get(id=group_id)
     items = OrderedItem.objects.filter(brand__id=group_id, status='order').order_by("po")
-    
+
+    from django.conf import settings
+    import os
+    filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
     import pyExcelerator as xl
-    import StringIO
     import datetime
+
+    from django.http import HttpResponse 
     # Open new workbook
     book = xl.Workbook()
-    writer = StringIO.StringIO()
-    # Add a worksheet
-    sheet = book.add_sheet(str(datetime.datetime.now()))
-    # write headers
-    header_font = xl.Font() #make a font object
-    header_font.bold = True
-    header_font.italic = True
-    # font needs to be style actually
-    sheet.write(0,0,"Luke Auto Parts International, Inc")
-    book.save(writer)
-    content = writer.getvalue()
-    print content
+
+    # styles
+    header_style = xl.XFStyle()
+    header_style.font = xl.Font()
+    header_style.font.bold = True
+    header_style.font.italic = True
+    header_style.font.height = 0x0190
+    
+    sub_header_style = xl.XFStyle()
+    sub_header_style.font = xl.Font()
+    sub_header_style.bold = True
+    
+    big_style = xl.XFStyle()
+    big_style.font = xl.Font()
+    big_style.font.height = 0x0190
+    big_style.font.bold = True 
+  
+    # Create sheet
+    sheet = book.add_sheet(brand.name)
+    #sheet.cols[0].width = 0x1724
+    
+    sheet.write_merge(0,0,0,6, "Luke Auto Parts International, Inc",header_style)
+
+    sheet.write(1,0,"102 53 Street",sub_header_style)
+    sheet.write(2,0,"BROOKLYN, NY 11232",sub_header_style)
+    sheet.write(3,0,"FAX: (718) 247-5962, TEL.: (718)701-3151",sub_header_style)
+    
+    sheet.write(5,0,"Date %s" % datetime.datetime.now().strftime('%m/%d/%Y'), big_style)
+    
+    print sheet.cols
+    
+    it = {}
+    for i in items:
+        if not it.has_key(i.po.po) :
+            it[i.po.po] = []
+        it[i.po.po].append(i)
+    num = 5
+    for po_number, data in it.items() :
+        num += 2
+        sheet.write(num,0,"PO Alex %s" % po_number, big_style)
+        for d in data:
+           num += 1
+           sheet.write_merge(num,num,0,2, d.part_number)
+           sheet.write(num,3,d.quantity)
+    # Save book
+    book.save(filename)
+    os.chmod(filename, 0777)
+    content = open(filename,'rb').read()
+    response = HttpResponse(content, mimetype='application/vnd.ms-excel')
+    name = '%s-%s.xls' % (brand.name,datetime.datetime.now().strftime('%m-%d-%Y-%H-%M'))
+    response['Content-Disposition'] = 'inline; filename=%s' % name
+    os.remove(filename)
+    return response
+     
     

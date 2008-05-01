@@ -1,6 +1,7 @@
  #-*- coding=UTF-8 -*-
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.http import HttpResponse
 
 from lib.http import JsonResponse, render_response
 
@@ -31,3 +32,12 @@ def ajax_request(func):
         else:
             return response
     return wrapper
+
+def render_as(mimetype='text/html'):
+    def renderer(func):
+        def wrapper(request, *args, **kw):
+            output = func(request, *args, **kw)
+            return HttpResponse(content=output, mimetype=mimetype)
+        return wrapper
+    return renderer
+            
