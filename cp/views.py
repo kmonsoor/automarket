@@ -165,8 +165,6 @@ def export(request, group_id):
     
     sheet.write(5,0,"Date %s" % datetime.datetime.now().strftime('%m/%d/%Y'), big_style)
     
-    print sheet.cols
-    
     it = {}
     for i in items:
         if not it.has_key(i.po.po) :
@@ -179,7 +177,7 @@ def export(request, group_id):
         for d in data:
            num += 1
            sheet.write_merge(num,num,0,2, d.part_number)
-           sheet.write(num,3,d.quantity)
+           sheet.write(num,3,int(d.quantity))
     # Save book
     book.save(filename)
     os.chmod(filename, 0777)
