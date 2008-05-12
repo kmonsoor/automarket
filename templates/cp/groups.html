@@ -4,6 +4,10 @@
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">
+<script>
+var ajax_loader_img_path = '{{ MEDIA_URL }}img/icons/ajax-loader.gif';
+</script>
+<script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
 {% endblock %}
 
 {% block content %}

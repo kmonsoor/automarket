@@ -8,6 +8,19 @@ from lib.filter import Filter
 
 from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES, CAR_SIDES
 
+def get_status_options():
+    status_options_str = '{';
+    status_options = []
+    k = 0
+    for i in ORDER_ITEM_STATUSES:
+        k += 1
+        status_options_str += '"%s":"%s"' % (i[0], i[1])
+        status_options.append({'value':i[0],'option':i[1]})
+        if k < len(ORDER_ITEM_STATUSES):
+            status_options_str += ','
+    status_options_str += '}'
+    return (status_options_str, status_options)
+
 #@login_required
 @render_to('cp/index.html')
 def index(request):
@@ -65,18 +78,8 @@ def index(request):
     paginator.set_page(current_page)
     context['items'] = paginator.get_page();
     context['paginator'] = paginator
-    status_options_str = '{';
-    status_options = []
-    k = 0
-    for i in ORDER_ITEM_STATUSES:
-        k += 1
-        status_options_str += '"%s":"%s"' % (i[0], i[1])
-        status_options.append({'value':i[0],'option':i[1]})
-        if k < len(ORDER_ITEM_STATUSES):
-            status_options_str += ','
-    status_options_str += '}'
-    context['status_options_str'] = status_options_str
-    context['status_options'] = status_options
+    
+    context['status_options_str'], context['status_options'] = get_status_options()
     return context
 
 @render_to('cp/groups.html')
@@ -86,7 +89,9 @@ def groups(request):
     for i in items:
         if not i.brand.id in brands:
             brands.append(i.brand.id)
-    return {'brands':brands}
+    return {
+            'brands':brands,
+            }
 
 @ajax_request
 def position_edit(request, id):
