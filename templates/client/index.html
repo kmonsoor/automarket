@@ -33,7 +33,7 @@
 	<tbody>
 	{% for i in orders %}
 	<tr class="{% cycle row1,row2 %}">
-	<td>{{ i.po.po }}</td>
+	<td>{{ i.get_numbered_po }}</td>
 	<td>{{ i.created|date:"m/d/Y" }}</td>
 	<td>
 		{{ i.year }} <br />

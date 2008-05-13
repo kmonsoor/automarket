@@ -5,6 +5,7 @@ register = template.Library()
 menu_items = [
     {'action':'index','name':"Мои заказы"},
     {'action':'order','name':"Новый заказ"},
+    {'action':'import','name':"Загрузить XLS"},
 ]
 
 @register.inclusion_tag('client/tags/menu.html')

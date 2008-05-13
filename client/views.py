@@ -18,6 +18,7 @@ from client.forms import OrderItemForm, PoForm
 @login_required
 @render_to('client/index.html')
 def index(request):
+    
     response = {}
     response['current_action'] = 'index'
     
@@ -69,7 +70,7 @@ def order(request):
     if request.method == 'POST' :
         po_form = PoForm(request.POST.copy(), user=request.user)
         po_id = int(po_form.data['po.#'][0])
-       
+        po_number = OrderedItem.objects.get_next_ponumber(po_id)
         dict = request.POST.copy()
         del(dict['po.#'])
         request.POST = dict
@@ -91,12 +92,12 @@ def order(request):
                 item.brand = Brand.objects.get(name=form.clean_data['brand'])
                 
                 item.po = Po.objects.get(pk=po_id)
+                item.ponumber = po_number
+                
                 item.quantity_backorder = 0
                 item.quantity_ship = 0
                 item.status = 'order'
                 item.confirmed = True
-                
-                print item.__dict__
                 
                 item.save()
                 
