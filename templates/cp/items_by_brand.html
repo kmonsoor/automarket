@@ -3,13 +3,13 @@
 <tr><th colspan="3">{{ brand.name }}</th></tr>
 {% for i in items %}
 {% ifchanged %}
-<tr><td colspan="3" style="background: #dbdbdb"><b>{{ i.po }}</b></td></tr>
+<tr><td colspan="3" style="background: #dbdbdb"><b>{{ i.get_numbered_po }}</b></td></tr>
 {% endifchanged %}
-<tr>
+<tr id="row_{{ i.id }}">
 <td>{{ i.part_number }}</td>
 <td>{{ i.quantity }}</td>
 <td>
-<select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
+<select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value); hideRow({{ i.id }})">
 {% for opt in status_options %}
 <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option }}</option>
 {% endfor %}

@@ -6,8 +6,16 @@
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">
 <script>
 var ajax_loader_img_path = '{{ MEDIA_URL }}img/icons/ajax-loader.gif';
+var caller = 'groups';
 </script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
+<script>
+function hideRow(id) {
+    if (document.getElementById('status_input_' + id).value != 'order') {
+        jQuery('#row_' + id).css('display', 'none');  
+    }
+}
+</script>
 {% endblock %}
 
 {% block content %}

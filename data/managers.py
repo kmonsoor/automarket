@@ -11,7 +11,8 @@ class OrderedItemManager(Manager):
         table = self.model._meta.db_table
         try:
             cursor.execute("""SELECT MAX(`ponumber`) FROM `%s` WHERE `po_id`='%d'""" % (table,po_id))
+            ponumber = cursor.fetchone()[0] or 1
         except :
-            return 1
+            ponumber = 1
         else:
-            return cursor.fetchone()[0] + 1
+            return ponumber + 1

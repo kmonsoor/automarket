@@ -95,18 +95,20 @@ function editQuantityShip(id) {
 }
 
 function editStatus(id, value) {
-    if (value != 'superseded' && jQuery('#part_number_superseded_'+id).html() != '') {
-        alert('Не забудьте про superseded');
-    }
-    if (value == 'superseded' && jQuery('#part_number_superseded_'+id).html() == '') {
-        alert('Не забудьте про superseded');
-    }
-    if (value == 'superseded') {
-        jQuery('#number_' + id).attr('class', 'cross_out');
-    }
-    else {
-        jQuery('#number_' + id).attr('class', 'default');
-    }
+	if (caller == 'index') {
+	    if (value != 'superseded' && jQuery('#part_number_superseded_'+id).html() != '') {
+	        alert('Не забудьте про superseded');
+	    }
+	    if (value == 'superseded' && jQuery('#part_number_superseded_'+id).html() == '') {
+	        alert('Не забудьте про superseded');
+	    }
+	    if (value == 'superseded') {
+	        jQuery('#number_' + id).attr('class', 'cross_out');
+	    }
+	    else {
+	        jQuery('#number_' + id).attr('class', 'default');
+	    }
+	}
     jQuery('#status_input_' + id).attr('disabled',1)
     jQuery.ajax(
         {
