@@ -7,9 +7,11 @@ status_options_str, status_options = gso()
 register = template.Library()
 
 @register.inclusion_tag('cp/items_by_brand.html')
-def ordereditems_by_brand(brand_id):
+def ordereditems_by_brand(brand_id, user=None):
     brand = Brand.objects.get(id=brand_id)
     items = OrderedItem.objects.filter(brand__id=brand_id, status='order').order_by("po", "ponumber")
+    if user:
+        items = items.filter(po__user=user)
     return {
             'brand':brand,
             'items':items,

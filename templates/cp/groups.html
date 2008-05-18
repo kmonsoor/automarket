@@ -22,7 +22,12 @@ function hideRow(id) {
 <div style="font-size: 16px; margin: 0 0 10px 0"><a href="/cp/">В виде таблицы</a> | <b><a href="/cp/groups/">По группам</a></b></div>
 {% if brands %}
 {% for id in brands %}
+{% ifequal mode "trusted_user" %}
+{% ordereditems_by_brand id user %}
+{% else %}
 {% ordereditems_by_brand id %}
+{% endifequal %}
+
 {% endfor %}
 {% endif %}
 {% endblock %}

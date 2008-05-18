@@ -5,14 +5,19 @@ from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.filter import Filter
+from lib.exceptions import AccessDenied
 
-from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES, CAR_SIDES
+from data.models import OrderedItem, Brand, TrustedUsers, Managers, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
 
-def get_status_options():
+def get_status_options(mode='manager'):
+    if mode == 'manager':
+        statuses_dict = ORDER_ITEM_STATUSES
+    else:
+        statuses_dict = TRUSTED_USER_ORDER_ITEM_STATUSES
     status_options_str = '{';
     status_options = []
     k = 0
-    for i in ORDER_ITEM_STATUSES:
+    for i in statuses_dict:
         k += 1
         status_options_str += '"%s":"%s"' % (i[0], i[1])
         status_options.append({'value':i[0],'option':i[1]})
@@ -21,9 +26,23 @@ def get_status_options():
     status_options_str += '}'
     return (status_options_str, status_options)
 
-#@login_required
+def get_access(request):
+    access = False
+    mode = None
+    if TrustedUsers.objects.filter(user=request.user).count() > 0:
+        access = True
+        mode = 'trusted_user'   
+    if Managers.objects.filter(user=request.user).count() > 0:
+        access = True
+        mode = 'manager'
+    return (access, mode)
+
+@login_required
 @render_to('cp/index.html')
 def index(request):
+    access, mode = get_access(request)
+    if not access:
+        raise AccessDenied
     context = {}
     fields = (
               {'name':'status','verbose':u'Статус', 'type':u'select', 'choices':ORDER_ITEM_STATUSES},
@@ -70,8 +89,12 @@ def index(request):
         order_by = order_direction + LIST_HEADERS[int(order_field)][1]
 
     context['headers'] = list(sort_headers.headers())
-    current_page = request.GET.get('page', 1) 
+    current_page = request.GET.get('page', 1)
+    
     qs = OrderedItem.objects.select_related().filter(**filter.get_filters())
+    if mode == 'trusted_user': 
+        qs = qs.filter(po__user = request.user)
+        
     if order_by:
         qs = qs.order_by(order_by)
     paginator = SimplePaginator(qs, 5, '?page=%s')
@@ -79,18 +102,22 @@ def index(request):
     context['items'] = paginator.get_page();
     context['paginator'] = paginator
     
-    context['status_options_str'], context['status_options'] = get_status_options()
+    context['status_options_str'], context['status_options'] = get_status_options(mode)
     return context
 
 @render_to('cp/groups.html')
 def groups(request):
-    items = OrderedItem.objects.filter(status='order').order_by('brand')
+    access, mode = get_access(request)
+    qs = OrderedItem.objects.filter(status='order').order_by('brand')
+    if mode == 'trusted_user':
+        qs = qs.filter(po__user=request.user)
     brands = []
-    for i in items:
+    for i in qs:
         if not i.brand.id in brands:
             brands.append(i.brand.id)
     return {
             'brands':brands,
+            'mode':mode,
             }
 
 @ajax_request
@@ -191,6 +218,11 @@ def export(request, group_id):
     name = '%s-%s.xls' % (brand.name,datetime.datetime.now().strftime('%m-%d-%Y-%H-%M'))
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
+    
+    # Set items' status to 'in_processing'
+    for i in items:
+        i.status = 'in_processing'
+        i.save()
     return response
      
     

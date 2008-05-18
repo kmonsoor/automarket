@@ -85,6 +85,16 @@ ORDER_ITEM_STATUSES = (
                        ('on_stock',u'Получено'),
 )
 
+TRUSTED_USER_ORDER_ITEM_STATUSES = (
+                       ('order',u'Новый заказ'),
+                       ('in_processing',u'В работе'),
+                       ('superseded',u'Замена'),
+                       ('out_of_stock',u'Нет на складе'),
+                       ('back_order',u'Остаток'),
+                       ('wrong_number',u'Неверный номер'),
+                       ('not_produce',u'Не производится'),
+)
+
 from data.managers import OrderedItemManager
 class OrderedItem(models.Model):
 
@@ -155,3 +165,16 @@ class TrustedUsers(models.Model):
     class Meta:
         verbose_name = "пользователя в доверенные"
         verbose_name_plural = "Доверенные пользователи"
+        
+class Managers(models.Model):
+    user = models.ForeignKey(User, unique=True, verbose_name="Пользователь")
+    
+    def __str__(self):
+        return self.user.username
+    
+    class Admin:
+        pass
+    
+    class Meta:
+        verbose_name = "пользователя в менеджеры"
+        verbose_name_plural = "Менеджеры"

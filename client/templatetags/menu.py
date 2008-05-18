@@ -5,6 +5,7 @@ register = template.Library()
 menu_items = [
     {'action':'index','name':"Мои заказы"},
     {'action':'order','name':"Новый заказ"},
+    {'action':'cp','name':"Редактировать заказы"},
     {'action':'import','name':"Загрузить XLS"},
 ]
 
