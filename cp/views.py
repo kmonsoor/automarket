@@ -179,6 +179,7 @@ def export(request, group_id):
     sub_header_style = xl.XFStyle()
     sub_header_style.font = xl.Font()
     sub_header_style.bold = True
+    sub_header_style.font.height = 0x0190-100
     
     big_style = xl.XFStyle()
     big_style.font = xl.Font()
@@ -191,17 +192,18 @@ def export(request, group_id):
     
     sheet.write_merge(0,0,0,6, "Luke Auto Parts International, Inc",header_style)
 
-    sheet.write(1,0,"102 53 Street",sub_header_style)
-    sheet.write(2,0,"BROOKLYN, NY 11232",sub_header_style)
-    sheet.write(3,0,"FAX: (718) 247-5962, TEL.: (718)701-3151",sub_header_style)
+    sheet.write_merge(1,0,0,6, "102 53 Street",sub_header_style)
+    sheet.write_merge(2,0,0,6, "BROOKLYN, NY 11232",sub_header_style)
+    sheet.write_merge(3,0,0,6, "FAX: (718) 247-5962, TEL.: (718)701-3151",sub_header_style)
     
     sheet.write(5,0,"Date %s" % datetime.datetime.now().strftime('%m/%d/%Y'), big_style)
     
     it = {}
     for i in items:
-        if not it.has_key(i.po.po) :
-            it[i.po.po] = []
-        it[i.po.po].append(i)
+        k = "%s%d" % (i.po.po,i.ponumber)
+        if not it.has_key(k) :
+            it[k] = []
+        it[k].append(i)
     num = 5
     for po_number, data in it.items() :
         num += 2
