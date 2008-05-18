@@ -1,0 +1,23 @@
+{% extends 'client_base.html' %}
+
+{% block page_title %}Импорт заказа из XLS - файла{% endblock %}
+
+{% block page_content %}
+
+<div class="system-message">
+<p>
+
+</p>
+</div>
+
+<form action="" method="post" enctype="multipart/form-data">
+
+<div class="error">{{ message }}</div>
+
+{{ form }}
+
+<div class="submit-row">
+<input type="submit" name="save_order" value="Отправить заказ" />&nbsp;&nbsp;&nbsp;
+</div>
+</form>
+{% endblock %}

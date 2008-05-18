@@ -45,3 +45,13 @@ class PoForm(Form):
         super(PoForm, self).__init__(*ar, **kw)
     
     po = forms.ChoiceField()
+
+class ImportXlsForm(forms.Form):
+    po = forms.ChoiceField()
+    xls_file = forms.Field(widget=forms.FileInput(), required=False, label="Файл")
+    
+    def __init__(self, *ar, **kw):
+        if 'user' in kw :
+            self.user = kw.pop('user')
+        self.base_fields['po'].widget.choices = pos(self.user)
+        super(ImportXlsForm, self).__init__(*ar, **kw)        

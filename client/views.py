@@ -13,7 +13,7 @@ from data.models import Brand
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 
-from client.forms import OrderItemForm, PoForm
+from client.forms import OrderItemForm, PoForm, ImportXlsForm
 
 @login_required
 @render_to('client/index.html')
@@ -152,5 +152,19 @@ def delete_item(request, po, item_id):
         pass
     return HttpResponseRedirect('/client/order/')
     
-
+@login_required
+@render_to('client/import_order.html')
+def import_order(request):
+    response = {}
+    response['current_action'] = 'import_order'
+    if request.method == 'POST':
+        # Get a file
+        form = ImportXlsForm(user=request.user)
+        afile = request.FILES.get('xls_file',None)
+        if afile :
+            print afile['content']
+    else:
+        form = ImportXlsForm(user=request.user)
+    response['form'] = form
+    return response        
             

@@ -25,6 +25,6 @@ urlpatterns += patterns('client.views',
     (r'^client/order/superseded/(?P<action>accept|decline)/(?P<item_id>[\d]+)','superseded'),
     (r'^client/order/$','order',),
     (r'^client/help/brands.html', 'help_brand_list'),
+    (r'^client/import/','import_order'),
     (r'^client/','index'),
-    
 )
