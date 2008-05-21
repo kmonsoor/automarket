@@ -166,3 +166,8 @@ class TrustedUsers(models.Model):
         verbose_name = "пользователя в доверенные"
         verbose_name_plural = "Доверенные пользователи"
         
+# Extend User model
+def is_trusted(self):
+    return self.id in [x.id for x in TrustedUsers.objects.all()]
+
+User.add_to_class('is_trusted', is_trusted)
