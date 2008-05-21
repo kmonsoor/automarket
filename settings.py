@@ -1,6 +1,7 @@
 # Django settings for automarket project.
 
 DEBUG = True
+DEBUG_SQL=True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -71,6 +72,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.doc.XViewMiddleware',
+    #'django.middleware.SQLLogMiddleware.SQLLogMiddleware',
 )
 
 ROOT_URLCONF = 'automarket.urls'

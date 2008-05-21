@@ -10,9 +10,9 @@ var caller = 'groups';
 </script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
 <script>
-function hideRow(id) {
+function hideRow(id, group_id) {
     if (document.getElementById('status_input_' + id).value != 'order') {
-        jQuery('#row_' + id).css('display', 'none');  
+        jQuery('#row_' + id).css('display', 'none'); 
     }
 }
 </script>

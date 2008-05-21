@@ -166,15 +166,3 @@ class TrustedUsers(models.Model):
         verbose_name = "пользователя в доверенные"
         verbose_name_plural = "Доверенные пользователи"
         
-class Managers(models.Model):
-    user = models.ForeignKey(User, unique=True, verbose_name="Пользователь")
-    
-    def __str__(self):
-        return self.user.username
-    
-    class Admin:
-        pass
-    
-    class Meta:
-        verbose_name = "пользователя в менеджеры"
-        verbose_name_plural = "Менеджеры"

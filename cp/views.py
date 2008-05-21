@@ -1,13 +1,14 @@
 # -*- coding=UTF-8 -*-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.filter import Filter
-from lib.exceptions import AccessDenied
+#from lib.exceptions import AccessDenied
 
-from data.models import OrderedItem, Brand, TrustedUsers, Managers, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
+from data.models import OrderedItem, Brand, TrustedUsers, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
 
 def get_status_options(mode='manager'):
     if mode == 'manager':
@@ -32,7 +33,7 @@ def get_access(request):
     if TrustedUsers.objects.filter(user=request.user).count() > 0:
         access = True
         mode = 'trusted_user'   
-    if Managers.objects.filter(user=request.user).count() > 0:
+    if request.user.is_staff == True:
         access = True
         mode = 'manager'
     return (access, mode)
@@ -42,7 +43,7 @@ def get_access(request):
 def index(request):
     access, mode = get_access(request)
     if not access:
-        raise AccessDenied
+        raise Http404
     context = {}
     fields = (
               {'name':'status','verbose':u'Статус', 'type':u'select', 'choices':ORDER_ITEM_STATUSES},
@@ -108,6 +109,8 @@ def index(request):
 @render_to('cp/groups.html')
 def groups(request):
     access, mode = get_access(request)
+    if not access:
+        raise Http404
     qs = OrderedItem.objects.filter(status='order').order_by('brand')
     if mode == 'trusted_user':
         qs = qs.filter(po__user=request.user)
