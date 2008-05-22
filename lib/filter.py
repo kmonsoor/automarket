@@ -6,7 +6,6 @@ from django.newforms import form_for_model
 
 class Filter(object):
     def __init__(self, request, model, fields):
-        #print request.POST
         filter = request.session.get('filter', None)
         if request.POST.has_key('filter'):
             if request.POST.get('clear_filter', None) and filter:
@@ -28,8 +27,6 @@ class Filter(object):
             
         self.model = model
         self.fields = fields
-        
-        #print "con=%s" % self.contents
         
     def render_char(self, item):
         value = self.contents.get(item['name'], '')

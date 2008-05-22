@@ -12,7 +12,6 @@ def start(request):
     message = ''
     if request.method == 'POST' :
         form = UserAuthForm(request.POST.copy())
-        print dir(form)
         if form.is_valid() :
             user = authenticate(username=form.clean_data['username'], password=form.clean_data['password'])
             if user is not None:

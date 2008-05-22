@@ -113,9 +113,7 @@ def order(request):
     return response
 
 def superseded(request, action, item_id):
-    
     next = request.GET.get('next','/client/')
-    
     try:
         item = OrderedItem.objects.get(id=item_id)
     except:
@@ -166,7 +164,7 @@ def import_order(request):
             xls = xlsreader.readexcel(file_contents=afile['content'])
             for sname in xls.book.sheet_names(): 
                 for row in xls.iter_dict(sname): 
-                    print row 
+                    #print row 
     else:
         form = ImportXlsForm(user=request.user)
     response['form'] = form
