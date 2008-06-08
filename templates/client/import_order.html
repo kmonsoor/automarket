@@ -1,5 +1,46 @@
 {% extends 'client_base.html' %}
+{% block extrahead %}
+{{ block.super }}
 
+<script type="text/javascript" src="{{ MEDIA_URL }}js/mootools.js"></script>
+<script type="text/javascript" src="{{ MEDIA_URL }}js/mootools/dynamicforms.js"></script>
+<script type="text/javascript">
+
+var current = null;
+
+function setBrand(value) {
+    document.getElementById('id_brand.'+current).value = value;
+    current = null;
+}
+
+function showList(e)
+{
+    id = e.id;
+    current = id.split('.')[1]
+    showPopUp('/client/help/brands.html',200,600,'brands',1);
+}
+
+
+var PageForm = Form.extend({
+    initialize: function(value) {
+    this.parent({{ page_template }}, value);
+    this.fieldset = new Element('fieldset');
+    this.fieldset.setProperty('class', 'module aligned');
+    this.fieldset.innerHTML = this.html;
+    $('page-forms').adopt(this.fieldset);
+    }
+});
+Window.onDomReady(function() {
+
+    {% for page in page_data %}
+    new PageForm({{ page }});
+    {% endfor %}
+
+});
+
+</script>
+
+{% endblock %}
 {% block page_title %}Импорт заказа из XLS - файла{% endblock %}
 
 {% block page_content %}
@@ -20,4 +61,14 @@
 <input type="submit" name="save_order" value="Отправить заказ" />&nbsp;&nbsp;&nbsp;
 </div>
 </form>
+
+
+<p>&nbsp;</p>
+
+<div id="page-forms"></div>
+
+
+<p align="right"><a class="add_link" href="javascript:void(0)" onclick="new PageForm();">Добавить позицию</a></p>
+
+
 {% endblock %}

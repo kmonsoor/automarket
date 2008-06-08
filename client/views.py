@@ -155,6 +155,31 @@ def delete_item(request, po, item_id):
 def import_order(request):
     response = {}
     response['current_action'] = 'import_order'
+    CELLS = (
+       (0,'year','YEAR'),
+       (1,'car_maker','MAKE'),
+       (2,'car_model','MODEL'),
+       (3,'engine_volume','V'),
+       (4,'description','DESCRIPTION'),
+       (5,'side','SIDE'),
+       (6,'brand','BRAND'),
+       (7,'part_number','PART#'),
+       (8,'superseded','SUPERSEDED'),
+       (9,'price','PRICE'),
+       (10,'qty','Q'),
+    )
+    
+    def get_field_name(cell_title):
+        for i in CELLS:
+            if i[2] == cell_title:
+                return i[1]
+    
+    def swap_keys(kwargs):
+        _data = {}
+        for k,v in kwargs.items():
+            _data[get_field_name(k)] = v
+        return _data
+    
     if request.method == 'POST':
         # Get a file
         form = ImportXlsForm(user=request.user)
@@ -162,11 +187,22 @@ def import_order(request):
         if afile :
             from lib import xlsreader
             xls = xlsreader.readexcel(file_contents=afile['content'])
-            for sname in xls.book.sheet_names(): 
-                for row in xls.iter_dict(sname): 
-                    #print row 
+            data = []
+            for row in xls.iter_dict(xls.book.sheet_names()[0]): 
+                if not row['Q']:
+                    continue
+                row = dict([(x.upper().replace(' ',''),y) for x,y in list(row.iteritems())])
+                data.append(swap_keys(row))
+            if data:
+                form_list = []
+                for d in data:
+                    form_list.append(OrderItemForm(d).render_js('from_template'))
+                response['page_data'] = form_list
+            else:
+                pass
     else:
         form = ImportXlsForm(user=request.user)
     response['form'] = form
+    response['page_template'] = OrderItemForm().render_js('from_template')
     return response        
             
