@@ -116,7 +116,9 @@ class OrderedItem(models.Model):
     status = models.CharField(maxlength=50, choices=ORDER_ITEM_STATUSES, default='order', verbose_name="Статус")
     description = models.TextField(verbose_name="Описание")
     brand = models.ForeignKey(Brand, null=True, blank=True, verbose_name="Производитель запчасти")
-    created = models.DateTimeField(auto_now=True, verbose_name="Дата заказа")
+    created = models.DateTimeField(auto_now_add=True, verbose_name="Дата заказа")
+    modified = models.DateTimeField(auto_now=True, verbose_name="Дата изменения", editable=False)
+    status_modified = models.DateTimeField(verbose_name="Дата изменения статуса", editable=False)
     confirmed = models.BooleanField(default=False, verbose_name="Подтверждено")
     
     comments = models.TextField(blank=True, null=True, verbose_name="Комментарии")

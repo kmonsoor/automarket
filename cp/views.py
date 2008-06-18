@@ -6,6 +6,7 @@ from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.filter import Filter
+from datetime import datetime
 #from lib.exceptions import AccessDenied
 
 from data.models import OrderedItem, Brand, TrustedUsers, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
@@ -227,6 +228,7 @@ def export(request, group_id):
     # Set items' status to 'in_processing'
     for i in items:
         i.status = 'in_processing'
+        i.status_modified = datetime.now()
         i.save()
     return response
      

@@ -98,7 +98,7 @@ def order(request):
                 item.quantity_ship = 0
                 item.status = 'order'
                 item.confirmed = True
-                
+                item.status_modified = datetime.now()
                 item.save()
                 
             return HttpResponseRedirect('/client/')
@@ -128,6 +128,7 @@ def superseded(request, action, item_id):
         new_item.part_number_superseded = None
         new_item.part_number = item.part_number_superseded
         new_item.status = 'order'
+        new_item.status_modified = datetime.now()
         new_item.save()
         # Delete old item
         item.delete()
@@ -196,6 +197,7 @@ def import_order(request):
             if data:
                 form_list = []
                 for d in data:
+                    print d
                     form_list.append(OrderItemForm(d).render_js('from_template'))
                 response['page_data'] = form_list
             else:
