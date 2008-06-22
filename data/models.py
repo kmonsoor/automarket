@@ -15,24 +15,24 @@ class Po(models.Model):
         pass
     def __str__(self):
         return '%s: %s' % (self.user.username, self.po)
-    
+
 # part maker
 class Brand(models.Model):
     name = models.CharField(maxlength=255, verbose_name="Наименование")
     parent = models.ForeignKey('self',null=True,blank=True, verbose_name="Родитель")
-    
+
     class Admin:
         list_display = ('name','_parents_repr')
-    
+
     class Meta:
         verbose_name = "производителя"
         verbose_name_plural = "Производители запчастей"
-    
+
     def __str__(self):
         p_list = self._recurse_for_parents(self)
         p_list.append(self.name)
         return self.get_separator().join(p_list)
-    
+
     def _recurse_for_parents(self, cat_obj):
         p_list = []
         if cat_obj.parent_id:
@@ -43,28 +43,28 @@ class Brand(models.Model):
         if cat_obj == self and p_list:
             p_list.reverse()
         return p_list
-        
+
     def get_separator(self):
         return ' :: '
-    
+
     def _parents_repr(self):
         p_list = self._recurse_for_parents(self)
         return self.get_separator().join(p_list)
     _parents_repr.short_description = "Parents"
-    
+
     def save(self):
         p_list = self._recurse_for_parents(self)
         if self.name in p_list:
             raise validators.ValidationError(u"You can not add Brand into itself!")
         super(Brand, self).save()
-    
+
     def unify(self):
         p_list = self._recurse_for_parents(self)
         if len(p_list) > 0:
             return p_list[len(p_list-1)]
         else :
-            return self            
-    
+            return self
+
     def unify(self):
         if self.parent != None:
             return self.parent
@@ -120,17 +120,17 @@ class OrderedItem(models.Model):
     modified = models.DateTimeField(auto_now=True, verbose_name="Дата изменения", editable=False)
     status_modified = models.DateTimeField(verbose_name="Дата изменения статуса", editable=False)
     confirmed = models.BooleanField(default=False, verbose_name="Подтверждено")
-    
+
     comments = models.TextField(blank=True, null=True, verbose_name="Комментарии")
-    
-    
+
+
     objects = OrderedItemManager()
-    
+
     def get_numbered_po(self):
         return '%s%d' % (self.po.po, self.ponumber)
-    
+
     get_numbered_po.short_description = "РО позиции"
-    
+
     def user(self):
         return self.po.user
     user.short_description = "Заказчик"
@@ -138,38 +138,71 @@ class OrderedItem(models.Model):
         list_display =('get_numbered_po','created', 'user', 'po','part_number','part_number_superseded','quantity')
         list_filter = ('created',)
         search_fields = ('part_number',)
-    
+
     def __str__(self):
         return "%s-%d" % (self.created, self.id)
-    
+
     def save(self):
         self.quantity_backorder = int(self.quantity) - int(self.quantity_ship)
         self.brand = self.brand.unify()
 
         super(OrderedItem, self).save()
-    
+
     def status_verbose(self):
         return dict(ORDER_ITEM_STATUSES).get(self.status,self.status)
-    
+
     class Meta:
         verbose_name = "позицию"
         verbose_name_plural = "Заказанные позиции"
 
 class TrustedUsers(models.Model):
     user = models.ForeignKey(User, unique=True, verbose_name="Пользователь")
-    
+
     def __str__(self):
         return self.user.username
-    
+
     class Admin:
         pass
-    
+
     class Meta:
         verbose_name = "пользователя в доверенные"
         verbose_name_plural = "Доверенные пользователи"
-        
+
 # Extend User model
 def is_trusted(self):
     return self.id in [x.id for x in TrustedUsers.objects.all()]
 
 User.add_to_class('is_trusted', is_trusted)
+
+
+# Invoices model
+class Invoice(models.Model):
+    creator = models.ForeignKey(User, verbode_name=u'Создатель инвойса')
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    items = models.ManyToManyField(OrderedItem)
+    places_num = models.IntegerField(blank=True, null=True, verbose_name=u"Количество мест")
+    weight_kg = models.FloatField(blank=True, null=True, verbose_name=u"Количество кг")
+    shipping_cost = models.FloatField(blank=True, null=True, verbose_name=u"Стоимость доставки")
+
+
+# Balance (sketch?)
+
+# Bill TO user
+class Credit(models.Model):
+    user = models.ForeignKey(User)
+    invoice = models.ForeignKey(Invoice, null=True, blank=True)
+    payment_for = models.CharField(max_length=255)
+    payment_sum = models.FloatField(default=0)
+
+# Payments from user
+class Debit(models.Model):
+    user = models.ForeignKey(User)
+    payment_for = models.CharField(max_length=255)
+    payment_sum = models.FloatField(default=0)
+    created =models.DateTimeField(auto_now_add=True)
+
+
+
+
