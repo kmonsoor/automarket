@@ -177,14 +177,14 @@ User.add_to_class('is_trusted', is_trusted)
 
 # Invoices model
 class Invoice(models.Model):
-    creator = models.ForeignKey(User, verbode_name=u'Создатель инвойса')
+    creator = models.ForeignKey(User, verbose_name=u'Создатель инвойса')
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
     items = models.ManyToManyField(OrderedItem)
     places_num = models.IntegerField(blank=True, null=True, verbose_name=u"Количество мест")
-    weight_kg = models.FloatField(blank=True, null=True, verbose_name=u"Количество кг")
-    shipping_cost = models.FloatField(blank=True, null=True, verbose_name=u"Стоимость доставки")
+    weight_kg = models.FloatField(blank=True, null=True, verbose_name=u"Количество кг", max_digits=15, decimal_places=3)
+    shipping_cost = models.FloatField(blank=True, null=True, verbose_name=u"Стоимость доставки", max_digits=15, decimal_places=2)
 
 
 # Balance (sketch?)
@@ -193,14 +193,14 @@ class Invoice(models.Model):
 class Credit(models.Model):
     user = models.ForeignKey(User)
     invoice = models.ForeignKey(Invoice, null=True, blank=True)
-    payment_for = models.CharField(max_length=255)
-    payment_sum = models.FloatField(default=0)
+    payment_for = models.CharField(maxlength=255)
+    payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
 
 # Payments from user
 class Debit(models.Model):
     user = models.ForeignKey(User)
-    payment_for = models.CharField(max_length=255)
-    payment_sum = models.FloatField(default=0)
+    payment_for = models.CharField(maxlength=255)
+    payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
     created =models.DateTimeField(auto_now_add=True)
 
 
