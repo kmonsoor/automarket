@@ -18,7 +18,6 @@ from client.forms import OrderItemForm, PoForm, ImportXlsForm
 @login_required
 @render_to('client/index.html')
 def index(request):
-    
     response = {}
     response['current_action'] = 'index'
     
@@ -35,6 +34,7 @@ def index(request):
                 ('QTY<br>BO', 'quantity_backorder'),
                 ('QTY<br>SH', 'quantity_ship'),
                 ('Статус', 'status'),
+                ('Статус изменен','status_modified')
                 )
     sort_headers = SortHeaders(request, LIST_HEADERS, default_order_field='created', default_order_type='desc')
     response['headers'] = list(sort_headers.headers())

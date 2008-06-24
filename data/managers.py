@@ -16,3 +16,7 @@ class OrderedItemManager(Manager):
             ponumber = 1
         else:
             return ponumber + 1
+
+class InvoiceItemManager(Manager):
+    def for_user(self, user):
+        return self.select_related().filter(invoice__po__in=[x.id for x in user.po_set.all()])
