@@ -66,14 +66,20 @@ def order(request):
     message = ''
     response = {}
     response['current_action'] = 'order'
-    
+    data = {
+        'description.1': u'\u0441\u0442\u043e\u0439\u043a\u0430 \u0434\u0432\u0435\u0440\u043d\u0430\u044f FR', 
+        'engine_volume':u'3.5', 'car_model.1': u'G35 coupe', 'superseded': '', 'brand': u'infiniti', 'side': u'R', 
+        'price': 158, 'part_number':u'76260-AM800', 'year': u'2003', 'qty': 1, 'car_maker': u'Infiniti'
+        }
     if request.method == 'POST' :
+
         po_form = PoForm(request.POST.copy(), user=request.user)
         po_id = int(po_form.data['po.#'][0])
         po_number = OrderedItem.objects.get_next_ponumber(po_id)
         dict = request.POST.copy()
         del(dict['po.#'])
         request.POST = dict
+
         item_forms = OrderItemForm.get_forms(request)
         item_data = [item_form.render_js('from_template') for item_form in item_forms]
         
@@ -175,10 +181,11 @@ def import_order(request):
             if i[2] == cell_title:
                 return i[1]
     
-    def swap_keys(kwargs):
+    def swap_keys(kwargs, num):
         _data = {}
         for k,v in kwargs.items():
-            _data[get_field_name(k)] = v
+            _data[get_field_name(k)+'.%d' % num] = v
+            _data['id'+'.%d' % num] = ''
         return _data
     
     if request.method == 'POST':
@@ -188,17 +195,19 @@ def import_order(request):
         if afile :
             from lib import xlsreader
             xls = xlsreader.readexcel(file_contents=afile['content'])
-            data = []
+            data = {}
+            i = 1
             for row in xls.iter_dict(xls.book.sheet_names()[0]): 
                 if not row['Q']:
                     continue
                 row = dict([(x.upper().replace(' ',''),y) for x,y in list(row.iteritems())])
-                data.append(swap_keys(row))
+                data.update(swap_keys(row,i))
+                i = i+1
+            from django.utils.datastructures import MultiValueDict
             if data:
-                form_list = []
-                for d in data:
-                    print d
-                    form_list.append(OrderItemForm(d).render_js('from_template'))
+                request.POST = MultiValueDict(data)
+                item_forms = OrderItemForm.get_forms(request)
+                form_list = [item_form.render_js('from_template') for item_form in item_forms]                
                 response['page_data'] = form_list
             else:
                 pass
@@ -207,4 +216,14 @@ def import_order(request):
     response['form'] = form
     response['page_template'] = OrderItemForm().render_js('from_template')
     return response        
-            
+
+def invoices(request):
+    
+    response['current_action'] = 'invoices'
+    paginator = SimplePaginator(Invoice.objects.filter().order_by('-created'), 25, 'page=?')
+    paginator.set_page(request.GET.get('page',1))
+    response.update( {
+            'paginator':paginator,
+            'invoices':paginator.get_page()
+            })
+    return response

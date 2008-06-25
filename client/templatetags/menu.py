@@ -7,6 +7,8 @@ menu_items = [
     {'action':'order','name':"Новый заказ",'access':'user'},
     {'action':'cp','name':"Редактировать заказы",'access':'trusted_user'},
     {'action':'import_order','name':"Загрузить XLS",'access':'user'},
+    {'action':'invoices','name':"Инвойсы",'access':'user'},
+    {'action':'balance','name':"Баланс",'access':'user'},
 ]
 
 trusted_actions = ('cp',)

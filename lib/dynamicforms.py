@@ -23,6 +23,7 @@ class FormCollection(list):
 
 class BaseForm(forms.BaseForm):
     def __init__(self, *args, **kwargs):
+        print kwargs
         self.postfix = kwargs.pop('postfix', '#')
         kwargs['prefix'] = kwargs.get('prefix', '') or getattr(self, 'PREFIX', '')
         self.template = kwargs.pop('template', '') or getattr(self, 'TEMPLATE', '')

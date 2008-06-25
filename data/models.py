@@ -179,11 +179,10 @@ User.add_to_class('is_trusted', is_trusted)
 
 # Invoices model
 class Invoice(models.Model):
-    creator = models.ForeignKey(User, verbose_name=u'Создатель инвойса')
+    creator = models.ForeignKey(User, verbose_name=u'Создатель инвойса', related_name='invoice_creator')
+    owner = models.ForeignKey(User, verbose_name=u'Получатель инвойса', related_name='invoice_owner')
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-
-    items = models.ManyToManyField(OrderedItem)
     places_num = models.IntegerField(blank=True, null=True, verbose_name=u"Количество мест")
     weight_kg = models.FloatField(blank=True, null=True, verbose_name=u"Количество кг", max_digits=15, decimal_places=3)
     shipping_cost = models.FloatField(blank=True, null=True, verbose_name=u"Стоимость доставки", max_digits=15, decimal_places=2)
