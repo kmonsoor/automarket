@@ -205,6 +205,7 @@ def import_order(request):
                 i = i+1
             from django.utils.datastructures import MultiValueDict
             if data:
+                print data
                 request.POST = MultiValueDict(data)
                 item_forms = OrderItemForm.get_forms(request)
                 form_list = [item_form.render_js('from_template') for item_form in item_forms]                

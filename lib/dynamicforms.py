@@ -23,13 +23,14 @@ class FormCollection(list):
 
 class BaseForm(forms.BaseForm):
     def __init__(self, *args, **kwargs):
-        print kwargs
         self.postfix = kwargs.pop('postfix', '#')
         kwargs['prefix'] = kwargs.get('prefix', '') or getattr(self, 'PREFIX', '')
         self.template = kwargs.pop('template', '') or getattr(self, 'TEMPLATE', '')
         self.core = kwargs.pop('core', '') or getattr(self, 'CORE', [])
         self.id = kwargs.pop('id', '')
+        print args, kwargs
         super(BaseForm, self).__init__(*args, **kwargs)
+        
     def add_prefix(self, field_name):
         prefixed = super(BaseForm, self).add_prefix(field_name)
         return self.postfix and ('%s.%s' % (prefixed, self.postfix)) or prefixed
@@ -57,9 +58,9 @@ class BaseForm(forms.BaseForm):
 
         forms = FormCollection()
         form_ids.sort()
+
         for form_id in form_ids:
-            new_kwargs = dict(kwargs.items() + 
-                    [('postfix', form_id), ('id', request.POST[id_name[:-1]+form_id])])
+            new_kwargs = dict(kwargs.items() + [('postfix', form_id), ('id', request.POST[id_name[:-1]+form_id])])
             form = cls(request.POST, **new_kwargs)
             if not form.id:
                 # Ignore empty forms where no core field is specified
