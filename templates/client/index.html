@@ -80,6 +80,7 @@
     {% endifnotequal %}	
 	</td>
 	<td>{{ i.status_verbose }}</td>
+	<td>{{ i.status_modified|date:"m/d/Y" }}</td>
 	</tr>
 	{% endfor %}
 

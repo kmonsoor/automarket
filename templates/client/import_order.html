@@ -58,17 +58,30 @@ Window.onDomReady(function() {
 {{ form }}
 
 <div class="submit-row">
-<input type="submit" name="save_order" value="Отправить заказ" />&nbsp;&nbsp;&nbsp;
+<input type="submit" name="save_order" value="Загрузить файл" />&nbsp;&nbsp;&nbsp;
 </div>
 </form>
 
-
+{% if page_data %}
 <p>&nbsp;</p>
+<form action="/client/order/" method="post">
+
+<p>
+<table width="40%">
+<tr><td colspan="2"><p class="error">Не забудьте указать PO!</p></td></tr>
+<tr><td><strong>PO</strong></td><td>
+{{ po_form.po }}</td></tr>
+</table>
+</p>
 
 <div id="page-forms"></div>
 
-
 <p align="right"><a class="add_link" href="javascript:void(0)" onclick="new PageForm();">Добавить позицию</a></p>
 
+<div class="submit-row">
+<input type="submit" name="save_order" value="Отправить заказ" />&nbsp;&nbsp;&nbsp;
+</div>
 
+</form>
+{% endif %}
 {% endblock %}

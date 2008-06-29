@@ -72,14 +72,13 @@ def order(request):
         'price': 158, 'part_number':u'76260-AM800', 'year': u'2003', 'qty': 1, 'car_maker': u'Infiniti'
         }
     if request.method == 'POST' :
-
+        
         po_form = PoForm(request.POST.copy(), user=request.user)
         po_id = int(po_form.data['po.#'][0])
         po_number = OrderedItem.objects.get_next_ponumber(po_id)
         dict = request.POST.copy()
         del(dict['po.#'])
         request.POST = dict
-
         item_forms = OrderItemForm.get_forms(request)
         item_data = [item_form.render_js('from_template') for item_form in item_forms]
         
@@ -173,7 +172,7 @@ def import_order(request):
        (7,'part_number','PART#'),
        (8,'superseded','SUPERSEDED'),
        (9,'price','PRICE'),
-       (10,'qty','Q'),
+       (10,'quantity','Q'),
     )
     
     def get_field_name(cell_title):
@@ -190,7 +189,7 @@ def import_order(request):
     
     if request.method == 'POST':
         # Get a file
-        form = ImportXlsForm(user=request.user)
+        form = ImportXlsForm()
         afile = request.FILES.get('xls_file',None)
         if afile :
             from lib import xlsreader
@@ -200,12 +199,11 @@ def import_order(request):
             for row in xls.iter_dict(xls.book.sheet_names()[0]): 
                 if not row['Q']:
                     continue
-                row = dict([(x.upper().replace(' ',''),y) for x,y in list(row.iteritems())])
+                row = dict([(x.upper().replace(' ',''),[y]) for x,y in list(row.iteritems())])
                 data.update(swap_keys(row,i))
                 i = i+1
             from django.utils.datastructures import MultiValueDict
             if data:
-                print data
                 request.POST = MultiValueDict(data)
                 item_forms = OrderItemForm.get_forms(request)
                 form_list = [item_form.render_js('from_template') for item_form in item_forms]                
@@ -213,8 +211,9 @@ def import_order(request):
             else:
                 pass
     else:
-        form = ImportXlsForm(user=request.user)
+        form = ImportXlsForm()
     response['form'] = form
+    response['po_form'] = PoForm(user=request.user)
     response['page_template'] = OrderItemForm().render_js('from_template')
     return response        
 

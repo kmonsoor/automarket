@@ -99,3 +99,8 @@ INSTALLED_APPS = (
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 3600
+
+try:
+    from settings_local import *
+except:
+    pass

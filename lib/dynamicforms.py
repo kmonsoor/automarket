@@ -28,7 +28,6 @@ class BaseForm(forms.BaseForm):
         self.template = kwargs.pop('template', '') or getattr(self, 'TEMPLATE', '')
         self.core = kwargs.pop('core', '') or getattr(self, 'CORE', [])
         self.id = kwargs.pop('id', '')
-        print args, kwargs
         super(BaseForm, self).__init__(*args, **kwargs)
         
     def add_prefix(self, field_name):
@@ -53,12 +52,10 @@ class BaseForm(forms.BaseForm):
        
         form = cls(request.POST, **kwargs)
         id_name = form.add_prefix('id')
-
         form_ids = [key[len(id_name)-1:] for key in request.POST.keys() if key.startswith(id_name[:-1])]
 
         forms = FormCollection()
         form_ids.sort()
-
         for form_id in form_ids:
             new_kwargs = dict(kwargs.items() + [('postfix', form_id), ('id', request.POST[id_name[:-1]+form_id])])
             form = cls(request.POST, **new_kwargs)
