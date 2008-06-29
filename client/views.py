@@ -157,8 +157,8 @@ def delete_item(request, po, item_id):
         pass
     return HttpResponseRedirect('/client/order/')
     
-@login_required
 @render_to('client/import_order.html')
+@login_required
 def import_order(request):
     response = {}
     response['current_action'] = 'import_order'
@@ -219,13 +219,45 @@ def import_order(request):
     return response        
 
 @render_to('client/invoices.html')
+@login_required
 def invoices(request):
     response = {}
     response['current_action'] = 'invoices'
-    paginator = SimplePaginator(Invoice.objects.filter(owner=request.user).order_by('-created'), 25, 'page=?')
+    
+    LIST_HEADERS = (
+                ('Дата', 'created'),
+                ('PO', 'po'),
+                ('Позиций', None),
+                ('Общий вес', None),
+                ('Число мест', None),
+                ('Стоимость доставки', None)
+    )
+    sort_headers = SortHeaders(request, LIST_HEADERS, default_order_field='created', default_order_type='desc')
+    response['headers'] = list(sort_headers.headers())
+    field = LIST_HEADERS[int(request.GET.get('o',0))][1]
+    direction = request.GET.get('ot','desc')
+    directions = {'asc':'', 'desc':'-'}
+    field_order = '%s%s' % (directions[direction], field)
+
+    po_list = [x.id for x in Po.objects.filter(user=request.user)]
+    qs = Invoices.objects.filter(po__in=po_list).order_by(field_order)
+    # Filter
+    q = request.GET.get('q','').strip()
+    if len(q) > 0 :
+        qs = qs.filter(Q(po__po__icontains=q))
+    
+    paginator = SimplePaginator(qs, 25, '?page=%s')
     paginator.set_page(request.GET.get('page',1))
     response.update( {
             'paginator':paginator,
-            'invoices':paginator.get_page()
+            'invoices':paginator.get_page(),
+            'direction': direction,
+            'field': field
             })
     return response
+
+@login_required
+def balance(request):
+    response = {}
+    
+    return {}
