@@ -26,5 +26,6 @@ urlpatterns += patterns('client.views',
     (r'^client/order/$','order',),
     (r'^client/help/brands.html', 'help_brand_list'),
     (r'^client/import_order/','import_order'),
+    (r'^client/invoices/','invoices'),
     (r'^client/','index'),
 )

@@ -180,7 +180,7 @@ User.add_to_class('is_trusted', is_trusted)
 # Invoices model
 class Invoice(models.Model):
     creator = models.ForeignKey(User, verbose_name=u'Создатель инвойса', related_name='invoice_creator')
-    owner = models.ForeignKey(User, verbose_name=u'Получатель инвойса', related_name='invoice_owner')
+    po = models.ForeignKey(Po, verbose_name=u'Po', related_name='invoice_po')
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     places_num = models.IntegerField(blank=True, null=True, verbose_name=u"Количество мест")

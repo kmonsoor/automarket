@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from data.models import Po
 from data.models import OrderedItem
 from data.models import Brand
+from data.models import Invoice, InvoiceItem
 
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
@@ -217,10 +218,11 @@ def import_order(request):
     response['page_template'] = OrderItemForm().render_js('from_template')
     return response        
 
+@render_to('client/invoices.html')
 def invoices(request):
-    
+    response = {}
     response['current_action'] = 'invoices'
-    paginator = SimplePaginator(Invoice.objects.filter().order_by('-created'), 25, 'page=?')
+    paginator = SimplePaginator(Invoice.objects.filter(owner=request.user).order_by('-created'), 25, 'page=?')
     paginator.set_page(request.GET.get('page',1))
     response.update( {
             'paginator':paginator,
