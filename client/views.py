@@ -256,8 +256,10 @@ def invoices(request):
             })
     return response
 
+@render_to('client/balance.html')
 @login_required
 def balance(request):
     response = {}
+    response['current_action'] = 'balance'
     
-    return {}
+    return response
