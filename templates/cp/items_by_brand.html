@@ -13,9 +13,9 @@ function hideGroup{{ brand.id }}() {
 {% for i in items %}
 {% ifchanged %}
 <tr>
-<td style="background: #dbdbdb"><b>{{ i.get_numbered_po }}</b></td>
+<td style="background: #dbdbdb" width=100%><b>{{ i.get_numbered_po }}</b></td>
 <td style="background: #dbdbdb"><b>QTY</b></td>
-<td style="background: #dbdbdb">&nbsp;</td>
+<td style="background: #dbdbdb" width=180>&nbsp;</td>
 </tr>
 {% endifchanged %}
 <tr id="row_{{ i.id }}">

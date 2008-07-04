@@ -7,52 +7,105 @@
 <script>
 var ajax_loader_img_path = '{{ MEDIA_URL }}img/icons/ajax-loader.gif';
 var caller = 'index';
+var brands = new Array({{ brands }});
 </script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
 {% endblock %}
 
 {% block content %}
 <div style="font-size: 16px; margin: 0 0 10px 0"><b><a href="/cp/">В виде таблицы</a></b> | <a href="/cp/groups/">По группам</a></div>
-<div style="padding: 5px; border: solid 1px #0190BF; margin: 0 0 10px 0; background: #F5F5F5">
-{{ filter.render }}
-<div style="clear: both">&nbsp;</div>
-</div>
 {% if items %}
+<form method="{{ filter.method }}">
+<input type="hidden" name="qs_filter" value="1">
+<input type="submit" value="Фильтр">
+<input type="submit" name="qs_filter_clear" value="Очистить">
+Количество записей на странице: 
+<select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
+<option value="10"{% ifequal items_per_page 10 %} selected {% endifequal %}>10</option>
+<option value="15"{% ifequal items_per_page 15 %} selected {% endifequal %}>15</option>
+<option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
+</select>
 <table class="admin_table">
 <tr>
 {% table_header_sort headers %}
 </tr>
+<tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+<td>
+<nobr>{{ filter.form.po__po }} {{ filter.form.ponumber }}</nobr>
+</td>
+<td>
+&nbsp;
+</td>
+<td>
+{{ filter.form.description__contains }}
+</td>
+<td>
+{{ filter.form.side }}
+</td>
+<td>
+{{ filter.form.brand__name__contains }}
+</td>
+<td>
+{{ filter.form.part_number__contains }}
+</td>
+<td>
+{{ filter.form.part_number_superseded__contains }}
+</td>
+<td>
+<nobr>{{ filter.form.price__gte }} {{ filter.form.price__lte }}</nobr>
+</td>
+<td>
+{{ filter.form.quantity }}
+</td>
+<td>
+{{ filter.form.quantity_ship }}
+</td>
+<td>
+{{ filter.form.status }}
+</td>
+</tr>
 {% for i in items %}
 <tr>
-<td>{{ i.po|default:"&nbsp;" }}</td>
+<td>{{ i.get_numbered_po|default:"&nbsp;" }}</td>
 <td>{{ i.created|date:"m/d/Y" }}</td>
 <td>{{ i.description|default:"&nbsp;" }}</td>
 <td>{{ i.side|default:"&nbsp;" }}</td>
-<td>{{ i.brand|default:"&nbsp;" }}</td>
-<td id="number_{{ i.id }}"{% ifequal i.status "superseded" %} class="cross_out"{% endifequal %}>{{ i.part_number|default:"&nbsp;" }}</td>
-<td class="editable" onclick="editSuperseded({{ i.id }})"><div id="part_number_superseded_{{ i.id }}"  >{{ i.part_number_superseded|default:"" }}</div>
-<span id="part_number_superseded_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="cancel()">Cancel</button></span>
+<td class="editable" onclick="editBrand({{ i.id }})">
+<div id="brand_display_{{ i.id }}" >{{ i.brand|default:"&nbsp;" }}</div>
+<div id="brand_{{ i.id }}" style="display: none">{{ i.brand.id }}</div>
 </td>
-<td class="editable" onclick="editPrice({{ i.id }})"><div id="price_{{ i.id }}">{{ i.price|default:"&nbsp;" }}</div>
-<span id="price_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="cancel()">Cancel</button></span>
+<td id="number_{{ i.id }}"{% ifequal i.status "superseded" %} class="cross_out"{% endifequal %}>
+	{{ i.part_number|default:"&nbsp;" }}
 </td>
-<td><div id="quantity_{{ i.id }}">{{ i.quantity|default:"" }}</div>
+<td class="editable" onclick="editSuperseded({{ i.id }})">
+	<div id="part_number_superseded_display_{{ i.id }}">{{ i.part_number_superseded|default:"" }}</div>
+	<div id="part_number_superseded_{{ i.id }}" style="display: none">{{ i.part_number_superseded }}</div>
+    <span id="part_number_superseded_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="cancel()">Cancel</button></span>
 </td>
-<td><div id="quantity_backorder_{{ i.id }}">{{ i.quantity_backorder|default:"" }}</div>
+<td class="editable" onclick="editPrice({{ i.id }})">
+	<div id="price_display_{{ i.id }}">{{ i.price|default:"&nbsp;" }}</div>
+	<div id="price_{{ i.id }}" style="display: none">{{ i.price }}</div>
+    <span id="price_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="cancel()">Cancel</button></span>
 </td>
-<td class="editable" onclick="editQuantityShip({{ i.id }})"><div id="quantity_ship_{{ i.id }}">{{ i.quantity_ship|default:"" }}</div>
-<span id="quantity_ship_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="cancel()">Cancel</button></span>
+<td>
+	<div id="quantity_{{ i.id }}">{{ i.quantity|default:"" }}</div>
+</td>
+<td class="editable" onclick="editQuantityShip({{ i.id }})">
+	<div id="quantity_ship_display_{{ i.id }}">{{ i.quantity_ship|default:"" }}</div>
+	<div id="quantity_ship_{{ i.id }}" style="display: none">{{ i.quantity_ship }}</div>
+    <span id="quantity_ship_buttons_{{ i.id }}" style="display: none"><button onclick="save()">Save</button><button onclick="cancel()">Cancel</button></span>
 </td>
 <td class="editable">
-<select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
-{% for opt in status_options %}
-<option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option }}</option>
-{% endfor %}
-</select>
+    <select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
+    {% for opt in status_options %}
+    <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option }}</option>
+    {% endfor %}
+    </select>
 </td>
 </tr>
 {% endfor %}
 </table>
+</form>
 {% else %}
 Нет ни одной записи
 {% endif %}

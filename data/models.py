@@ -74,7 +74,7 @@ class Brand(models.Model):
             return self
 
 
-CAR_SIDES = ((None,''),('R','R'),('L','L'),)
+CAR_SIDES = (('',''),('R','R'),('L','L'),)
 
 ORDER_ITEM_STATUSES = (
                        ('order',u'Новый заказ'),
@@ -113,7 +113,6 @@ class OrderedItem(models.Model):
     part_number_superseded = models.CharField(maxlength=255, null=True, blank=True , verbose_name="Новый номер")
     price = models.FloatField(max_digits=15, decimal_places=2,  null=True, blank=True, verbose_name="Цена")
     quantity = models.IntegerField(verbose_name="Количество")
-    quantity_backorder = models.IntegerField(verbose_name="Осталось довести")
     quantity_ship = models.IntegerField(verbose_name="Отгружено")
     status = models.CharField(maxlength=50, choices=ORDER_ITEM_STATUSES, default='order', verbose_name="Статус")
     description = models.TextField(verbose_name="Описание")

@@ -1,15 +1,16 @@
-# -*- coding=UTF-8 -*-
+# -*- coding=utf-8 -*-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
-from lib.filter import Filter
+from lib.qs_filter import QSFilter
 from datetime import datetime
 #from lib.exceptions import AccessDenied
 
 from data.models import OrderedItem, Brand, TrustedUsers, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
+from data.forms import OrderedItemsFilterForm, OrderedItemForm
 
 def get_status_options(mode='manager'):
     if mode == 'manager':
@@ -46,26 +47,23 @@ def index(request):
     if not access:
         raise Http404
     context = {}
-    fields = (
-              {'name':'status','verbose':u'Статус', 'type':u'select', 'choices':ORDER_ITEM_STATUSES},
-              #{'name':'car_maker', 'verbose':u'Марка', 'type':u'char'},
-              #{'name':'car_model', 'verbose':u'Модель', 'type':u'char'},
-              #{'name':'engine_volume', 'verbose':u'Объём двигателя', 'type':u'char'},
-              {'name':'part_number', 'verbose':u'Part #', 'type':u'char'},
-              {'name':'part_number_superseded', 'verbose':u'Superseded', 'type':u'char'},
-              {'name':'price', 'verbose':u'Цена', 'type':u'char'},
-              {'name':'quantity', 'verbose':u'QTY', 'type':u'char'},
-              {'name':'quantity_backorder', 'verbose':u'QTY BO', 'type':u'char'},
-              {'name':'quantity_ship', 'verbose':u'QTY SH', 'type':u'char'},
-              {'name':'brand__name', 'verbose':u'Brand', 'type':u'char'},
-              {'name':'side', 'verbose':u'Сторона', 'type':u'select', 'choices':CAR_SIDES},
-              #{'name':'created', 'verbose':u'created', 'type':u'char'},
-              #{'name':'year', 'verbose':u'Год выпуска', 'type':u'char'},           
-              )
-    filter = Filter(request, OrderedItem, fields)
+    current_page = request.GET.get('page', 1)
+    items_per_page = request.GET.get('items_per_page', None)
+    if not items_per_page:
+        items_per_page = request.session.get('items_per_page', None)
+    else:
+        request.session['items_per_page'] = items_per_page
+        request.session.modified = True
+    if not items_per_page:
+        items_per_page = 10
+    items_per_page = int(items_per_page)
+    context['items_per_page'] = items_per_page
+    filter = QSFilter(request, OrderedItemsFilterForm)
+    if filter.modified:
+        current_page = 1
     context['filter'] = filter
     LIST_HEADERS = (
-                    ('PO', 'auth_user.username'),
+                    ('PO', None),
                     ('Дата', 'created'),
                     ('Описание', None),
                     ('Side', None),
@@ -74,7 +72,6 @@ def index(request):
                     ('Superseded', 'part_number_superseded'),
                     ('Price', 'price'),
                     ('QTY', 'quantity'),
-                    ('QTY BO', 'quantity_backorder'),
                     ('QTY SH', 'quantity_ship'),
                     ('Status', 'status'),
                     )
@@ -91,7 +88,7 @@ def index(request):
         order_by = order_direction + LIST_HEADERS[int(order_field)][1]
 
     context['headers'] = list(sort_headers.headers())
-    current_page = request.GET.get('page', 1)
+    
     
     qs = OrderedItem.objects.select_related().filter(**filter.get_filters())
     if mode == 'trusted_user': 
@@ -99,12 +96,13 @@ def index(request):
         
     if order_by:
         qs = qs.order_by(order_by)
-    paginator = SimplePaginator(qs, 5, '?page=%s')
+    paginator = SimplePaginator(qs, items_per_page, '?page=%s')
     paginator.set_page(current_page)
     context['items'] = paginator.get_page();
     context['paginator'] = paginator
     
     context['status_options_str'], context['status_options'] = get_status_options(mode)
+    context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.name) for brand in Brand.objects.all()])
     return context
 
 @render_to('cp/groups.html')
@@ -126,24 +124,78 @@ def groups(request):
 
 @ajax_request
 def position_edit(request, id):
+    
+    class FieldSaver(object):
+        def save_brand(self, obj, value):
+            try:
+                obj.brand = Brand.objects.get(id=value)
+                obj.save()
+            except Exception, e:
+                pass
+            return obj.brand.id
+        
+        def save_part_number_superseded(self, obj, value):
+            try:
+                obj.part_number_superseded = value
+                obj.save()
+            except Exception, e:
+                pass
+            return obj.part_number_superseded
+        
+        def save_price(self, obj, value):
+            try:
+                obj.price = value
+                obj.save()
+            except Exception, e:
+                pass
+            return obj.price
+        
+        def save_quantity_ship(self, obj, value):
+            try:
+                obj.quantity_ship = value
+                obj.save()
+            except Exception, e:
+                pass
+            return obj.quantity_ship
+        
+        def save_status(self, obj, value):
+            try:
+                obj.status = value
+                obj.save()
+            except Exception, e:
+                pass
+            return obj.status
+        
     item = get_object_or_404(OrderedItem, id=id)
     response = {}
     try:
-        item.__dict__[request.POST['type']]
+        old_value = getattr(item, request.POST['type'])
+        #print old_value
     except:
-        response['error'] = 'Attribute %s does not exist' % request.POST['type']
+        response['error'] = 'Attribute does not exist'
         return response 
     
-    old_value = str(getattr(item, request.POST['type']))
-    setattr(item, request.POST['type'], request.POST['value'])
-    try:
-        item.save()
-        response['value'] = str(getattr(item, request.POST['type']))
-    except:
-        response['value'] = old_value or ''
-        response['error'] = 'Wrong value for attribute %s' % request.POST['type']
+    form = OrderedItemForm({request.POST['type']:request.POST['value']})
+    if form.is_valid():
+        try:
+            value = form.clean_data[request.POST['type']]
+        except Exception, e:
+            response['error'] = e
+            return response
+        
+        response['value'] = getattr(FieldSaver(), 'save_' + request.POST['type'])(item, value)
+
+        
+    else:
+        response['value'] = old_value and str(old_value) or ''
+        response['error'] = 'Wrong value!'
     
     return response
+
+def save_brand(obj, value):
+    obj.brand = value
+    obj.save()
+    return obj.brand.id
 
 from lib.decorators import render_as
 
