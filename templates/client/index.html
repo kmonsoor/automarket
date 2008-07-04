@@ -66,18 +66,7 @@
 	
 	<td>{{ i.quantity }}</td>
 	<td>
-	{% ifnotequal i.status 'order' %}
-	{{ i.quantity_backorder }}
-	{% else %}
-	-
-	{% endifnotequal %}
-	</td>
-	<td>
-	{% ifnotequal i.status 'order' %}
 	{{ i.quantity_ship }}
-    {% else %}
-    -
-    {% endifnotequal %}	
 	</td>
 	<td>{{ i.status_verbose }}</td>
 	<td>{{ i.status_modified|date:"m/d/Y" }}</td>

@@ -1,13 +1,14 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',
-    (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': 'd:/projects/automarket/media'}),
+    (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': '/home/dmitry/projects/automarket/media'}),
     (r'^admin/', include('django.contrib.admin.urls')),
 )
 
 urlpatterns += patterns('common.views',
     (r'^$', 'start'),
     (r'^accounts/login/$', 'start'),
+    (r'^accounts/logout/$','exit'),
 )
 
 

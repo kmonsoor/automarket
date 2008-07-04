@@ -21,7 +21,7 @@ from client.forms import OrderItemForm, PoForm, ImportXlsForm
 def index(request):
     response = {}
     response['current_action'] = 'index'
-    
+     
     LIST_HEADERS = (
                 ('Дата', 'created'),
                 ('Авто', None),
@@ -32,7 +32,6 @@ def index(request):
                 ('Замена', 'part_number_superseded'),
                 ('Цена', 'price'),
                 ('QTY<br>ORD', 'quantity'),
-                ('QTY<br>BO', 'quantity_backorder'),
                 ('QTY<br>SH', 'quantity_ship'),
                 ('Статус', 'status'),
                 ('Статус изменен','status_modified')
@@ -67,11 +66,6 @@ def order(request):
     message = ''
     response = {}
     response['current_action'] = 'order'
-    data = {
-        'description.1': u'\u0441\u0442\u043e\u0439\u043a\u0430 \u0434\u0432\u0435\u0440\u043d\u0430\u044f FR', 
-        'engine_volume':u'3.5', 'car_model.1': u'G35 coupe', 'superseded': '', 'brand': u'infiniti', 'side': u'R', 
-        'price': 158, 'part_number':u'76260-AM800', 'year': u'2003', 'qty': 1, 'car_maker': u'Infiniti'
-        }
     if request.method == 'POST' :
         
         po_form = PoForm(request.POST.copy(), user=request.user)

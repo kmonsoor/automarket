@@ -215,7 +215,7 @@ class Debit(models.Model):
 class Balance(models.Model):
     user = models.ForeignKey(User)
     payment_description = models.TextField()
-    payment_sum = models.FloatField()
+    payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
     deleted = models.DateTimeField(null=True, blank=True, default=None)
     

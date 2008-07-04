@@ -28,5 +28,10 @@ def start(request):
             message = 'Проверьте правильность ввода логина/пароля'
     form =  UserAuthForm()
     return {'form':form, 'message':message}
+
+
+def exit(request):
+    logout(request)
+    return HttpResponseRedirect('/accounts/login/')
        
                 

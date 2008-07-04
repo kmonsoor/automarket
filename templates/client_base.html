@@ -13,7 +13,14 @@ jQuery.noConflict();
 {% endblock %}
 {% block header %}
 {% load menu %}
+<div id="stylefour">
 {% client_menu current_action user %}
+<div style="float: right; right:0px; padding: 10px 10px 0 0 ">
+<a href="/accounts/logout/" title="Выход">
+    <img src="{{ MEDIA_URL }}img/icons/stock_exit.png" />
+</a>
+</div>
+</div> 
 {% endblock %}
 {% block content %}
 
