@@ -1,7 +1,7 @@
 # -*- coding=utf-8 -*-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
@@ -9,7 +9,7 @@ from lib.qs_filter import QSFilter
 from datetime import datetime
 #from lib.exceptions import AccessDenied
 
-from data.models import OrderedItem, Brand, TrustedUsers, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
+from data.models import OrderedItem, Brand, TrustedUsers, Invoice, InvoiceItem, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
 from data.forms import OrderedItemsFilterForm, OrderedItemForm
 
 def get_status_options(mode='manager'):
@@ -192,10 +192,28 @@ def position_edit(request, id):
     
     return response
 
-def save_brand(obj, value):
-    obj.brand = value
-    obj.save()
-    return obj.brand.id
+@login_required
+def make_invoices(request):
+    access, mode = get_access(request)
+    if access and mode == 'manager':
+        pass
+    else: 
+        raise Http404
+    
+    items = OrderedItem.objects.filter(status='on_stock').order_by('po')
+    invoice = None
+    for item in items:
+        if not invoice or invoice.po != item.po.po:
+            invoice = Invoice(creator=request.user, po=item.po)
+            invoice.save()
+        invoice_item = InvoiceItem(invoice=invoice, ordered_item=item)
+        invoice_item.save()
+        item.status = 'shipped'
+        item.save()
+    return HttpResponseRedirect('/cp/')
+            
+        
+    
 
 from lib.decorators import render_as
 

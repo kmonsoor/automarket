@@ -83,8 +83,8 @@ ORDER_ITEM_STATUSES = (
                        ('out_of_stock',u'Нет на складе'),
                        ('back_order',u'Остаток'),
                        ('wrong_number',u'Неверный номер'),
-                       ('not_produce',u'Не производится'),
                        ('on_stock',u'Получено'),
+                       ('shipped',u'Отгружено'),
 )
 
 TRUSTED_USER_ORDER_ITEM_STATUSES = (
@@ -94,7 +94,7 @@ TRUSTED_USER_ORDER_ITEM_STATUSES = (
                        ('out_of_stock',u'Нет на складе'),
                        ('back_order',u'Остаток'),
                        ('wrong_number',u'Неверный номер'),
-                       ('not_produce',u'Не производится'),
+                       ('shipped',u'Отгружено'),
 )
 
 from data.managers import OrderedItemManager
@@ -218,6 +218,32 @@ class Balance(models.Model):
     payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
     deleted = models.DateTimeField(null=True, blank=True, default=None)
+#===============================================================================
+# # Balance (sketch?)
+# 
+# # Bill TO user
+# class Credit(models.Model):
+#    user = models.ForeignKey(User)
+#    invoice = models.ForeignKey(Invoice, null=True, blank=True)
+#    payment_for = models.CharField(maxlength=255)
+#    payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
+# 
+# # Payments from user
+# class Debit(models.Model):
+#    user = models.ForeignKey(User)
+#    payment_for = models.CharField(maxlength=255)
+#    payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
+#    created =models.DateTimeField(auto_now_add=True)
+# 
+# # A mozhet tak?
+# 
+# class Balance(models.Model):
+#    user = models.ForeignKey(User)
+#    payment_description = models.TextField()
+#    payment_sum = models.FloatField()
+#    created = models.DateTimeField(auto_now_add=True)
+#    deleted = models.DateTimeField(null=True, blank=True, default=None)
+#===============================================================================
     
 
 

@@ -13,7 +13,7 @@ var brands = new Array({{ brands }});
 {% endblock %}
 
 {% block content %}
-<div style="font-size: 16px; margin: 0 0 10px 0"><b><a href="/cp/">В виде таблицы</a></b> | <a href="/cp/groups/">По группам</a></div>
+<div style="font-size: 16px; margin: 0 0 10px 0"><b><a href="/cp/">В виде таблицы</a></b> | <a href="/cp/groups/">По группам</a> | <a href="/cp/make_invoices/" onclick="return confirm('Создать инвойсы?')">Создать инвойсы</a></div>
 {% if items %}
 <form method="{{ filter.method }}">
 <input type="hidden" name="qs_filter" value="1">
