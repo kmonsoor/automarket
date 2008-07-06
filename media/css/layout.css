@@ -57,13 +57,18 @@ body {
 }
 
 /*subnav*/
-
-#stylefour{position:relative;display:block;height:39px;font-size:11px;font-weight:bold;background:transparent url(../img/design/bgOFF.gif) repeat-x top left;font-family:Arial,Verdana,Helvitica,sans-serif;border-top: 4px solid #6495ED;}
+/*
+#stylefour{position:relative;display:block;height:39px;font-size:11px;font-weight:bold;background:transparent url(../img/design/bgOFF.gif) repeat-x top left;font-family:sans;border-top: 4px solid #6495ED;}
 #stylefour ul{margin:0;padding:0;list-style-type:none;width:auto;}
 #stylefour ul li{display:block;float:left;margin:0;}
 #stylefour ul li a{display:block;float:left;color:#666;text-decoration:none;padding:11px 20px 0 20px;height:23px;background:transparent url(../img/design/bgDIVIDER.gif) no-repeat top right;}
 #stylefour ul li a:hover,#stylefour ul li a.current{color:#B30000;background:#fff url(../img/design/bgON.gif) no-repeat top right;}
-
+*/
+#stylefour{position:relative;display:block;height:39px;font-size:11px;font-weight:bold;}
+#stylefour ul{margin:0;padding:0;list-style-type:none;width:auto;}
+#stylefour ul li{display:block;float:left;margin:0;}
+#stylefour ul li a{display:block;float:left;color:#0190BF;text-decoration:none;padding:11px 20px 0 20px;height:23px;}
+#stylefour ul li a:hover,#stylefour ul li a.current{color:#70C6FF;background:#fff;}
 
 #content-main { float:left; width:100%; }
 #content-related { float:right; width:18em; position:relative; margin-right:-19em; }

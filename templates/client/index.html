@@ -1,4 +1,4 @@
-212{% extends 'client_base.html' %}
+{% extends 'client_base.html' %}
 
 {% block extrahead %}
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/hangelists.css" />
@@ -11,27 +11,39 @@
 
 {% block page_title %}Мои заказы{% endblock %}
 {% block page_content %}
-<div class="module filtered" id="changelist">
-<div id="toolbar"><form id="changelist-search" action="" method="get">
-<div><!-- DIV needed for valid HTML -->
-<label for="searchbar">&nbsp;</label>
-<input type="text" size="40" name="q" value="" id="searchbar" />
-<input type="submit" value="Вперёд" />
-<p class="help">&nbsp;&nbsp;Поиск по OEM #, Производителю запчасти</p>
-
-
-</div>
-</form>
-</div>
-<script type="text/javascript">document.getElementById("searchbar").focus();</script>
-<p>&nbsp;</p>
-<table width="98%">
-	<thead>
+<div class="" id="changelist">
+<form method="{{ filter.method }}">
+<input type="hidden" name="qs_filter" value="1">
+<input type="submit" value="Фильтр">
+<input type="submit" name="qs_filter_clear" value="Очистить">
+Количество записей на странице: 
+<select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
+<option value="10"{% ifequal items_per_page 10 %} selected {% endifequal %}>10</option>
+<option value="15"{% ifequal items_per_page 15 %} selected {% endifequal %}>15</option>
+<option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
+</select>
+<table class="admin_table" style="border-top: 1px solid grey">
+	
 	<th>PO #</th>
     {% table_header_sort headers %}
-    </thead>
+    <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+    <td><nobr>{{ filter.form.po__po }} {{ filter.form.ponumber }}</nobr></td>
+    <td><!-- date --></td>
+    <td><!-- auto --></td>
+    <td>{{ filter.form.description__contains }}</td>
+    <td>{{ filter.form.side }}</td>
+    <td>{{ filter.form.brand__name__contains }}</td>
+    <td>{{ filter.form.part_number__contains }}</td>
+    <td>{{ filter.form.part_number_superseded__contains }}</td>
+    <td><nobr>{{ filter.form.price__gte }} {{ filter.form.price__lte }}</nobr></td>
+    <td><!-- QORD --></td>
+    <td><!-- QSHIP --></td>
+    <td>{{ filter.form.status }}</td>
+    <td><!-- status date --></td>
+    </tr>
+    
 	<tbody>
-	{% for i in orders %}
+	{% for i in items %}
 	<tr class="{% cycle row1,row2 %}">
 	<td>{{ i.get_numbered_po }}</td>
 	<td>{{ i.created|date:"m/d/Y" }}</td>

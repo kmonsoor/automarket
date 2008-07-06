@@ -77,7 +77,7 @@ def index(request):
     paginator = SimplePaginator(qs, items_per_page, '?page=%s')
     paginator.set_page(current_page)
     
-    response['orders'] = paginator.get_page()
+    response['items'] = paginator.get_page()
     response['paginator'] = paginator
     return response
 
