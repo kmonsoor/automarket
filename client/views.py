@@ -13,15 +13,34 @@ from data.models import Invoice, InvoiceItem
 
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
+from lib.qs_filter import QSFilter
 
 from client.forms import OrderItemForm, PoForm, ImportXlsForm
+from data.forms import OrderedItemsFilterForm
 
 @login_required
 @render_to('client/index.html')
 def index(request):
     response = {}
     response['current_action'] = 'index'
-     
+    # Set page number
+    current_page = request.GET.get('page', 1)
+    items_per_page = request.GET.get('items_per_page', None)
+    if not items_per_page:
+        items_per_page = request.session.get('items_per_page', None)
+    else:
+        request.session['items_per_page'] = items_per_page
+        request.session.modified = True
+    if not items_per_page:
+        items_per_page = 10
+    items_per_page = int(items_per_page)
+    response['items_per_page'] = items_per_page
+    # Set filter
+    filter = QSFilter(request, OrderedItemsFilterForm)
+    if filter.modified:
+        current_page = 1
+    response['filter'] = filter
+    # Set table headers sortable 
     LIST_HEADERS = (
                 ('Дата', 'created'),
                 ('Авто', None),
@@ -36,32 +55,34 @@ def index(request):
                 ('Статус', 'status'),
                 ('Статус изменен','status_modified')
                 )
-    sort_headers = SortHeaders(request, LIST_HEADERS, default_order_field='created', default_order_type='desc')
-    response['headers'] = list(sort_headers.headers())
-    field = LIST_HEADERS[int(request.GET.get('o',0))][1]
-    direction = request.GET.get('ot','desc')
-    directions = {'asc':'', 'desc':'-'}
-    field_order = '%s%s' % (directions[direction], field)
-
-    current_page = request.GET.get('page',1)
-    po_list = [x.id for x in Po.objects.filter(user=request.user)]
-    qs = OrderedItem.objects.filter(po__in=po_list).order_by(field_order)
-    # Filter
-    q = request.GET.get('q','').strip()
-    if len(q) > 0 :
-        qs = qs.filter(Q(part_number__icontains=q) | Q(brand__name__icontains=q))
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
     
-    paginator = SimplePaginator(qs, 25, '?page=%s')
+    order_by = '-created'
+    if order_field:
+        if order_direction == 'desc':
+            order_direction = '-'
+        else:
+            order_direction = ''            
+        order_by = order_direction + LIST_HEADERS[int(order_field)][1]
+
+    response['headers'] = list(sort_headers.headers())
+    
+    # Get queryset
+    qs = OrderedItem.objects.select_related().filter(po__user=request.user).filter(**filter.get_filters())
+    if order_by:
+        qs = qs.order_by(order_by)
+    
+    paginator = SimplePaginator(qs, items_per_page, '?page=%s')
     paginator.set_page(current_page)
     
-    response['field'] = field
-    response['direction'] = direction    
     response['orders'] = paginator.get_page()
     response['paginator'] = paginator
     return response
 
-@login_required
 @render_to('client/order.html')
+@login_required
 def order(request):
     message = ''
     response = {}

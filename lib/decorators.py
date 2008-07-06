@@ -40,4 +40,3 @@ def render_as(mimetype='text/html'):
             return HttpResponse(content=output, mimetype=mimetype)
         return wrapper
     return renderer
-            
