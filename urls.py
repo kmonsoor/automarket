@@ -1,7 +1,11 @@
+try:
+    from settings_local import MEDIA_ROOT
+except:
+    from django.conf.settings import MEDIA_ROOT
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('',
-    (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': '/home/dmitry/projects/automarket/media'}),
+    (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': MEDIA_ROOT}),
     (r'^admin/', include('django.contrib.admin.urls')),
 )
 
@@ -19,6 +23,7 @@ urlpatterns += patterns('cp.views',
     (r'^cp/position/edit/(?P<id>\d+)/$', 'position_edit'),
     (r'^cp/export/(?P<group_id>\d+)/$', 'export'),
     (r'^cp/make_invoices/$', 'make_invoices'),
+    (r'^cp/invoices/$', 'invoices'),
 )
 
 

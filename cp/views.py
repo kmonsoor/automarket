@@ -195,11 +195,9 @@ def position_edit(request, id):
 @login_required
 def make_invoices(request):
     access, mode = get_access(request)
-    if access and mode == 'manager':
-        pass
-    else: 
+    if not access or not mode == 'manager':
         raise Http404
-    
+           
     items = OrderedItem.objects.filter(status='on_stock').order_by('po')
     invoice = None
     for item in items:
@@ -210,9 +208,16 @@ def make_invoices(request):
         invoice_item.save()
         item.status = 'shipped'
         item.save()
-    return HttpResponseRedirect('/cp/')
+    return HttpResponseRedirect('/cp/invoices/')
             
-        
+@login_required
+@render_to('cp/invoices.html')
+def make_invoices(request): 
+    access, mode = get_access(request)
+    if not access or not mode == 'manager':
+        raise Http404
+    
+           
     
 
 from lib.decorators import render_as

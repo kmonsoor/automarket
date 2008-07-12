@@ -194,56 +194,18 @@ class InvoiceItem(models.Model):
     objects = InvoiceItemManager()
 
 
-# Balance (sketch?)
-
 # Bill TO user
-class Credit(models.Model):
+class Bill(models.Model):
     user = models.ForeignKey(User)
     invoice = models.ForeignKey(Invoice, null=True, blank=True)
     payment_for = models.CharField(maxlength=255)
     payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
+    created = models.DateTimeField(auto_now_add=True)
 
 # Payments from user
-class Debit(models.Model):
+class Payment(models.Model):
     user = models.ForeignKey(User)
     payment_for = models.CharField(maxlength=255)
     payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
-    created =models.DateTimeField(auto_now_add=True)
-
-# A mozhet tak?
-
-class Balance(models.Model):
-    user = models.ForeignKey(User)
-    payment_description = models.TextField()
-    payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
-    deleted = models.DateTimeField(null=True, blank=True, default=None)
-#===============================================================================
-# # Balance (sketch?)
-# 
-# # Bill TO user
-# class Credit(models.Model):
-#    user = models.ForeignKey(User)
-#    invoice = models.ForeignKey(Invoice, null=True, blank=True)
-#    payment_for = models.CharField(maxlength=255)
-#    payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
-# 
-# # Payments from user
-# class Debit(models.Model):
-#    user = models.ForeignKey(User)
-#    payment_for = models.CharField(maxlength=255)
-#    payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
-#    created =models.DateTimeField(auto_now_add=True)
-# 
-# # A mozhet tak?
-# 
-# class Balance(models.Model):
-#    user = models.ForeignKey(User)
-#    payment_description = models.TextField()
-#    payment_sum = models.FloatField()
-#    created = models.DateTimeField(auto_now_add=True)
-#    deleted = models.DateTimeField(null=True, blank=True, default=None)
-#===============================================================================
-    
-
 
