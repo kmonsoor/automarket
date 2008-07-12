@@ -212,7 +212,7 @@ def make_invoices(request):
             
 @login_required
 @render_to('cp/invoices.html')
-def make_invoices(request): 
+def invoices(request): 
     access, mode = get_access(request)
     if not access or not mode == 'manager':
         raise Http404
