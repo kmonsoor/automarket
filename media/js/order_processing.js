@@ -1,7 +1,18 @@
-var current = {'id':null,'type':null,'value':null, 'dict':null, 'display_value':null, 'canceled':false,'in_process':false};
+var current = null;
+var backend_url = null;
+
 function setDefaultCurrent() {
-	current = {'id':null,'type':null,'value':null, 'dict':null, 'display_value':null, 'canceled':false,'in_process':false};
+	current = {
+        'id':null,
+        'type':null,
+        'value':null, 
+        'dict':null, 
+        'display_value':null, 
+        'canceled':false,
+        'in_process':false
+        };	
 }
+setDefaultCurrent();
 
 function showCurrent() {
 	var a = '';
@@ -18,7 +29,7 @@ function save() {
     jQuery.ajax(
         {
             type: 'POST',
-            url: '/cp/position/edit/' + current.id + '/',
+            url: backend_url + current.id + '/',
             data: {
                     'type':current.type,
                     'value':value
@@ -28,6 +39,7 @@ function save() {
                 current.value = r[0]['value'];
 				setDisplayValue();
                 if (r[0]['error']) alert(r[0]['error']);
+				postSave();
                 close();
                 
             }
@@ -38,9 +50,8 @@ function save() {
 function setDisplayValue() {
 	if (current.dict) {
 		for (i in current.dict) {
-			item = current.dict[i];
-			if (item.id == current.value) {
-				current.display_value = item.name;
+			if (current.dict[i].id == current.value) {
+				current.display_value = current.dict[i].name;
 				break;
 			}
 		}
@@ -51,22 +62,19 @@ function setDisplayValue() {
 }
 
 function close() {
-    restore();
-    if (current.type == 'part_number_superseded') {
+    restore();  
+    setDefaultCurrent();
+}
+
+function postSave() {
+	if (current.type == 'part_number_superseded') {
         if (current.value.toString().length > 0) {
             editStatus(current.id, 'superseded');
         }
     }
-	if (current.type == 'brand') {
+    if (current.type == 'brand') {
         editStatus(current.id, 'superseded');
     } 
-    if (current.type == 'quantity_ship') {
-        jQuery('#quantity_backorder_' + current.id).html(parseInt(jQuery('#quantity_' + current.id).html()) - parseInt(jQuery('#quantity_ship_' + current.id).html()));
-    }
-	if (current.type == 'brand') {
-		jQuery('#brand_display_' + current.id).html(current.display_value);
-	}
-    setDefaultCurrent();
 }
 
 function restore() {
@@ -174,7 +182,7 @@ function editStatus(id, value) {
     jQuery.ajax(
         {
             type: 'POST',
-            url: '/cp/position/edit/' + id + '/',
+            url: backend_url + id + '/',
             data: {
                     'type':'status',
                     'value':value
@@ -187,5 +195,52 @@ function editStatus(id, value) {
                 close();
             }
         });
+    
+}
+
+
+function editPlacesNum(id) {
+	if (return_check(id, 'places_num')) return;
+    if (current.id) close();
+    current.type = 'places_num'; 
+    current.value = jQuery('#places_num_'+id).html();
+    current.display_value = jQuery('#places_num_display_'+id).html();
+    current.id = id;
+    jQuery('#places_num_display_'+id).html('<input id="places_num_input_' + id + '" type="text" value="' + current.value + '">');
+	jQuery('#places_num_buttons_'+id).css("display","block");
+}
+
+function editWeightKg(id) {
+	if (return_check(id, 'weight_kg')) return;
+    if (current.id) close();
+    current.type = 'weight_kg'; 
+    current.value = jQuery('#weight_kg_'+id).html();
+    current.display_value = jQuery('#weight_kg_display_'+id).html();
+    current.id = id;
+    jQuery('#weight_kg_display_'+id).html('<input id="weight_kg_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#weight_kg_buttons_'+id).css("display","block");
+}
+
+function editShippingCost(id) {
+	if (return_check(id, 'shipping_cost')) return;
+    if (current.id) close();
+    current.type = 'shipping_cost'; 
+    current.value = jQuery('#shipping_cost_'+id).html();
+    current.display_value = jQuery('#shipping_cost_display_'+id).html();
+    current.id = id;
+    jQuery('#shipping_cost_display_'+id).html('<input id="shipping_cost_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#shipping_cost_buttons_'+id).css("display","block");
+}
+
+function editQuantity(id) {
+    if (return_check(id, 'quantity')) return;
+    if (current.id) close();
+    current.type = 'quantity'; 
+    current.value = jQuery('#quantity_'+id).html();
+    current.display_value = jQuery('#quantity_display_'+id).html();
+    current.id = id;
+    
+    jQuery('#quantity_display_'+id).html('<input id="quantity_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#quantity_buttons_'+id).css("display","inline");
     
 }

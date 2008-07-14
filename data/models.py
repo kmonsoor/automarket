@@ -190,7 +190,7 @@ class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice)
     ordered_item = models.ForeignKey(OrderedItem)
     quantity = models.IntegerField(default=0)
-    
+    price = models.FloatField(max_digits=15, decimal_places=2,  null=True, blank=True, verbose_name="Цена")
     objects = InvoiceItemManager()
 
 

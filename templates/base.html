@@ -19,7 +19,7 @@ function showPopUp( url, winx, winy, name, scroll ) {
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/action_links.css" />
 {% block extrahead %}{% endblock %}
 </head>
-<body>
+<body{% block extrabody %}{% endblock %}>
 <div id="container">
 <div id="header">{% block header %}{% endblock %}</div>
 <div id="content">

@@ -34,6 +34,36 @@ class OrderedItemForm(forms.Form):
         else:
             return self.clean_data['price']
         
-
+class InvoiceFilterForm(forms.Form):
+    po_po = forms.CharField()
+    
+class InvoiceForm(forms.Form):
+    places_num = forms.IntegerField(required=False)
+    weight_kg = forms.CharField(required=False)
+    shipping_cost = forms.CharField(required=False)
+    
+    def clean_shipping_cost(self):
+        if self.clean_data['shipping_cost']:
+            try:
+                value = float(self.clean_data['shipping_cost'])
+            except:
+                raise forms.ValidationError('This field requires a decimal value.')
+            return value
+        else:
+            return self.clean_data['shipping_cost']
+        
+class InvoiceItemForm(forms.Form):
+    price = forms.CharField(required=False)
+    quantity = forms.IntegerField(required=False)
+    
+    def clean_price(self):
+        if self.clean_data['price']:
+            try:
+                value = float(self.clean_data['price'])
+            except:
+                raise forms.ValidationError('This field requires a decimal value.')
+            return value
+        else:
+            return self.clean_data['price']
         
     

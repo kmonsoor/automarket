@@ -20,10 +20,11 @@ urlpatterns += patterns('cp.views',
     (r'^cp/$', 'index'),
     (r'^client/cp/$', 'index'),
     (r'^cp/groups/$', 'groups'),
-    (r'^cp/position/edit/(?P<id>\d+)/$', 'position_edit'),
+    (r'^cp/position/edit/(?P<content_type>\w+)/(?P<id>\d+)/$', 'position_edit'),
     (r'^cp/export/(?P<group_id>\d+)/$', 'export'),
     (r'^cp/make_invoices/$', 'make_invoices'),
     (r'^cp/invoices/$', 'invoices'),
+    (r'^cp/invoice/(?P<id>\d+)/$', 'invoice'),
 )
 
 

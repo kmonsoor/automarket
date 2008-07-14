@@ -1,16 +1,18 @@
 # -*- coding=utf-8 -*-
+from datetime import datetime
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.http import Http404, HttpResponseRedirect
+
 from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from datetime import datetime
-#from lib.exceptions import AccessDenied
+from lib.helpers import next
 
-from data.models import OrderedItem, Brand, TrustedUsers, Invoice, InvoiceItem, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
-from data.forms import OrderedItemsFilterForm, OrderedItemForm
+from data.models import OrderedItem, Brand, TrustedUsers, Invoice, InvoiceItem, Bill, Payment, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
+from data.forms import OrderedItemsFilterForm, OrderedItemForm, InvoiceFilterForm, InvoiceForm, InvoiceItemForm
 
 def get_status_options(mode='manager'):
     if mode == 'manager':
@@ -43,6 +45,7 @@ def get_access(request):
 @login_required
 @render_to('cp/index.html')
 def index(request):
+    print datetime.now()
     access, mode = get_access(request)
     if not access:
         raise Http404
@@ -50,9 +53,9 @@ def index(request):
     current_page = request.GET.get('page', 1)
     items_per_page = request.GET.get('items_per_page', None)
     if not items_per_page:
-        items_per_page = request.session.get('items_per_page', None)
+        items_per_page = request.session.get('cp_index_items_per_page', None)
     else:
-        request.session['items_per_page'] = items_per_page
+        request.session['cp_index_items_per_page'] = items_per_page
         request.session.modified = True
     if not items_per_page:
         items_per_page = 10
@@ -90,10 +93,9 @@ def index(request):
     context['headers'] = list(sort_headers.headers())
     
     
-    qs = OrderedItem.objects.select_related().filter(**filter.get_filters())
+    qs = OrderedItem.objects.select_related().filter(**filter.get_filters()).exclude(status='shipped')
     if mode == 'trusted_user': 
-        qs = qs.filter(po__user = request.user)
-        
+        qs = qs.filter(po__user = request.user) 
     if order_by:
         qs = qs.order_by(order_by)
     paginator = SimplePaginator(qs, items_per_page, '?page=%s')
@@ -122,51 +124,115 @@ def groups(request):
             'mode':mode,
             }
 
-@ajax_request
-def position_edit(request, id):
+
+class OrderedItemSaver(object):
+    error = None
+    def save_brand(self, obj, value):
+        try:
+            obj.brand = Brand.objects.get(id=value)
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.brand.id
     
-    class FieldSaver(object):
-        def save_brand(self, obj, value):
-            try:
-                obj.brand = Brand.objects.get(id=value)
-                obj.save()
-            except Exception, e:
-                pass
-            return obj.brand.id
-        
-        def save_part_number_superseded(self, obj, value):
-            try:
-                obj.part_number_superseded = value
-                obj.save()
-            except Exception, e:
-                pass
-            return obj.part_number_superseded
-        
-        def save_price(self, obj, value):
-            try:
-                obj.price = value
-                obj.save()
-            except Exception, e:
-                pass
-            return obj.price
-        
-        def save_quantity_ship(self, obj, value):
-            try:
-                obj.quantity_ship = value
-                obj.save()
-            except Exception, e:
-                pass
-            return obj.quantity_ship
-        
-        def save_status(self, obj, value):
-            try:
-                obj.status = value
-                obj.save()
-            except Exception, e:
-                pass
-            return obj.status
-        
-    item = get_object_or_404(OrderedItem, id=id)
+    def save_part_number_superseded(self, obj, value):
+        try:
+            obj.part_number_superseded = value
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.part_number_superseded
+    
+    def save_price(self, obj, value):
+        try:
+            obj.price = value
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.price
+    
+    def save_quantity_ship(self, obj, value):
+        try:
+            if obj.quantity < value:
+                self.error = 'quantity_ship value can not be more than quantity (quantity: %s, entered: %s)' % (obj.quantity, value)
+                return obj.quantity_ship
+            obj.quantity_ship = value
+            obj.save()
+        except Exception, e:
+            self.error = e
+        return obj.quantity_ship
+    
+    def save_status(self, obj, value):
+        try:
+            obj.status = value
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.status
+
+class InvoiceSaver(object):
+    error = None
+    def save_places_num(self, obj, value):
+        try:
+            obj.places_num = value
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.places_num
+    
+    def save_weight_kg(self, obj, value):
+        try:
+            obj.weight_kg = value
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.weight_kg
+    
+    def save_shipping_cost(self, obj, value):
+        try:
+            obj.shipping_cost = value
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.shipping_cost
+
+class InvoiceItemSaver(object):
+    error = None
+    def save_price(self, obj, value):
+        try:
+            obj.price = value
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.price
+    
+    def save_quantity(self, obj, value):
+        try:
+            obj.quantity = value
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.quantity
+
+@ajax_request
+def position_edit(request, content_type, id):
+    models = {
+              'ordered_item':OrderedItem,
+              'invoice':Invoice,
+              'invoice_item':InvoiceItem,
+              }
+    forms = {
+              'ordered_item':OrderedItemForm,
+              'invoice':InvoiceForm,
+              'invoice_item':InvoiceItemForm,
+              }
+    savers = {
+              'ordered_item':OrderedItemSaver,
+              'invoice':InvoiceSaver,
+              'invoice_item':InvoiceItemSaver,
+              }
+    print content_type
+    item = get_object_or_404(models[content_type], id=id)
     response = {}
     try:
         old_value = getattr(item, request.POST['type'])
@@ -175,7 +241,7 @@ def position_edit(request, id):
         response['error'] = 'Attribute does not exist'
         return response 
     
-    form = OrderedItemForm({request.POST['type']:request.POST['value']})
+    form = forms[content_type]({request.POST['type']:request.POST['value']})
     if form.is_valid():
         try:
             value = form.clean_data[request.POST['type']]
@@ -183,9 +249,9 @@ def position_edit(request, id):
             response['error'] = e
             return response
         
-        response['value'] = getattr(FieldSaver(), 'save_' + request.POST['type'])(item, value)
-
-        
+        saver = savers[content_type]()
+        response['value'] = getattr(saver, 'save_' + request.POST['type'])(item, value)
+        response['error'] = saver.error      
     else:
         response['value'] = old_value and str(old_value) or ''
         response['error'] = 'Wrong value!'
@@ -199,15 +265,26 @@ def make_invoices(request):
         raise Http404
            
     items = OrderedItem.objects.filter(status='on_stock').order_by('po')
+    #invoices 
     invoice = None
     for item in items:
-        if not invoice or invoice.po != item.po.po:
+        if not invoice or invoice.po.po != item.po.po:
             invoice = Invoice(creator=request.user, po=item.po)
-            invoice.save()
-        invoice_item = InvoiceItem(invoice=invoice, ordered_item=item)
-        invoice_item.save()
-        item.status = 'shipped'
-        item.save()
+            invoice.saved = False
+        if item.quantity_ship and item.price:
+            if not invoice.saved:
+                invoice.save()
+                invoice.saved = True
+            price = float(item.price * item.quantity_ship)
+            invoice.invoiceitem_set.create(ordered_item=item, quantity=item.quantity_ship, price=price)
+            
+            if item.quantity_ship < item.quantity:
+                new_item = OrderedItem(po=item.po, ponumber=item.ponumber, car_maker=item.car_maker, car_model=item.car_model, year=item.year, engine_volume=item.engine_volume, side=item.side, part_number=item.part_number, part_number_superseded=item.part_number_superseded, price=item.price, status=item.status, description=item.description, brand=item.brand, created=item.created, status_modified=item.status_modified, confirmed=item.confirmed, comments=item.comments)
+                new_item.quantity = item.quantity - item.quantity_ship
+                new_item.quantity_ship = 0
+                new_item.save()
+            item.status = 'shipped'
+            item.save()
     return HttpResponseRedirect('/cp/invoices/')
             
 @login_required
@@ -217,8 +294,64 @@ def invoices(request):
     if not access or not mode == 'manager':
         raise Http404
     
-           
+    current_page = request.GET.get('page', 1)
+    items_per_page = request.GET.get('items_per_page', None)
+    if not items_per_page:
+        items_per_page = request.session.get('invoices_items_per_page', None)
+    else:
+        request.session['invoices_items_per_page'] = items_per_page
+        request.session.modified = True
+    if not items_per_page:
+        items_per_page = 10
     
+    qs_filter = QSFilter(request, InvoiceFilterForm)
+    if qs_filter.modified:
+        current_page = 1
+    LIST_HEADERS = (
+                    ('ID', None),
+                    ('PO', None),
+                    ('Дата', 'created'),                  
+                    ('places_num', 'places_num'),
+                    ('weight_kg', 'weight_kg'),
+                    ('shipping_cost', 'shipping_cost'),
+                    ('Actions', None),
+                    )
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
+    order_by = '-created'
+    if order_field:
+        if order_direction == 'desc':
+            order_direction = '-'
+        else:
+            order_direction = ''            
+        order_by = order_direction + LIST_HEADERS[int(order_field)][1]
+
+    headers = list(sort_headers.headers())
+    
+    invoices = Invoice.objects.filter(**qs_filter.get_filters()).order_by(order_by)
+    paginator = SimplePaginator(invoices, items_per_page, '?page=%s')
+    paginator.set_page(current_page)
+    
+    return {
+            'items_per_page':items_per_page,
+            'filter':qs_filter,
+            'headers':headers,
+            'invoices':invoices,
+            'next':next(request),
+            'paginator':paginator,
+            }
+
+@login_required  
+@render_to('cp/invoice.html')         
+def invoice(request, id):    
+    access, mode = get_access(request)
+    if not access or not mode == 'manager':
+        raise Http404
+    inv = get_object_or_404(Invoice, id=id)
+    return {
+            'invoice':inv,
+            }
 
 from lib.decorators import render_as
 

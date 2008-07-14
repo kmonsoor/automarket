@@ -10,6 +10,7 @@ var caller = 'groups';
 </script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
 <script>
+backend_url = '/cp/position/edit/ordered_item/';
 function hideRow(id, group_id) {
     if (document.getElementById('status_input_' + id).value != 'order') {
         jQuery('#row_' + id).css('display', 'none'); 

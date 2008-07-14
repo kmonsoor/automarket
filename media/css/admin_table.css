@@ -25,6 +25,10 @@
 	color: white;
 }
 
+A.black {
+    color: black;
+}
+
 .admin_table TD.editable{
 	background: #DCDCDC;
 	cursor: pointer;
