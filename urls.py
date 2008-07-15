@@ -1,13 +1,26 @@
-try:
-    from settings_local import MEDIA_ROOT
-except:
-    from django.conf.settings import MEDIA_ROOT
+# -*- coding=utf-8 -*-
+
 from django.conf.urls.defaults import *
 
-urlpatterns = patterns('',
-    (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': MEDIA_ROOT}),
+try:
+    from settings_local import MEDIA_ROOT
+    DEVELOPMENT_MODE = True
+except:
+    from django.conf.settings import MEDIA_ROOT
+    DEVELOPMENT_MODE = False
+
+urlpatterns = patterns('',)
+
+if DEVELOPMENT_MODE:
+    urlpatterns += patterns('',
+        (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': MEDIA_ROOT}),
+    )    
+
+
+urlpatterns += patterns('',
     (r'^admin/', include('django.contrib.admin.urls')),
 )
+
 
 urlpatterns += patterns('common.views',
     (r'^$', 'start'),
