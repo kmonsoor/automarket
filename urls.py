@@ -16,7 +16,6 @@ if DEVELOPMENT_MODE:
         (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': MEDIA_ROOT}),
     )    
 
-
 urlpatterns += patterns('',
     (r'^admin/', include('django.contrib.admin.urls')),
 )

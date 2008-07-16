@@ -45,7 +45,6 @@ def get_access(request):
 @login_required
 @render_to('cp/index.html')
 def index(request):
-    print datetime.now()
     access, mode = get_access(request)
     if not access:
         raise Http404
@@ -75,7 +74,7 @@ def index(request):
                     ('Superseded', 'part_number_superseded'),
                     ('Price', 'price'),
                     ('QTY', 'quantity'),
-                    ('QTY SH', 'quantity_ship'),
+                    ('SHP', 'quantity_ship'),
                     ('Status', 'status'),
                     )
     sort_headers = SortHeaders(request, LIST_HEADERS)
@@ -231,12 +230,10 @@ def position_edit(request, content_type, id):
               'invoice':InvoiceSaver,
               'invoice_item':InvoiceItemSaver,
               }
-    print content_type
     item = get_object_or_404(models[content_type], id=id)
     response = {}
     try:
         old_value = getattr(item, request.POST['type'])
-        #print old_value
     except:
         response['error'] = 'Attribute does not exist'
         return response 
@@ -283,7 +280,7 @@ def make_invoices(request):
                 new_item.quantity = item.quantity - item.quantity_ship
                 new_item.quantity_ship = 0
                 new_item.save()
-            item.status = 'shipped'
+            item.status = 'back_order'
             item.save()
     return HttpResponseRedirect('/cp/invoices/')
             

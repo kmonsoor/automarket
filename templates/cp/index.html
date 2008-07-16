@@ -22,16 +22,15 @@ backend_url = '/cp/position/edit/ordered_item/';
 <a href="/cp/make_invoices/" onclick="return confirm('Создать инвойсы?')">Создать инвойсы</a> |
 <a href="/cp/invoices/">Инвойсы</a>
 </div>
-{% if items %}
 <form method="{{ filter.method }}">
 <input type="hidden" name="qs_filter" value="1">
 <input type="submit" value="Фильтр">
 <input type="submit" name="qs_filter_clear" value="Очистить">
 Количество записей на странице: 
 <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
-<option value="10"{% ifequal items_per_page 10 %} selected {% endifequal %}>10</option>
-<option value="15"{% ifequal items_per_page 15 %} selected {% endifequal %}>15</option>
-<option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
+<option value="20"{% ifequal items_per_page 10 %} selected {% endifequal %}>10</option>
+<option value="50"{% ifequal items_per_page 15 %} selected {% endifequal %}>15</option>
+<option value="100"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
 </select>
 <table class="admin_table">
 <tr>
@@ -114,8 +113,5 @@ backend_url = '/cp/position/edit/ordered_item/';
 {% endfor %}
 </table>
 </form>
-{% else %}
-Нет ни одной записи
-{% endif %}
 {% include "paginator.html" %}
 {% endblock %}
