@@ -1,6 +1,7 @@
 # -*- coding=UTF-8 -*-
 
 from django.db import models
+
 from django.contrib.auth.models import User
 
 from data.managers import *
@@ -10,11 +11,20 @@ import datetime, time
 class Po(models.Model):
     user = models.ForeignKey(User, verbose_name="Пользователь")
     po = models.CharField(maxlength=255, verbose_name="Буквенная часть РО")
+    
     class Meta:
         verbose_name = 'PO'
         verbose_name_plural = 'PO'
+    
+    def get_po_tariff_link(self):
+        return '<a href="/admin/po/tariff/%d/">Установить тарифы</a>' % self.id
+    
+    get_po_tariff_link.allow_tags = True
+    get_po_tariff_link.short_description = 'Дополнительные действия'
+    
     class Admin:
-        pass
+        list_display = ('po','user','get_po_tariff_link')
+        
     def __str__(self):
         return '%s: %s' % (self.user.username, self.po)
 
@@ -209,3 +219,54 @@ class Payment(models.Model):
     payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
 
+class Tarif(models.Model):
+    po = models.ForeignKey(Po, verbose_name='PO')
+    default_value = models.FloatField(max_digits=15, decimal_places=2, verbose_name='Множитель по умолчанию', default=1, blank=True)
+    
+    def __str__(self):
+        return '%s (%d)' % ( self.po, self.id )
+
+class TarifClass(models.Model):
+    tarif = models.ForeignKey(Tarif, verbose_name='Тариф', editable=False)
+    brand = models.ForeignKey(Brand, verbose_name='Производитель', editable=False)
+    value = models.FloatField(max_digits=15, decimal_places=2, verbose_name='Множитель', default=1, blank=True)
+    
+    def __str__(self):
+        return '%s - %s' % (self.tarif, self.brand)
+    
+    class Meta:
+        verbose_name = 'тарифный план'
+        verbose_name_plural = 'Tарифные планы'
+        unique_together = (('tarif', 'brand'),)
+    
+    class Admin:
+        list_display = ('tarif','brand', 'value')
+        list_filter = ('brand',)
+        search_fields = ('tarif.po',)
+    
+               
+
+def createTarifClasses(po):
+    tarif, created = Tarif.objects.get_or_create(po=po)
+    brands = Brand.objects.all()        
+    for b in brands:
+        tc, created = TarifClass.objects.get_or_create(brand=b, tarif=tarif)
+
+
+from django.dispatch import dispatcher  
+from django.db.models import signals 
+
+
+def on_po_save(sender, instance, signal, *args, **kwargs):
+    if 'created' in kwargs:  
+        if kwargs['created']:
+            createTarifClasses(instance)
+dispatcher.connect(on_po_save, signal=signals.post_save, sender=Po)
+
+def on_brand_save(sender, instance, signal, *args, **kwargs):
+    if 'created' in kwargs:
+        if kwargs['created']:
+            for po in Po.objects.all():
+                tarif, created = Tarif.objects.get_or_create(po=po)
+                tc, created = TarifClass.objects.get_or_create(brand=instance, tarif=tarif)
+dispatcher.connect(on_brand_save, signal=signals.post_save, sender=Brand)

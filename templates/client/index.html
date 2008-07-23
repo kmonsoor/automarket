@@ -1,7 +1,7 @@
 {% extends 'client_base.html' %}
 
 {% block extrahead %}
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/hangelists.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/changelists.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />
 
@@ -18,12 +18,14 @@
 <input type="submit" name="qs_filter_clear" value="Очистить">
 Количество записей на странице: 
 <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
-<option value="10"{% ifequal items_per_page 10 %} selected {% endifequal %}>10</option>
-<option value="15"{% ifequal items_per_page 15 %} selected {% endifequal %}>15</option>
-<option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
+<option value="10"{% ifequal items_per_page 10 %} selected {% endifequal %}>20</option>
+<option value="15"{% ifequal items_per_page 15 %} selected {% endifequal %}>50</option>
+<option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>100</option>
 </select>
-<table class="admin_table" style="border-top: 1px solid grey">
-	
+
+<div class="module" id="changelist">
+<table>
+	<thead>
 	<th>PO #</th>
     {% table_header_sort headers %}
     <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
@@ -41,7 +43,7 @@
     <td>{{ filter.form.status }}</td>
     <td><!-- status date --></td>
     </tr>
-    
+    </thead>
 	<tbody>
 	{% for i in items %}
 	<tr class="{% cycle row1,row2 %}">
@@ -87,5 +89,5 @@
 
 	</tbody>
 	</table>
-
+</div>
 {% endblock %}

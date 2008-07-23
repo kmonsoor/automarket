@@ -17,15 +17,25 @@ function showPopUp( url, winx, winy, name, scroll ) {
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/global.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/layout.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/action_links.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />
 {% block extrahead %}{% endblock %}
 </head>
 <body{% block extrabody %}{% endblock %}>
-<div id="container">
-<div id="header">{% block header %}{% endblock %}</div>
+<!--  div id="container" -->
+{% block header %}
+<div id="header">
+    <div id="branding">
+        <h1 id="site-name">{% block global_title %}{% endblock %}</h1>
+    </div>
+    {% block global_menu %}{% endblock %}
+    <div id="user-tools">
+    Добро пожаловать, <strong>{{ user.username }}</strong>   |   <a href="/accounts/logout/">Выход</a></div>
+</div> 
+{% endblock %}
 <div id="content">
 {% block content %}{% endblock %}
 </div>
-</div>
+<!-- /div -->
 <div id="footer">
 {% block footer %}{% endblock %}
 <span class="copy">&nbsp;</span> 

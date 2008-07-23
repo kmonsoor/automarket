@@ -13,64 +13,47 @@ var brands = [
 <script>
 backend_url = '/cp/position/edit/ordered_item/';
 </script>
+
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/changelists.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />
+
+
 {% endblock %}
 
 {% block content %}
-<div style="font-size: 16px; margin: 0 0 10px 0">
-<b><a href="/cp/">В виде таблицы</a></b> | 
-<a href="/cp/groups/">По группам</a> | 
-<a href="/cp/make_invoices/" onclick="return confirm('Создать инвойсы?')">Создать инвойсы</a> |
-<a href="/cp/invoices/">Инвойсы</a>
-</div>
+
 <form method="{{ filter.method }}">
 <input type="hidden" name="qs_filter" value="1">
 <input type="submit" value="Фильтр">
 <input type="submit" name="qs_filter_clear" value="Очистить">
 Количество записей на странице: 
 <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
-<option value="20"{% ifequal items_per_page 10 %} selected {% endifequal %}>10</option>
-<option value="50"{% ifequal items_per_page 15 %} selected {% endifequal %}>15</option>
-<option value="100"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
+<option value="20"{% ifequal items_per_page 10 %} selected {% endifequal %}>20</option>
+<option value="50"{% ifequal items_per_page 15 %} selected {% endifequal %}>50</option>
+<option value="100"{% ifequal items_per_page 20 %} selected {% endifequal %}>100</option>
 </select>
-<table class="admin_table">
-<tr>
-{% table_header_sort headers %}
-</tr>
+
+<div class="module" id="changelist">
+
+<table>
+<thead>
+<tr>{% table_header_sort headers %}</tr>
 <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
-<td>
-<nobr>{{ filter.form.po__po }} {{ filter.form.ponumber }}</nobr>
-</td>
-<td>
-&nbsp;
-</td>
-<td>
-{{ filter.form.description__contains }}
-</td>
-<td>
-{{ filter.form.side }}
-</td>
-<td>
-{{ filter.form.brand__name__contains }}
-</td>
-<td>
-{{ filter.form.part_number__contains }}
-</td>
-<td>
-{{ filter.form.part_number_superseded__contains }}
-</td>
-<td>
-<nobr>{{ filter.form.price__gte }} {{ filter.form.price__lte }}</nobr>
-</td>
-<td>
-{{ filter.form.quantity }}
-</td>
-<td>
-{{ filter.form.quantity_ship }}
-</td>
-<td>
-{{ filter.form.status }}
-</td>
+<td><nobr>{{ filter.form.po__po }} {{ filter.form.ponumber }}</nobr></td>
+<td>&nbsp;</td>
+<td>{{ filter.form.description__contains }}</td>
+<td>{{ filter.form.side }}</td>
+<td>{{ filter.form.brand__name__contains }}</td>
+<td>{{ filter.form.part_number__contains }}</td>
+<td>{{ filter.form.part_number_superseded__contains }}</td>
+<td><nobr>{{ filter.form.price__gte }} {{ filter.form.price__lte }}</nobr></td>
+<td>{{ filter.form.quantity }}</td>
+<td>{{ filter.form.quantity_ship }}</td>
+<td>{{ filter.form.status }}</td>
 </tr>
+</thead>
+<tbody>
 {% for i in items %}
 <tr>
 <td>{{ i.get_numbered_po|default:"&nbsp;" }}</td>
@@ -111,7 +94,11 @@ backend_url = '/cp/position/edit/ordered_item/';
 </td>
 </tr>
 {% endfor %}
+</tbody>
 </table>
+
+</div>
+
 </form>
 {% include "paginator.html" %}
 {% endblock %}

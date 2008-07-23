@@ -8,13 +8,13 @@ class OrderedItemsFilterForm(forms.Form):
     ponumber = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
     description__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
     status = forms.ChoiceField(label=u'Статус', choices=(('',u''),)+ORDER_ITEM_STATUSES, required=False, widget=forms.Select(attrs={'class':'qs_filter'}))
-    part_number__contains = forms.CharField(label=u'Part #', required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    part_number_superseded__contains = forms.CharField(label=u'part_number_superseded', required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+    part_number__contains = forms.CharField(label=u'Part #', required=False, widget=forms.TextInput(attrs={'size':12,'class':'qs_filter'}))
+    part_number_superseded__contains = forms.CharField(label=u'part_number_superseded', required=False, widget=forms.TextInput(attrs={'size':12,'class':'qs_filter'}))
     price__gte = forms.CharField(label=u'Цена, от', required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
     price__lte = forms.CharField(label=u'Цена, до', required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
     quantity = forms.IntegerField(label=u'QTY', required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
     quantity_ship = forms.IntegerField(label=u'QTY BO', required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
-    brand__name__contains = forms.CharField(label=u'Brand', required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+    brand__name__contains = forms.CharField(label=u'Brand', required=False, widget=forms.TextInput(attrs={'size':8,'class':'qs_filter'}))
     side = forms.ChoiceField(label=u'Сторона', choices=CAR_SIDES, required=False, widget=forms.Select(attrs={'class':'qs_filter'}))
     
 class OrderedItemForm(forms.Form):
