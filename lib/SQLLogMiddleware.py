@@ -54,7 +54,7 @@ class SQLLogMiddleware:
             q["seen"]=c
             seen[sql]=c + 1
             
-        t = Template(u'''
+        t = Template('''
             <p>
              <em>request.path:</em> {{ request.path|escape }}<br />
              <em>Total query count:</em> {{ queries|length }}<br/>

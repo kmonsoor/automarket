@@ -1,0 +1,18 @@
+{% extends 'client_base.html' %}
+
+{% block page_title %}Инвойсы{% endblock %}
+{% block page_content %}
+<div class="module filtered" id="changelist">
+<div id="toolbar"><form id="changelist-search" action="" method="get">
+<div><!-- DIV needed for valid HTML -->
+<label for="searchbar">&nbsp;</label>
+<input type="text" size="40" name="q" value="" id="searchbar" />
+<input type="submit" value="Вперёд" />
+<p class="help">&nbsp;&nbsp;Поиск по PO</p>
+</div>
+</form>
+</div>
+<script type="text/javascript">document.getElementById("searchbar").focus();</script>
+<p>&nbsp;</p>
+
+{% endblock %}

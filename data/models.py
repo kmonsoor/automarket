@@ -17,7 +17,7 @@ class Po(models.Model):
         verbose_name_plural = 'PO'
     
     def get_po_tariff_link(self):
-        return '<a href="/admin/po/tariff/%d/">Установить тарифы</a>' % self.id
+        return '<a href="/admin/data/po/tarif/%d/">Установить тарифы</a>' % self.id
     
     get_po_tariff_link.allow_tags = True
     get_po_tariff_link.short_description = 'Дополнительные действия'
@@ -87,24 +87,24 @@ class Brand(models.Model):
 CAR_SIDES = (('',''),('R','R'),('L','L'),)
 
 ORDER_ITEM_STATUSES = (
-                       ('order',u'Новый заказ'),
-                       ('in_processing',u'В работе'),
-                       ('superseded',u'Замена'),
-                       ('out_of_stock',u'Нет на складе'),
-                       ('back_order',u'Остаток'),
-                       ('wrong_number',u'Неверный номер'),
-                       ('on_stock',u'Получено'),
-                       ('shipped',u'Отгружено'),
+                       ('order','Новый заказ'),
+                       ('in_processing','В работе'),
+                       ('superseded','Замена'),
+                       ('out_of_stock','Нет на складе'),
+                       ('back_order','Остаток'),
+                       ('wrong_number','Неверный номер'),
+                       ('on_stock','Получено'),
+                       ('shipped','Отгружено'),
 )
 
 TRUSTED_USER_ORDER_ITEM_STATUSES = (
-                       ('order',u'Новый заказ'),
-                       ('in_processing',u'В работе'),
-                       ('superseded',u'Замена'),
-                       ('out_of_stock',u'Нет на складе'),
-                       ('back_order',u'Остаток'),
-                       ('wrong_number',u'Неверный номер'),
-                       ('shipped',u'Отгружено'),
+                       ('order','Новый заказ'),
+                       ('in_processing','В работе'),
+                       ('superseded','Замена'),
+                       ('out_of_stock','Нет на складе'),
+                       ('back_order','Остаток'),
+                       ('wrong_number','Неверный номер'),
+                       ('shipped','Отгружено'),
 )
 
 from data.managers import OrderedItemManager
@@ -188,13 +188,13 @@ User.add_to_class('is_trusted', is_trusted)
 
 # Invoices model
 class Invoice(models.Model):
-    creator = models.ForeignKey(User, verbose_name=u'Создатель инвойса', related_name='invoice_creator')
-    po = models.ForeignKey(Po, verbose_name=u'Po', related_name='invoice_po')
+    creator = models.ForeignKey(User, verbose_name='Создатель инвойса', related_name='invoice_creator')
+    po = models.ForeignKey(Po, verbose_name='Po', related_name='invoice_po')
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    places_num = models.IntegerField(blank=True, null=True, verbose_name=u"Количество мест")
-    weight_kg = models.FloatField(blank=True, null=True, verbose_name=u"Количество кг", max_digits=15, decimal_places=3)
-    shipping_cost = models.FloatField(blank=True, null=True, verbose_name=u"Стоимость доставки", max_digits=15, decimal_places=2)
+    places_num = models.IntegerField(blank=True, null=True, verbose_name="Количество мест")
+    weight_kg = models.FloatField(blank=True, null=True, verbose_name="Количество кг", max_digits=15, decimal_places=3)
+    shipping_cost = models.FloatField(blank=True, null=True, verbose_name="Стоимость доставки", max_digits=15, decimal_places=2)
 
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice)

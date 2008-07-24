@@ -42,8 +42,8 @@ def get_access(request):
         mode = 'manager'
     return (access, mode)
 
-@login_required
 @render_to('cp/index.html')
+@login_required
 def index(request):
     access, mode = get_access(request)
     if not access:
@@ -284,8 +284,8 @@ def make_invoices(request):
             item.save()
     return HttpResponseRedirect('/cp/invoices/')
             
-@login_required
 @render_to('cp/invoices.html')
+@login_required
 def invoices(request): 
     access, mode = get_access(request)
     if not access or not mode == 'manager':
@@ -339,8 +339,8 @@ def invoices(request):
             'paginator':paginator,
             }
 
+@render_to('cp/invoice.html')
 @login_required  
-@render_to('cp/invoice.html')         
 def invoice(request, id):    
     access, mode = get_access(request)
     if not access or not mode == 'manager':

@@ -84,7 +84,7 @@ class readexcel(object):
                 for j, var in enumerate(headings): 
                     # replace duplicate headings with "F#". 
                     if not var or var in keys: 
-                        var = u'F%s' % (j) 
+                        var = 'F%s' % (j) 
                     keys.append(var.strip()) 
                 first_row_index = i + 1 
                 break 

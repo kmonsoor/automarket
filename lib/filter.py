@@ -40,10 +40,10 @@ class Filter(object):
         
     def render_select(self, item):
         value = self.contents.get(item['name'], '')
-        html = u'<div>%s</div><select name="%s"><option value=""></option>' % (item['verbose'], item['name'])
+        html = '<div>%s</div><select name="%s"><option value=""></option>' % (item['verbose'], item['name'])
         for i in item['choices']:
-            html += u'<option value="%s"%s>%s</option>' % (i[0], i[0]==value and u' selected' or u'', i[1])
-        html += u"</select>"
+            html += '<option value="%s"%s>%s</option>' % (i[0], i[0]==value and ' selected' or '', i[1])
+        html += "</select>"
         return html
                
     def render(self):

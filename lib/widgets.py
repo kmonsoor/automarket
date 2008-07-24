@@ -46,7 +46,7 @@ class JQueryAutoComplete(forms.TextInput):
         if not self.attrs.has_key('id'):
             final_attrs['id'] = 'id_%s' % name    
         
-        return u'''<input type="text" %(attrs)s/>
+        return '''<input type="text" %(attrs)s/>
         <script type="text/javascript">%(js)s</script>
         ''' % {
                 'attrs' : flatatt(final_attrs),

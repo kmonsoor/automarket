@@ -17,7 +17,7 @@ if DEVELOPMENT_MODE:
     )    
 
 urlpatterns += patterns('',
-    (r'^admin/po/tariff/(?P<po_id>\d+)/', 'cp.admin.po_tariff'),
+    (r'^admin/data/po/tarif/(?P<po_id>\d+)/', 'cp.admin.po_tarif'),
     (r'^admin/', include('django.contrib.admin.urls')),
 )
 
