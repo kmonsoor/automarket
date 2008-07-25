@@ -2,6 +2,14 @@
 {% block extrahead %}
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/login.css" />
 {% endblock %}
+{% block header %}
+<div id="header">
+    <div id="branding">
+        <h1 id="site-name">Automototrade.info</h1>
+    </div>
+    {% block global_menu %}{% endblock %}
+</div> 
+{% endblock %}
 {% block content %}
 <div id="login">
 <div id="error" style="color:red">{% if message %}{{ message }}{% endif %}</div>
