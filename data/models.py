@@ -244,7 +244,20 @@ class TarifClass(models.Model):
         list_filter = ('brand',)
         search_fields = ('tarif.po',)
     
-               
+
+def get_tarif_value(oi):
+    if not isinstance(oi, OrderedItem):
+        raise AttributeError("OrderedItem object expected!")
+    value = 1
+    try:
+        tarif = Tarif.objects.get(po=oi.po)
+        tarif_class = TarifClass.objects.get(tarif=tarif, brand=oi.brand)
+        value = tarif_class.value
+    except TarifClass.DoesNotExist:
+        value = tarif.default_value
+        
+    return value
+
 
 def createTarifClasses(po):
     tarif, created = Tarif.objects.get_or_create(po=po)

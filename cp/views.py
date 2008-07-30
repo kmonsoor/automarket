@@ -257,6 +257,9 @@ def position_edit(request, content_type, id):
 
 @login_required
 def make_invoices(request):
+    
+    from data.models import get_tarif_value
+    
     access, mode = get_access(request)
     if not access or not mode == 'manager':
         raise Http404
@@ -272,7 +275,8 @@ def make_invoices(request):
             if not invoice.saved:
                 invoice.save()
                 invoice.saved = True
-            price = float(item.price * item.quantity_ship)
+            # Calculate price = common price * quantity on shipping * tarif value for given po
+            price = float(item.price * item.quantity_ship * get_tarif_value(item))
             invoice.invoiceitem_set.create(ordered_item=item, quantity=item.quantity_ship, price=price)
             
             if item.quantity_ship < item.quantity:
