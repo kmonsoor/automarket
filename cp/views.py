@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 from datetime import datetime
 
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.http import Http404, HttpResponseRedirect
@@ -9,9 +10,10 @@ from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from lib.helpers import next
+from lib.helpers import next, reverse
 
-from data.models import OrderedItem, Brand, TrustedUsers, Invoice, InvoiceItem, Bill, Payment, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
+
+from data.models import Po, OrderedItem, Brand, TrustedUsers, Invoice, InvoiceItem, Bill, Payment, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
 from data.forms import OrderedItemsFilterForm, OrderedItemForm, InvoiceFilterForm, InvoiceForm, InvoiceItemForm
 
 def get_status_options(mode='manager'):
@@ -350,8 +352,23 @@ def invoice(request, id):
     if not access or not mode == 'manager':
         raise Http404
     inv = get_object_or_404(Invoice, id=id)
+    if request.method == 'POST':
+        if request.POST.has_key('cancel'):
+            return HttpResponseRedirect(request.GET.get('next','/cp/'))
+        # Update ivoice data
+        form = InvoiceForm(request.POST.copy())
+        if form.is_valid():
+            # Save data
+            print dir(form)
+            inv.places_num = form.clean_data['places_num']
+            inv.weight_kg = form.clean_data['weight_kg']
+            inv.shipping_cost = form.clean_data['shipping_cost']
+            inv.save()
+    else:
+        form = InvoiceForm()
     return {
             'invoice':inv,
+            'form':form,
             }
 
 from lib.decorators import render_as
@@ -441,4 +458,21 @@ def export(request, group_id):
         i.save()
     return response
      
+@render_to('cp/balance_index.html')
+def balance_index(request):
+    
+    users = User.objects.all().order_by('username') #filter(**qs_filter.get_filters()).order_by(order_by)
+    paginator = SimplePaginator(users, 50, '?page=%s')
+    paginator.set_page(current_page)
+    
+    return {
+            'paginator':paginator,
+            }
+
+@render_to('cp/balance.html')
+def balance(request, user_id):
+    user = User.objects.get(pk=user_id)
+    print dir(user)
+    print user.po_set.all()
+    return {}
     

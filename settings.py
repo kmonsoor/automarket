@@ -4,6 +4,9 @@ DEBUG = True
 DEBUG_SQL=True
 TEMPLATE_DEBUG = DEBUG
 
+SECRET_GARDEN = True
+SECRET_GARDEN_KEY = 'admin'
+
 ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )

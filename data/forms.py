@@ -38,9 +38,9 @@ class InvoiceFilterForm(forms.Form):
     po_po = forms.CharField()
     
 class InvoiceForm(forms.Form):
-    places_num = forms.IntegerField(required=False)
-    weight_kg = forms.CharField(required=False)
-    shipping_cost = forms.CharField(required=False)
+    places_num = forms.IntegerField(required=True, label='Количество мест')
+    weight_kg = forms.CharField(required=True, label='Вес, кг')
+    shipping_cost = forms.CharField(required=True, label='Стоимость доставки')
     
     def clean_shipping_cost(self):
         if self.clean_data['shipping_cost']:
