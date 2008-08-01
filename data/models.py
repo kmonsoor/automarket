@@ -196,6 +196,8 @@ class Invoice(models.Model):
     weight_kg = models.FloatField(blank=True, null=True, verbose_name="Количество кг", max_digits=15, decimal_places=3)
     shipping_cost = models.FloatField(blank=True, null=True, verbose_name="Стоимость доставки", max_digits=15, decimal_places=2)
 
+
+
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice)
     ordered_item = models.ForeignKey(OrderedItem)

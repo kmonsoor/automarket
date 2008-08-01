@@ -20,5 +20,19 @@ class OrderedItemManager(Manager):
 class InvoiceItemManager(Manager):
     def for_user(self, user):
         return self.select_related().filter(invoice__po__in=[x.id for x in user.po_set.all()])
+    
+    def get_item_sum(self, invoice):
+        sql = """SELECT SUM(`price`)  
+                 FROM %s 
+                 WHERE `invoice_id`=%d 
+                 GROUP BY `invoice_id`""" % (self.meta.__table,invoice.id)
+        from django.db import connection
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        res = cursor.fetchone()
+        if res is not None:
+            return int(res[0])
+        else:
+            return 0
 
        

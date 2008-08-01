@@ -472,7 +472,8 @@ def balance_index(request):
 @render_to('cp/balance.html')
 def balance(request, user_id):
     user = User.objects.get(pk=user_id)
-    print dir(user)
-    print user.po_set.all()
+    print User.objects.__class__.__dict__
+    for user_po in user.po_set.all():
+        print po
     return {}
     
