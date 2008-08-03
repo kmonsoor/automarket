@@ -333,6 +333,7 @@ def invoices(request):
     headers = list(sort_headers.headers())
     
     invoices = Invoice.objects.filter(**qs_filter.get_filters()).order_by(order_by)
+    print invoices
     paginator = SimplePaginator(invoices, items_per_page, '?page=%s')
     paginator.set_page(current_page)
     
@@ -356,16 +357,15 @@ def invoice(request, id):
         if request.POST.has_key('cancel'):
             return HttpResponseRedirect(request.GET.get('next','/cp/'))
         # Update ivoice data
-        form = InvoiceForm(request.POST.copy())
+        form = InvoiceForm(request.POST.copy(),instance=inv)
         if form.is_valid():
             # Save data
-            print dir(form)
             inv.places_num = form.clean_data['places_num']
             inv.weight_kg = form.clean_data['weight_kg']
             inv.shipping_cost = form.clean_data['shipping_cost']
             inv.save()
     else:
-        form = InvoiceForm()
+        form = InvoiceForm(instance=inv)
     return {
             'invoice':inv,
             'form':form,
@@ -461,19 +461,27 @@ def export(request, group_id):
 @render_to('cp/balance_index.html')
 def balance_index(request):
     
-    users = User.objects.all().order_by('username') #filter(**qs_filter.get_filters()).order_by(order_by)
-    paginator = SimplePaginator(users, 50, '?page=%s')
+    current_page = request.GET.get('page',1)
+    
+    userqs = User.objects.all().order_by('username') #filter(**qs_filter.get_filters()).order_by(order_by)
+    paginator = SimplePaginator(userqs, 50, '?page=%s')
     paginator.set_page(current_page)
+    
+    users = paginator.get_page()
+    for u in users:
+        u.total_debit = Invoice.objects.total_for(u)
+        u.total_credit = Payment.objects.total_for(u)
     
     return {
             'paginator':paginator,
+            'users': users,
             }
 
 @render_to('cp/balance.html')
 def balance(request, user_id):
+    response = {}
     user = User.objects.get(pk=user_id)
-    print User.objects.__class__.__dict__
-    for user_po in user.po_set.all():
-        print po
-    return {}
+    from common.views import show_balance
+    response.update(show_balance(request, user=user))
+    return response
     

@@ -1,0 +1,24 @@
+{% extends 'cp_base.html' %}
+{% block content %}
+<h1>Балансы</h1>
+<table class="">
+<thead>
+<tr>
+<th>Пользователь</th>
+<th>Выставлено счетов</th>
+<th>Внесено платежей</th>
+</tr>
+</thead>
+<tbody>
+{% for u in users %}
+<tr>
+<td>
+<a href="/cp/balance/{{ u.id }}/">{{ u }}</a>
+</td>
+<td>{{ u.total_debit }}</td>
+<td>{{ u.total_credit }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

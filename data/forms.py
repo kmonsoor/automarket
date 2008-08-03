@@ -29,7 +29,7 @@ class OrderedItemForm(forms.Form):
             try:
                 value = float(self.clean_data['price'])
             except:
-                raise forms.ValidationError('This field requires a decimal value.')
+                raise forms.ValidationError('Введите десятичное значение с разделителем - точка!')
             return value
         else:
             return self.clean_data['price']
@@ -42,12 +42,22 @@ class InvoiceForm(forms.Form):
     weight_kg = forms.CharField(required=True, label='Вес, кг')
     shipping_cost = forms.CharField(required=True, label='Стоимость доставки')
     
+    def __init__(self, *a, **kw):
+        instance = None
+        if 'instance' in kw:
+            instance = kw.pop('instance')
+        super(InvoiceForm, self).__init__(*a, **kw)
+        if instance:
+            self.fields['places_num'].initial = instance.places_num
+            self.fields['weight_kg'].initial = instance.weight_kg
+            self.fields['shipping_cost'].initial = instance.shipping_cost
+    
     def clean_shipping_cost(self):
         if self.clean_data['shipping_cost']:
             try:
                 value = float(self.clean_data['shipping_cost'])
             except:
-                raise forms.ValidationError('This field requires a decimal value.')
+                raise forms.ValidationError('Введите десятичное значение с разделителем - точка!')
             return value
         else:
             return self.clean_data['shipping_cost']

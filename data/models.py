@@ -1,12 +1,10 @@
 # -*- coding=UTF-8 -*-
+import datetime, time
 
 from django.db import models
-
 from django.contrib.auth.models import User
 
 from data.managers import *
-
-import datetime, time
 
 class Po(models.Model):
     user = models.ForeignKey(User, verbose_name="Пользователь")
@@ -195,8 +193,21 @@ class Invoice(models.Model):
     places_num = models.IntegerField(blank=True, null=True, verbose_name="Количество мест")
     weight_kg = models.FloatField(blank=True, null=True, verbose_name="Количество кг", max_digits=15, decimal_places=3)
     shipping_cost = models.FloatField(blank=True, null=True, verbose_name="Стоимость доставки", max_digits=15, decimal_places=2)
-
-
+    
+    
+    def __str__(self):
+        return "%s - %s" % (self.po, self.created)
+    
+    def get_item_sum(self):
+        return InvoiceItem.objects.summarize_by_invoice(self)
+    
+    def get_shipping_sum(self):
+        return self.shipping_cost
+    
+    def get_total_sum(self):
+        return self.get_item_sum() + self.get_shipping_sum()
+    
+    objects = InvoiceManager()
 
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice)
@@ -220,6 +231,8 @@ class Payment(models.Model):
     payment_for = models.CharField(maxlength=255)
     payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
+    
+    objects = PaymentManager()
 
 class Tarif(models.Model):
     po = models.ForeignKey(Po, verbose_name='PO')

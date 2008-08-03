@@ -81,8 +81,8 @@ class SQLLogMiddleware:
         queries = connection.queries
         html = t.render(Context(locals()))
         if debug_sql == True:
-            if response.get("content-type", "").startswith("text/html"):
-                response.write(html)
+            #if response.get("content-type", "").startswith("text/html"):
+            response.write(html)
             return response
             
         assert os.path.isdir(debug_sql), debug_sql

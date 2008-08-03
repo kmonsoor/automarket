@@ -1,7 +1,7 @@
 # -*- coding=utf-8 -*-
 
 DEBUG = True
-DEBUG_SQL=True
+DEBUG_SQL = True
 TEMPLATE_DEBUG = DEBUG
 
 SECRET_GARDEN = True
@@ -77,7 +77,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.doc.XViewMiddleware',
-#    'django.middleware.SQLLogMiddleware.SQLLogMiddleware',
+    'lib.SQLLogMiddleware.SQLLogMiddleware',
 )
 
 ROOT_URLCONF = 'automarket.urls'

@@ -1,0 +1,29 @@
+{% extends 'cp_base.html' %}
+{% block content %}
+<h1>Баланс пользователя {{ user }}</h1>
+<form action="" name="select_period" method="post">
+<fieldset>
+{{ select_period_form }}
+</fieldset>
+<div class="submit-row">
+<input type="submit" name="submit" value="Показать" />
+</div>
+</form>
+<p>&nbsp;</p>
+<table width="100%">
+ <thead>
+  <tr>
+    <th>Счета</th>
+    <th>Платежи</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+    <td>
+    </td>
+    <td></td>
+  </tr>
+ </tbody>
+</table>
+
+{% endblock %}
