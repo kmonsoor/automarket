@@ -1,3 +1,4 @@
+# -*- coding=utf-8 -*-
 from django.db.models import Manager
 
 class OrderedItemManager(Manager):
@@ -45,6 +46,7 @@ class InvoiceManager(Manager):
     def get_for_period(self, user, start, finish):
         # TODO - проверить запрос!
         qs = self.filter(created__gte=start).filter(modified__lte=finish).filter(po__user=user)
+        print list(qs.copy())
         data = map(lambda x: setattr(x,'sum',InvoiceItem.objects.summarize_by_invoice(x)), list(qs))
         print data
         return []
