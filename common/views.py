@@ -50,8 +50,13 @@ def show_balance(request, user=None):
         start = form.fields['from_date'].initial
         finish = form.fields['to_date'].initial
     pitems = Invoice.objects.get_for_period(user,start,finish)
-    #bills = Bills.objects.get_for_period(user,start, finish)
+    bills = Bill.objects.get_for_period(user,start, finish)
+    
+    from lib.lists import sort_by_attr
+    debet = sort_by_attr(pitems+bills, 'date')
+    
+    credit = Payment.objects.get_for_period(user,start,finish)
     
     
     #period_custom_bills
-    return {'select_period_form':form,'user':user}                  
+    return {'select_period_form':form,'user':user, 'debet':debet, 'creadit':credit}                  

@@ -220,10 +220,11 @@ class InvoiceItem(models.Model):
 # Bill TO user
 class Bill(models.Model):
     user = models.ForeignKey(User)
-    invoice = models.ForeignKey(Invoice, null=True, blank=True)
     payment_for = models.CharField(maxlength=255)
     payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
+    
+    objects = BillManager()
 
 # Payments from user
 class Payment(models.Model):

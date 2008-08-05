@@ -20,8 +20,27 @@
  <tbody>
   <tr>
     <td>
+    <table>
+    {% for i in debet %}
+    <tr>
+    <td>{{ i.date }}</td>
+    <td>{{ i.comment }}</td>
+    <td>{{ i.sum }}</td>
+    </tr>
+    {% endfor %}
+    </table>
     </td>
-    <td></td>
+    <td>
+    <table>
+    {% for i in debet %}
+    <tr>
+    <td>{{ i.date }}</td>
+    <td>{{ i.comment }}</td>
+    <td>{{ i.sum }}</td>
+    </tr>
+    {% endfor %}
+    </table>
+    </td>
   </tr>
  </tbody>
 </table>

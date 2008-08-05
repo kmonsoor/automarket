@@ -1,6 +1,6 @@
 # -*- coding=utf-8 -*-
 from django.db.models import Manager
-
+from lib.lists import sort_by_attr
 class OrderedItemManager(Manager):
     
     def get_by_po(self):
@@ -41,15 +41,26 @@ class InvoiceManager(Manager):
     def total_for(self, user):
         from data.models import InvoiceItem
         qs = self.select_related().filter(po__user=user)
+        
         return reduce(lambda x,y: x+y, [InvoiceItem.objects.summarize_by_invoice(invoice) for invoice in qs],0)
     
     def get_for_period(self, user, start, finish):
         # TODO - проверить запрос!
-        qs = self.filter(created__gte=start).filter(modified__lte=finish).filter(po__user=user)
-        print list(qs.copy())
-        data = map(lambda x: setattr(x,'sum',InvoiceItem.objects.summarize_by_invoice(x)), list(qs))
-        print data
-        return []
+        from data.models import InvoiceItem
+        # Get sum for items
+        qsi = self.filter(po__user=user).filter(created__gte=start).filter(created__lte=finish)
+        # Get sum for additionals
+        qsa = self.filter(po__user=user).filter(modified__gte=start).filter(modified__lte=finish)
+        def add_data(x,comment,date_field):
+            setattr(x,'sum',InvoiceItem.objects.summarize_by_invoice(x))
+            setattr(x,'comment', comment + u' %s' % x.id)
+            setattr(x,'date',x.__dict__[date_field])
+            return x
+        data1 = [add_data(x,u'Выставлен инвойс','created') for x in list(qsi)]
+        data2 = [add_data(x,u'Стоимость доставки к инвойсу','modified') for x in list(qsa)]
+        data3 = sort_by_attr(data1+data2,'date')
+
+        return data3 
 
         
 
@@ -68,4 +79,25 @@ class PaymentManager(Manager):
             return res[0]
         else:
             return float(0)
-          
+    
+    def get_for_period(self, user, start, finish):
+        qs = self.filter(user=user).filter(created__gte=start).filter(created__lte=finish)
+        def add_data(x):
+            setattr(x, 'date', xrange.created)
+            setattr(x, 'sum', x.payment_sum)
+            setattr(x,'comment',x.payment_for)
+            return x
+        return [add_data(x) for x in qs] 
+        
+class BillManager(Manager):
+    
+    def get_for_period(self, user, start, finish):
+        qs = self.filter(user=user).filter(created__gte=start).filter(created__lte=finish)
+        def add_data(x):
+            setattr(x, 'date', x.created)
+            setattr(x, 'sum', x.payment_sum)
+            setattr(x,'comment',x.payment_for)
+            return x
+        return [add_data(x) for x in qs]
+    
+                 
