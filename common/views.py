@@ -43,8 +43,8 @@ def show_balance(request, user=None):
         # From / to form
         form = Selectperiod(request.POST.copy())
         if form.is_valid():
-            start = form.cleaned_data['from_date']
-            finish = form.cleaned_data['to_date']
+            start = form.clean_data['from_date']
+            finish = form.clean_data['to_date']
     else:
         form = Selectperiod()
         start = form.fields['from_date'].initial

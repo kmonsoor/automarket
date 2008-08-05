@@ -255,7 +255,7 @@ def invoices(request):
     field_order = '%s%s' % (directions[direction], field)
 
     po_list = [x.id for x in Po.objects.filter(user=request.user)]
-    qs = Invoices.objects.filter(po__in=po_list).order_by(field_order)
+    qs = Invoice.objects.filter(po__in=po_list).order_by(field_order)
     # Filter
     q = request.GET.get('q','').strip()
     if len(q) > 0 :
@@ -276,5 +276,6 @@ def invoices(request):
 def balance(request):
     response = {}
     response['current_action'] = 'balance'
-    
+    from common.views import show_balance
+    response.update(show_balance(request, request.user))
     return response
