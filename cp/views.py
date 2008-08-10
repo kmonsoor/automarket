@@ -313,11 +313,12 @@ def invoices(request):
     LIST_HEADERS = (
                     ('ID', None),
                     ('PO', None),
-                    ('Дата', 'created'),                  
-                    ('places_num', 'places_num'),
-                    ('weight_kg', 'weight_kg'),
-                    ('shipping_cost', 'shipping_cost'),
-                    ('Actions', None),
+                    ('Дата', 'created'),
+                    ('Сумма по позициям', None),                  
+                    ('Места', 'places_num'),
+                    ('Вес, кг', 'weight_kg'),
+                    ('Доставка', 'shipping_cost'),
+                    ('Действия', None),
                     )
     sort_headers = SortHeaders(request, LIST_HEADERS)
     order_field = request.GET.get('o', None)

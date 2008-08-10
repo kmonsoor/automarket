@@ -1,8 +1,12 @@
 {% extends 'cp_base.html' %}
 {% block content %}
 <h1>Баланс пользователя {{ user }}</h1>
+<div style="float:right; display:inline; margin-top: -20px; margin-right: 10px">
+<a class="add_link" href="/cp/balances/add_custom/{{ user.id }}/?next={{ next }}">Выставить доп. счет</a>
+&nbsp;|&nbsp;
+<a class="add_link" href="/cp/balances/add_payment/{{ user.id }}/?next={{ next }}">Ввести платеж</a>
+</div>
 <form action="" name="select_period" method="post">
-<fieldset>
 {{ select_period_form }}
 </fieldset>
 <div class="submit-row">

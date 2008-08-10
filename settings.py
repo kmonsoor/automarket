@@ -1,7 +1,7 @@
 # -*- coding=utf-8 -*-
 
 DEBUG = True
-DEBUG_SQL = True
+DEBUG_SQL = False
 TEMPLATE_DEBUG = DEBUG
 
 SECRET_GARDEN = True
@@ -70,6 +70,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.auth',
     'django.core.context_processors.request',
     'lib.context_processors.media_url',
+    'lib.context_processors.next',
 )
 
 MIDDLEWARE_CLASSES = (
