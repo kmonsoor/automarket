@@ -1,0 +1,16 @@
+{% extends 'cp_base.html' %}
+{% block content %}
+<h1>Выставить дополнительный счет пользователю {{ auser }}</h1>
+<form action="" name="add_form" method="post">
+{% for field in form %}
+<div class="form-row aligned requered{% if field.errors %} error{% endif %}">
+{{ field.label_tag }}
+{{ field }}
+</div>
+{% endfor %}
+<div class="submit-row">
+<input type="submit" name="submit" value="Сохранить">&nbsp;
+<input type="reset" name="reset" value="Отменить" onclick="document.location.href='{{ next }}'">&nbsp;
+</div>
+</form>
+{% endblock %}
