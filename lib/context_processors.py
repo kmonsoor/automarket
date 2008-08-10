@@ -6,5 +6,6 @@ def media_url(request):
 
 def next(request):
     from lib.helpers import next
-    return {'next':next(request)}
+    next_url = request.GET.get('next',None) or next(request)
+    return {'next':next_url}
         

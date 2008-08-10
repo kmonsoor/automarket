@@ -479,6 +479,7 @@ def balance_index(request):
             }
 
 @render_to('cp/balance.html')
+@login_required
 def balance(request, user_id):
     response = {}
     user = User.objects.get(pk=user_id)
@@ -486,3 +487,18 @@ def balance(request, user_id):
     response.update(show_balance(request, user=user))
     return response
     
+@render_to('cp/add_custom_bill.html')
+@login_required
+def add_custom_bill(request, user_id):
+    auser = get_object_or_404(User, pk=user_id)
+    from data.forms import AddCustomBill 
+    if request.method == 'POST':
+        form = AddCustomBill(request.POST.copy())
+        if form.is_valid():
+            data = form.clean_data
+            bill = Bill(payment_for=data['payment_for'],payment_sum=data['payment_sum'],user=auser)
+            bill.save()
+            return HttpResponseRedirect(request.GET.get('next','/cp/balance/%d/' % auser.id))
+    else:
+        form = AddCustomBill()
+    return {'auser':auser, 'form':form}

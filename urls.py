@@ -38,6 +38,8 @@ urlpatterns += patterns('cp.views',
     (r'^cp/make_invoices/$', 'make_invoices'),
     (r'^cp/invoices/$', 'invoices'),
     (r'^cp/invoice/(?P<id>\d+)/$', 'invoice'),
+    (r'^cp/balances/add_custom_bill/(?P<user_id>\d+)/$', 'add_custom_bill'),
+    (r'^cp/balances/add_payment/(?P<user_id>\d+)/$', 'add_payment'),
     (r'^cp/balances/$', 'balance_index'),
     (r'^cp/balance/(?P<user_id>\d+)/$', 'balance'),
 )

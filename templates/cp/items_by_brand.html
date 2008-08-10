@@ -31,7 +31,11 @@ function hideGroup{{ brand.id }}() {
 </tr>
 {% endfor %}
 <tr>
-<td colspan="3" align="right" style="background: #ffffff"><b><a target="_blank" href="/cp/export/{{ brand.id }}/" class="export_link" style="color: #0190bf">Экспорт</a></b></td>
+<td colspan="3" align="right" style="background: #ffffff">
+<div class="submit-row">
+<b><a target="_blank" href="/cp/export/{{ brand.id }}/" class="export_link" style="color: #0190bf">Экспорт</a></b>
+</div>
+</td>
 </tr>
 </table>
 {% endif %}

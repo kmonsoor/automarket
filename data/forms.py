@@ -76,4 +76,8 @@ class InvoiceItemForm(forms.Form):
         else:
             return self.clean_data['price']
         
-    
+class AddCustomBill(forms.Form):
+    payment_for = forms.CharField(widget=forms.TextInput(attrs={'size':100}), label="Пояснительный текст")
+    payment_sum = forms.CharField(label="Сумма")
+
+  

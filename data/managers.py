@@ -81,7 +81,7 @@ class PaymentManager(Manager):
             return float(0)
     
     def get_for_period(self, user, start, finish):
-        qs = self.filter(user=user).filter(created__gte=start).filter(created__lte=finish)
+        qs = self.filter(user=user).filter(created__gte=start).filter(created__lte=finish).order_by('-created')
         def add_data(x):
             setattr(x, 'date', xrange.created)
             setattr(x, 'sum', x.payment_sum)
@@ -90,11 +90,12 @@ class PaymentManager(Manager):
         return [add_data(x) for x in qs] 
         
 class BillManager(Manager):
-    
     def get_for_period(self, user, start, finish):
-        qs = self.filter(user=user).filter(created__gte=start).filter(created__lte=finish)
+        #start, finish = map(lambda x: str(x)+' 00:00:00',(start, finish))
+        qs = self.filter(user=user).filter(modified__gte=start, modified__lte=finish)
+        from django.db import connection
         def add_data(x):
-            setattr(x, 'date', x.created)
+            setattr(x, 'date', x.modified)
             setattr(x, 'sum', x.payment_sum)
             setattr(x,'comment',x.payment_for)
             return x

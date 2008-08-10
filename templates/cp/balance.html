@@ -2,7 +2,7 @@
 {% block content %}
 <h1>Баланс пользователя {{ user }}</h1>
 <div style="float:right; display:inline; margin-top: -20px; margin-right: 10px">
-<a class="add_link" href="/cp/balances/add_custom/{{ user.id }}/?next={{ next }}">Выставить доп. счет</a>
+<a class="add_link" href="/cp/balances/add_custom_bill/{{ user.id }}/?next={{ next }}">Выставить доп. счет</a>
 &nbsp;|&nbsp;
 <a class="add_link" href="/cp/balances/add_payment/{{ user.id }}/?next={{ next }}">Ввести платеж</a>
 </div>
@@ -36,7 +36,7 @@
     </td>
     <td>
     <table>
-    {% for i in debet %}
+    {% for i in credit %}
     <tr>
     <td>{{ i.date }}</td>
     <td>{{ i.comment }}</td>

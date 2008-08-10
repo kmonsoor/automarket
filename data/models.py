@@ -223,6 +223,7 @@ class Bill(models.Model):
     payment_for = models.CharField(maxlength=255)
     payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
     created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
     
     objects = BillManager()
 
