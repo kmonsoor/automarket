@@ -502,3 +502,20 @@ def add_custom_bill(request, user_id):
     else:
         form = AddCustomBill()
     return {'auser':auser, 'form':form}
+
+@render_to('cp/add_payment.html')
+@login_required
+def add_payment(request, user_id):
+    auser = get_object_or_404(User, pk=user_id)
+    from data.forms import AddPayment
+    if request.method == 'POST':
+        form = AddPayment(request.POST.copy())
+        if form.is_valid():
+            data = form.clean_data
+            pay = Payment(user=auser, payment_for=data['payment_for'],payment_sum=data['payment_sum'])
+            pay.save()
+            return HttpResponseRedirect(request.GET.get('next','/cp/balance/%d/' % auser.id))
+    else:
+        form = AddPayment()
+        
+    return {'auser':auser, 'form': form}

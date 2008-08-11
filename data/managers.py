@@ -83,7 +83,7 @@ class PaymentManager(Manager):
     def get_for_period(self, user, start, finish):
         qs = self.filter(user=user).filter(created__gte=start).filter(created__lte=finish).order_by('-created')
         def add_data(x):
-            setattr(x, 'date', xrange.created)
+            setattr(x, 'date', x.created)
             setattr(x, 'sum', x.payment_sum)
             setattr(x,'comment',x.payment_for)
             return x
