@@ -59,7 +59,7 @@ def index(request):
         request.session['cp_index_items_per_page'] = items_per_page
         request.session.modified = True
     if not items_per_page:
-        items_per_page = 10
+        items_per_page = 20
     items_per_page = int(items_per_page)
     context['items_per_page'] = items_per_page
     filter = QSFilter(request, OrderedItemsFilterForm)
@@ -305,8 +305,8 @@ def invoices(request):
         request.session['invoices_items_per_page'] = items_per_page
         request.session.modified = True
     if not items_per_page:
-        items_per_page = 10
-    
+        items_per_page = 20
+    items_per_page = int(items_per_page)
     qs_filter = QSFilter(request, InvoiceFilterForm)
     if qs_filter.modified:
         current_page = 1
@@ -334,15 +334,13 @@ def invoices(request):
     headers = list(sort_headers.headers())
     
     invoices = Invoice.objects.filter(**qs_filter.get_filters()).order_by(order_by)
-    print invoices
     paginator = SimplePaginator(invoices, items_per_page, '?page=%s')
     paginator.set_page(current_page)
-    
     return {
             'items_per_page':items_per_page,
             'filter':qs_filter,
             'headers':headers,
-            'invoices':invoices,
+            'invoices':paginator.get_page(),
             'next':next(request),
             'paginator':paginator,
             }

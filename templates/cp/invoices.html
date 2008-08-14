@@ -20,14 +20,23 @@ backend_url = '/cp/position/edit/invoice/';
 <input type="submit" name="qs_filter_clear" value="Очистить">
 Количество записей на странице: 
 <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
-<option value="20"{% ifequal items_per_page 10 %} selected {% endifequal %}>10</option>
-<option value="50"{% ifequal items_per_page 15 %} selected {% endifequal %}>15</option>
-<option value="100"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
+<option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
+<option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+<option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
 </select>
 <table class="admin_table">
 <tr>
 {% table_header_sort headers %}
 </tr>
+<tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+<td>&nbsp;</td>
+<td><nobr>{{ filter.form.po__user__username__icontains }}: {{ filter.form.po__po__icontains }}</nobr></td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 {% for invoice in invoices %}
 <tr>
 	<td>{{ invoice.id }}</td>

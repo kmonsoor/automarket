@@ -35,7 +35,8 @@ class OrderedItemForm(forms.Form):
             return self.clean_data['price']
         
 class InvoiceFilterForm(forms.Form):
-    po_po = forms.CharField()
+    po__po__icontains = forms.CharField(required=False, widget=forms.widgets.TextInput(attrs={'style':'width: 40px;'}))
+    po__user__username__icontains = forms.CharField(required=False, widget=forms.widgets.TextInput(attrs={'style':'width: 40px;'}))
     
 class InvoiceForm(forms.Form):
     places_num = forms.IntegerField(required=True, label='Количество мест')
