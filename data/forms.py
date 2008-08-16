@@ -63,6 +63,21 @@ class InvoiceForm(forms.Form):
         else:
             return self.clean_data['shipping_cost']
         
+class InvoiceAjaxForm(forms.Form):
+    places_num = forms.IntegerField(required=False, label='Количество мест')
+    weight_kg = forms.CharField(required=False, label='Вес, кг')
+    shipping_cost = forms.CharField(required=False, label='Стоимость доставки')
+    
+    def clean_shipping_cost(self):
+        if self.clean_data['shipping_cost']:
+            try:
+                value = float(self.clean_data['shipping_cost'])
+            except:
+                raise forms.ValidationError('Введите десятичное значение с разделителем - точка!')
+            return value
+        else:
+            return self.clean_data['shipping_cost']
+        
 class InvoiceItemForm(forms.Form):
     price = forms.CharField(required=False)
     quantity = forms.IntegerField(required=False)

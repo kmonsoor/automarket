@@ -14,7 +14,7 @@ from lib.helpers import next, reverse
 
 
 from data.models import Po, OrderedItem, Brand, TrustedUsers, Invoice, InvoiceItem, Bill, Payment, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
-from data.forms import OrderedItemsFilterForm, OrderedItemForm, InvoiceFilterForm, InvoiceForm, InvoiceItemForm
+from data.forms import OrderedItemsFilterForm, OrderedItemForm, InvoiceFilterForm, InvoiceForm, InvoiceAjaxForm, InvoiceItemForm
 
 def get_status_options(mode='manager'):
     if mode == 'manager':
@@ -224,7 +224,7 @@ def position_edit(request, content_type, id):
               }
     forms = {
               'ordered_item':OrderedItemForm,
-              'invoice':InvoiceForm,
+              'invoice':InvoiceAjaxForm,
               'invoice_item':InvoiceItemForm,
               }
     savers = {
@@ -280,13 +280,30 @@ def make_invoices(request):
             # Calculate price = common price * quantity on shipping * tarif value for given po
             price = float(item.price * item.quantity_ship * get_tarif_value(item))
             invoice.invoiceitem_set.create(ordered_item=item, quantity=item.quantity_ship, price=price)
-            
             if item.quantity_ship < item.quantity:
-                new_item = OrderedItem(po=item.po, ponumber=item.ponumber, car_maker=item.car_maker, car_model=item.car_model, year=item.year, engine_volume=item.engine_volume, side=item.side, part_number=item.part_number, part_number_superseded=item.part_number_superseded, price=item.price, status=item.status, description=item.description, brand=item.brand, created=item.created, status_modified=item.status_modified, confirmed=item.confirmed, comments=item.comments)
+                new_item = OrderedItem(
+                                       po=item.po, 
+                                       ponumber=item.ponumber, 
+                                       car_maker=item.car_maker, 
+                                       car_model=item.car_model, 
+                                       year=item.year, 
+                                       engine_volume=item.engine_volume, 
+                                       side=item.side, 
+                                       part_number=item.part_number, 
+                                       part_number_superseded=item.part_number_superseded, 
+                                       price=item.price,  
+                                       description=item.description, 
+                                       brand=item.brand, 
+                                       created=item.created, 
+                                       status_modified=item.status_modified, 
+                                       confirmed=item.confirmed, 
+                                       comments=item.comments
+                                       )
+                new_item.status='back_order'
                 new_item.quantity = item.quantity - item.quantity_ship
                 new_item.quantity_ship = 0
                 new_item.save()
-            item.status = 'back_order'
+            item.status = 'shipped'
             item.save()
     return HttpResponseRedirect('/cp/invoices/')
             
