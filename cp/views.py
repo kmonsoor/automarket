@@ -453,7 +453,7 @@ def export(request, group_id):
     # Set items' status to 'in_processing'
     for i in items:
         i.status = 'in_processing'
-        i.status_modified = datetime.now()
+        i.status_modified = datetime.datetime.now()
         i.save()
     return response
      

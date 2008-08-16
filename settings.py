@@ -1,7 +1,7 @@
 # -*- coding=utf-8 -*-
 
 DEBUG = True
-DEBUG_SQL = True
+DEBUG_SQL = False
 TEMPLATE_DEBUG = DEBUG
 
 SECRET_GARDEN = True

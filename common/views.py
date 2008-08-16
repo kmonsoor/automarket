@@ -1,5 +1,5 @@
 # -*- coding=UTF-8 -*-
-
+import datetime
 from lib.decorators import render_to
 from django.http import HttpResponseRedirect
 from django.contrib.auth import login, logout, authenticate
@@ -49,6 +49,7 @@ def show_balance(request, user=None):
         form = Selectperiod()
         start = form.fields['from_date'].initial
         finish = form.fields['to_date'].initial
+    finish += datetime.timedelta(hours=24)
     pitems = Invoice.objects.get_for_period(user,start,finish)
     bills = Bill.objects.get_for_period(user,start, finish)
         
