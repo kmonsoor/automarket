@@ -517,3 +517,81 @@ def add_payment(request, user_id):
         form = AddPayment()
         
     return {'auser':auser, 'form': form}
+
+@login_required
+def invoice_export(request, id):
+    access, mode = get_access(request)
+    if not access or not mode == 'manager':
+        raise Http404
+    invoice = get_object_or_404(Invoice, id=id)    
+    
+    from django.conf import settings
+    import os
+    filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
+    import pyExcelerator as xl
+    import datetime
+    
+    from django.http import HttpResponse 
+    # Open new workbook
+    book = xl.Workbook()
+    
+    # Styles
+    header_style = xl.XFStyle()
+    header_style.font = xl.Font()
+    header_style.font.bold = True
+    header_style.font.italic = True
+    header_style.font.height = 0x0190
+    
+    sub_header_style = xl.XFStyle()
+    sub_header_style.font = xl.Font()
+    sub_header_style.bold = True
+    sub_header_style.font.height = 0x0190-100
+    
+    bold_style = xl.XFStyle()
+    bold_style.font = xl.Font()
+    bold_style.font.height = 0x0190-200
+    bold_style.font.bold = True
+    
+    # Write headers
+    sheet = book.add_sheet(str(invoice))
+    sheet.write_merge(0,0,0,6, "Invoice created %s" % invoice.created, header_style)
+    sheet.write_merge(1,0,0,6, "PO: %s" % str(invoice.po), header_style)
+    sheet.write(3,0, "PO", sub_header_style)
+    sheet.write(3,1, "# OEM", sub_header_style)
+    sheet.write(3,2, "Price", sub_header_style)
+    sheet.write(3,3, "QA", sub_header_style)
+    # Write items table
+    num = 3
+    for item in invoice.invoiceitem_set.all():
+        num += 1
+        sheet.write(num,0,item.ordered_item.get_numbered_po())
+        sheet.write(num,1,item.ordered_item.part_number)
+        sheet.write(num,2,item.price)
+        sheet.write(num,3,int(item.quantity))
+    # Write adds
+    num += 1
+    
+    sheet.write(num+1,1,'Total:',bold_style)
+    sheet.write(num+1,2,invoice.get_item_sum(),bold_style)
+    
+    num += 2
+    sheet.write(num+1,0,'Place number')
+    sheet.write(num+1,1,int(invoice.places_num))
+    sheet.write(num+2,0,'Weight, kg')
+    sheet.write(num+2,1,float(invoice.weight_kg))
+    sheet.write(num+3,0,'Shipping cost')
+    sheet.write(num+3,1,float(invoice.shipping_cost))
+
+    sheet.write(num+5,0,'Last modified')
+    sheet.write(num+5,1,'%s' % invoice.modified)
+
+    
+    # Save book
+    book.save(filename)
+    os.chmod(filename, 0777)
+    content = open(filename,'rb').read()
+    response = HttpResponse(content, mimetype='application/vnd.ms-excel')
+    name = '%s-%d.xls' % (invoice.created.strftime('%m-%d-%Y'),invoice.id)
+    response['Content-Disposition'] = 'inline; filename=%s' % name
+    os.remove(filename)    
+    return response
