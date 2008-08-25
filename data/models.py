@@ -82,6 +82,12 @@ class Brand(models.Model):
             return self
 
 
+def get_brand_children(brand):
+        try:
+            return Brand.objects.filter(parent=brand)
+        except:
+            return False    
+
 CAR_SIDES = (('',''),('R','R'),('L','L'),)
 
 ORDER_ITEM_STATUSES = (
@@ -260,7 +266,23 @@ class TarifClass(models.Model):
         list_display = ('tarif','brand', 'value')
         list_filter = ('brand',)
         search_fields = ('tarif.po',)
+        
+    def save(self):
+        update_tarif_classes(self)
+        super(TarifClass, self).save()
     
+
+def update_tarif_classes(tarif_class):
+    brands = get_brand_children(tarif_class.brand)
+    if brands:
+        for b in brands:
+            try:
+                tc = TarifClass.objects.get(tarif=tarif_class.tarif, brand=b)
+                tc.value = tarif_class.value
+                tc.save()
+            except Exception, e:
+                pass
+
 
 def get_tarif_value(oi):
     if not isinstance(oi, OrderedItem):
@@ -299,4 +321,5 @@ def on_brand_save(sender, instance, signal, *args, **kwargs):
             for po in Po.objects.all():
                 tarif, created = Tarif.objects.get_or_create(po=po)
                 tc, created = TarifClass.objects.get_or_create(brand=instance, tarif=tarif)
+
 dispatcher.connect(on_brand_save, signal=signals.post_save, sender=Brand)
