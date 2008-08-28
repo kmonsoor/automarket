@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from django import newforms as forms
+from django import forms
 
 from data.models import OrderedItem, Brand, TrustedUsers, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
 
@@ -25,14 +25,14 @@ class OrderedItemForm(forms.Form):
     quantity_ship = forms.IntegerField(required=False)
     
     def clean_price(self):
-        if self.clean_data['price']:
+        if self.cleaned_data['price']:
             try:
-                value = float(self.clean_data['price'])
+                value = float(self.cleaned_data['price'])
             except:
                 raise forms.ValidationError('Введите десятичное значение с разделителем - точка!')
             return value
         else:
-            return self.clean_data['price']
+            return self.cleaned_data['price']
         
 class InvoiceFilterForm(forms.Form):
     po__po__icontains = forms.CharField(required=False, widget=forms.widgets.TextInput(attrs={'style':'width: 40px;'}))
@@ -54,14 +54,14 @@ class InvoiceForm(forms.Form):
             self.fields['shipping_cost'].initial = instance.shipping_cost
     
     def clean_shipping_cost(self):
-        if self.clean_data['shipping_cost']:
+        if self.cleaned_data['shipping_cost']:
             try:
-                value = float(self.clean_data['shipping_cost'])
+                value = float(self.cleaned_data['shipping_cost'])
             except:
                 raise forms.ValidationError('Введите десятичное значение с разделителем - точка!')
             return value
         else:
-            return self.clean_data['shipping_cost']
+            return self.cleaned_data['shipping_cost']
         
 class InvoiceAjaxForm(forms.Form):
     places_num = forms.IntegerField(required=False, label='Количество мест')
@@ -69,28 +69,28 @@ class InvoiceAjaxForm(forms.Form):
     shipping_cost = forms.CharField(required=False, label='Стоимость доставки')
     
     def clean_shipping_cost(self):
-        if self.clean_data['shipping_cost']:
+        if self.cleaned_data['shipping_cost']:
             try:
-                value = float(self.clean_data['shipping_cost'])
+                value = float(self.cleaned_data['shipping_cost'])
             except:
                 raise forms.ValidationError('Введите десятичное значение с разделителем - точка!')
             return value
         else:
-            return self.clean_data['shipping_cost']
+            return self.cleaned_data['shipping_cost']
         
 class InvoiceItemForm(forms.Form):
     price = forms.CharField(required=False)
     quantity = forms.IntegerField(required=False)
     
     def clean_price(self):
-        if self.clean_data['price']:
+        if self.cleaned_data['price']:
             try:
-                value = float(self.clean_data['price'])
+                value = float(self.cleaned_data['price'])
             except:
                 raise forms.ValidationError('This field requires a decimal value.')
             return value
         else:
-            return self.clean_data['price']
+            return self.cleaned_data['price']
         
 class AddCustomBill(forms.Form):
     payment_for = forms.CharField(widget=forms.TextInput(attrs={'size':100}), label="Пояснительный текст")

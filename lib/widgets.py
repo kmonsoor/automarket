@@ -1,8 +1,8 @@
 # -*- coding=UTF-8 -*-
 
-from django import newforms as forms
-from django.newforms.widgets import flatatt
-from django.newforms.util import smart_unicode
+from django import forms
+from django.forms.widgets import flatatt
+from django.forms.util import smart_unicode
 from django.utils.html import escape
 from django.utils.simplejson import JSONEncoder
 

@@ -8,6 +8,7 @@ class QSFilter(object):
     is_set = False
     
     def __init__(self, request, form, use_session=True):
+
         self.use_session = use_session
         self.method = self.use_session and 'post' or 'get'
         self.data = self.process_request(request)         
@@ -17,6 +18,7 @@ class QSFilter(object):
             self.form = form()           
             
     def process_request(self, request):
+        
         if request.REQUEST.has_key('qs_filter_clear'):
             self.clear_session(request)
             self.modified = True
@@ -24,6 +26,7 @@ class QSFilter(object):
             return None
         if request.REQUEST.has_key('qs_filter'):
             data = dict(getattr(request, request.method).items())
+            print data
             if self.use_session:
                 request.session['qs_filter'] = {'data':data,'path':request.path}
             self.modified = True
@@ -46,7 +49,7 @@ class QSFilter(object):
     def get_filters(self):
         if self.form.is_valid():
             data = {}
-            for k, v in self.form.clean_data.items():
+            for k, v in self.form.cleaned_data.items():
                 if v:
                     data.update({k:v})
             return data

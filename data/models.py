@@ -7,38 +7,35 @@ from django.contrib.auth.models import User
 from data.managers import *
 
 class Po(models.Model):
-    user = models.ForeignKey(User, verbose_name="Пользователь")
-    po = models.CharField(maxlength=255, verbose_name="Буквенная часть РО")
+    user = models.ForeignKey(User, verbose_name=u"Пользователь")
+    po = models.CharField(max_length=255, verbose_name=u"Буквенная часть РО")
     
     class Meta:
-        verbose_name = 'PO'
-        verbose_name_plural = 'PO'
+        verbose_name = u'PO'
+        verbose_name_plural = u'PO'
     
     def get_po_tariff_link(self):
-        return '<a href="/admin/data/po/tarif/%d/">Установить тарифы</a>' % self.id
+        return u'<a href="/admin/data/po/tarif/%d/">Установить тарифы</a>' % self.id
     
     get_po_tariff_link.allow_tags = True
-    get_po_tariff_link.short_description = 'Дополнительные действия'
-    
-    class Admin:
-        list_display = ('po','user','get_po_tariff_link')
+    get_po_tariff_link.short_description = u'Дополнительные действия'
         
-    def __str__(self):
-        return '%s: %s' % (self.user.username, self.po)
+    def __unicode__(self):
+        return u'%s: %s' % (self.user.username, self.po)
 
 # part maker
 class Brand(models.Model):
-    name = models.CharField(maxlength=255, verbose_name="Наименование")
-    parent = models.ForeignKey('self',null=True,blank=True, verbose_name="Родитель")
+    name = models.CharField(max_length=255, verbose_name=u"Наименование")
+    parent = models.ForeignKey('self',null=True,blank=True, verbose_name=u"Родитель")
 
     class Admin:
         list_display = ('name','_parents_repr')
 
     class Meta:
-        verbose_name = "производителя"
-        verbose_name_plural = "Производители запчастей"
+        verbose_name = u"производителя"
+        verbose_name_plural = u"Производители запчастей"
 
-    def __str__(self):
+    def __unicode__(self):
         p_list = self._recurse_for_parents(self)
         p_list.append(self.name)
         return self.get_separator().join(p_list)
@@ -114,47 +111,47 @@ TRUSTED_USER_ORDER_ITEM_STATUSES = (
 from data.managers import OrderedItemManager
 class OrderedItem(models.Model):
 
-    po = models.ForeignKey(Po, verbose_name="РО")
-    ponumber = models.IntegerField(verbose_name="Номер заказа")
+    po = models.ForeignKey(Po, verbose_name=u"РО")
+    ponumber = models.IntegerField(verbose_name=u"Номер заказа")
     # car details
-    car_maker = models.CharField(maxlength=255, null=True, blank=True, verbose_name="Производитель машины")
-    car_model = models.CharField(maxlength=255, null=True, blank=True, verbose_name="Модель")
-    year = models.CharField(maxlength=4, null=True, blank=True, verbose_name="Год выпуска")
-    engine_volume = models.CharField(maxlength=10, null=True, blank=True, verbose_name="Объем двигателя")
-    side = models.CharField(maxlength=1, choices=CAR_SIDES, blank=True, null=True, verbose_name="Сторона")
+    car_maker = models.CharField(max_length=255, null=True, blank=True, verbose_name=u"Производитель машины")
+    car_model = models.CharField(max_length=255, null=True, blank=True, verbose_name=u"Модель")
+    year = models.CharField(max_length=4, null=True, blank=True, verbose_name=u"Год выпуска")
+    engine_volume = models.CharField(max_length=10, null=True, blank=True, verbose_name=u"Объем двигателя")
+    side = models.CharField(max_length=1, choices=CAR_SIDES, blank=True, null=True, verbose_name=u"Сторона")
     # item details
-    part_number = models.CharField(maxlength=255, verbose_name="Номер")
-    part_number_superseded = models.CharField(maxlength=255, null=True, blank=True , verbose_name="Новый номер")
-    price = models.FloatField(max_digits=15, decimal_places=2,  null=True, blank=True, verbose_name="Цена")
-    quantity = models.IntegerField(verbose_name="Количество")
-    quantity_ship = models.IntegerField(verbose_name="Отгружено")
-    status = models.CharField(maxlength=50, choices=ORDER_ITEM_STATUSES, default='order', verbose_name="Статус")
-    description = models.TextField(verbose_name="Описание")
-    brand = models.ForeignKey(Brand, null=True, blank=True, verbose_name="Производитель запчасти")
-    created = models.DateTimeField(auto_now_add=True, verbose_name="Дата заказа")
-    modified = models.DateTimeField(auto_now=True, verbose_name="Дата изменения", editable=False)
-    status_modified = models.DateTimeField(verbose_name="Дата изменения статуса", editable=False)
-    confirmed = models.BooleanField(default=False, verbose_name="Подтверждено")
+    part_number = models.CharField(max_length=255, verbose_name=u"Номер")
+    part_number_superseded = models.CharField(max_length=255, null=True, blank=True , verbose_name=u"Новый номер")
+    price = models.FloatField(null=True, blank=True, verbose_name=u"Цена")
+    quantity = models.IntegerField(verbose_name=u"Количество")
+    quantity_ship = models.IntegerField(verbose_name=u"Отгружено")
+    status = models.CharField(max_length=50, choices=ORDER_ITEM_STATUSES, default='order', verbose_name=u"Статус")
+    description = models.TextField(verbose_name=u"Описание")
+    brand = models.ForeignKey(Brand, null=True, blank=True, verbose_name=u"Производитель запчасти")
+    created = models.DateTimeField(auto_now_add=True, verbose_name=u"Дата заказа")
+    modified = models.DateTimeField(auto_now=True, verbose_name=u"Дата изменения", editable=False)
+    status_modified = models.DateTimeField(verbose_name=u"Дата изменения статуса", editable=False)
+    confirmed = models.BooleanField(default=False, verbose_name=u"Подтверждено")
 
-    comments = models.TextField(blank=True, null=True, verbose_name="Комментарии")
+    comments = models.TextField(blank=True, null=True, verbose_name=u"Комментарии")
 
 
     objects = OrderedItemManager()
 
     def get_numbered_po(self):
-        return '%s%d' % (self.po.po, self.ponumber)
+        return u'%s%d' % (self.po.po, self.ponumber)
 
-    get_numbered_po.short_description = "РО позиции"
+    get_numbered_po.short_description = u"РО позиции"
 
     def user(self):
         return self.po.user
-    user.short_description = "Заказчик"
+    user.short_description = u"Заказчик"
     class Admin:
         list_display =('get_numbered_po','created', 'user', 'po','part_number','part_number_superseded','quantity')
         list_filter = ('created',)
         search_fields = ('part_number',)
 
-    def __str__(self):
+    def __unicode__(self):
         return "%s-%d" % (self.created, self.id)
 
     def save(self):
@@ -167,21 +164,21 @@ class OrderedItem(models.Model):
         return dict(ORDER_ITEM_STATUSES).get(self.status,self.status)
 
     class Meta:
-        verbose_name = "позицию"
-        verbose_name_plural = "Заказанные позиции"
+        verbose_name = u"позицию"
+        verbose_name_plural = u"Заказанные позиции"
 
 class TrustedUsers(models.Model):
-    user = models.ForeignKey(User, unique=True, verbose_name="Пользователь")
+    user = models.ForeignKey(User, unique=True, verbose_name=u"Пользователь")
 
-    def __str__(self):
+    def __unicode__(self):
         return self.user.username
 
     class Admin:
         pass
 
     class Meta:
-        verbose_name = "пользователя в доверенные"
-        verbose_name_plural = "Доверенные пользователи"
+        verbose_name = u"пользователя в доверенные"
+        verbose_name_plural = u"Доверенные пользователи"
 
 # Extend User model
 def is_trusted(self):
@@ -192,17 +189,17 @@ User.add_to_class('is_trusted', is_trusted)
 
 # Invoices model
 class Invoice(models.Model):
-    creator = models.ForeignKey(User, verbose_name='Создатель инвойса', related_name='invoice_creator')
-    po = models.ForeignKey(Po, verbose_name='Po', related_name='invoice_po')
+    creator = models.ForeignKey(User, verbose_name=u'Создатель инвойса', related_name=u'invoice_creator')
+    po = models.ForeignKey(Po, verbose_name=u'Po', related_name=u'invoice_po')
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
-    places_num = models.IntegerField(blank=True, null=True, verbose_name="Количество мест")
-    weight_kg = models.FloatField(blank=True, null=True, verbose_name="Количество кг", max_digits=15, decimal_places=3)
-    shipping_cost = models.FloatField(blank=True, null=True, verbose_name="Стоимость доставки", max_digits=15, decimal_places=2)
+    places_num = models.IntegerField(blank=True, null=True, verbose_name=u"Количество мест")
+    weight_kg = models.FloatField(blank=True, null=True, verbose_name=u"Количество кг")
+    shipping_cost = models.FloatField(blank=True, null=True, verbose_name=u"Стоимость доставки")
     
     
-    def __str__(self):
-        return "%s - %s" % (self.po, self.created)
+    def __unicode__(self):
+        return u"%s - %s" % (self.po, self.created)
     
     def get_item_sum(self):
         return InvoiceItem.objects.summarize_by_invoice(self)
@@ -219,15 +216,15 @@ class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice)
     ordered_item = models.ForeignKey(OrderedItem)
     quantity = models.IntegerField(default=0)
-    price = models.FloatField(max_digits=15, decimal_places=2,  null=True, blank=True, verbose_name="Цена")
+    price = models.FloatField(null=True, blank=True, verbose_name=u"Цена")
     objects = InvoiceItemManager()
 
 
 # Bill TO user
 class Bill(models.Model):
     user = models.ForeignKey(User)
-    payment_for = models.CharField(maxlength=255)
-    payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
+    payment_for = models.CharField(max_length=255)
+    payment_sum = models.FloatField(default=0)
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     
@@ -236,30 +233,30 @@ class Bill(models.Model):
 # Payments from user
 class Payment(models.Model):
     user = models.ForeignKey(User)
-    payment_for = models.CharField(maxlength=255)
-    payment_sum = models.FloatField(default=0, max_digits=15, decimal_places=2)
+    payment_for = models.CharField(max_length=255)
+    payment_sum = models.FloatField(default=0)
     created = models.DateTimeField(auto_now_add=True)
     
     objects = PaymentManager()
 
 class Tarif(models.Model):
-    po = models.ForeignKey(Po, verbose_name='PO')
-    default_value = models.FloatField(max_digits=15, decimal_places=2, verbose_name='Множитель по умолчанию', default=1, blank=True)
+    po = models.ForeignKey(Po, verbose_name=u'PO')
+    default_value = models.FloatField(verbose_name=u'Множитель по умолчанию', default=1, blank=True)
     
-    def __str__(self):
-        return '%s (%d)' % ( self.po, self.id )
+    def __unicode__(self):
+        return u'%s (%d)' % ( self.po, self.id )
 
 class TarifClass(models.Model):
-    tarif = models.ForeignKey(Tarif, verbose_name='Тариф', editable=False)
-    brand = models.ForeignKey(Brand, verbose_name='Производитель', editable=False)
-    value = models.FloatField(max_digits=15, decimal_places=2, verbose_name='Множитель', default=1, blank=True)
+    tarif = models.ForeignKey(Tarif, verbose_name=u'Тариф', editable=False)
+    brand = models.ForeignKey(Brand, verbose_name=u'Производитель', editable=False)
+    value = models.FloatField(verbose_name=u'Множитель', default=1, blank=True)
     
-    def __str__(self):
-        return '%s - %s' % (self.tarif, self.brand)
+    def __unicode__(self):
+        return u'%s - %s' % (self.tarif, self.brand)
     
     class Meta:
-        verbose_name = 'тарифный план'
-        verbose_name_plural = 'Tарифные планы'
+        verbose_name = u'тарифный план'
+        verbose_name_plural = u'Tарифные планы'
         unique_together = (('tarif', 'brand'),)
     
     class Admin:
@@ -270,7 +267,6 @@ class TarifClass(models.Model):
     def save(self):
         update_tarif_classes(self)
         super(TarifClass, self).save()
-    
 
 def update_tarif_classes(tarif_class):
     brands = get_brand_children(tarif_class.brand)
@@ -286,7 +282,7 @@ def update_tarif_classes(tarif_class):
 
 def get_tarif_value(oi):
     if not isinstance(oi, OrderedItem):
-        raise AttributeError("OrderedItem object expected!")
+        raise AttributeError(u"OrderedItem object expected!")
     value = 1
     try:
         tarif = Tarif.objects.get(po=oi.po)
@@ -304,9 +300,9 @@ def createTarifClasses(po):
     for b in brands:
         tc, created = TarifClass.objects.get_or_create(brand=b, tarif=tarif)
 
-
+"""
 from django.dispatch import dispatcher  
-from django.db.models import signals 
+from django.db.models import signals
 
 
 def on_po_save(sender, instance, signal, *args, **kwargs):
@@ -323,3 +319,21 @@ def on_brand_save(sender, instance, signal, *args, **kwargs):
                 tc, created = TarifClass.objects.get_or_create(brand=instance, tarif=tarif)
 
 dispatcher.connect(on_brand_save, signal=signals.post_save, sender=Brand)
+"""
+from django.db.models.signals import post_save
+
+def on_po_save(sender, **kwargs):
+    if 'created' in kwargs:  
+        if kwargs['created']:
+            instance = kwargs['instance']
+            createTarifClasses(instance)
+post_save.connect(on_po_save, sender=Po)
+
+def on_brand_save(sender, **kwargs):
+    if 'created' in kwargs:
+        if kwargs['created']:
+            instance = kwargs['instance']
+            for po in Po.objects.all():
+                tarif, created = Tarif.objects.get_or_create(po=po)
+                tc, created = TarifClass.objects.get_or_create(brand=instance, tarif=tarif)
+post_save.connect(on_brand_save, sender=Brand)

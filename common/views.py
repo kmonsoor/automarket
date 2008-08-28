@@ -14,7 +14,7 @@ def start(request):
     if request.method == 'POST' :
         form = UserAuthForm(request.POST.copy())
         if form.is_valid() :
-            user = authenticate(username=form.clean_data['username'], password=form.clean_data['password'])
+            user = authenticate(username=form.cleaned_data['username'], password=form.cleaned_data['password'])
             if user is not None:
                 if user.is_active:
                     login(request, user)
@@ -43,8 +43,8 @@ def show_balance(request, user=None):
         # From / to form
         form = Selectperiod(request.POST.copy())
         if form.is_valid():
-            start = form.clean_data['from_date']
-            finish = form.clean_data['to_date']
+            start = form.cleaned_data['from_date']
+            finish = form.cleaned_data['to_date']
     else:
         form = Selectperiod()
         start = form.fields['from_date'].initial

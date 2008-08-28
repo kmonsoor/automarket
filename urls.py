@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
-
 from django.conf.urls.defaults import *
+from django.contrib import admin
+admin.autodiscover()
 
 try:
     from settings_local import MEDIA_ROOT
@@ -17,8 +18,8 @@ if DEVELOPMENT_MODE:
     )    
 
 urlpatterns += patterns('',
-    (r'^admin/data/po/tarif/(?P<po_id>\d+)/', 'cp.admin.po_tarif'),
-    (r'^admin/', include('django.contrib.admin.urls')),
+    (r'^admin/data/po/tarif/(?P<po_id>\d+)/','cp.admin_views.po_tarif'),
+    (r'^admin/(.*)', admin.site.root),
 )
 
 

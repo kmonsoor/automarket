@@ -47,6 +47,7 @@ def get_access(request):
 @render_to('cp/index.html')
 @login_required
 def index(request):
+    print request
     access, mode = get_access(request)
     if not access:
         raise Http404
@@ -99,9 +100,9 @@ def index(request):
         qs = qs.filter(po__user = request.user) 
     if order_by:
         qs = qs.order_by(order_by)
-    paginator = SimplePaginator(qs, items_per_page, '?page=%s')
-    paginator.set_page(current_page)
-    context['items'] = paginator.get_page();
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+    #paginator.set_page(current_page)
+    context['items'] = paginator.get_page_items();
     context['paginator'] = paginator
     
     context['status_options_str'], context['status_options'] = get_status_options(mode)
@@ -243,7 +244,7 @@ def position_edit(request, content_type, id):
     form = forms[content_type]({request.POST['type']:request.POST['value']})
     if form.is_valid():
         try:
-            value = form.clean_data[request.POST['type']]
+            value = form.cleaned_data[request.POST['type']]
         except Exception, e:
             response['error'] = e
             return response
@@ -253,7 +254,7 @@ def position_edit(request, content_type, id):
         response['error'] = saver.error      
     else:
         response['value'] = old_value and str(old_value) or ''
-        response['error'] = 'Wrong value!'
+        response['error'] = u'Wrong value!'
     
     return response
 
@@ -351,13 +352,13 @@ def invoices(request):
     headers = list(sort_headers.headers())
     
     invoices = Invoice.objects.filter(**qs_filter.get_filters()).order_by(order_by)
-    paginator = SimplePaginator(invoices, items_per_page, '?page=%s')
-    paginator.set_page(current_page)
+    paginator = SimplePaginator(request, invoices, items_per_page, 'page')
+    #paginator.set_page(current_page)
     return {
             'items_per_page':items_per_page,
             'filter':qs_filter,
             'headers':headers,
-            'invoices':paginator.get_page(),
+            'invoices':paginator.get_page_items(),
             'next':next(request),
             'paginator':paginator,
             }
@@ -376,9 +377,9 @@ def invoice(request, id):
         form = InvoiceForm(request.POST.copy(),instance=inv)
         if form.is_valid():
             # Save data
-            inv.places_num = form.clean_data['places_num']
-            inv.weight_kg = form.clean_data['weight_kg']
-            inv.shipping_cost = form.clean_data['shipping_cost']
+            inv.places_num = form.cleaned_data['places_num']
+            inv.weight_kg = form.cleaned_data['weight_kg']
+            inv.shipping_cost = form.cleaned_data['shipping_cost']
             inv.save()
     else:
         form = InvoiceForm(instance=inv)
@@ -480,10 +481,10 @@ def balance_index(request):
     current_page = request.GET.get('page',1)
     
     userqs = User.objects.all().order_by('username') #filter(**qs_filter.get_filters()).order_by(order_by)
-    paginator = SimplePaginator(userqs, 50, '?page=%s')
-    paginator.set_page(current_page)
+    paginator = SimplePaginator(request, userqs, 50, 'page')
+    #paginator.set_page(current_page)
     
-    users = paginator.get_page()
+    users = paginator.get_page_items()
     for u in users:
         u.total_debit = Invoice.objects.total_for(u)
         u.total_credit = Payment.objects.total_for(u)
@@ -510,7 +511,7 @@ def add_custom_bill(request, user_id):
     if request.method == 'POST':
         form = AddCustomBill(request.POST.copy())
         if form.is_valid():
-            data = form.clean_data
+            data = form.cleaned_data
             bill = Bill(payment_for=data['payment_for'],payment_sum=data['payment_sum'],user=auser)
             bill.save()
             return HttpResponseRedirect(request.GET.get('next','/cp/balance/%d/' % auser.id))
@@ -526,7 +527,7 @@ def add_payment(request, user_id):
     if request.method == 'POST':
         form = AddPayment(request.POST.copy())
         if form.is_valid():
-            data = form.clean_data
+            data = form.cleaned_data
             pay = Payment(user=auser, payment_for=data['payment_for'],payment_sum=data['payment_sum'])
             pay.save()
             return HttpResponseRedirect(request.GET.get('next','/cp/balance/%d/' % auser.id))

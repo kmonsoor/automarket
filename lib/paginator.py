@@ -1,54 +1,115 @@
-from django.core.paginator import ObjectPaginator, InvalidPage
+#$Id: paginator.py 159 2008-07-02 11:53:51Z dmitry $
+# -*- coding: utf-8 -*-
+from django.core.paginator import Paginator, InvalidPage
 
-class SimplePaginator(ObjectPaginator):
-    def __init__(self, query_set, page_size, link_template, total='?'):
-        self.current_page = 1
-        self.page_size = page_size
-        self.link_template = link_template
-        self.total = total
-        ObjectPaginator.__init__(self, query_set, page_size)
+class SimplePaginator(object):
+    """
+    Usage:
+    1) in view
+    
+    def my_view(request):
+        from path.to.paginator import SimplePaginator
+        ....
+        qs = MyModel.objects.filter(...)
+        # Create paginator object - push it into context        
+        paginator = SimplePaginator(request, qs, 25, 'page')
+        # Get items for template - push it into context
+        items = paginator.get_page_items()
+        ...
 
-    def set_page(self, page_num):
-        self.current_page = int(page_num)
+    2) in template
+    For showing pagination use
+    {% include 'paginator.html' %}
 
-    def has_next_page(self, page_num=None):
-        if page_num is None:
-            return ObjectPaginator.has_next_page(self, self.current_page-1)
+
+    Paginator template example
+    {% ifnotequal paginator.pages 1 %}
+    <div id="pagination">
+    <table width="70%">
+    <tr>
+    <td>
+        {% if paginator.has_p %}
+            <a href="{{ paginator.p_link }}" title="Previous page">&#8592;</a>&nbsp;
+        {% endif %}
+            Page {{ paginator.current }} from {{ paginator.pages }}&nbsp;
+        {% if paginator.has_n %}
+            <a href="{{ paginator.n_link }}" title="Next page">&#8594;</a>&nbsp;
+        {% endif %}
+    </td><td align="right">
+        {% for group in paginator.windowed_page_links %}
+        {% for p in group %}
+        {% if not p.current %}
+        <a href="{{p.link}}">{{ p.page }}</a>&nbsp;
+        {% else %}
+        <span class="current">{{ p.page }}</span>&nbsp;
+        {% endif %}
+        {% endfor %}{% if not forloop.last %}...{% endif %}
+        {% endfor %}
+    </td>
+    </tr>
+    </table>
+    </div>
+    {% endifnotequal %}
+    
+    """
+    
+    link_template = u'%(get_string)s%(delimeter)spage=%(page_number)d'
+    
+    def __init__(self, request, qs, per_page, link_name='page'):
+        _get = request.GET.copy()
+
+        if request.GET.has_key(link_name):
+            self.current_page = _get.get(link_name)
+            _get.pop(link_name)
         else:
-            return ObjectPaginator.has_next_page(self,page_num)
-
-    def has_previous_page(self, page_num=None):
-        if page_num is None:
-            return ObjectPaginator.has_previous_page(self, self.current_page-1)
+            self.current_page = 1
+        
+        if len(_get) > 0:
+            self.get_string = u'?%s' % "&".join((u"%s=%s" % (k,v) for k,v in _get.items()))
+            self.delimeter = '&'
         else:
-            return ObjectPaginator.has_previous_page(self,page_num)
+            self.get_string = ''
+            self.delimeter = '?'
+            
+        paginator = Paginator(qs, per_page)
+        self.page = paginator.page(self.current_page)
+        
+        self.pages = self.page.paginator.num_pages
+    
+    def __repr__(self):
+        return u'Page %d for %d' % (self.current(),self.page.paginator.count) 
+    
+    def get_page_items(self):
+        return self.page.object_list
+    
+    def has_p(self):
+        return self.page.has_previous()        
+    
+    def has_n(self):
+        return self.page.has_next()
+    
+    def current(self):
+        return self.page.number
+    
+    def total(self):
+        return self.page.paginator.count
 
-    def get_page(self, page_num=None):
-        if page_num is None:
-            return ObjectPaginator.get_page(self, self.current_page-1)
+    def render_page_link(self, page_number):
+        return self.link_template % {'get_string':self.get_string, 'page_number':page_number, 'delimeter':self.delimeter}
+    
+    def n_link(self):
+        if self.has_n():
+            return self.render_page_link(self.page.next_page_number())
         else:
-            return ObjectPaginator.get_page(self, page_num)
-
-    def previous_link(self):
-        if ObjectPaginator.has_previous_page(self, self.current_page-1):
-            return self.link_template % (self.current_page - 1)
+            return u""
+    def p_link(self):
+        if self.has_p():
+            return self.render_page_link(self.page.previous_page_number())
         else:
-            return None
-
-    def next_link(self):
-        if ObjectPaginator.has_next_page(self, self.current_page-1):
-            return self.link_template % (self.current_page + 1)
-        else:
-            return None
-
-    def start_index(self):
-        return (self.current_page-1) * self.page_size + 1
-
-    def end_index(self):
-        return min(self.current_page * self.page_size, self.hits)
-
+            return u""
+    
     def make_page_links(self, start, end):
-        return [(p+1, self.link_template % (p+1), (p+1 == self.current_page)) for p in range(start, end)]
+        return [(p+1, self.render_page_link(p+1), (p+1 == self.current())) for p in range(start, end)]
 
     def page_links(self):
         return self.make_page_links(0, self.pages)
@@ -57,13 +118,13 @@ class SimplePaginator(ObjectPaginator):
         links = []
         if self.pages <= 12:
             links = [self.page_links()]
-        elif self.current_page - window_size/2 <= 3:
+        elif self.page.number - window_size/2 <= 3:
             links = [self.make_page_links(0, window_size), self.make_page_links(self.pages-2, self.pages)]
-        elif self.current_page + window_size/2 > self.pages - 2:
+        elif self.page.number + window_size/2 > self.pages - 2:
             links = [self.make_page_links(0, 2), self.make_page_links(self.pages-window_size, self.pages)]
         else:
             links = [self.make_page_links(0, 2),
-                             self.make_page_links(self.current_page-window_size/2-1, self.current_page+window_size/2-1),
+                             self.make_page_links(self.page.number-window_size/2-1, self.page.number+window_size/2-1),
                              self.make_page_links(self.pages-2, self.pages)]
         response = []
         for g in links:
@@ -71,7 +132,4 @@ class SimplePaginator(ObjectPaginator):
             for i in g:
                 r.append({'page':i[0],'link':i[1],'current':i[2]})
             response.append(r)
-        return response
-
-    
-    
+        return response 

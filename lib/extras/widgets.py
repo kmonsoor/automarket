@@ -2,7 +2,7 @@
 Extra HTML Widget classes
 """
 
-from django.newforms.widgets import Widget, Select
+from django.forms.widgets import Widget, Select
 from django.utils.dates import MONTHS
 import datetime
 

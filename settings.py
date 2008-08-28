@@ -78,7 +78,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.doc.XViewMiddleware',
-    'lib.SQLLogMiddleware.SQLLogMiddleware',
+    #'lib.SQLLogMiddleware.SQLLogMiddleware',
 )
 
 ROOT_URLCONF = 'automarket.urls'

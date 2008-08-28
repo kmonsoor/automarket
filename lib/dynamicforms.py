@@ -2,8 +2,8 @@
 import re
 
 from django.template import Context, loader
-from django import newforms as forms
-from django.newforms.forms import DeclarativeFieldsMetaclass
+from django import forms
+from django.forms.forms import DeclarativeFieldsMetaclass
 
 replace_res = [re.compile('(<[^>]+) (%s=\\\\"[a-zA-Z0-9-_]+\.)#(\\\\")([^<]*>)' % s) for s in ('id', 'for', 'name')]
 

@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 from datetime import datetime
 from django import template
-from django import newforms as forms
-from django.newforms import form_for_model
+from django import forms
+from django.forms import form_for_model
 
 class Filter(object):
     def __init__(self, request, model, fields):

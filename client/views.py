@@ -74,10 +74,10 @@ def index(request):
     if order_by:
         qs = qs.order_by(order_by)
     
-    paginator = SimplePaginator(qs, items_per_page, '?page=%s')
-    paginator.set_page(current_page)
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+    #paginator.set_page(current_page)
     
-    response['items'] = paginator.get_page()
+    response['items'] = paginator.get_page_items()
     response['paginator'] = paginator
     return response
 
@@ -103,14 +103,14 @@ def order(request):
                 # Do something with your data here
                 item = OrderedItem()
 
-                for key, value in form.clean_data.items() :
+                for key, value in form.cleaned_data.items() :
                     if not key in ('brand','side','po'):
                         item.__dict__[key] = value
 
-                if form.clean_data['side'] != 'None' and form.clean_data['side'] is not None :
-                    item.side = form.clean_data['side']
+                if form.cleaned_data['side'] != 'None' and form.cleaned_data['side'] is not None :
+                    item.side = form.cleaned_data['side']
                 
-                item.brand = Brand.objects.get(name=form.clean_data['brand'])
+                item.brand = Brand.objects.get(name=form.cleaned_data['brand'])
                 
                 item.po = Po.objects.get(pk=po_id)
                 item.ponumber = po_number
@@ -261,11 +261,11 @@ def invoices(request):
     if len(q) > 0 :
         qs = qs.filter(Q(po__po__icontains=q))
     
-    paginator = SimplePaginator(qs, 25, '?page=%s')
-    paginator.set_page(request.GET.get('page',1))
+    paginator = SimplePaginator(request, qs, 25, 'page')
+    #paginator.set_page(request.GET.get('page',1))
     response.update( {
             'paginator':paginator,
-            'invoices':paginator.get_page(),
+            'invoices':paginator.get_page_items(),
             'direction': direction,
             'field': field
             })

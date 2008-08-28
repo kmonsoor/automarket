@@ -1,6 +1,6 @@
 # -*- coding=UTF-8 -*-
 import datetime
-from django import newforms as forms
+from django import forms
 
 from data.models import *
 
@@ -31,10 +31,10 @@ class OrderItemForm(Form):
     
     
     def clean_brand(self):
-        if 'brand' in self.clean_data.keys() :
-            if self.clean_data['brand'] not in data :
+        if 'brand' in self.cleaned_data.keys() :
+            if self.cleaned_data['brand'] not in data :
                 raise forms.ValidationError("Такого производителя нет!")
-        return self.clean_data['brand']
+        return self.cleaned_data['brand']
 
 class PoForm(Form):
     
