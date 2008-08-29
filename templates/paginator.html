@@ -3,17 +3,21 @@
 <table width="100%">
 <tr>
 <td>
-		{% if paginator.previous_link %}
-		    <a href="{{ paginator.previous_link }}">&#8592;</a>
+		{% if paginator.has_p %}
+		    <a href="{{ paginator.p_link }}">&#8592;</a>&nbsp;
 		{% endif %}
-		    Страница {{ paginator.current_page }} из {{ paginator.pages }}
-		{% if paginator.next_link %}
-		    <a href="{{ paginator.next_link }}">&#8594;</a>
+		    Страница <font class="bold">{{ paginator.current }} </font> из {{ paginator.pages }}&nbsp;
+		{% if paginator.has_n %}
+		    <a href="{{ paginator.n_link }}">&#8594;</a>&nbsp;
 		{% endif %}
-</td><td align="right">
+</td><td style="text-align: right">
 		{% for group in paginator.windowed_page_links %}
 		{% for p in group %}
-		<a href="{{p.link}}" {% if p.current %}class="current"{% endif %}>{{ p.page }}</a>&nbsp;
+		{% if not p.current %}
+		<a href="{{ p.link }}">{{ p.page }}</a>&nbsp;
+		{% else %}
+		<span class="current bold">{{ p.page }}</span>&nbsp;
+		{% endif %}
 		{% endfor %}{% if not forloop.last %}...{% endif %}
 		{% endfor %}
 </td>

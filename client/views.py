@@ -209,7 +209,7 @@ def import_order(request):
         afile = request.FILES.get('xls_file',None)
         if afile :
             from lib import xlsreader
-            xls = xlsreader.readexcel(file_contents=afile['content'])
+            xls = xlsreader.readexcel(file_contents=afile.read())
             data = {}
             i = 1
             for row in xls.iter_dict(xls.book.sheet_names()[0]): 
@@ -226,6 +226,7 @@ def import_order(request):
                 response['page_data'] = form_list
             else:
                 pass
+            afile.close()
     else:
         form = ImportXlsForm()
     response['form'] = form
