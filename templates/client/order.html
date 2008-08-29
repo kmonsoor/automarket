@@ -26,7 +26,7 @@ function showList(e)
 
 var PageForm = Form.extend({
     initialize: function(value) {
-    this.parent({{ page_template }}, value);
+    this.parent({{ page_template|safe }}, value);
     this.fieldset = new Element('fieldset');
     this.fieldset.setProperty('class', 'module aligned');
     this.fieldset.innerHTML = this.html;
@@ -36,7 +36,7 @@ var PageForm = Form.extend({
 Window.onDomReady(function() {
 
     {% for page in page_data %}
-    new PageForm({{ page }});
+    new PageForm({{ page|safe }});
     {% endfor %}
 
 });
