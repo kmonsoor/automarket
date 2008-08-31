@@ -8,7 +8,8 @@ from lib.widgets import JQueryAutoComplete
 from lib.dynamicforms import Form
 CH = CAR_SIDES
 
-data = [x.name for x in Brand.objects.all()]
+def brands():
+    return [x.name for x in Brand.objects.all()]
 
 def pos(user):
     return ((x.id, x.po) for x in Po.objects.filter(user=user))
@@ -22,7 +23,7 @@ class OrderItemForm(Form):
     car_model = forms.CharField(widget=forms.TextInput(attrs={'size':10}), required=False)
     engine_volume = forms.CharField(widget=forms.TextInput(attrs={'size':4}), required=False)
     year = forms.IntegerField(max_value=9999, min_value=1900, widget=forms.TextInput(attrs={'size':4}), required=False)
-    #brand = forms.CharField(widget=JQueryAutoComplete(source=data))
+    #brand = forms.CharField(widget=JQueryAutoComplete(source=brands()))
     brand = forms.CharField()
     description = forms.CharField(max_length=255, widget=forms.Textarea(attrs={'cols':'20', 'rows':5}))
     side = forms.CharField(widget=forms.Select(choices=CH), required=False)
@@ -32,7 +33,7 @@ class OrderItemForm(Form):
     
     def clean_brand(self):
         if 'brand' in self.cleaned_data.keys() :
-            if self.cleaned_data['brand'] not in data :
+            if self.cleaned_data['brand'] not in brands() :
                 raise forms.ValidationError("Такого производителя нет!")
         return self.cleaned_data['brand']
 
