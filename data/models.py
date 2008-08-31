@@ -59,11 +59,11 @@ class Brand(models.Model):
         return self.get_separator().join(p_list)
     _parents_repr.short_description = "Parents"
 
-    def save(self):
+    def save(self, *args, **kwargs):
         p_list = self._recurse_for_parents(self)
         if self.name in p_list:
             raise validators.ValidationError(u"You can not add Brand into itself!")
-        super(Brand, self).save()
+        super(Brand, self).save(*args, **kwargs)
 
     def unify(self):
         p_list = self._recurse_for_parents(self)
@@ -154,11 +154,11 @@ class OrderedItem(models.Model):
     def __unicode__(self):
         return "%s-%d" % (self.created, self.id)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.quantity_backorder = int(self.quantity) - int(self.quantity_ship)
         self.brand = self.brand.unify()
 
-        super(OrderedItem, self).save()
+        super(OrderedItem, self).save(*args, **kwargs)
 
     def status_verbose(self):
         return dict(ORDER_ITEM_STATUSES).get(self.status,self.status)
@@ -264,9 +264,9 @@ class TarifClass(models.Model):
         list_filter = ('brand',)
         search_fields = ('tarif.po',)
         
-    def save(self):
+    def save(self, *args, **kwargs):
         update_tarif_classes(self)
-        super(TarifClass, self).save()
+        super(TarifClass, self).save(*args, **kwargs)
 
 def update_tarif_classes(tarif_class):
     brands = get_brand_children(tarif_class.brand)
