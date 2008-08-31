@@ -42,7 +42,7 @@ class InvoiceManager(Manager):
         from data.models import InvoiceItem
         qs = self.select_related().filter(po__user=user)
         
-        return reduce(lambda x,y: x+y, [InvoiceItem.objects.summarize_by_invoice(invoice) for invoice in qs],0)
+        return reduce(lambda x,y: float(x)+float(y), [InvoiceItem.objects.summarize_by_invoice(invoice) for invoice in qs],0)
     
     def get_for_period(self, user, start, finish):
         # TODO - проверить запрос!
