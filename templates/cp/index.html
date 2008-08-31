@@ -6,14 +6,14 @@
 <script>
 var caller = 'index';
 var brands = [
-	{{ brands }}
+	{{ brands|safe }}
 	];
 </script>
+
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
 <script>
 backend_url = '/cp/position/edit/ordered_item/';
 </script>
-
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/changelists.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />

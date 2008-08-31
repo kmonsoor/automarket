@@ -26,7 +26,6 @@ class QSFilter(object):
             return None
         if request.REQUEST.has_key('qs_filter'):
             data = dict(getattr(request, request.method).items())
-            print data
             if self.use_session:
                 request.session['qs_filter'] = {'data':data,'path':request.path}
             self.modified = True

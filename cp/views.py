@@ -47,7 +47,6 @@ def get_access(request):
 @render_to('cp/index.html')
 @login_required
 def index(request):
-    print request
     access, mode = get_access(request)
     if not access:
         raise Http404
@@ -255,7 +254,6 @@ def position_edit(request, content_type, id):
     else:
         response['value'] = old_value and str(old_value) or ''
         response['error'] = u'Wrong value!'
-    
     return response
 
 @login_required
