@@ -32,7 +32,7 @@ def index(request):
         request.session['items_per_page'] = items_per_page
         request.session.modified = True
     if not items_per_page:
-        items_per_page = 10
+        items_per_page = 20
     items_per_page = int(items_per_page)
     response['items_per_page'] = items_per_page
     # Set filter

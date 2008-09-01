@@ -18,9 +18,9 @@
 <input type="submit" name="qs_filter_clear" value="Очистить">
 Количество записей на странице: 
 <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
-<option value="20"{% ifequal items_per_page 10 %} selected {% endifequal %}>20</option>
-<option value="50"{% ifequal items_per_page 15 %} selected {% endifequal %}>50</option>
-<option value="100"{% ifequal items_per_page 20 %} selected {% endifequal %}>100</option>
+<option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
+<option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+<option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
 </select>
 
 <div class="module" id="changelist">
