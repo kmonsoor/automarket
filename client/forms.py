@@ -33,6 +33,7 @@ class OrderItemForm(Form):
     
     def clean_brand(self):
         if 'brand' in self.cleaned_data.keys() :
+            self.cleaned_data['brand'] = self.cleaned_data['brand'].lower()
             if self.cleaned_data['brand'] not in brands() :
                 raise forms.ValidationError("Такого производителя нет!")
         return self.cleaned_data['brand']
