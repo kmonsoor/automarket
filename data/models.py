@@ -27,7 +27,11 @@ class Po(models.Model):
 class Brand(models.Model):
     name = models.CharField(max_length=255, verbose_name=u"Наименование")
     parent = models.ForeignKey('self',null=True,blank=True, verbose_name=u"Родитель")
-
+    active = models.BooleanField(default=True, verbose_name=u"Активен")
+    
+    objects = models.Manager()
+    active_objects = ActiveBrandManager()
+    
     class Admin:
         list_display = ('name','_parents_repr')
 
@@ -65,6 +69,11 @@ class Brand(models.Model):
             raise validators.ValidationError(u"You can not add Brand into itself!")
         super(Brand, self).save(*args, **kwargs)
 
+    def delete(self):
+        self.active = False
+        self.save()
+        
+    
     def unify(self):
         p_list = self._recurse_for_parents(self)
         if len(p_list) > 0:

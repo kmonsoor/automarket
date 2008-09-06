@@ -110,7 +110,7 @@ def order(request):
                 if form.cleaned_data['side'] != 'None' and form.cleaned_data['side'] is not None :
                     item.side = form.cleaned_data['side']
                 
-                item.brand = Brand.objects.get(name=form.cleaned_data['brand'])
+                item.brand = Brand.active_objects.get(name=form.cleaned_data['brand'])
                 
                 item.po = Po.objects.get(pk=po_id)
                 item.ponumber = po_number
@@ -160,7 +160,7 @@ def superseded(request, action, item_id):
 
 @render_to('client/help/brand_list.html')
 def help_brand_list(request):
-    brands = Brand.objects.all().order_by('name')
+    brands = Brand.active_objects.all().order_by('name')
     return {'list':brands}
 
 @login_required

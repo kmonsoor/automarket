@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
 class BrandOptions(admin.ModelAdmin):
-    list_display = ('name','_parents_repr')
+    list_display = ('name','_parents_repr','active')
 
 class OrderedItemOptions(admin.ModelAdmin):
     list_display =('get_numbered_po','created', 'user', 'po','part_number','part_number_superseded','quantity')

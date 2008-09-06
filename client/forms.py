@@ -9,7 +9,7 @@ from lib.dynamicforms import Form
 CH = CAR_SIDES
 
 def brands():
-    return [x.name for x in Brand.objects.all()]
+    return [x.name for x in Brand.active_objects.all()]
 
 def pos(user):
     return ((x.id, x.po) for x in Po.objects.filter(user=user))

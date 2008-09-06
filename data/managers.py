@@ -101,4 +101,7 @@ class BillManager(Manager):
             return x
         return [add_data(x) for x in qs]
     
-                 
+class ActiveBrandManager(Manager):
+    def get_query_set(self):
+        return super(BrandManager, self).get_query_set().fiter(active=True)
+                     
