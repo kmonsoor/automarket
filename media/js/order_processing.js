@@ -5,7 +5,8 @@ function setDefaultCurrent() {
 	current = {
         'id':null,
         'type':null,
-        'value':null, 
+        'value':null,
+        'previous_value':null, 
         'dict':null, 
         'display_value':null, 
         'canceled':false,
@@ -36,6 +37,7 @@ function save() {
                    },
             success: function(response) {
                 r = eval('['+response+']');
+                current.previous_value = current.value;
                 current.value = r[0]['value'];
 				setDisplayValue();
                 if (r[0]['error']) alert(r[0]['error']);
@@ -75,6 +77,17 @@ function postSave() {
     if (current.type == 'brand') {
         editStatus(current.id, 'superseded');
     } 
+    if (current.type == 'price') {
+        if (current.value) {
+            editStatus(current.id, 'on_stock');
+        }
+        else {
+            if (current.previous_value) {
+                editStatus(current.id, '_return_');
+            }
+            current.display_value = 'Price';
+        }
+    }
 }
 
 function restore() {

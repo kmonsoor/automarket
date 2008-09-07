@@ -165,7 +165,13 @@ class OrderedItemSaver(object):
     
     def save_status(self, obj, value):
         try:
-            obj.status = value
+            previous_status = obj.previous_status
+            obj.previous_status = obj.status
+            if value == '_return_':
+                if previous_status:
+                    obj.status = previous_status
+            else:
+                obj.status = value
             obj.save()
         except Exception, e:
             pass

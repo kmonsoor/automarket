@@ -18,7 +18,7 @@ class OrderedItemsFilterForm(forms.Form):
     side = forms.ChoiceField(label='Сторона', choices=CAR_SIDES, required=False, widget=forms.Select(attrs={'class':'qs_filter'}))
     
 class OrderedItemForm(forms.Form):
-    status = forms.ChoiceField(choices=ORDER_ITEM_STATUSES, required=False)
+    status = forms.ChoiceField(choices=(('_return_','Прежний'),) + ORDER_ITEM_STATUSES, required=False)
     price = forms.CharField(required=False)
     part_number_superseded = forms.CharField(required=False)
     brand = forms.CharField(required=False)

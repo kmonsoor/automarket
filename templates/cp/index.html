@@ -73,7 +73,7 @@ backend_url = '/cp/position/edit/ordered_item/';
     <span id="part_number_superseded_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
 </td>
 <td class="editable" onclick="editPrice({{ i.id }})">
-	<div id="price_display_{{ i.id }}">{{ i.price|default:"&nbsp;" }}</div>
+	<div id="price_display_{{ i.id }}">{{ i.price|default:"Price" }}</div>
 	<div id="price_{{ i.id }}" style="display: none">{{ i.price|default:"" }}</div>
     <span id="price_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
 </td>

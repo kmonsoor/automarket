@@ -135,6 +135,7 @@ class OrderedItem(models.Model):
     quantity = models.IntegerField(verbose_name=u"Количество")
     quantity_ship = models.IntegerField(verbose_name=u"Отгружено")
     status = models.CharField(max_length=50, choices=ORDER_ITEM_STATUSES, default='order', verbose_name=u"Статус")
+    previous_status = models.CharField(max_length=50, verbose_name=u"Прежний статус", null=True, blank=True,)
     description = models.TextField(verbose_name=u"Описание")
     brand = models.ForeignKey(Brand, null=True, blank=True, verbose_name=u"Производитель запчасти")
     created = models.DateTimeField(auto_now_add=True, verbose_name=u"Дата заказа")
