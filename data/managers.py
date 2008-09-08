@@ -103,5 +103,5 @@ class BillManager(Manager):
     
 class ActiveBrandManager(Manager):
     def get_query_set(self):
-        return super(ActiveBrandManager, self).get_query_set().fiter(active=True)
+        return super(ActiveBrandManager, self).get_query_set().filter(active=True)
                      
