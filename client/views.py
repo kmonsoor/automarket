@@ -41,6 +41,7 @@ def index(request):
         current_page = 1
     response['filter'] = filter
     # Set table headers sortable 
+    from django.utils.html import mark_safe
     LIST_HEADERS = (
                 ('Дата', 'created'),
                 ('Авто', None),
@@ -50,10 +51,10 @@ def index(request):
                 ('OEM #', 'part_number'),
                 ('Замена', 'part_number_superseded'),
                 ('Цена', 'price'),
-                ('QTY<br>ORD', 'quantity'),
-                ('QTY<br>SH', 'quantity_ship'),
+                (mark_safe('QTY<br />ORD'), 'quantity'),
+                (mark_safe('QTY<br />SH'), 'quantity_ship'),
                 ('Статус', 'status'),
-                ('Статус изменен','status_modified')
+                (mark_safe('Статус<br /> изменен'),'status_modified')
                 )
     sort_headers = SortHeaders(request, LIST_HEADERS)
     order_field = request.GET.get('o', None)
