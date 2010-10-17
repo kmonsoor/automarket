@@ -1,21 +1,14 @@
 # -*- coding=utf-8 -*-
 from django.conf.urls.defaults import *
 from django.contrib import admin
+from django.conf import settings
 admin.autodiscover()
-
-try:
-    from settings_local import MEDIA_ROOT
-    DEVELOPMENT_MODE = True
-except:
-    from django.conf.settings import MEDIA_ROOT
-    DEVELOPMENT_MODE = False
-
 urlpatterns = patterns('',)
 
-if DEVELOPMENT_MODE:
+if settings.DEBUG:
     urlpatterns += patterns('',
-        (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': MEDIA_ROOT}),
-    )    
+        (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
+    )
 
 urlpatterns += patterns('',
     (r'^admin/data/po/tarif/(?P<po_id>\d+)/','cp.admin_views.po_tarif'),

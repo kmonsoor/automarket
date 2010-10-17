@@ -1,4 +1,4 @@
 # -*- coding=utf-8 -*-
 
-#PATHES = ('/home/webchemist/Projects/','/home/webchemist/Projects/automarket/',)
-PATHES = ('D:/projects/automarket','D:/projects',)
+PATHES = ('/home/webchemist/projects/','/home/webchemist/projects/automarket/',)
+#PATHES = ('D:/projects/automarket','D:/projects',)
