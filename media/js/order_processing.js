@@ -132,6 +132,115 @@ function editSuperseded(id) {
     
 }
 
+function editPartNumber(id) {
+    if (return_check(id, 'part_number')) return;
+    if (current.id) close();
+    current.type = 'part_number'; 
+    current.value = jQuery('#part_number_'+id).html();
+	current.display_value = jQuery('#part_number_display_'+id).html();
+    current.id = id;
+    
+    jQuery('#part_number_display_'+id).html('<input id="part_number_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#part_number_buttons_'+id).css("display","inline");
+    
+}
+
+function editPriceBase(id) {
+    if (return_check(id, 'price_base')) return;
+    if (current.id) close();
+    current.type = 'price_base'; 
+    current.value = jQuery('#price_base_'+id).html();
+	current.display_value = jQuery('#price_base_display_'+id).html();
+    current.id = id;
+    
+    jQuery('#price_base_display_'+id).html('<input id="price_base_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#price_base_buttons_'+id).css("display","inline");
+    
+}
+
+function editWeight(id) {
+    if (return_check(id, 'weight')) return;
+    if (current.id) close();
+    current.type = 'weight'; 
+    current.value = jQuery('#weight_'+id).html();
+	current.display_value = jQuery('#weight_display_'+id).html();
+    current.id = id;
+    
+    jQuery('#weight_display_'+id).html('<input id="weight_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#weight_buttons_'+id).css("display","inline");
+    
+}
+
+function editPriceDiscount(id) {
+    if (return_check(id, 'price_discount')) return;
+    if (current.id) close();
+    current.type = 'price_discount'; 
+    current.value = jQuery('#price_discount_'+id).html();
+	current.display_value = jQuery('#price_discount_display_'+id).html();
+    current.id = id;
+    
+    jQuery('#price_discount_display_'+id).html('<input id="price_discount_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#price_discount_buttons_'+id).css("display","inline");
+    
+}
+
+function editPriceInvoice(id) {
+    if (return_check(id, 'price_invoice')) return;
+    if (current.id) close();
+    current.type = 'price_invoice'; 
+    current.value = jQuery('#price_invoice_'+id).html();
+	current.display_value = jQuery('#price_invoice_display_'+id).html();
+    current.id = id;
+    
+    jQuery('#price_invoice_display_'+id).html('<input id="price_invoice_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#price_invoice_buttons_'+id).css("display","inline");
+	
+	calculateTotalWShip(id);
+}
+
+function calculateTotalWShip(id){
+	jQuery('total_w_ship_{{ i.id }}')
+}
+
+function editCommentCustomer(id) {
+    if (return_check(id, 'comment_customer')) return;
+    if (current.id) close();
+    current.type = 'comment_customer'; 
+    current.value = jQuery('#comment_customer_'+id).html();
+	current.display_value = jQuery('#comment_customer_display_'+id).html();
+    current.id = id;
+    
+    jQuery('#comment_customer_display_'+id).html('<textarea id="comment_customer_input_' + id + '">'+ current.value +'</textarea>');
+    jQuery('#comment_customer_buttons_'+id).css("display","inline");
+    
+}
+
+function editDescriptionRu(id) {
+    if (return_check(id, 'description_ru')) return;
+    if (current.id) close();
+    current.type = 'description_ru'; 
+    current.value = jQuery('#description_ru_'+id).html();
+	current.display_value = jQuery('#description_ru_display_'+id).html();
+    current.id = id;
+    
+    jQuery('#description_ru_display_'+id).html('<textarea id="description_ru_input_' + id + '">'+ current.value +'</textarea>');
+    jQuery('#description_ru_buttons_'+id).css("display","inline");
+    
+}
+
+function editDescriptionEn(id) {
+    if (return_check(id, 'description_en')) return;
+    if (current.id) close();
+    current.type = 'description_en'; 
+    current.value = jQuery('#description_en_'+id).html();
+	current.display_value = jQuery('#description_en_display_'+id).html();
+    current.id = id;
+    
+    jQuery('#description_en_display_'+id).html('<textarea id="description_en_input_' + id + '">'+ current.value +'</textarea>');
+    jQuery('#description_en_buttons_'+id).css("display","inline");
+    
+}
+
 function editBrand(id) {
     if (return_check(id, 'brand')) return;
     if (current.id) close();

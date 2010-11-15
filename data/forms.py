@@ -1,28 +1,33 @@
 # -*- coding:utf-8 -*-
-from django import forms
 
-from data.models import OrderedItem, Brand, TrustedUsers, ORDER_ITEM_STATUSES, TRUSTED_USER_ORDER_ITEM_STATUSES, CAR_SIDES
+from django import forms
+from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES
 
 class OrderedItemsFilterForm(forms.Form):
-    po__po = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
-    ponumber = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
-    description__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    status = forms.ChoiceField(label='Статус', choices=(('',u''),)+ORDER_ITEM_STATUSES, required=False, widget=forms.Select(attrs={'class':'qs_filter'}))
-    part_number__contains = forms.CharField(label=u'Part #', required=False, widget=forms.TextInput(attrs={'size':12,'class':'qs_filter'}))
-    part_number_superseded__contains = forms.CharField(label=u'part_number_superseded', required=False, widget=forms.TextInput(attrs={'size':12,'class':'qs_filter'}))
-    price__gte = forms.CharField(label='Цена, от', required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
-    price__lte = forms.CharField(label='Цена, до', required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
-    quantity = forms.IntegerField(label='QTY', required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
-    quantity_ship = forms.IntegerField(label='QTY BO', required=False, widget=forms.TextInput(attrs={'size':3, 'class':'qs_filter'}))
-    brand__name__contains = forms.CharField(label='Brand', required=False, widget=forms.TextInput(attrs={'size':8,'class':'qs_filter'}))
-    side = forms.ChoiceField(label='Сторона', choices=CAR_SIDES, required=False, widget=forms.Select(attrs={'class':'qs_filter'}))
+    ponumber = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10, 'class':'qs_filter'}))
+    supplier__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10, 'class':'qs_filter'}))
+    brand__name__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))
+    part_number__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':20,'class':'qs_filter'}))
+    comment_customer__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':22,'class':'qs_filter'}))
+    price_invoice__gte = forms.CharField(label='от', required=False, widget=forms.TextInput(attrs={'size':5, 'class':'qs_filter'}))
+    price_invoice__lte = forms.CharField(label='до', required=False, widget=forms.TextInput(attrs={'size':6, 'class':'qs_filter'}))
+    part_number_superseded__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':20,'class':'qs_filter'}))
+    description_ru__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':22,'class':'qs_filter'}))
+    description_en__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':22,'class':'qs_filter'}))
+    manager__username__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':8,'class':'qs_filter'}))
+    client__username__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':8,'class':'qs_filter'}))
     
 class OrderedItemForm(forms.Form):
-    status = forms.ChoiceField(choices=(('_return_','Прежний'),) + ORDER_ITEM_STATUSES, required=False)
-    price = forms.CharField(required=False)
+    part_number = forms.CharField(required=False)
+    comment_customer = forms.CharField(required=False)
+    price_invoice = forms.FloatField(required=False)
     part_number_superseded = forms.CharField(required=False)
-    brand = forms.CharField(required=False)
-    quantity_ship = forms.IntegerField(required=False)
+    description_ru = forms.CharField(required=False)
+    description_en = forms.CharField(required=False)
+    price_base = forms.FloatField(required=False)
+    weight = forms.FloatField(required=False)
+    price_discount = forms.FloatField(required=False)
+    status = forms.ChoiceField(choices=(('_return_','Прежний'),) + ORDER_ITEM_STATUSES, required=False)
     
     def clean_price(self):
         if self.cleaned_data['price']:
@@ -33,71 +38,3 @@ class OrderedItemForm(forms.Form):
             return value
         else:
             return self.cleaned_data['price']
-        
-class InvoiceFilterForm(forms.Form):
-    po__po__icontains = forms.CharField(required=False, widget=forms.widgets.TextInput(attrs={'style':'width: 40px;'}))
-    po__user__username__icontains = forms.CharField(required=False, widget=forms.widgets.TextInput(attrs={'style':'width: 40px;'}))
-    
-class InvoiceForm(forms.Form):
-    places_num = forms.IntegerField(required=True, label='Количество мест')
-    weight_kg = forms.CharField(required=True, label='Вес, кг')
-    shipping_cost = forms.CharField(required=True, label='Стоимость доставки')
-    
-    def __init__(self, *a, **kw):
-        instance = None
-        if 'instance' in kw:
-            instance = kw.pop('instance')
-        super(InvoiceForm, self).__init__(*a, **kw)
-        if instance:
-            self.fields['places_num'].initial = instance.places_num
-            self.fields['weight_kg'].initial = instance.weight_kg
-            self.fields['shipping_cost'].initial = instance.shipping_cost
-    
-    def clean_shipping_cost(self):
-        if self.cleaned_data['shipping_cost']:
-            try:
-                value = float(self.cleaned_data['shipping_cost'])
-            except:
-                raise forms.ValidationError('Введите десятичное значение с разделителем - точка!')
-            return value
-        else:
-            return self.cleaned_data['shipping_cost']
-        
-class InvoiceAjaxForm(forms.Form):
-    places_num = forms.IntegerField(required=False, label='Количество мест')
-    weight_kg = forms.CharField(required=False, label='Вес, кг')
-    shipping_cost = forms.CharField(required=False, label='Стоимость доставки')
-    
-    def clean_shipping_cost(self):
-        if self.cleaned_data['shipping_cost']:
-            try:
-                value = float(self.cleaned_data['shipping_cost'])
-            except:
-                raise forms.ValidationError('Введите десятичное значение с разделителем - точка!')
-            return value
-        else:
-            return self.cleaned_data['shipping_cost']
-        
-class InvoiceItemForm(forms.Form):
-    price = forms.CharField(required=False)
-    quantity = forms.IntegerField(required=False)
-    
-    def clean_price(self):
-        if self.cleaned_data['price']:
-            try:
-                value = float(self.cleaned_data['price'])
-            except:
-                raise forms.ValidationError('This field requires a decimal value.')
-            return value
-        else:
-            return self.cleaned_data['price']
-        
-class AddCustomBill(forms.Form):
-    payment_for = forms.CharField(widget=forms.TextInput(attrs={'size':100}), label="Пояснительный текст")
-    payment_sum = forms.CharField(label="Сумма")
-
-class AddPayment(forms.Form):
-    payment_for = forms.CharField(widget=forms.TextInput(attrs={'size':100}), label="Пояснительный текст")
-    payment_sum = forms.CharField(label="Сумма")
-
-  

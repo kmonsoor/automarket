@@ -1,0 +1,74 @@
+{% extends 'cp_base.html' %}
+{% load i18n %}
+
+{% block page_title %}Новый заказ{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ MEDIA_URL }}js/mootools.js"></script>
+<script type="text/javascript" src="{{ MEDIA_URL }}js/mootools/dynamicforms.js"></script>
+<script type="text/javascript">
+	var current = null;
+	
+	function setBrand(value) {
+		document.getElementById('id_brand.'+current).value = value;
+		current = null;
+	}
+	
+	function showList(e)
+	{
+		id = e.id;
+		current = id.split('.')[1]
+		supplier_id = jQuery(e).parents('tr').find('#id_supplier\\.'+current+' :selected').attr('value');
+		showPopUp('/client/help/'+ supplier_id +'/brands/', 200, 600, 'brands', 1);
+	}
+	
+	
+	var PageForm = Form.extend({
+		initialize: function(value) {
+		this.parent({{ page_template|safe }}, value);
+		this.fieldset = new Element('fieldset');
+		this.fieldset.setProperty('class', 'module aligned');
+		this.fieldset.innerHTML = this.html;
+		$('page-forms').adopt(this.fieldset);
+		}
+	});
+	
+	Window.onDomReady(function() {
+	
+		{% for page in page_data %}
+		new PageForm({{ page|safe }});
+		{% endfor %}
+		
+		jQuery('.priceSale, .quantity').keyup(function() {
+			calculateTotal();
+		});
+	});
+	
+	calculateTotal = function() {
+		total = 0;
+		jQuery('.priceSale').each(function() {
+			var val = parseInt(this.value * jQuery(this).parents('tr:first').find('.quantity').attr('value'));
+			if (!isNaN(val)) total += val;
+		});
+		total ? jQuery('#spanTotalPrice').html('').html(total) : jQuery('#spanTotalPrice').html('0');
+	}
+	
+	jQuery(function(){
+		jQuery("#linkSearch").fancybox();
+	})
+</script>
+{% endblock %}
+
+{% block content %}
+	<a style="color: #0190bf; padding:10px;" id="linkSearch" href="http://localhost:8000/cp/search/?iframe">Поиск</a> <a style="color: #0190bf; padding:10px;" href="{% url import_to_csv %}">Импорт из CSV</a>
+	<br/><br/>
+	<form action="" method="post">
+		<div id="page-forms"></div>
+		<p align="right" id="pTotalPrice" style="font-size:16px;" class="totalPrice"><b>Total: </b> <span id="spanTotalPrice">0</span></p>
+		<p align="right"><a class="add_link" href="javascript:void(0)" onclick="new PageForm();">Добавить позицию</a></p>
+		<div class="submit-row">
+			<input type="submit" name="save_order" value="Отправить заказ" />&nbsp;&nbsp;&nbsp;
+		</div>
+	</form>
+{% endblock %}

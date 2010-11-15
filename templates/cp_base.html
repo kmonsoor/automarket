@@ -1,20 +1,18 @@
 {% extends 'base.html' %}
-{% block extrahead %}
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/qs_filter.css" />
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css">
-{{ block.super }}
-<script>
-var ajax_loader_img_path = '{{ MEDIA_URL }}img/icons/ajax-loader.gif';
-</script>
-{% endblock %}
 {% block global_title %}Менеджемент{% endblock %}
+
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/qs_filter.css" />
+    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">
+    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css">
+    {{ block.super }}
+    <script>var ajax_loader_img_path = '{{ MEDIA_URL }}img/icons/ajax-loader.gif';</script>
+{% endblock %}
+
 {% block global_menu %}
-<ul>
-<li><a href="/cp/">В виде таблицы</a></li>
-<li><a href="/cp/groups/">По группам</a></li> 
-<li><a href="/cp/make_invoices/" onclick="return confirm('Создать инвойсы?')">Создать инвойсы</a></li>
-<li><a href="/cp/invoices/">Инвойсы</a></li>
-<li><a href="/cp/balances/">Балансы</a></li>
-</ul>
+    <ul>
+        <li><a href="/cp/order/">Новый заказ</a></li>
+        <li><a href="/cp/">В виде таблицы</a></li>
+        <li><a href="/cp/groups/">По группам</a></li> 
+    </ul>
 {% endblock %}

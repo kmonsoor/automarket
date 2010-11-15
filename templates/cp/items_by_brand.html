@@ -13,7 +13,7 @@ function hideGroup{{ brand.id }}() {
 {% for i in items %}
 {% ifchanged %}
 <tr>
-<td style="background: #dbdbdb" width=100%><b>{{ i.get_numbered_po }}</b></td>
+<td style="background: #dbdbdb" width=100%><b>{{ i.get_po_verbose }}</b></td>
 <td style="background: #dbdbdb"><b>QTY</b></td>
 <td style="background: #dbdbdb" width=180>&nbsp;</td>
 </tr>
@@ -33,7 +33,7 @@ function hideGroup{{ brand.id }}() {
 <tr>
 <td colspan="3" align="right" style="background: #ffffff">
 <div class="submit-row">
-<b><a target="_blank" href="/cp/export/{{ brand.id }}/" class="export_link" style="color: #0190bf">Экспорт</a></b>
+<b><a href="/cp/export/{{ brand.id }}/" class="export_link" style="color: #0190bf">Экспорт</a></b>
 </div>
 </td>
 </tr>

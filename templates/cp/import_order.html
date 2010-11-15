@@ -1,7 +1,6 @@
-{% extends 'client_base.html' %}
+{% extends 'cp_base.html' %}
 {% block extrahead %}
 {{ block.super }}
-
 <script type="text/javascript" src="{{ MEDIA_URL }}js/mootools.js"></script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/mootools/dynamicforms.js"></script>
 <script type="text/javascript">
@@ -20,7 +19,6 @@ function showList(e)
     showPopUp('/client/help/brands.html',200,600,'brands',1);
 }
 
-
 var PageForm = Form.extend({
     initialize: function(value) {
     this.parent({{ page_template|safe }}, value);
@@ -30,6 +28,7 @@ var PageForm = Form.extend({
     $('page-forms').adopt(this.fieldset);
     }
 });
+
 Window.onDomReady(function() {
 
     {% for page in page_data %}
@@ -39,27 +38,19 @@ Window.onDomReady(function() {
 });
 
 </script>
-
 {% endblock %}
+
 {% block page_title %}Импорт заказа из XLS - файла{% endblock %}
 
-{% block page_content %}
-
-<div class="system-message">
-<p>
-
-</p>
-</div>
+{% block content %}
+<div class="system-message"><p></p></div>
 
 <form action="" method="post" enctype="multipart/form-data">
-
-<div class="error">{{ message }}</div>
-
-{{ form }}
-
-<div class="submit-row">
-<input type="submit" name="save_order" value="Загрузить файл" />&nbsp;&nbsp;&nbsp;
-</div>
+    <div class="error">{{ message }}</div>
+    {{ form }}
+    <div class="submit-row">
+        <input type="submit" name="save_order" value="Загрузить файл" />&nbsp;&nbsp;&nbsp;
+    </div>
 </form>
 
 {% if page_data %}

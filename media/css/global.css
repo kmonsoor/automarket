@@ -92,7 +92,7 @@ input[type=submit].default, .submit-row input.default { border:2px solid #5b80b2
 input[type=submit].default:active { background-image:url(../img/admin/default-bg-reverse.gif); background-position:top; }
 
 /* MODULES */
-.module { border:1px solid #ccc; margin-bottom:5px; background:white; }
+.module { margin-bottom:5px; background:white; }
 .module p, .module ul, .module h3, .module h4, .module dl, .module pre { padding-left:10px; padding-right:10px; }
 .module blockquote { margin-left:12px; }
 .module ul, .module ol { margin-left:1.5em; }

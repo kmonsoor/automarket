@@ -9,9 +9,8 @@ register = template.Library()
 @register.inclusion_tag('cp/items_by_brand.html')
 def ordereditems_by_brand(brand_id, user=None):
     brand = Brand.active_objects.get(id=brand_id)
-    items = OrderedItem.objects.filter(brand__id=brand_id, status='order').order_by("po", "ponumber")
-    if user:
-        items = items.filter(po__user=user)
+    items = OrderedItem.objects.filter(brand__id=brand_id, status='order').order_by("ponumber")
+    
     return {
             'brand':brand,
             'items':items,

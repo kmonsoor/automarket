@@ -178,7 +178,7 @@ class PartSearch(object):
                 for k, v in data.items():
                     if v.startswith('$'):
                         data[k] = Decimal(v.strip('$'))
-                print data
+                
                 return data
         # If something goes wrong
         return None
@@ -186,6 +186,6 @@ class PartSearch(object):
     def search(self, maker_id, partnumber):
         if maker_id not in [x[1] for x in self.get_make_options()]:
             raise Exception('Invalid maker')
-        response = self.get_form_response(maker_id, partnumber)
+        response = self.get_response(maker_id, partnumber)
         return self.parse_response(response)
 
