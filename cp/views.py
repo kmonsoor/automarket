@@ -134,7 +134,6 @@ def order(request):
         item_forms = OrderItemForm.get_forms(request)
         item_data = [item_form.render_js('from_template') for item_form in item_forms]
         if item_forms.are_valid():
-            print '123123123213123123213231313'
             forms = {}
             for form in item_forms:
                 if form.cleaned_data['supplier'] not in forms:
