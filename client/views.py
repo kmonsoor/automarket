@@ -26,6 +26,16 @@ def search(request):
             found = PartSearch().search(maker, part_number)
             if not found:
                 msg = u"Not Found"
+            else:
+                # TO DO исправить все это, сделать нормально
+                found['MSRP'] = float(found['MSRP'])*1.1
+                discount = 0.05
+                found['your_price'] = found['MSRP'] - found['MSRP']*discount
+                found['your_economy'] = found['MSRP'] - found['your_price']
+                found['your_economy_perc'] = 100 - (found['your_price']/found['MSRP'])*100
+                found['MSRP'] = "%.2f" % found['MSRP']
+                found['your_price'] = "%.2f" % found['your_price']
+                found['your_economy'] = "%.2f" % found['your_economy']
             maker_name = PartSearch().get_maker_name(maker)
             
     else:
