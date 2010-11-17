@@ -34,6 +34,6 @@ urlpatterns += patterns('cp.views',
 
 
 urlpatterns += patterns('client.views',
-    url(r'^client/help/(?P<supplier_id>[\d]+)/brands/$', 'help_brand_list'),
+    url(r'^client/help/(?P<supplier_id>[\d]+)/brands/$', 'help_brand_list', name='brand_list'),
     url(r'^client/','index'),
 )

@@ -85,6 +85,9 @@ def help_brand_list(request, supplier_id):
     try:
         brands = Brand.active_objects.filter(supplier__id = supplier_id).order_by('name')
     except:
-        brands = []
+        brands = Brand.active_objects.all().order_by('name')
+    else:
+        if not brands:
+            brands = Brand.active_objects.all().order_by('name')
 
     return {'list': brands,}

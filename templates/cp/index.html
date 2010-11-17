@@ -77,7 +77,10 @@ backend_url = '/cp/position/edit/ordered_item/';
 			<div id="comment_customer_{{ i.id }}" style="display: none">{{ i.comment_customer|default:"" }}</div>
 			<span id="comment_customer_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
 		</td>
-		<td id="quantity_{{ i.id }}">{{ i.quantity }}</td>
+		<td>
+			<div id="quantity_display_{{ i.id }}">{{ i.quantity|default:"" }}</div>
+			<div id="quantity_{{ i.id }}" style="display: none">{{ i.quantity|default:"" }}</div>
+		</td>
 		<td class="editable" onclick="editPriceInvoice({{ i.id }})">
 			<div id="price_invoice_display_{{ i.id }}">{{ i.price_invoice|default:"" }}</div>
 			<div id="price_invoice_{{ i.id }}" style="display: none">{{ i.price_invoice|default:"" }}</div>

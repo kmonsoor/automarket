@@ -124,6 +124,13 @@ class PartSearch(object):
                      if x[1].lower() == maker_string.lower()][0]
         except IndexError:
             return None
+        
+    def get_maker_name(self, maker_id):
+        try:
+            return [x[1].lower() for x in self.get_make_options() \
+                     if x[0] == str(maker_id)][0]
+        except IndexError:
+            return None
 
     def get_response(self, maker_id, partnumber):
         """
@@ -151,11 +158,12 @@ class PartSearch(object):
         _s = r'<table width="100%" cellpadding="3" cellspacing="0" border="0">'
         parts = response.split(_s)
         parts = [x for x in parts if (">OEM Catalog<" in x and "Item Number" in x and "MSRP" in x)]
+        p = None
         if len(parts):
             try:
                 p = parts[0].split("</table>")[0]
             except Exception, mess:
-                p = None
+                pass
         if p:
             p = "<table>%s</table>" % p
             bs = BeautifulSoup(p)
@@ -177,14 +185,14 @@ class PartSearch(object):
                 data['description'] = description
                 for k, v in data.items():
                     if v.startswith('$'):
-                        data[k] = Decimal(v.strip('$'))
-                
+                        data[k] = v.strip('$')
+
                 return data
         # If something goes wrong
         return None
 
     def search(self, maker_id, partnumber):
-        if maker_id not in [x[1] for x in self.get_make_options()]:
+        if maker_id not in [x[0] for x in self.get_make_options()]:
             raise Exception('Invalid maker')
         response = self.get_response(maker_id, partnumber)
         return self.parse_response(response)

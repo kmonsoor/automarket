@@ -4,8 +4,9 @@ from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404
-from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render_to_response
+from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.utils import simplejson
 
 from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
@@ -22,17 +23,23 @@ from common.views import PartSearch
 @login_required
 @render_to('cp/search.html')
 def search(request):
+    found = None
+    maker_name = None
+    msg = ''
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
-            search = PartSearch().search('Mazda', part_number)
-            return search
+            found = PartSearch().search(maker, part_number)
+            if not found:
+                msg = u"Not Found"
+            maker_name = PartSearch().get_maker_name(maker)
+            
     else:
         form = SearchForm()
-    
-    return {'form': form,}
+
+    return {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
     
 
 def get_status_options():
@@ -125,7 +132,9 @@ def order(request):
     response = {}
     if request.method == 'POST':
         item_forms = OrderItemForm.get_forms(request)
+        item_data = [item_form.render_js('from_template') for item_form in item_forms]
         if item_forms.are_valid():
+            print '123123123213123123213231313'
             forms = {}
             for form in item_forms:
                 if form.cleaned_data['supplier'] not in forms:
@@ -141,9 +150,15 @@ def order(request):
                     data['brand'] = Brand.active_objects.get(name=_form.cleaned_data['brand'])
                     data['supplier'] = Supplier.objects.get(id=supplier_id)
                     item = OrderedItem(**data).save()
+            return HttpResponseRedirect('/cp/order/')
+    else:
+        item_data = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
     
     response['page_template'] = OrderItemForm().render_js('from_template')
-    response['page_data'] = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
+    response['page_data'] = item_data
+    
+    # search_form
+    response['search_form'] = SearchForm()
  
     return response
 

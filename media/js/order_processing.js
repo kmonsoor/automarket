@@ -36,14 +36,12 @@ function save() {
                     'value':value
                    },
             success: function(response) {
-                r = eval('['+response+']');
                 current.previous_value = current.value;
-                current.value = r[0]['value'];
+                current.value = response.value;
 				setDisplayValue();
-                if (r[0]['error']) alert(r[0]['error']);
+                if (response.error) alert(response.error);
 				postSave();
                 close();
-                
             }
         });
     
@@ -194,12 +192,6 @@ function editPriceInvoice(id) {
     
     jQuery('#price_invoice_display_'+id).html('<input id="price_invoice_input_' + id + '" type="text" value="' + current.value + '">');
     jQuery('#price_invoice_buttons_'+id).css("display","inline");
-	
-	calculateTotalWShip(id);
-}
-
-function calculateTotalWShip(id){
-	jQuery('total_w_ship_{{ i.id }}')
 }
 
 function editCommentCustomer(id) {

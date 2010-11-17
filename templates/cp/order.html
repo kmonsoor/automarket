@@ -20,7 +20,10 @@
 		id = e.id;
 		current = id.split('.')[1]
 		supplier_id = jQuery(e).parents('tr').find('#id_supplier\\.'+current+' :selected').attr('value');
-		showPopUp('/client/help/'+ supplier_id +'/brands/', 200, 600, 'brands', 1);
+		if (supplier_id)
+			showPopUp('/client/help/'+ supplier_id +'/brands/', 200, 600, 'brands', 1);
+		else	
+			showPopUp('/client/help/0/brands/', 200, 600, 'brands', 1);
 	}
 	
 	
@@ -48,20 +51,74 @@
 	calculateTotal = function() {
 		total = 0;
 		jQuery('.priceSale').each(function() {
-			var val = parseInt(this.value * jQuery(this).parents('tr:first').find('.quantity').attr('value'));
+			var val = parseFloat(this.value * jQuery(this).parents('tr:first').find('.quantity').attr('value'));
 			if (!isNaN(val)) total += val;
 		});
 		total ? jQuery('#spanTotalPrice').html('').html(total) : jQuery('#spanTotalPrice').html('0');
 	}
 	
-	jQuery(function(){
-		jQuery("#linkSearch").fancybox();
-	})
+	function showSearchForm(){
+		showPopUp('{% url search %}', 800, 300, 'Search', 1);
+		console.log(jQuery('input[id^=id_part_number\\.]'));
+	}
+	
+	function setPart(data){
+		console.log(data);
+		data = jQuery.unserialize(data);
+		id = getFreeRow();
+		jQuery('#id_part_number\\.'+id).attr('value', data.partnumber);
+		jQuery('#id_brand\\.'+id).attr('value', data.maker_name);
+		jQuery('#id_description_en\\.'+id).attr('value', data.description);
+		jQuery('#id_price_sale\\.'+id).attr('value', data.price);
+	}
+	
+	function getFreeRow(){
+		freeRow = null;
+		curr_id = null;
+		jQuery('input[id^=id_part_number\\.]').each(function(){
+			curr_id = jQuery(this).attr('id').split('.')[1];
+			if(!jQuery(this).attr('value')){
+				freeRow = curr_id;
+				return false;
+			}
+		});
+		
+		if (!freeRow){
+			jQuery('a.add_link').click();
+			freeRow = parseInt(curr_id) + 1;
+		}
+
+		return freeRow;
+	}
+	
+	(function(jQuery){
+		jQuery.unserialize = function(serializedString){
+			var str = decodeURI(serializedString);
+			var pairs = str.split('&');
+			var obj = {}, p, idx, val;
+			for (var i=0, n=pairs.length; i < n; i++) {
+				p = pairs[i].split('=');
+				idx = p[0];
+				if (idx.indexOf("[]") == (idx.length - 2)) {
+					var ind = idx.substring(0, idx.length-2)
+					if (obj[ind] === undefined) {
+						obj[ind] = [];
+					}
+					obj[ind].push(unescape(p[1]));
+				}
+				else {
+					obj[idx] = unescape(p[1]);
+				}
+			}
+			return obj;
+		};
+	})(jQuery);
+	
 </script>
 {% endblock %}
 
 {% block content %}
-	<a style="color: #0190bf; padding:10px;" id="linkSearch" href="http://localhost:8000/cp/search/?iframe">Поиск</a> <a style="color: #0190bf; padding:10px;" href="{% url import_to_csv %}">Импорт из CSV</a>
+	<a style="color: #0190bf; padding:10px;" id="linkSearch" onclick="showSearchForm();" href="javascript:void(0);">Поиск</a> <a style="color: #0190bf; padding:10px;" href="{% url import_to_csv %}">Импорт из CSV</a>
 	<br/><br/>
 	<form action="" method="post">
 		<div id="page-forms"></div>

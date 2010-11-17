@@ -15,12 +15,12 @@ def brands():
     
 def users():
     users = [(x.id, str(x)) for x in User.objects.filter(groups=1)]
-    users.insert(0, (0, 'выбрать',))
+    users.insert(0, ('', 'выбрать',))
     return users
 
 def suppliers():
     list = [(x.id, x.title + ' :: ' + x.direction) for x in Supplier.objects.all()]
-    list.insert(0, (0, 'выбрать'))
+    list.insert(0, ('', 'выбрать'))
     return list
 
 
@@ -43,7 +43,7 @@ class OrderItemForm(Form):
 
 def makers():
     list = PartSearch().get_make_options()
-    list.insert(0, (0, 'Select Make'))
+    list.insert(0, ('', 'Select Make'))
     return list
     
 class SearchForm(forms.Form):
