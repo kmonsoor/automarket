@@ -26,7 +26,7 @@ def start(request):
                     if user.is_staff:
                         return HttpResponseRedirect('/cp/')
                     else :
-                        return HttpResponseRedirect('/client/')
+                        return HttpResponseRedirect('/client/search/')
                 else:
                     message = 'Ваша учетная запись временно отключена'
         else:

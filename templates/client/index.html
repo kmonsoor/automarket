@@ -4,6 +4,7 @@
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/changelists.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/qs_filter.css" />
 
 {% endblock %}
 
@@ -22,68 +23,40 @@
 <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
 <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
 </select>
-
 <div class="module" id="changelist">
 <table>
 	<thead>
-	<th>PO #</th>
     {% table_header_sort headers %}
     <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
-    <td><nobr>{{ filter.form.po__po }} {{ filter.form.ponumber }}</nobr></td>
-    <td><!-- date --></td>
-    <td><!-- auto --></td>
-    <td>{{ filter.form.description__contains }}</td>
-    <td>{{ filter.form.side }}</td>
+    <td></td>
     <td>{{ filter.form.brand__name__contains }}</td>
     <td>{{ filter.form.part_number__contains }}</td>
+    <td></td>
     <td>{{ filter.form.part_number_superseded__contains }}</td>
-    <td><nobr>{{ filter.form.price__gte }} {{ filter.form.price__lte }}</nobr></td>
-    <td><!-- QORD --></td>
-    <td><!-- QSHIP --></td>
-    <td>{{ filter.form.status }}</td>
-    <td><!-- status date --></td>
+    <td>{{ filter.form.manager__username__contains }}</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
     </tr>
     </thead>
 	<tbody>
 	{% for i in items %}
 	<tr class="{% cycle row1,row2 %}">
-	<td>{{ i.get_numbered_po }}</td>
-	<td>{{ i.created|date:"m/d/Y" }}</td>
-	<td>
-		{{ i.year }} <br />
-		{{ i.car_maker }}<br />
-		{{ i.car_model }}<br />
-		{{ i.engine_volume }}</td>
-	<td>{{ i.description }}</td>
-	<td>{% if i.side %}{{ i.side }}{% else %}-{% endif %}</td>
-	<td>{{ i.brand.name }}</td>
-	<td>
-	{% ifequal i.status 'superseded' %}<s>{% endifequal %}
-	{{ i.part_number }}
-	{% ifequal i.status 'superseded' %}</s>{% endifequal %}
-	</td>
-	<td>
-	{% if i.part_number_superseded %}
-	{{ i.part_number_superseded }}<br />
-	<a class="add_link" href="/client/order/superseded/accept/{{ i.id }}">Принять замену</a>
-	<a class="delete_link" href="/client/order/superseded/decline/{{ i.id }}">Отказаться</a>
-	{% else %}
-	-
-	{% endif %}
-	</td>
-	<td>
-	{% ifnotequal i.price 0.00 %}
-	{{ i.price }}
-	{% else %}
-	-
-	{% endifnotequal %}
-	
-	<td>{{ i.quantity }}</td>
-	<td>
-	{{ i.quantity_ship }}
-	</td>
-	<td>{{ i.status_verbose }}</td>
-	<td>{{ i.status_modified|date:"m/d/Y" }}</td>
+		<td>{{ i.get_po_verbose }}</td>
+		<td>{{ i.brand }}</td>
+		<td>{{ i.part_number }}</td>
+		<td>{{ i.quantity }}</td>
+		<td>
+		{% if i.part_number_superseded %}
+			{{ i.part_number_superseded }}
+			<!--<a class="add_link" href="/client/order/superseded/accept/{{ i.id }}">Принять замену</a>-->
+			<!--<a class="delete_link" href="/client/order/superseded/decline/{{ i.id }}">Отказаться</a>-->
+		{% endif %}
+		</td>
+		<td>{{ i.manager }}</td>
+		<td>{{ i.total_cost|default:"" }}</td>
+		<td>{{ i.get_status_verbose }}</td>
 	</tr>
 	{% endfor %}
 

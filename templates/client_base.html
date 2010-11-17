@@ -15,8 +15,10 @@ jQuery.noConflict();
 
 {% block global_title %}Клиентская часть{% endblock %}
 {% block global_menu %}
-    {% load menu %}
-	{% client_menu current_action user %}
+    <ul>
+        <li><a href="/client/search/">Поиск</a></li>
+        <li><a href="/client/">Мои заказы</a></li>
+    </ul>
 {% endblock %}
 
 {% block content %}

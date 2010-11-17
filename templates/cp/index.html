@@ -40,7 +40,7 @@ backend_url = '/cp/position/edit/ordered_item/';
 <thead>
 <tr>{% table_header_sort headers %}</tr>
 <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
-<td>{{ filter.form.ponumber }}</td>
+<td></td>
 <td>{{ filter.form.supplier__title__contains }}</td>
 <td>{{ filter.form.brand__name__contains }}</td>
 <td>{{ filter.form.part_number__contains }}</td>

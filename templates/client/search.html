@@ -1,0 +1,53 @@
+{% extends 'client_base.html' %}
+{% load i18n %}
+
+{% block page_title %}Поиск{% endblock %}
+
+{% block content %}
+<div id="divSearch" style="text-align: left; min-width: 800px;">
+    <form method="POST" id="formSearch">
+        {{ form.maker.errors }}<b>{{ form.maker.label }}* :</b> {{ form.maker }}<br/><br/>
+        {{ form.part_number.errors }}<b>{{ form.part_number.label }}* :</b> {{ form.part_number }}
+        <br/><br/>
+        <input type="submit" value="Search" />
+    </form>
+    <br/>
+    <h2>{{ msg|default:"" }}</h2>
+    {% if found %}
+        <form id="formFound">
+            <table id="dataTable" width="750px">
+                <tr>
+                    <td><b>Item Number</b></td>
+                    <td><b>MSRP</b></td>
+                    <td><b>Core Price</b></td>
+                    <td><b>Price</b></td>
+                    <td><b>Description</b></td>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                    <td>
+                        {{ found.partnumber }}
+                        <input type="hidden" name="partnumber" value="{{ found.partnumber }}">
+                    </td>
+                    <td>
+                        {{ found.MSRP }}
+                        <input type="hidden" name="MSRP" value="{{ found.MSRP }}">
+                    </td>
+                    <td>
+                        {{ found.core_price }}
+                        <input type="hidden" name="core_price" value="{{ found.core_price }}">
+                    </td>
+                    <td>
+                        {{ found.price }}
+                        <input type="hidden" name="price" value="{{ found.price }}">
+                    </td>
+                    <td>
+                        {{ found.description }}
+                        <input type="hidden" name="description" value="{{ found.description }}">
+                    </td>
+                </tr>
+            </table>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}
