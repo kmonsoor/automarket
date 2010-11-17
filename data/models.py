@@ -114,7 +114,7 @@ ORDER_ITEM_STATUSES = (
 
 class OrderedItem(models.Model):
     supplier = models.ForeignKey(Supplier, verbose_name=u"Направление")
-    ponumber = models.BigIntegerField(verbose_name=u"PO номер заказа")
+    ponumber = models.IntegerField(verbose_name=u"PO номер заказа")
     brand = models.ForeignKey(Brand, verbose_name=u"Бренд")
     part_number = models.CharField(verbose_name=u"Номер детали", max_length=255)
     part_number_superseded = models.CharField(max_length=255, null=True, blank=True , verbose_name=u"Новый номер(замена)")
