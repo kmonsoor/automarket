@@ -37,7 +37,7 @@ backend_url = '/cp/position/edit/ordered_item/';
 <div class="module" id="changelist">
 
 <table>
-<thead style="border: solid 2px green;">
+<thead>
 <tr>{% table_header_sort headers %}</tr>
 <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
 <td>{{ filter.form.ponumber }}</td>

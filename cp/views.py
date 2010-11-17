@@ -75,7 +75,7 @@ def index(request):
     filter = QSFilter(request, OrderedItemsFilterForm)
     if filter.modified:
         current_page = 1
-    context['filter'] = filter
+    
     LIST_HEADERS = (
                     (u'PO', 'ponumber'),
                     (u'Поставщик', 'supplier'),
@@ -105,12 +105,14 @@ def index(request):
     
     order_by = '-created'
     if order_field:
+        filter.is_set = True
         if order_direction == 'desc':
             order_direction = '-'
         else:
             order_direction = ''            
         order_by = order_direction + LIST_HEADERS[int(order_field)][1]
- 
+    
+    context['filter'] = filter
     context['headers'] = list(sort_headers.headers()) 
     
     qs = OrderedItem.objects.select_related().filter(**filter.get_filters()).exclude(status='shipped')

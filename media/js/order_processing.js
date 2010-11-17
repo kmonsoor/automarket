@@ -302,10 +302,9 @@ function editStatus(id, value) {
                     'value':value
                    },
             success: function(response) {
-                r = eval('['+response+']');
-                jQuery('#status_input_' + id).val(r[0]['value']);
+                jQuery('#status_input_' + id).val(response.value);
                 jQuery('#status_input_' + id).attr('disabled',false)
-                if (r[0]['error']) alert(r[0]['error']);
+                if (response.error) alert(response.value);
                 close();
             }
         });
