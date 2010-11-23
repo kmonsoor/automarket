@@ -85,7 +85,7 @@ def index(request):
                     (u'COMMENT', None),
                     (u'Q', None),
                     (u'PRICE IN', None),
-                    (u'TOTAL W SHIP', None),
+                    (u'TOTAL', None),
                     (u'ЗАМЕНА', None),
                     (u'ID', 'manager'),
                     (u'CL', 'client'),
@@ -93,11 +93,11 @@ def index(request):
                     (u'ENG', None),
                     (u'LIST', None),
                     (u'WEIGHT', None),
-                    (u'ДОСТАВКА', None),
+                    (u'SHIPPING', None),
                     (u'PRICE', None),
                     (u'NEW PRICE', None),
                     (u'COST', None),
-                    (u'TOTAL COST *new', None),
+                    (u'TOTAL COST', None),
                     (u'Статус', None),
                     )
     sort_headers = SortHeaders(request, LIST_HEADERS)

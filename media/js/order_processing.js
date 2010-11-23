@@ -86,6 +86,34 @@ function postSave() {
             current.display_value = 'Price';
         }
     }
+	if (current.type == 'price_invoice') {
+		var total_w_ship = parseInt(jQuery('#quantity_display_'+current.id).html())*parseFloat(current.display_value);
+		jQuery('#total_w_ship_'+current.id).html(total_w_ship.toFixed(2));
+	}
+	if (current.type == 'weight') {
+		var shipping = parseFloat(jQuery('#delivery_supplier_input_'+current.id).attr('value'))*parseFloat(current.display_value)*parseInt(jQuery('#quantity_display_'+current.id).html());
+		jQuery('#delivery_display_'+current.id).html(shipping.toFixed(2));
+		var shipping = parseFloat(jQuery('#delivery_display_'+current.id).html())
+		if (jQuery('#price_discount_display_'+current.id).html())
+			var cost = shipping + parseFloat(jQuery('#price_discount_display_'+current.id).html());
+		else if (jQuery('#price_sale_'+current.id).html())
+			var cost = shipping + parseFloat(jQuery('#price_sale_'+current.id).html());
+		jQuery('#cost_'+current.id).html(cost.toFixed(2));
+		calculateTotalCost();
+	}
+	if (current.type == 'price_discount') {
+		if (current.display_value)
+			var cost = parseFloat(jQuery('#delivery_display_'+current.id).html()) + parseFloat(current.display_value);
+		else if (jQuery('#price_sale_'+current.id).html())
+			var cost = parseFloat(jQuery('#delivery_display_'+current.id).html()) + parseFloat(jQuery('#price_sale_'+current.id).html());
+		jQuery('#cost_'+current.id).html(cost.toFixed(2));
+		calculateTotalCost();
+	}
+}
+
+function calculateTotalCost() {
+	var total_cost = parseInt(jQuery('#quantity_display_'+current.id).html())*parseFloat(jQuery('#cost_'+current.id).html());
+	jQuery('#total_cost_'+current.id).html(total_cost.toFixed(2));
 }
 
 function restore() {

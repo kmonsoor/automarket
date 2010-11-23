@@ -18,6 +18,7 @@ class Supplier(models.Model):
     title = models.CharField(verbose_name=u"Название", max_length=10)
     description = models.TextField(verbose_name=u"Описание", null=True, blank=True)
     brands = models.ManyToManyField('Brand', verbose_name=u"Бренды")
+    delivery = models.FloatField(verbose_name=u"Доставка", default=0)
     
     class Meta:
         verbose_name = u'Поставщик'
@@ -167,6 +168,21 @@ class OrderedItem(models.Model):
         verbose_name_plural = u"Заказанные позиции"
 
     def save(self, *args, **kwargs):
+        
+        if self.supplier.delivery and self.weight and self.quantity:
+            self.delivery = self.supplier.delivery*self.weight*self.quantity
+            
+        if self.quantity and self.price_invoice:
+            self.total_w_ship = self.price_invoice*self.quantity
+                
+        if self.delivery and self.price_sale and not self.price_discount:
+            self.cost = self.delivery + self.price_sale
+        elif self.delivery and self.price_discount:
+            self.cost = self.delivery + self.price_discount
+            
+        if self.cost and self.quantity:
+            self.total_cost = self.cost*self.quantity
+            
         super(OrderedItem, self).save(*args, **kwargs)
 
     def get_status_verbose(self):

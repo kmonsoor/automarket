@@ -116,7 +116,10 @@ backend_url = '/cp/position/edit/ordered_item/';
 			<div id="weight_{{ i.id }}" style="display: none">{{ i.weight|default:"" }}</div>
 			<span id="weight_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
 		</td>
-		<td id="delivery_{{ i.id }}">{{ i.delivery|default:"" }}</td>
+		<td id="delivery_{{ i.id }}">
+			<div id="delivery_display_{{ i.id }}">{{ i.delivery|default:"" }}</div>
+			<input type="hidden" name="delivery_supplier_input_{{ i.id }}" id="delivery_supplier_input_{{ i.id }}" value="{{ i.supplier.delivery }}">
+		</td>
 		<td id="price_sale_{{ i.id }}">{{ i.price_sale|default:"" }}</td>
 		<td class="editable" onclick="editPriceDiscount({{ i.id }})">
 			<div id="price_discount_display_{{ i.id }}">{{ i.price_discount|default:"" }}</div>
