@@ -31,15 +31,23 @@ class OrderItemForm(Form):
     supplier = forms.CharField(widget=forms.Select(choices=suppliers()), label=u'DIR', required=True)
     brand = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'BRAND', required=True)
     part_number = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'PART #',required=True)
-    comment_customer = forms.CharField(widget=forms.Textarea(attrs={'cols':10, 'rows':2}), label=u'COMENT 1', required=False)
-    comment_supplier = forms.CharField(widget=forms.Textarea(attrs={'cols':10, 'rows':2}), label=u'COMENT 2', required=False)
+    comment_customer = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'COMENT 1', required=False)
+    comment_supplier = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'COMENT 2', required=False)
     quantity = forms.IntegerField(min_value=1, widget=forms.TextInput(attrs={'size':5, 'class':'quantity'}), label=u'Q', required=True)
     client_id = forms.CharField(widget=forms.Select(choices=users()), label=u'CL', required=True)
-    description_ru = forms.CharField(widget=forms.Textarea(attrs={'cols':10, 'rows':2}), label=u'RUS', required=False)
-    description_en = forms.CharField(widget=forms.Textarea(attrs={'cols':10, 'rows':2}), label=u'ENG', required=False)
+    description_ru = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'RUS', required=False)
+    description_en = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'ENG', required=False)
     price_base = forms.FloatField(widget=forms.TextInput(attrs={'size':5}), label=u'LIST', required=True)
     price_sale = forms.FloatField(widget=forms.TextInput(attrs={'size':5, 'class': 'priceSale'}), label=u'PRICE', required=True)      
     
+    def clean_brand(self):
+        brand = self.cleaned_data['brand']
+        try:
+            brand = Brand.active_objects.get(name = brand)
+        except Brand.DoesNotExist:
+            raise forms.ValidationError(u"Такого бренда не существует")
+        
+        return brand
 
 def makers():
     list = PartSearch().get_make_options()

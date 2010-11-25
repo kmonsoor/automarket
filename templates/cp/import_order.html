@@ -1,4 +1,5 @@
 {% extends 'cp_base.html' %}
+{% block page_title %}Импорт заказа из XLS - файла{% endblock %}
 {% block extrahead %}
 {{ block.super }}
 <script type="text/javascript" src="{{ MEDIA_URL }}js/mootools.js"></script>
@@ -8,15 +9,19 @@
 var current = null;
 
 function setBrand(value) {
-    document.getElementById('id_brand.'+current).value = value;
-    current = null;
+	document.getElementById('id_brand.'+current).value = value;
+	current = null;
 }
-
+	
 function showList(e)
 {
-    id = e.id;
-    current = id.split('.')[1]
-    showPopUp('/client/help/brands.html',200,600,'brands',1);
+	id = e.id;
+	current = id.split('.')[1]
+	supplier_id = jQuery(e).parents('tr').find('#id_supplier\\.'+current+' :selected').attr('value');
+	if (supplier_id)
+		showPopUp('/client/help/'+ supplier_id +'/brands/', 200, 600, 'brands', 1);
+	else	
+		showPopUp('/client/help/0/brands/', 200, 600, 'brands', 1);
 }
 
 var PageForm = Form.extend({
@@ -30,49 +35,33 @@ var PageForm = Form.extend({
 });
 
 Window.onDomReady(function() {
-
     {% for page in page_data %}
     new PageForm({{ page|safe }});
     {% endfor %}
-
 });
 
 </script>
 {% endblock %}
 
-{% block page_title %}Импорт заказа из XLS - файла{% endblock %}
-
 {% block content %}
-<div class="system-message"><p></p></div>
 
 <form action="" method="post" enctype="multipart/form-data">
     <div class="error">{{ message }}</div>
     {{ form }}
     <div class="submit-row">
-        <input type="submit" name="save_order" value="Загрузить файл" />&nbsp;&nbsp;&nbsp;
+        <input type="submit" name="save_order" value="Загрузить файл" />
     </div>
 </form>
-
 {% if page_data %}
-<p>&nbsp;</p>
-<form action="/client/order/" method="post">
-
-<p>
-<table width="40%">
-<tr><td colspan="2"><p class="error">Не забудьте указать PO!</p></td></tr>
-<tr><td><strong>PO</strong></td><td>
-{{ po_form.po }}</td></tr>
-</table>
-</p>
-
-<div id="page-forms"></div>
-
-<p align="right"><a class="add_link" href="javascript:void(0)" onclick="new PageForm();">Добавить позицию</a></p>
-
-<div class="submit-row">
-<input type="submit" name="save_order" value="Отправить заказ" />&nbsp;&nbsp;&nbsp;
-</div>
-
-</form>
+    <form action="/cp/order/" method="post">
+        <div id="page-forms"></div>
+        <p align="right">
+            <a class="add_link" href="javascript:void(0)" onclick="new PageForm();">Добавить позицию</a>
+        </p>
+        <div class="submit-row">
+            <input type="submit" name="save_order" value="Отправить заказ" />
+        </div>
+    </form>
 {% endif %}
+
 {% endblock %}

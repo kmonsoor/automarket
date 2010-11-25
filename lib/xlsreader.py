@@ -33,7 +33,7 @@ class readexcel(object):
         self.book = xlrd.open_workbook(filename=filename, file_contents=file_contents) 
         self.sheet_keys = {} 
     def is_data_row(self, sheet, i): 
-        values = sheet.row_values(i) 
+        values = sheet.row_values(i)
         if isinstance(values[0], basestring) and values[0].startswith('#'): 
             return False # ignorable comment row 
         for v in values: 
@@ -85,7 +85,7 @@ class readexcel(object):
                     # replace duplicate headings with "F#". 
                     if not var or var in keys: 
                         var = 'F%s' % (j) 
-                    keys.append(var.strip()) 
+                    keys.append(var) 
                 first_row_index = i + 1 
                 break 
         self.sheet_keys[sname] = keys 

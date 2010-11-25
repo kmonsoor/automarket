@@ -1,24 +1,29 @@
 # -*- coding=utf-8 -*-
 
+import os
+import pyExcelerator as xl
+import datetime
 from datetime import datetime
 
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render_to_response
 from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.utils.datastructures import MultiValueDict
 from django.utils import simplejson
+from django.conf import settings
 
 from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from lib.helpers import next, reverse
+from lib import xlsreader
 
 from cp.forms import OrderItemForm, ImportXlsForm, SearchForm
 from data.models import Supplier, OrderedItem, Brand, ORDER_ITEM_STATUSES
 from data.forms import OrderedItemsFilterForm, OrderedItemForm
 from common.views import PartSearch
-
 
 @login_required
 @render_to('cp/search.html')
@@ -147,7 +152,6 @@ def order(request):
                     data = _form.cleaned_data
                     data['ponumber'] = ponumber
                     data['manager'] = request.user
-                    data['brand'] = Brand.active_objects.get(name=_form.cleaned_data['brand'])
                     data['supplier'] = Supplier.objects.get(id=supplier_id)
                     item = OrderedItem(**data).save()
             return HttpResponseRedirect('/cp/order/')
@@ -314,13 +318,8 @@ def export(request, group_id):
     brand = Brand.objects.get(id=group_id)
     items = OrderedItem.objects.filter(brand__id = group_id, status='order').order_by("supplier__po")
 
-    from django.conf import settings
-    import os
     filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
-    import pyExcelerator as xl
-    import datetime
-
-    from django.http import HttpResponse 
+     
     # Open new workbook
     book = xl.Workbook()
 
@@ -387,19 +386,18 @@ def export(request, group_id):
 @render_to('cp/import_order.html')
 @login_required
 def import_order(request):
-    response = {}
     CELLS = (
-       (0,'year','YEAR'),
-       (1,'car_maker','MAKE'),
-       (2,'car_model','MODEL'),
-       (3,'engine_volume','V'),
-       (4,'description','DESCRIPTION'),
-       (5,'side','SIDE'),
-       (6,'brand','BRAND'),
-       (7,'part_number','PART#'),
-       (8,'superseded','SUPERSEDED'),
-       (9,'price','PRICE'),
-       (10,'quantity','Q'),
+       (0,'supplier','DIR'),
+       (1,'brand','BRAND'),
+       (2,'part_number','PART#'),
+       (3,'comment_customer','COMENT 1'),
+       (4,'comment_supplier','COMENT 2'),
+       (5,'quantity','Q'),
+       (6,'client_id','CL'),
+       (7,'description_ru','RUS'),
+       (8,'description_en','ENG'),
+       (9,'price_base','LIST'),
+       (10,'price_sale','PRICE'),
     )
     
     def get_field_name(cell_title):
@@ -410,26 +408,34 @@ def import_order(request):
     def swap_keys(kwargs, num):
         _data = {}
         for k,v in kwargs.items():
-            _data[get_field_name(k)+'.%d' % num] = v
+            if k == 'DIR':
+                try:
+                    _data[get_field_name(k)+'.%d' % num] = [Supplier.objects.get(title=v[0]).id]
+                except Supplier.DoesNotExist:
+                    _data[get_field_name(k)+'.%d' % num] = v
+            elif k == 'BRAND':
+                _data[get_field_name(k)+'.%d' % num] = [v[0].lower()]
+            else:
+                _data[get_field_name(k)+'.%d' % num] = v
             _data['id'+'.%d' % num] = ''
         return _data
     
+    response = {}
+    data = {}
     if request.method == 'POST':
-        # Get a file
+        for x in Brand.objects.all():
+            x.name = x.name.lower()
+            x.save()
         form = ImportXlsForm()
-        afile = request.FILES.get('xls_file',None)
-        if afile :
-            from lib import xlsreader
-            xls = xlsreader.readexcel(file_contents=afile.read())
-            data = {}
+        f = request.FILES.get('xls_file', None)
+        if f:
+            xls = xlsreader.readexcel(file_contents=f.read())
             i = 1
-            for row in xls.iter_dict(xls.book.sheet_names()[0]): 
-                if not row['Q']:
-                    continue
-                row = dict([(x.upper().replace(' ',''),[y]) for x,y in list(row.iteritems())])
+            for row in xls.iter_dict(xls.book.sheet_names()[0]):
+                row = dict([(x,[y]) for x,y in list(row.iteritems())])
                 data.update(swap_keys(row,i))
                 i = i+1
-            from django.utils.datastructures import MultiValueDict
+            
             if data:
                 request.POST = MultiValueDict(data)
                 item_forms = OrderItemForm.get_forms(request)
@@ -437,7 +443,7 @@ def import_order(request):
                 response['page_data'] = form_list
             else:
                 pass
-            afile.close()
+            f.close()
     else:
         form = ImportXlsForm()
     response['form'] = form
