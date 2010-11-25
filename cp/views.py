@@ -2,7 +2,6 @@
 
 import os
 import pyExcelerator as xl
-import datetime
 from datetime import datetime
 
 from django.contrib.auth.models import User
@@ -350,7 +349,7 @@ def export(request, group_id):
     sheet.write_merge(2,0,0,6, "BROOKLYN, NY 11232",sub_header_style)
     sheet.write_merge(3,0,0,6, "FAX: (718) 247-5962, TEL.: (718)701-3151",sub_header_style)
     
-    sheet.write(5,0,"Date %s" % datetime.datetime.now().strftime('%m/%d/%Y'), big_style)
+    sheet.write(5,0,"Date %s" % datetime.now().strftime('%m/%d/%Y'), big_style)
     
     it = {}
     for i in items:
@@ -371,14 +370,14 @@ def export(request, group_id):
     os.chmod(filename, 0777)
     content = open(filename,'rb').read()
     response = HttpResponse(content, mimetype='application/vnd.ms-excel')
-    name = '%s-%s.xls' % (brand.name,datetime.datetime.now().strftime('%m-%d-%Y-%H-%M'))
+    name = '%s-%s.xls' % (brand.name,datetime.now().strftime('%m-%d-%Y-%H-%M'))
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
     
     # Set items' status to 'in_processing'
     for i in items:
         i.status = 'in_processing'
-        i.status_modified = datetime.datetime.now()
+        i.status_modified = datetime.now()
         i.save()
     return response
 
@@ -423,9 +422,6 @@ def import_order(request):
     response = {}
     data = {}
     if request.method == 'POST':
-        for x in Brand.objects.all():
-            x.name = x.name.lower()
-            x.save()
         form = ImportXlsForm()
         f = request.FILES.get('xls_file', None)
         if f:
