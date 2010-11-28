@@ -146,9 +146,13 @@ def order(request):
                 forms[form.cleaned_data['supplier']].append(form)
 
             for supplier_id, _forms in forms.items():
-                ponumber = OrderedItem.objects.get_next_ponumber(supplier_id)
+                brands = []
                 for _form in _forms:
                     data = _form.cleaned_data
+                    if data['brand'] not in brands:
+                        ponumber = OrderedItem.objects.get_next_ponumber(supplier_id)
+                        brands.append(data['brand'])
+                    
                     data['ponumber'] = ponumber
                     data['manager'] = request.user
                     data['supplier'] = Supplier.objects.get(id=supplier_id)
