@@ -2,9 +2,10 @@
 
 import datetime, time
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from data.managers import OrderedItemManager, ActiveBrandManager
 
+Group.add_to_class('discount', models.PositiveIntegerField(blank=True, null=True, default=0, verbose_name=u'Скидка в %'))
 
 DIRECTIONS = (
     ('US', 'United States'),
@@ -26,9 +27,6 @@ class Supplier(models.Model):
     
     def __unicode__(self):
         return u"%s :: %s" % (self.title, self.direction)
-    
-    def get_next_ponumber(self):
-        print self
         
 
 class Brand(models.Model):

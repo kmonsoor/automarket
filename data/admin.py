@@ -20,12 +20,24 @@ class BrandOptions(admin.ModelAdmin):
     list_display = ('name','_parents_repr','active')
 
 class OrderedItemOptions(admin.ModelAdmin):
-    list_display =('ponumber', 'created', 'manager', 'client','part_number','part_number_superseded','quantity')
+    list_display =('po_number', 'created', 'manager', 'client','part_number','part_number_superseded','quantity')
     list_filter = ('created',)
     search_fieldsets = ('part_number',)
 
+    def po_number(self, obj):
+        return '%s%s' % (obj.supplier.po, obj.ponumber,)
+    po_number.allow_tags = True
+    po_number.short_description = u'PO'
+        
+    
 class MyUserAdmin(UserAdmin):
-    list_display = ('id', 'username', 'email','first_name', 'last_name', 'is_staff', 'last_login',)
+    list_display = ('id', 'username', 'email','first_name', 'last_name', 'groups_list', 'is_staff', 'last_login',) 
+    
+    def groups_list(self, obj):
+        groups = [x['name'] for x in obj.groups.values()] 
+        return (',').join(groups) if groups else u'Нет группы' 
+    groups_list.allow_tags = True
+    groups_list.short_description = u'Группа'
     filter_horizontal = ['groups']
 
 admin.site.register(Supplier, SupplierAdmin)

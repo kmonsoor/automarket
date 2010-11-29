@@ -1,7 +1,7 @@
 # -*- coding=UTF-8 -*-
 
 from datetime import datetime
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
@@ -28,11 +28,16 @@ def search(request):
                 msg = u"Not Found"
             else:
                 # TO DO исправить все это, сделать нормально
-                found['MSRP'] = float(found['MSRP'])*1.1
-                discount = 0.05
+                found['MSRP'] = float(found['MSRP'])*1.1 # +10%
+                discount = 0
+                for x in request.user.groups.values('discount'):
+                    if x['discount'] > discount:
+                        discount = float(x['discount'])/100
+                
                 found['your_price'] = found['MSRP'] - found['MSRP']*discount
                 found['your_economy'] = found['MSRP'] - found['your_price']
                 found['your_economy_perc'] = 100 - (found['your_price']/found['MSRP'])*100
+                # output
                 found['MSRP'] = "%.2f" % found['MSRP']
                 found['your_price'] = "%.2f" % found['your_price']
                 found['your_economy'] = "%.2f" % found['your_economy']
