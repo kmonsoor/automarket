@@ -41,7 +41,7 @@ class OrderItemForm(Form):
     price_sale = forms.FloatField(widget=forms.TextInput(attrs={'size':5, 'class': 'priceSale'}), label=u'PRICE', required=True)
     def __init__(self, *args, **kwargs):
         super(OrderItemForm, self).__init__(*args, **kwargs)
-        self.fields['client_id'].choices = users()
+        self.fields['client_id'].widget.choices = users()
 
 
     def clean_brand(self):
