@@ -1,3 +1,4 @@
+
 /* Tables in user profile used for editing data */
 
 .admin_table {
@@ -42,7 +43,7 @@ A.black {
 	margin: 20px 0 20px 0;
 }
 .admin_table2 TH, TD {
-	padding: 5px;
+	padding: 1px;
 	/* vertical-align: middle; */
 }
 .admin_table2 TH {
@@ -56,3 +57,4 @@ A.black {
 .cross_out{
 	text-decoration: line-through;
 }
+
