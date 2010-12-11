@@ -102,7 +102,9 @@ def index(request):
                     (u'NEW PRICE', None),
                     (u'COST', None),
                     (u'TOTAL COST', None),
+                    (u'Инвойс', 'invoice_code'),
                     (u'Статус', None),
+                    
                     )
     sort_headers = SortHeaders(request, LIST_HEADERS)
     order_field = request.GET.get('o', None)
@@ -280,6 +282,14 @@ class OrderedItemSaver(object):
         except Exception, e:
             pass
         return obj.status
+    
+    def save_invoice_code(self, obj, value):
+        try:
+            obj.invoice_code = value
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.invoice_code
 
 @ajax_request
 def position_edit(request, content_type, id):
@@ -299,7 +309,6 @@ def position_edit(request, content_type, id):
     except:
         response['error'] = 'Attribute does not exist'
         return response 
-    
     form = forms[content_type]({request.POST['type']:request.POST['value']})
     if form.is_valid():
         try:

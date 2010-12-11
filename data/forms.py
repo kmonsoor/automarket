@@ -16,6 +16,7 @@ class OrderedItemsFilterForm(forms.Form):
     description_en__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':22,'class':'qs_filter'}))
     manager__username__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':8,'class':'qs_filter'}))
     client__username__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':8,'class':'qs_filter'}))
+    invoice_code__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':8,'class':'qs_filter'}))
     
 class OrderedItemForm(forms.Form):
     part_number = forms.CharField(required=False)
@@ -27,6 +28,7 @@ class OrderedItemForm(forms.Form):
     price_base = forms.FloatField(required=False)
     weight = forms.FloatField(required=False)
     price_discount = forms.FloatField(required=False)
+    invoice_code = forms.CharField(required=False)
     status = forms.ChoiceField(choices=(('_return_','Прежний'),) + ORDER_ITEM_STATUSES, required=False)
     
     def clean_price(self):

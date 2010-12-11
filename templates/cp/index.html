@@ -59,6 +59,8 @@ backend_url = '/cp/position/edit/ordered_item/';
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>{{ filter.form.invoice_code__contains }}</td>
 </tr>
 </thead>
 <tbody>
@@ -133,7 +135,12 @@ backend_url = '/cp/position/edit/ordered_item/';
 		</td>
 		<td id="cost_{{ i.id }}">{{ i.cost|default:"" }}</td>
 		<td id="total_cost_{{ i.id }}">{{ i.total_cost|default:"" }}</td>
-
+		
+		<td class="editable" onclick="editInvoiceCode({{ i.id }})">
+			<div id="invoice_code_display_{{ i.id }}">{{ i.invoice_code_|default:"" }}</div>
+			<div id="invoice_code_{{ i.id }}" style="display: none">{{ i.invoice_code_|default:"" }}</div>
+			<span id="invoice_code_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
+		</td>
 		<td class="editable">
 			<select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
 			{% for opt in status_options %}
@@ -141,6 +148,7 @@ backend_url = '/cp/position/edit/ordered_item/';
 			{% endfor %}
 			</select>
 		</td>
+		
 	</tr>
 {% endfor %}
 </tbody>

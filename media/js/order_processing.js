@@ -248,6 +248,20 @@ function editDescriptionRu(id) {
     
 }
 
+function editInvoiceCode(id) {
+    if (return_check(id, 'invoice_code')) return;
+    if (current.id) close();
+    current.type = 'invoice_code'; 
+    current.value = jQuery('#invoice_code_'+id).html();
+	current.display_value = jQuery('#invoice_code_display_'+id).html();
+    current.id = id;
+    
+    jQuery('#invoice_code_display_'+id).html('<input type="text" id="invoice_code_input_' + id + '" value="'+ current.value +'">');
+    jQuery('#invoice_code_buttons_'+id).css("display","inline");
+    
+}
+
+
 function editDescriptionEn(id) {
     if (return_check(id, 'description_en')) return;
     if (current.id) close();
@@ -260,6 +274,7 @@ function editDescriptionEn(id) {
     jQuery('#description_en_buttons_'+id).css("display","inline");
     
 }
+
 
 function editBrand(id) {
     if (return_check(id, 'brand')) return;
