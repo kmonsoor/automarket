@@ -100,20 +100,20 @@ def get_brand_children(brand):
             return False
 
 ORDER_ITEM_STATUSES = (
-    ('order','НОВЫЙ ЗАКАЗ'),
-    ('obtained','ПОЛУЧЕНО В ЗАКАЗ'),
-    ('in_processing','В РАБОТЕ'),
-    ('failure','ОТКАЗ'),
-    ('wrong_number','НЕКОРРЕКТНЫЙ НОМЕР'),
-    ('out_of_stock','ОТСУТСТВУЕТ НА СКЛАДЕ'),
-    ('superseded','ЗАМЕНА НОМЕРА'),
-    ('back_order','BACK ORDER'),
-    ('received_supplier','ПОЛУЧЕНО ПОСТАВЩИКОМ'),
-    ('in_delivery','В ДОСТАВКЕ'),
-    ('received_warehouse','ПОЛУЧЕНО НА СКЛАД'),
-    ('sent_representative','ОТПРАВЛЕНО ПРЕДСТАВИТЕЛЮ'),
-    ('received_office','ПОЛУЧЕНО ОФИСОМ'),
-    ('issued','ВЫДАНО'),
+    ('order',u'новый заказ'),
+    ('obtained',u'получено в заказ'),
+    ('in_processing',u'в работе'),
+    ('failure',u'отказ'),
+    ('wrong_number',u'нккорректный номер'),
+    ('out_of_stock',u'отсутствует на складе'),
+    ('superseded',u'замена номера'),
+    ('back_order',u'back order'),
+    ('received_supplier',u'получено поставщиком'),
+    ('in_delivery',u'в доставке'),
+    ('received_warehouse',u'получено со склада'),
+    ('sent_representative',u'отправлено представителю'),
+    ('received_office',u'получено офисом'),
+    ('issued',u'выдано'),
 )
 
 

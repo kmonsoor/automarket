@@ -17,7 +17,9 @@ class OrderedItemsFilterForm(forms.Form):
     manager__username__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':8,'class':'qs_filter'}))
     client__username__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':8,'class':'qs_filter'}))
     invoice_code__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':8,'class':'qs_filter'}))
-    
+    status = forms.ChoiceField(required=False, choices=ORDER_ITEM_STATUSES,\
+            widget=forms.Select(attrs={'class':'qs_filter'}))
+
 class OrderedItemForm(forms.Form):
     part_number = forms.CharField(required=False)
     comment_customer = forms.CharField(required=False)
@@ -30,7 +32,7 @@ class OrderedItemForm(forms.Form):
     price_discount = forms.FloatField(required=False)
     invoice_code = forms.CharField(required=False)
     status = forms.ChoiceField(choices=(('_return_','Прежний'),) + ORDER_ITEM_STATUSES, required=False)
-    
+
     def clean_price(self):
         if self.cleaned_data['price']:
             try:
@@ -40,3 +42,4 @@ class OrderedItemForm(forms.Form):
             return value
         else:
             return self.cleaned_data['price']
+

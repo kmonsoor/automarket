@@ -61,6 +61,7 @@ backend_url = '/cp/position/edit/ordered_item/';
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>{{ filter.form.invoice_code__contains }}</td>
+<td>{{ filter.form.status }}</td>
 </tr>
 </thead>
 <tbody>
@@ -135,7 +136,7 @@ backend_url = '/cp/position/edit/ordered_item/';
 		</td>
 		<td id="cost_{{ i.id }}">{{ i.cost|default:"" }}</td>
 		<td id="total_cost_{{ i.id }}">{{ i.total_cost|default:"" }}</td>
-		
+
 		<td class="editable" onclick="editInvoiceCode({{ i.id }})">
 			<div id="invoice_code_display_{{ i.id }}">{{ i.invoice_code_|default:"" }}</div>
 			<div id="invoice_code_{{ i.id }}" style="display: none">{{ i.invoice_code_|default:"" }}</div>
@@ -148,7 +149,7 @@ backend_url = '/cp/position/edit/ordered_item/';
 			{% endfor %}
 			</select>
 		</td>
-		
+
 	</tr>
 {% endfor %}
 </tbody>
