@@ -1,0 +1,857 @@
+[
+    {
+        "pk": 1, 
+        "model": "data.direction", 
+        "fields": {
+            "po": "SP", 
+            "title": "US"
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "data.direction", 
+        "fields": {
+            "po": "MP", 
+            "title": "MSK"
+        }
+    }, 
+    {
+        "pk": 7, 
+        "model": "data.brandgroup", 
+        "fields": {
+            "delivery": 13.0, 
+            "brands": [
+                23, 
+                24, 
+                25, 
+                26, 
+                27
+            ], 
+            "direction": 2, 
+            "description": "", 
+            "title": "EXAP"
+        }
+    }, 
+    {
+        "pk": 6, 
+        "model": "data.brandgroup", 
+        "fields": {
+            "delivery": 13.0, 
+            "brands": [
+                55, 
+                56, 
+                57, 
+                58, 
+                59
+            ], 
+            "direction": 2, 
+            "description": "", 
+            "title": "DOCAP"
+        }
+    }, 
+    {
+        "pk": 5, 
+        "model": "data.brandgroup", 
+        "fields": {
+            "delivery": 13.0, 
+            "brands": [
+                39, 
+                40, 
+                41, 
+                42, 
+                43
+            ], 
+            "direction": 2, 
+            "description": "", 
+            "title": "DOCVP"
+        }
+    }, 
+    {
+        "pk": 4, 
+        "model": "data.brandgroup", 
+        "fields": {
+            "delivery": 13.0, 
+            "brands": [
+                21, 
+                22, 
+                23, 
+                24
+            ], 
+            "direction": 1, 
+            "description": "", 
+            "title": "OEM"
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "data.brandgroup", 
+        "fields": {
+            "delivery": 13.0, 
+            "brands": [
+                12, 
+                13, 
+                14, 
+                15
+            ], 
+            "direction": 1, 
+            "description": "", 
+            "title": "AFTMARK"
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "data.brandgroup", 
+        "fields": {
+            "delivery": 13.0, 
+            "brands": [
+                6, 
+                7, 
+                8, 
+                9, 
+                10
+            ], 
+            "direction": 1, 
+            "description": "", 
+            "title": "MOTO"
+        }
+    }, 
+    {
+        "pk": 1, 
+        "model": "data.brandgroup", 
+        "fields": {
+            "delivery": 13.0, 
+            "brands": [
+                2, 
+                3, 
+                4
+            ], 
+            "direction": 1, 
+            "description": "", 
+            "title": "ONLINE"
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Acura"
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Audi"
+        }
+    }, 
+    {
+        "pk": 4, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Bmw"
+        }
+    }, 
+    {
+        "pk": 5, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Buick"
+        }
+    }, 
+    {
+        "pk": 6, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Cadillac"
+        }
+    }, 
+    {
+        "pk": 7, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Chevrolet/geo"
+        }
+    }, 
+    {
+        "pk": 8, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Chrysler"
+        }
+    }, 
+    {
+        "pk": 9, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Dodge"
+        }
+    }, 
+    {
+        "pk": 10, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Eagle"
+        }
+    }, 
+    {
+        "pk": 11, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Ford"
+        }
+    }, 
+    {
+        "pk": 12, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Gm"
+        }
+    }, 
+    {
+        "pk": 13, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Honda"
+        }
+    }, 
+    {
+        "pk": 14, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Hyundai"
+        }
+    }, 
+    {
+        "pk": 15, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Infiniti"
+        }
+    }, 
+    {
+        "pk": 16, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Isuzu"
+        }
+    }, 
+    {
+        "pk": 17, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Jaguar"
+        }
+    }, 
+    {
+        "pk": 18, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Jeep"
+        }
+    }, 
+    {
+        "pk": 19, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Kia"
+        }
+    }, 
+    {
+        "pk": 20, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Land rover"
+        }
+    }, 
+    {
+        "pk": 21, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Lexus"
+        }
+    }, 
+    {
+        "pk": 22, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Lincoln"
+        }
+    }, 
+    {
+        "pk": 23, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Mazda"
+        }
+    }, 
+    {
+        "pk": 24, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Mercury"
+        }
+    }, 
+    {
+        "pk": 25, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Mitsubishi"
+        }
+    }, 
+    {
+        "pk": 26, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Nissan"
+        }
+    }, 
+    {
+        "pk": 27, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Oldsmobile"
+        }
+    }, 
+    {
+        "pk": 28, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Plymouth"
+        }
+    }, 
+    {
+        "pk": 29, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Pontiac"
+        }
+    }, 
+    {
+        "pk": 30, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Porsche"
+        }
+    }, 
+    {
+        "pk": 31, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Saab"
+        }
+    }, 
+    {
+        "pk": 32, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Saturn"
+        }
+    }, 
+    {
+        "pk": 33, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Subaru"
+        }
+    }, 
+    {
+        "pk": 34, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Suzuki"
+        }
+    }, 
+    {
+        "pk": 35, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Toyota"
+        }
+    }, 
+    {
+        "pk": 36, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Volkswagen"
+        }
+    }, 
+    {
+        "pk": 37, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Volvo"
+        }
+    }, 
+    {
+        "pk": 38, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Scion"
+        }
+    }, 
+    {
+        "pk": 39, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Mercedes-benz"
+        }
+    }, 
+    {
+        "pk": 40, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Daewoo"
+        }
+    }, 
+    {
+        "pk": 41, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Hummer"
+        }
+    }, 
+    {
+        "pk": 42, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Mini"
+        }
+    }, 
+    {
+        "pk": 43, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Turboii"
+        }
+    }, 
+    {
+        "pk": 44, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Rockauto"
+        }
+    }, 
+    {
+        "pk": 45, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Ekeystone"
+        }
+    }, 
+    {
+        "pk": 46, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Nexpart"
+        }
+    }, 
+    {
+        "pk": 47, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Mopar"
+        }
+    }, 
+    {
+        "pk": 48, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Ebay"
+        }
+    }, 
+    {
+        "pk": 49, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Tr"
+        }
+    }, 
+    {
+        "pk": 50, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Pu"
+        }
+    }, 
+    {
+        "pk": 51, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Wop"
+        }
+    }, 
+    {
+        "pk": 52, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Magnum"
+        }
+    }, 
+    {
+        "pk": 53, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Other"
+        }
+    }, 
+    {
+        "pk": 54, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Jaguar"
+        }
+    }, 
+    {
+        "pk": 55, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Weathertech"
+        }
+    }, 
+    {
+        "pk": 56, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Bentley"
+        }
+    }, 
+    {
+        "pk": 57, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Summit"
+        }
+    }, 
+    {
+        "pk": 58, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "Ronayers"
+        }
+    }, 
+    {
+        "pk": 59, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "AutoMarket"
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Acura"
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Audi"
+        }
+    }, 
+    {
+        "pk": 4, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Bmw"
+        }
+    }, 
+    {
+        "pk": 5, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Buick"
+        }
+    }, 
+    {
+        "pk": 6, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Cadillac"
+        }
+    }, 
+    {
+        "pk": 7, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Chevrolet"
+        }
+    }, 
+    {
+        "pk": 8, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Chrysler"
+        }
+    }, 
+    {
+        "pk": 9, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Dodge"
+        }
+    }, 
+    {
+        "pk": 10, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Ford"
+        }
+    }, 
+    {
+        "pk": 11, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Honda"
+        }
+    }, 
+    {
+        "pk": 12, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Hyundai"
+        }
+    }, 
+    {
+        "pk": 13, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Infiniti"
+        }
+    }, 
+    {
+        "pk": 14, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Isuzu"
+        }
+    }, 
+    {
+        "pk": 15, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Jaguar"
+        }
+    }, 
+    {
+        "pk": 16, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Jeep"
+        }
+    }, 
+    {
+        "pk": 17, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Kia"
+        }
+    }, 
+    {
+        "pk": 18, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Land rover"
+        }
+    }, 
+    {
+        "pk": 19, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Lexus"
+        }
+    }, 
+    {
+        "pk": 20, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Lincoln"
+        }
+    }, 
+    {
+        "pk": 21, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Mazda"
+        }
+    }, 
+    {
+        "pk": 22, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Mitsubishi"
+        }
+    }, 
+    {
+        "pk": 23, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Nissan"
+        }
+    }, 
+    {
+        "pk": 24, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Oldsmobile"
+        }
+    }, 
+    {
+        "pk": 25, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Pontiac"
+        }
+    }, 
+    {
+        "pk": 26, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Porsche"
+        }
+    }, 
+    {
+        "pk": 27, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Saab"
+        }
+    }, 
+    {
+        "pk": 28, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Subaru"
+        }
+    }, 
+    {
+        "pk": 29, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Suzuki"
+        }
+    }, 
+    {
+        "pk": 30, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Toyota"
+        }
+    }, 
+    {
+        "pk": 31, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Volkswagen"
+        }
+    }, 
+    {
+        "pk": 32, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Volvo"
+        }
+    }, 
+    {
+        "pk": 33, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Mercedes-benz"
+        }
+    }, 
+    {
+        "pk": 34, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Daewoo"
+        }
+    }, 
+    {
+        "pk": 35, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Hummer"
+        }
+    }, 
+    {
+        "pk": 36, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Mini"
+        }
+    }, 
+    {
+        "pk": 37, 
+        "model": "data.car", 
+        "fields": {
+            "title": "Bentley"
+        }
+    }, 
+    {
+        "pk": 32, 
+        "model": "data.ordereditem", 
+        "fields": {
+            "comment_supplier": "Mazda", 
+            "price_discount": 23.0, 
+            "weight": 3.0, 
+            "previous_status": "obtained", 
+            "ponumber": 1, 
+            "manager": 1, 
+            "cost": 101.0, 
+            "invoice_code": "", 
+            "part_number_superseded": null, 
+            "price_base": 21.0, 
+            "brandgroup": 4, 
+            "total_cost": 202.0, 
+            "total_w_ship": null, 
+            "description_ru": "qwe", 
+            "status": "in_processing", 
+            "brand": 23, 
+            "price_invoice": null, 
+            "description_en": "qwe", 
+            "delivery": 78.0, 
+            "comment_customer": "test", 
+            "status_modified": "2010-12-13 18:00:45", 
+            "created": "2010-12-13 16:48:11", 
+            "modified": "2010-12-13 18:12:18", 
+            "part_number": "ZZCA27165", 
+            "client": 1, 
+            "price_sale": 23.0, 
+            "quantity": 2
+        }
+    }, 
+    {
+        "pk": 33, 
+        "model": "data.ordereditem", 
+        "fields": {
+            "comment_supplier": "Buick", 
+            "price_discount": null, 
+            "weight": 5.0, 
+            "previous_status": "in_processing", 
+            "ponumber": 1, 
+            "manager": 1, 
+            "cost": 90.0, 
+            "invoice_code": "", 
+            "part_number_superseded": null, 
+            "price_base": 22.0, 
+            "brandgroup": 6, 
+            "total_cost": 270.0, 
+            "total_w_ship": null, 
+            "description_ru": "qwe", 
+            "status": "order", 
+            "brand": 56, 
+            "price_invoice": null, 
+            "description_en": "qwe", 
+            "delivery": 65.0, 
+            "comment_customer": "test", 
+            "status_modified": "2010-12-13 18:00:42", 
+            "created": "2010-12-13 16:48:11", 
+            "modified": "2010-12-13 18:18:43", 
+            "part_number": "1111 \u2013777777", 
+            "client": 1, 
+            "price_sale": 25.0, 
+            "quantity": 3
+        }
+    }
+]
