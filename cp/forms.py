@@ -25,7 +25,7 @@ class OrderItemForm(Form):
     TEMPLATE = 'cp/ordereditem_form.html'
     CORE = ('part_number',)
 
-    supplier = forms.CharField(widget=forms.Select(choices=()), label=u'DIR', required=True)
+    supplier = forms.CharField(widget=forms.Select(choices=(),attrs={'onchange': 'changeDir(this);'}), label=u'DIR', required=True)
     brand = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'BRAND', required=True)
     part_number = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'PART #',required=True)
     comment_customer = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'COMMENT 1', required=False)
@@ -48,6 +48,11 @@ class OrderItemForm(Form):
             brand = Brand.objects.get(title=brand)
         except Brand.DoesNotExist:
             raise forms.ValidationError(u"Такого бренда не существует")
+        else:
+            if self.cleaned_data['supplier']:
+                brandgroup = BrandGroup.objects.get(id = self.cleaned_data['supplier'])
+                if brand not in brandgroup.brands.all():
+                    raise forms.ValidationError(u"Этот бренд не входит в выбранное направление")
 
         return brand
     

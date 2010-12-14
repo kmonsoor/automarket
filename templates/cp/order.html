@@ -22,7 +22,8 @@
 		if (supplier_id)
 			showPopUp('/client/help/'+ supplier_id +'/brands/', 200, 600, 'brands', 1);
 		else	
-			showPopUp('/client/help/0/brands/', 200, 600, 'brands', 1);
+			alert('Выберите направление');
+		return false;
 	}
 	
 	function setCar(value) {
@@ -99,6 +100,13 @@
 		}
 
 		return freeRow;
+	}
+	
+	function changeDir(el){
+		var curr_id = jQuery(el).attr('id').split('.')[1];
+		jQuery('#id_brand\\.'+curr_id).attr('value', '');
+		
+		return false;
 	}
 	
 	(function(jQuery){

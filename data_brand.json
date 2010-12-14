@@ -2,7 +2,7 @@
     {
         "pk": 1, 
         "model": "data.brand", 
-        "fields": { 
+        "fields": {
             "title": "mopar"
         }
     }, 
@@ -128,7 +128,7 @@
     {
         "pk": 19, 
         "model": "data.brand", 
-        "fields": { 
+        "fields": {
             "title": "nissan"
         }
     }, 
@@ -263,77 +263,77 @@
         "pk": 38, 
         "model": "data.brand", 
         "fields": {
-            "title": "airtex" 
+            "title": "airtex"
         }
     }, 
     {
         "pk": 39, 
         "model": "data.brand", 
         "fields": {
-            "title": "alex" 
+            "title": "alex"
         }
     }, 
     {
         "pk": 40, 
         "model": "data.brand", 
         "fields": {
-            "title": "anco" 
+            "title": "anco"
         }
     }, 
     {
         "pk": 41, 
         "model": "data.brand", 
         "fields": {
-            "title": "arc" 
+            "title": "arc"
         }
     }, 
     {
         "pk": 42, 
         "model": "data.brand", 
         "fields": {
-            "title": "atp" 
+            "title": "atp"
         }
     }, 
     {
         "pk": 43, 
         "model": "data.brand", 
         "fields": {
-            "title": "autolite" 
+            "title": "autolite"
         }
     }, 
     {
         "pk": 44, 
         "model": "data.brand", 
         "fields": {
-            "title": "avs" 
+            "title": "avs"
         }
     }, 
     {
         "pk": 45, 
         "model": "data.brand", 
         "fields": {
-            "title": "bca" 
+            "title": "bca"
         }
     }, 
     {
         "pk": 46, 
         "model": "data.brand", 
         "fields": {
-            "title": "bosch" 
+            "title": "bosch"
         }
     }, 
     {
         "pk": 47, 
         "model": "data.brand", 
         "fields": {
-            "title": "bushwacker" 
+            "title": "bushwacker"
         }
     }, 
     {
         "pk": 48, 
         "model": "data.brand", 
         "fields": {
-            "title": "cardone" 
+            "title": "cardone"
         }
     }, 
     {
@@ -354,224 +354,224 @@
         "pk": 51, 
         "model": "data.brand", 
         "fields": {
-            "title": "champ" 
+            "title": "champ"
         }
     }, 
     {
         "pk": 52, 
         "model": "data.brand", 
         "fields": {
-            "title": "champion" 
+            "title": "champion"
         }
     }, 
     {
         "pk": 53, 
         "model": "data.brand", 
         "fields": {
-            "title": "clevite" 
+            "title": "clevite"
         }
     }, 
     {
         "pk": 54, 
         "model": "data.brand", 
         "fields": {
-            "title": "cloyes" 
+            "title": "cloyes"
         }
     }, 
     {
         "pk": 55, 
         "model": "data.brand", 
         "fields": {
-            "title": "coniseal" 
+            "title": "coniseal"
         }
     }, 
     {
         "pk": 56, 
         "model": "data.brand", 
         "fields": {
-            "title": "dayco" 
+            "title": "dayco"
         }
     }, 
     {
         "pk": 57, 
         "model": "data.brand", 
         "fields": {
-            "title": "denso" 
+            "title": "denso"
         }
     }, 
     {
         "pk": 58, 
         "model": "data.brand", 
         "fields": {
-            "title": "edelbrock" 
+            "title": "edelbrock"
         }
     }, 
     {
         "pk": 59, 
         "model": "data.brand", 
         "fields": {
-            "title": "edelmann" 
+            "title": "edelmann"
         }
     }, 
     {
         "pk": 60, 
         "model": "data.brand", 
         "fields": {
-            "title": "elgin" 
+            "title": "elgin"
         }
     }, 
     {
         "pk": 61, 
         "model": "data.brand", 
         "fields": {
-            "title": "energy suspension" 
+            "title": "energy suspension"
         }
     }, 
     {
         "pk": 62, 
         "model": "data.brand", 
         "fields": {
-            "title": "falcon" 
+            "title": "falcon"
         }
     }, 
     {
         "pk": 63, 
         "model": "data.brand", 
         "fields": {
-            "title": "federal mogul"  
+            "title": "federal mogul"
         }
     }, 
     {
         "pk": 64, 
         "model": "data.brand", 
-        "fields": { 
-            "title": "fel-pro" 
+        "fields": {
+            "title": "fel-pro"
         }
     }, 
     {
         "pk": 65, 
         "model": "data.brand", 
         "fields": {
-            "title": "fram" 
+            "title": "fram"
         }
     }, 
     {
         "pk": 66, 
         "model": "data.brand", 
         "fields": {
-            "title": "gates" 
+            "title": "gates"
         }
     }, 
     {
         "pk": 67, 
         "model": "data.brand", 
         "fields": {
-            "title": "guardian" 
+            "title": "guardian"
         }
     }, 
     {
         "pk": 68, 
         "model": "data.brand", 
         "fields": {
-            "title": "hadley" 
+            "title": "hadley"
         }
     }, 
     {
         "pk": 69, 
         "model": "data.brand", 
         "fields": {
-            "title": "hastings" 
+            "title": "hastings"
         }
     }, 
     {
         "pk": 70, 
         "model": "data.brand", 
         "fields": {
-            "title": "haynes" 
+            "title": "haynes"
         }
     }, 
     {
         "pk": 71, 
         "model": "data.brand", 
         "fields": {
-            "title": "huskyliner" 
+            "title": "huskyliner"
         }
     }, 
     {
         "pk": 72, 
         "model": "data.brand", 
         "fields": {
-            "title": "k&n" 
+            "title": "k&n"
         }
     }, 
     {
         "pk": 73, 
         "model": "data.brand", 
         "fields": {
-            "title": "kem" 
+            "title": "kem"
         }
     }, 
     {
         "pk": 74, 
         "model": "data.brand", 
         "fields": {
-            "title": "kyb" 
+            "title": "kyb"
         }
     }, 
     {
         "pk": 75, 
         "model": "data.brand", 
         "fields": {
-            "title": "lund" 
+            "title": "lund"
         }
     }, 
     {
         "pk": 76, 
         "model": "data.brand", 
         "fields": {
-            "title": "melling" 
+            "title": "melling"
         }
     }, 
     {
         "pk": 77, 
         "model": "data.brand", 
         "fields": {
-            "title": "metra" 
+            "title": "metra"
         }
     }, 
     {
         "pk": 78, 
         "model": "data.brand", 
         "fields": {
-            "title": "monroe" 
+            "title": "monroe"
         }
     }, 
     {
         "pk": 79, 
         "model": "data.brand", 
         "fields": {
-            "title": "moog" 
+            "title": "moog"
         }
     }, 
     {
         "pk": 80, 
         "model": "data.brand", 
         "fields": {
-            "title": "national" 
+            "title": "national"
         }
     }, 
     {
         "pk": 81, 
         "model": "data.brand", 
         "fields": {
-            "title": "ngk" 
+            "title": "ngk"
         }
     }, 
     {
         "pk": 82, 
         "model": "data.brand", 
         "fields": {
-            "title": "perfect circle" 
+            "title": "perfect circle"
         }
     }, 
 [   
@@ -579,84 +579,84 @@
         "pk": 83, 
         "model": "data.brand", 
         "fields": {
-            "title": "powerflow" 
+            "title": "powerflow"
         }
     }, 
     {
         "pk": 84, 
         "model": "data.brand", 
         "fields": {
-            "title": "ppg" 
+            "title": "ppg"
         }
     }, 
     {
         "pk": 85, 
         "model": "data.brand", 
         "fields": {
-            "title": "precision" 
+            "title": "precision"
         }
     }, 
     {
         "pk": 86, 
         "model": "data.brand", 
         "fields": {
-            "title": "putco" 
+            "title": "putco"
         }
     }, 
     {
         "pk": 87, 
         "model": "data.brand", 
         "fields": {
-            "title": "raybestos" 
+            "title": "raybestos"
         }
     }, 
     {
         "pk": 88, 
         "model": "data.brand", 
         "fields": {
-            "title": "sealed power" 
+            "title": "sealed power"
         }
     }, 
     {
         "pk": 89, 
         "model": "data.brand", 
         "fields": {
-            "title": "skf" 
+            "title": "skf"
         }
     }, 
     {
         "pk": 90, 
         "model": "data.brand", 
         "fields": {
-            "title": "spicer" 
+            "title": "spicer"
         }
     }, 
     {
         "pk": 91, 
         "model": "data.brand", 
         "fields": {
-            "title": "standard" 
+            "title": "standard"
         }
     }, 
     {
         "pk": 92, 
         "model": "data.brand", 
         "fields": {
-            "title": "stant" 
+            "title": "stant"
         }
     }, 
     {
         "pk": 93, 
         "model": "data.brand", 
         "fields": {
-            "title": "stant" 
+            "title": "stant"
         }
     }, 
     {
         "pk": 94, 
         "model": "data.brand", 
         "fields": {
-            "title": "sylvania" 
+            "title": "sylvania"
         }
     }, 
     {
@@ -684,182 +684,182 @@
         "pk": 98, 
         "model": "data.brand", 
         "fields": {
-            "title": "victor" 
+            "title": "victor"
         }
     }, 
     {
         "pk": 99, 
         "model": "data.brand", 
         "fields": {
-            "title": "wagner" 
+            "title": "wagner"
         }
     }, 
     {
         "pk": 100, 
         "model": "data.brand", 
         "fields": {
-            "title": "weatertech" 
+            "title": "weatertech"
         }
     }, 
     {
         "pk": 101, 
         "model": "data.brand", 
         "fields": {
-            "title": "wingswest" 
+            "title": "wingswest"
         }
     }, 
     {
         "pk": 102, 
         "model": "data.brand", 
         "fields": {
-            "title": "wix" 
+            "title": "wix"
         }
     }, 
     {
         "pk": 103, 
         "model": "data.brand", 
         "fields": {
-            "title": "used" 
+            "title": "used"
         }
     }, 
     {
         "pk": 104, 
         "model": "data.brand", 
         "fields": {
-            "title": "dnk" 
+            "title": "dnk"
         }
     }, 
     {
         "pk": 105, 
         "model": "data.brand", 
         "fields": {
-            "title": "depo" 
+            "title": "depo"
         }
     }, 
     {
         "pk": 106, 
         "model": "data.brand", 
         "fields": {
-            "title": "tyg" 
+            "title": "tyg"
         }
     }, 
     {
         "pk": 107, 
         "model": "data.brand", 
         "fields": {
-            "title": "interpart" 
+            "title": "interpart"
         }
     }, 
     {
         "pk": 108, 
         "model": "data.brand", 
         "fields": {
-            "title": "cv unlimited" 
+            "title": "cv unlimited"
         }
     }, 
     {
         "pk": 109, 
         "model": "data.brand", 
         "fields": {
-            "title": "chrysler" 
+            "title": "chrysler"
         }
     }, 
     {
         "pk": 110, 
         "model": "data.brand", 
         "fields": {
-            "title": "dodge" 
+            "title": "dodge"
         }
     }, 
     {
         "pk": 111, 
         "model": "data.brand", 
         "fields": {
-            "title": "plymouth" 
+            "title": "plymouth"
         }
     }, 
     {
         "pk": 112, 
         "model": "data.brand", 
         "fields": {
-            "title": "eagle" 
+            "title": "eagle"
         }
     }, 
     {
         "pk": 113, 
         "model": "data.brand", 
         "fields": {
-            "title": "jeep" 
+            "title": "jeep"
         }
     }, 
     {
         "pk": 114, 
         "model": "data.brand", 
         "fields": {
-            "title": "gmc" 
+            "title": "gmc"
         }
     }, 
     {
         "pk": 115, 
         "model": "data.brand", 
         "fields": {
-            "title": "chevrolet" 
+            "title": "chevrolet"
         }
     }, 
     {
         "pk": 116, 
         "model": "data.brand", 
         "fields": {
-            "title": "buick" 
+            "title": "buick"
         }
     }, 
     {
         "pk": 117, 
         "model": "data.brand", 
         "fields": {
-            "title": "cadillac" 
+            "title": "cadillac"
         }
     }, 
     {
         "pk": 118, 
         "model": "data.brand", 
         "fields": {
-            "title": "pontiac" 
+            "title": "pontiac"
         }
     }, 
     {
         "pk": 119, 
         "model": "data.brand", 
         "fields": {
-            "title": "oldsmobile" 
+            "title": "oldsmobile"
         }
     }, 
     {
         "pk": 120, 
         "model": "data.brand", 
         "fields": {
-            "title": "geo" 
+            "title": "geo"
         }
     }, 
     {
         "pk": 121, 
         "model": "data.brand", 
         "fields": {
-            "title": "saturn" 
+            "title": "saturn"
         }
     }, 
     {
         "pk": 122, 
         "model": "data.brand", 
         "fields": {
-            "title": "hummer" 
+            "title": "hummer"
         }
     }, 
     {
         "pk": 123, 
         "model": "data.brand", 
         "fields": {
-            "title": "lincoln" 
+            "title": "lincoln"
         }
     }, 
     {
@@ -873,42 +873,42 @@
         "pk": 125, 
         "model": "data.brand", 
         "fields": {
-            "title": "mini" 
+            "title": "mini"
         }
     }, 
     {
         "pk": 127, 
         "model": "data.brand", 
         "fields": {
-            "title": "ebay" 
+            "title": "ebay"
         }
     }, 
     {
         "pk": 128, 
         "model": "data.brand", 
         "fields": {
-            "title": "rockauto" 
+            "title": "rockauto"
         }
     }, 
     {
         "pk": 129, 
         "model": "data.brand", 
         "fields": {
-            "title": "turboii" 
+            "title": "turboii"
         }
     }, 
     {
         "pk": 130, 
         "model": "data.brand", 
         "fields": {
-            "title": "ekeystone" 
+            "title": "ekeystone"
         }
     }, 
     {
         "pk": 131, 
         "model": "data.brand", 
         "fields": {
-            "title": "nexpart" 
+            "title": "nexpart"
         }
     }, 
     {
@@ -920,7 +920,7 @@
     }, 
     {
         "pk": 133, 
-        "model": "data.brand",
+        "model": "data.brand", 
         "fields": {
             "title": "empireauto"
         }
