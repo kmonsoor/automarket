@@ -114,7 +114,7 @@ def help_brand_list(request, groupbrand_id):
         brands = Brand.objects.all().order_by('title')
     else:
         if not brands:
-            brands = Brand.active_objects.all().order_by('title')
+            brands = []
 
     return {'list': brands,}
 
