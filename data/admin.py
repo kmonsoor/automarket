@@ -5,27 +5,34 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User as DjangoUser
 from django.utils.translation import ugettext_lazy as _
-from data.models import Brand, OrderedItem, Supplier
-
+from data.models import Direction, BrandGroup, Brand, Car, OrderedItem
 
 admin.site.unregister(DjangoUser)
 
 
+class DirectionAdmin(admin.ModelAdmin):
+    list_display = ('title', 'po',)
 
-class SupplierAdmin(admin.ModelAdmin):
-    list_display = ('title', 'direction', 'po', 'description',)
+    
+class BrandGroupAdmin(admin.ModelAdmin):
+    list_display = ('title', 'direction', 'description',)
     list_filter = ('direction',)
 
-class BrandOptions(admin.ModelAdmin):
-    list_display = ('name','_parents_repr','active')
+    
+class BrandAdmin(admin.ModelAdmin):
+    list_display = ('title',)
+    
+class CarAdmin(admin.ModelAdmin):
+    list_display = ('title',)
 
-class OrderedItemOptions(admin.ModelAdmin):
+    
+class OrderedItemAdmin(admin.ModelAdmin):
     list_display =('po_number', 'created', 'manager', 'client','part_number','part_number_superseded','quantity')
     list_filter = ('created',)
     search_fieldsets = ('part_number',)
 
     def po_number(self, obj):
-        return '%s%s' % (obj.supplier.po, obj.ponumber,)
+        return '%s%s' % (obj.brandgroup.direction.po, obj.ponumber,)
     po_number.allow_tags = True
     po_number.short_description = u'PO'
         
@@ -40,8 +47,10 @@ class MyUserAdmin(UserAdmin):
     groups_list.short_description = u'Группа'
     filter_horizontal = ['groups']
 
-admin.site.register(Supplier, SupplierAdmin)
-admin.site.register(Brand, BrandOptions)
-admin.site.register(OrderedItem, OrderedItemOptions)
+    
+admin.site.register(Direction, DirectionAdmin) 
+admin.site.register(BrandGroup, BrandGroupAdmin)
+admin.site.register(Brand, BrandAdmin)
+admin.site.register(Car, CarAdmin)
+admin.site.register(OrderedItem, OrderedItemAdmin)
 admin.site.register(DjangoUser, MyUserAdmin)
-

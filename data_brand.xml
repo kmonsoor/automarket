@@ -1,0 +1,928 @@
+[
+    {
+        "pk": 1, 
+        "model": "data.brand", 
+        "fields": { 
+            "title": "mopar"
+        }
+    }, 
+    {
+        "pk": 2, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "gm"
+        }
+    }, 
+    {
+        "pk": 3, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "ford"
+        }
+    }, 
+    {
+        "pk": 4, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "acura"
+        }
+    }, 
+    {
+        "pk": 5, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "audi"
+        }
+    }, 
+    {
+        "pk": 6, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "bmw"
+        }
+    }, 
+    {
+        "pk": 7, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "daewoo"
+        }
+    }, 
+    {
+        "pk": 8, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "honda"
+        }
+    }, 
+    {
+        "pk": 9, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "huyndai"
+        }
+    }, 
+    {
+        "pk": 10, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "infiniti"
+        }
+    }, 
+    {
+        "pk": 11, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "isuzu"
+        }
+    }, 
+    {
+        "pk": 12, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "jaguar"
+        }
+    }, 
+    {
+        "pk": 13, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "kia"
+        }
+    }, 
+    {
+        "pk": 14, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "land rover"
+        }
+    }, 
+    {
+        "pk": 15, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "lexus"
+        }
+    }, 
+    {
+        "pk": 16, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "mazda"
+        }
+    }, 
+    {
+        "pk": 17, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "mercedes-benz"
+        }
+    }, 
+    {
+        "pk": 18, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "mitsubishi"
+        }
+    }, 
+    {
+        "pk": 19, 
+        "model": "data.brand", 
+        "fields": { 
+            "title": "nissan"
+        }
+    }, 
+    {
+        "pk": 20, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "porshe"
+        }
+    }, 
+    {
+        "pk": 21, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "saab"
+        }
+    }, 
+    {
+        "pk": 22, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "subaru"
+        }
+    }, 
+    {
+        "pk": 23, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "suzuki"
+        }
+    }, 
+    {
+        "pk": 24, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "toyota"
+        }
+    }, 
+    {
+        "pk": 25, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "scion"
+        }
+    }, 
+    {
+        "pk": 26, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "volkswagen"
+        }
+    }, 
+    {
+        "pk": 27, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "volvo"
+        }
+    }, 
+    {
+        "pk": 28, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "acdelco"
+        }
+    }, 
+    {
+        "pk": 29, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "motorcraft"
+        }
+    }, 
+    {
+        "pk": 30, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "hd"
+        }
+    }, 
+    {
+        "pk": 31, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "hmhd"
+        }
+    }, 
+    {
+        "pk": 32, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "jpcycles"
+        }
+    }, 
+    {
+        "pk": 33, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "tuckerrocky"
+        }
+    }, 
+    {
+        "pk": 34, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "kawasaki moto"
+        }
+    }, 
+    {
+        "pk": 35, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "honda moto"
+            
+        }
+    }, 
+    {
+        "pk": 36, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "suzuki moto"
+        }
+    }, 
+    {
+        "pk": 37, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "yamaha moto"
+        }
+    }, 
+    {
+        "pk": 38, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "airtex" 
+        }
+    }, 
+    {
+        "pk": 39, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "alex" 
+        }
+    }, 
+    {
+        "pk": 40, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "anco" 
+        }
+    }, 
+    {
+        "pk": 41, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "arc" 
+        }
+    }, 
+    {
+        "pk": 42, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "atp" 
+        }
+    }, 
+    {
+        "pk": 43, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "autolite" 
+        }
+    }, 
+    {
+        "pk": 44, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "avs" 
+        }
+    }, 
+    {
+        "pk": 45, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "bca" 
+        }
+    }, 
+    {
+        "pk": 46, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "bosch" 
+        }
+    }, 
+    {
+        "pk": 47, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "bushwacker" 
+        }
+    }, 
+    {
+        "pk": 48, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "cardone" 
+        }
+    }, 
+    {
+        "pk": 49, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "carriagework"
+        }
+    }, 
+    {
+        "pk": 50, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "casite"
+        }
+    }, 
+    {
+        "pk": 51, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "champ" 
+        }
+    }, 
+    {
+        "pk": 52, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "champion" 
+        }
+    }, 
+    {
+        "pk": 53, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "clevite" 
+        }
+    }, 
+    {
+        "pk": 54, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "cloyes" 
+        }
+    }, 
+    {
+        "pk": 55, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "coniseal" 
+        }
+    }, 
+    {
+        "pk": 56, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "dayco" 
+        }
+    }, 
+    {
+        "pk": 57, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "denso" 
+        }
+    }, 
+    {
+        "pk": 58, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "edelbrock" 
+        }
+    }, 
+    {
+        "pk": 59, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "edelmann" 
+        }
+    }, 
+    {
+        "pk": 60, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "elgin" 
+        }
+    }, 
+    {
+        "pk": 61, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "energy suspension" 
+        }
+    }, 
+    {
+        "pk": 62, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "falcon" 
+        }
+    }, 
+    {
+        "pk": 63, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "federal mogul"  
+        }
+    }, 
+    {
+        "pk": 64, 
+        "model": "data.brand", 
+        "fields": { 
+            "title": "fel-pro" 
+        }
+    }, 
+    {
+        "pk": 65, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "fram" 
+        }
+    }, 
+    {
+        "pk": 66, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "gates" 
+        }
+    }, 
+    {
+        "pk": 67, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "guardian" 
+        }
+    }, 
+    {
+        "pk": 68, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "hadley" 
+        }
+    }, 
+    {
+        "pk": 69, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "hastings" 
+        }
+    }, 
+    {
+        "pk": 70, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "haynes" 
+        }
+    }, 
+    {
+        "pk": 71, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "huskyliner" 
+        }
+    }, 
+    {
+        "pk": 72, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "k&n" 
+        }
+    }, 
+    {
+        "pk": 73, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "kem" 
+        }
+    }, 
+    {
+        "pk": 74, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "kyb" 
+        }
+    }, 
+    {
+        "pk": 75, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "lund" 
+        }
+    }, 
+    {
+        "pk": 76, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "melling" 
+        }
+    }, 
+    {
+        "pk": 77, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "metra" 
+        }
+    }, 
+    {
+        "pk": 78, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "monroe" 
+        }
+    }, 
+    {
+        "pk": 79, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "moog" 
+        }
+    }, 
+    {
+        "pk": 80, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "national" 
+        }
+    }, 
+    {
+        "pk": 81, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "ngk" 
+        }
+    }, 
+    {
+        "pk": 82, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "perfect circle" 
+        }
+    }, 
+[   
+    {
+        "pk": 83, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "powerflow" 
+        }
+    }, 
+    {
+        "pk": 84, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "ppg" 
+        }
+    }, 
+    {
+        "pk": 85, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "precision" 
+        }
+    }, 
+    {
+        "pk": 86, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "putco" 
+        }
+    }, 
+    {
+        "pk": 87, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "raybestos" 
+        }
+    }, 
+    {
+        "pk": 88, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "sealed power" 
+        }
+    }, 
+    {
+        "pk": 89, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "skf" 
+        }
+    }, 
+    {
+        "pk": 90, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "spicer" 
+        }
+    }, 
+    {
+        "pk": 91, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "standard" 
+        }
+    }, 
+    {
+        "pk": 92, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "stant" 
+        }
+    }, 
+    {
+        "pk": 93, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "stant" 
+        }
+    }, 
+    {
+        "pk": 94, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "sylvania" 
+        }
+    }, 
+    {
+        "pk": 95, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "termo tec"
+        }
+    }, 
+    {
+        "pk": 96, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "timken"
+        }
+    }, 
+    {
+        "pk": 97, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "ventishade"
+        }
+    }, 
+    {
+        "pk": 98, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "victor" 
+        }
+    }, 
+    {
+        "pk": 99, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "wagner" 
+        }
+    }, 
+    {
+        "pk": 100, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "weatertech" 
+        }
+    }, 
+    {
+        "pk": 101, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "wingswest" 
+        }
+    }, 
+    {
+        "pk": 102, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "wix" 
+        }
+    }, 
+    {
+        "pk": 103, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "used" 
+        }
+    }, 
+    {
+        "pk": 104, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "dnk" 
+        }
+    }, 
+    {
+        "pk": 105, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "depo" 
+        }
+    }, 
+    {
+        "pk": 106, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "tyg" 
+        }
+    }, 
+    {
+        "pk": 107, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "interpart" 
+        }
+    }, 
+    {
+        "pk": 108, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "cv unlimited" 
+        }
+    }, 
+    {
+        "pk": 109, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "chrysler" 
+        }
+    }, 
+    {
+        "pk": 110, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "dodge" 
+        }
+    }, 
+    {
+        "pk": 111, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "plymouth" 
+        }
+    }, 
+    {
+        "pk": 112, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "eagle" 
+        }
+    }, 
+    {
+        "pk": 113, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "jeep" 
+        }
+    }, 
+    {
+        "pk": 114, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "gmc" 
+        }
+    }, 
+    {
+        "pk": 115, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "chevrolet" 
+        }
+    }, 
+    {
+        "pk": 116, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "buick" 
+        }
+    }, 
+    {
+        "pk": 117, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "cadillac" 
+        }
+    }, 
+    {
+        "pk": 118, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "pontiac" 
+        }
+    }, 
+    {
+        "pk": 119, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "oldsmobile" 
+        }
+    }, 
+    {
+        "pk": 120, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "geo" 
+        }
+    }, 
+    {
+        "pk": 121, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "saturn" 
+        }
+    }, 
+    {
+        "pk": 122, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "hummer" 
+        }
+    }, 
+    {
+        "pk": 123, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "lincoln" 
+        }
+    }, 
+    {
+        "pk": 124, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "mercury"
+        }
+    }, 
+    {
+        "pk": 125, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "mini" 
+        }
+    }, 
+    {
+        "pk": 127, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "ebay" 
+        }
+    }, 
+    {
+        "pk": 128, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "rockauto" 
+        }
+    }, 
+    {
+        "pk": 129, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "turboii" 
+        }
+    }, 
+    {
+        "pk": 130, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "ekeystone" 
+        }
+    }, 
+    {
+        "pk": 131, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "nexpart" 
+        }
+    }, 
+    {
+        "pk": 132, 
+        "model": "data.brand", 
+        "fields": {
+            "title": "other"
+        }
+    }, 
+    {
+        "pk": 133, 
+        "model": "data.brand",
+        "fields": {
+            "title": "empireauto"
+        }
+    }
+]

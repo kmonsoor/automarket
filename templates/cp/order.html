@@ -15,8 +15,7 @@
 		current = null;
 	}
 	
-	function showList(e)
-	{
+	function showListBrand(e)	{
 		id = e.id;
 		current = id.split('.')[1]
 		supplier_id = jQuery(e).parents('tr').find('#id_supplier\\.'+current+' :selected').attr('value');
@@ -24,6 +23,17 @@
 			showPopUp('/client/help/'+ supplier_id +'/brands/', 200, 600, 'brands', 1);
 		else	
 			showPopUp('/client/help/0/brands/', 200, 600, 'brands', 1);
+	}
+	
+	function setCar(value) {
+		document.getElementById('id_comment_supplier.'+current).value = value;
+		current = null;
+	}
+	
+	function showListCar(e){
+		id = e.id;
+		current = id.split('.')[1]
+		showPopUp('/client/help/cars/', 200, 600, 'cars', 1);
 	}
 	
 	

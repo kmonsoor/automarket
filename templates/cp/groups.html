@@ -5,29 +5,20 @@
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">
 <script>
-var ajax_loader_img_path = '{{ MEDIA_URL }}img/icons/ajax-loader.gif';
-var caller = 'groups';
+    var ajax_loader_img_path = '{{ MEDIA_URL }}img/icons/ajax-loader.gif';
+    var caller = 'groups';
 </script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
 <script>
-backend_url = '/cp/position/edit/ordered_item/';
-function hideRow(id, group_id) {
-    if (document.getElementById('status_input_' + id).value != 'order') {
-        jQuery('#row_' + id).css('display', 'none'); 
-    }
-}
+    backend_url = '/cp/position/edit/ordered_item/';
+    function hideRow(id, group_id){ if (document.getElementById('status_input_' + id).value != 'order') jQuery('#row_' + id).css('display', 'none'); }
 </script>
 {% endblock %}
 
 {% block content %}
-{% if brands %}
-{% for id in brands %}
-{% ifequal mode "trusted_user" %}
-{% ordereditems_by_brand id user %}
-{% else %}
-{% ordereditems_by_brand id %}
-{% endifequal %}
-
-{% endfor %}
-{% endif %}
+    {% if orders_by_brandgroup %}
+        {% for brandgroup, orders in orders_by_brandgroup.items %}
+            {% ordereditems_by_brandgroup brandgroup orders %}
+        {% endfor %}
+    {% endif %}
 {% endblock %}

@@ -27,14 +27,17 @@ urlpatterns += patterns('cp.views',
     url(r'^cp/order/$', 'order', name="order"),
     url(r'^cp/groups/$', 'groups', name="groups"),
     url(r'^cp/position/edit/(?P<content_type>\w+)/(?P<id>\d+)/$', 'position_edit'),
+    url(r'^cp/position/change_status/$', 'change_status'),    
     url(r'^cp/export/(?P<group_id>\d+)/$', 'export'),
     url(r'^cp/import_order/', 'import_order', name='import_to_csv'),
+    url(r'^cp/export_order/', 'export_order', name='export_to_csv'),
     url(r'^cp/$', 'index'),
 )
 
 
 urlpatterns += patterns('client.views',
     url(r'^client/search/$', 'search', name='client_search'),
-    url(r'^client/help/(?P<supplier_id>[\d]+)/brands/$', 'help_brand_list', name='brand_list'),
+    url(r'^client/help/(?P<groupbrand_id>[\d]+)/brands/$', 'help_brand_list', name='brand_list'),
+    url(r'^client/help/cars/$', 'help_car_list', name='car_list'),
     url(r'^client/','index'),
 )

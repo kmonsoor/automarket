@@ -91,7 +91,8 @@ function postSave() {
 		jQuery('#total_w_ship_'+current.id).html(total_w_ship.toFixed(2));
 	}
 	if (current.type == 'weight') {
-		var shipping = parseFloat(jQuery('#delivery_supplier_input_'+current.id).attr('value'))*parseFloat(current.display_value)*parseInt(jQuery('#quantity_display_'+current.id).html());
+		//var shipping = parseFloat(jQuery('#delivery_supplier_input_'+current.id).attr('value'))*parseFloat(current.display_value)*parseInt(jQuery('#quantity_display_'+current.id).html());
+		var shipping = parseFloat(current.display_value)*13;
 		jQuery('#delivery_display_'+current.id).html(shipping.toFixed(2));
 		var shipping = parseFloat(jQuery('#delivery_display_'+current.id).html())
 		if (jQuery('#price_discount_display_'+current.id).html())
@@ -222,16 +223,16 @@ function editPriceInvoice(id) {
     jQuery('#price_invoice_buttons_'+id).css("display","inline");
 }
 
-function editCommentCustomer(id) {
-    if (return_check(id, 'comment_customer')) return;
+function editCommentSupplier(id) {
+    if (return_check(id, 'comment_supplier')) return;
     if (current.id) close();
-    current.type = 'comment_customer'; 
-    current.value = jQuery('#comment_customer_'+id).html();
-	current.display_value = jQuery('#comment_customer_display_'+id).html();
+    current.type = 'comment_supplier'; 
+    current.value = jQuery('#comment_supplier_'+id).html();
+	current.display_value = jQuery('#comment_supplier_display_'+id).html();
     current.id = id;
     
-    jQuery('#comment_customer_display_'+id).html('<textarea id="comment_customer_input_' + id + '">'+ current.value +'</textarea>');
-    jQuery('#comment_customer_buttons_'+id).css("display","inline");
+    jQuery('#comment_supplier_display_'+id).html('<textarea id="comment_supplier_input_' + id + '">'+ current.value +'</textarea>');
+    jQuery('#comment_supplier_buttons_'+id).css("display","inline");
     
 }
 

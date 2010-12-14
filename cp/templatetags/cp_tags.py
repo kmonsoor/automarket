@@ -1,20 +1,19 @@
 # -*- coding:utf-8 -*-
-from django import template
 
+from django import template
 from data.models import OrderedItem, Brand
-from cp.views import get_status_options as gso
-status_options_str, status_options = gso()
 register = template.Library()
 
-@register.inclusion_tag('cp/items_by_brand.html')
-def ordereditems_by_brand(brand_id, user=None):
-    brand = Brand.active_objects.get(id=brand_id)
-    items = OrderedItem.objects.filter(brand__id=brand_id, status='order').order_by("ponumber")
-    
+@register.inclusion_tag('cp/items_by_brandgroup.html')
+def ordereditems_by_brandgroup(brandgroup, orders):
+    orders_by_brand = {}
+    for order in orders:
+        if order.brand not in orders_by_brand.keys():
+            orders_by_brand[order.brand] = []
+        orders_by_brand[order.brand].append(order)
     return {
-            'brand':brand,
-            'items':items,
-            'status_options':status_options,
+            'brandgroup' : brandgroup,
+            'orders_by_brand' : orders_by_brand,
             }
 
 @register.inclusion_tag('lib/table_header_sort.html', takes_context=True)

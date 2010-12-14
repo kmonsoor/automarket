@@ -1,0 +1,15 @@
+<html>
+    <head>
+        <style>ul li {list-style: none;}</style>
+        <script type="text/javascript">
+        function selectCar(value) { window.opener.setCar(value); window.close(); }
+       </script>
+    </head>
+    <body>
+        <ul>
+            {% for l in list %}
+            <li><a href="javascript:void(0)" onclick="selectCar('{{ l.title }}')">{{ l.title }}</a></li>
+            {% endfor %}
+        </ul>
+    </body>
+</html>

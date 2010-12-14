@@ -11,7 +11,7 @@
 
 <td {% if form.brand.errors %}class="error"{% endif %}>
 {{ form.brand.label }}*<br /><br />
-{{ form.brand }}<br /><a class="help" id="c.#" href="javascript:void(0);" onclick="showList(this)">Список</a><br />
+{{ form.brand }}<br /><a class="help" id="c.#" href="javascript:void(0);" onclick="showListBrand(this)">Список</a><br />
 {% if form.brand.errors %}
 <span>{{ form.brand.errors }}</span>
 {% endif %}
@@ -35,7 +35,7 @@
 
 <td {% if form.comment_supplier.errors %}class="error"{% endif %}>
 {{ form.comment_supplier.label }}<br /><br />
-{{ form.comment_supplier }}
+{{ form.comment_supplier }}<br /><a class="help" id="c.#" href="javascript:void(0);" onclick="showListCar(this)">Список</a><br />
 {% if form.comment_supplier.errors %}
 <span>{{ form.comment_supplier.errors }}</span>
 {% endif %}

@@ -20,7 +20,7 @@ from lib.helpers import next, reverse
 from lib import xlsreader
 
 from cp.forms import OrderItemForm, ImportXlsForm, SearchForm
-from data.models import Supplier, OrderedItem, Brand, ORDER_ITEM_STATUSES
+from data.models import Direction, BrandGroup, Brand, Car, OrderedItem, ORDER_ITEM_STATUSES
 from data.forms import OrderedItemsFilterForm, OrderedItemForm
 from common.views import PartSearch
 
@@ -83,10 +83,10 @@ def index(request):
 
     LIST_HEADERS = (
                     (u'PO', 'ponumber'),
-                    (u'Поставщик', 'supplier'),
+                    (u'Поставщик', 'brandgroup'),
                     (u'BRAND', 'brand'),
                     (u'PART #', 'part_number'),
-                    (u'COMMENT', None),
+                    (u'COMMENT 2', None),
                     (u'Q', None),
                     (u'PRICE IN', None),
                     (u'TOTAL', None),
@@ -129,7 +129,7 @@ def index(request):
     context['status_options_str'], context['status_options'] = get_status_options()
     context['items'] = paginator.get_page_items();
     context['paginator'] = paginator
-    context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.name) for brand in Brand.objects.all()])
+    context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
     return context
 
 
@@ -141,24 +141,15 @@ def order(request):
         item_forms = OrderItemForm.get_forms(request)
         item_data = [item_form.render_js('from_template') for item_form in item_forms]
         if item_forms.are_valid():
-            forms = {}
             for form in item_forms:
-                if form.cleaned_data['supplier'] not in forms:
-                    forms[form.cleaned_data['supplier']] = []
-                forms[form.cleaned_data['supplier']].append(form)
-
-            for supplier_id, _forms in forms.items():
-                brands = []
-                for _form in _forms:
-                    data = _form.cleaned_data
-                    if data['brand'] not in brands:
-                        ponumber = OrderedItem.objects.get_next_ponumber(supplier_id)
-                        brands.append(data['brand'])
-
-                    data['ponumber'] = ponumber
-                    data['manager'] = request.user
-                    data['supplier'] = Supplier.objects.get(id=supplier_id)
-                    item = OrderedItem(**data).save()
+                data = form.cleaned_data
+                supplier_id = data['supplier']
+                ponumber = OrderedItem.objects.get_next_ponumber(supplier_id)
+                data['ponumber'] = ponumber
+                data['manager'] = request.user
+                data['brandgroup'] = BrandGroup.objects.get(id=supplier_id)
+                data.pop('supplier')
+                item = OrderedItem(**data).save()
             return HttpResponseRedirect('/cp/order/')
     else:
         item_data = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
@@ -168,18 +159,19 @@ def order(request):
 
     # search_form
     response['search_form'] = SearchForm()
-
     return response
 
 @render_to('cp/groups.html')
 def groups(request):
-    qs = OrderedItem.objects.filter(status='order').order_by('brand')
-    brands = []
-    for i in qs:
-        if not i.brand.id in brands:
-            brands.append(i.brand.id)
+    qs = OrderedItem.objects.filter(status='order')
+    orders_by_brandgroup = {}
+    for order in qs:
+        if order.brandgroup not in orders_by_brandgroup:
+            orders_by_brandgroup[order.brandgroup] = []
+        orders_by_brandgroup[order.brandgroup].append(order)
+
     return {
-            'brands':brands
+            'orders_by_brandgroup':orders_by_brandgroup
             }
 
 
@@ -326,9 +318,20 @@ def position_edit(request, content_type, id):
     return response
 
 
+def change_status(request):
+    if request.method == 'POST':
+        ids = request.POST.getlist('items')
+        try:
+            OrderedItem.objects.filter(id__in=ids, status='order').update(status='in_processing')
+        except:
+            pass
+        return HttpResponseRedirect('/cp/groups/')
+    else:
+        raise Http404
+
 def export(request, group_id):
-    brand = Brand.objects.get(id=group_id)
-    items = OrderedItem.objects.filter(brand__id = group_id, status='order').order_by("supplier__po")
+    brandgroup = BrandGroup.objects.get(id=group_id)
+    items = OrderedItem.objects.filter(brandgroup__id = group_id, status='order').order_by("brandgroup__direction__po")
 
     filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
 
@@ -353,7 +356,7 @@ def export(request, group_id):
     big_style.font.bold = True
 
     # Create sheet
-    sheet = book.add_sheet(brand.name)
+    sheet = book.add_sheet(brandgroup.title)
     #sheet.cols[0].width = 0x1724
 
     sheet.write_merge(0,0,0,6, "Luke Auto Parts International, Inc",header_style)
@@ -366,12 +369,12 @@ def export(request, group_id):
 
     it = {}
     for i in items:
-        k = "%s%d" % (i.supplier.po,i.ponumber)
+        k = "%s%d" % (i.brandgroup.direction.po,i.ponumber)
         if not it.has_key(k) :
             it[k] = []
         it[k].append(i)
     num = 5
-    for po_number, data in it.items() :
+    for po_number, data in it.items():
         num += 2
         sheet.write(num,0,"PO Alex %s" % po_number, big_style)
         for d in data:
@@ -383,7 +386,7 @@ def export(request, group_id):
     os.chmod(filename, 0777)
     content = open(filename,'rb').read()
     response = HttpResponse(content, mimetype='application/vnd.ms-excel')
-    name = '%s-%s.xls' % (brand.name,datetime.now().strftime('%m-%d-%Y-%H-%M'))
+    name = '%s-%s.xls' % (brandgroup.title,datetime.now().strftime('%m-%d-%Y-%H-%M'))
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
 
@@ -399,7 +402,7 @@ def export(request, group_id):
 @login_required
 def import_order(request):
     CELLS = (
-       (0,'supplier','DIR'),
+       (0,'brandgroup','DIR'),
        (1,'brand','BRAND'),
        (2,'part_number','PART#'),
        (3,'comment_customer','COMENT 1'),
@@ -422,8 +425,8 @@ def import_order(request):
         for k,v in kwargs.items():
             if k == 'DIR':
                 try:
-                    _data[get_field_name(k)+'.%d' % num] = [Supplier.objects.get(title=v[0]).id]
-                except Supplier.DoesNotExist:
+                    _data[get_field_name(k)+'.%d' % num] = [BrandGroup.objects.get(title=v[0]).id]
+                except BrandGroup.DoesNotExist:
                     _data[get_field_name(k)+'.%d' % num] = v
             elif k == 'BRAND':
                 _data[get_field_name(k)+'.%d' % num] = [v[0].lower()]
@@ -464,3 +467,63 @@ def import_order(request):
     response['page_template'] = OrderItemForm().render_js('from_template')
     return response
 
+
+LIST_HEADERS = (
+    (u'PO', 'ponumber'),
+    (u'Поставщик', 'brandgroup'),
+    (u'BRAND', 'brand'),
+    (u'PART #', 'part_number'),
+    (u'COMMENT 2', 'comment_supplier'),
+    (u'Q', 'quantity'),
+    (u'PRICE IN', 'price_invoice'),
+    (u'TOTAL', 'total_w_ship'),
+    (u'ЗАМЕНА', 'part_number_superseded'),
+    (u'ID', 'manager'),
+    (u'CL', 'client'),
+    (u'RUS', 'description_ru'),
+    (u'ENG', 'description_en'),
+    (u'LIST', 'price_base'),
+    (u'WEIGHT', 'weight'),
+    (u'SHIPPING', 'delivery'),
+    (u'PRICE', 'price_sale'),
+    (u'NEW PRICE', 'price_discount'),
+    (u'COST', 'cost'),
+    (u'TOTAL COST', 'total_cost'),
+    (u'Инвойс', 'invoice_code'),
+    (u'Статус', 'status'),
+)
+
+@login_required
+def export_order(request):
+    orders = OrderedItem.objects.all().order_by('brandgroup__direction__po', 'ponumber')
+    filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
+    book = xl.Workbook()
+    sheet = book.add_sheet('ORDERS')
+
+    i = 0
+    curr_line = 0
+    for key, value in LIST_HEADERS:
+        sheet.write(curr_line,i,key)
+        i += 1
+        
+    for order in orders:
+        i = 0
+        curr_line += 1
+        for key, value in LIST_HEADERS:
+            if value == 'ponumber':
+                value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber)
+            elif value == 'status':
+                value = order.get_status_verbose()
+            else:
+                value = unicode(getattr(order, value)) if getattr(order, value) is not None else ''
+            sheet.write(curr_line,i,value)
+            i += 1
+        
+    book.save(filename)
+    os.chmod(filename, 0777)
+    content = open(filename,'rb').read()
+    response = HttpResponse(content, mimetype='application/vnd.ms-excel')
+    name = '%s-%s.xls' % ('orders',datetime.now().strftime('%m-%d-%Y-%H-%M'))
+    response['Content-Disposition'] = 'inline; filename=%s' % name
+    os.remove(filename)
+    return response

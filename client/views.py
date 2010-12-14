@@ -6,7 +6,7 @@ from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from data.models import OrderedItem, Brand
+from data.models import OrderedItem, Brand, Car
 from data.forms import OrderedItemsFilterForm
 from client.forms import SearchForm
 from common.views import PartSearch
@@ -107,13 +107,17 @@ def index(request):
 
 
 @render_to('client/help/brand_list.html')
-def help_brand_list(request, supplier_id):
+def help_brand_list(request, groupbrand_id):
     try:
-        brands = Brand.active_objects.filter(supplier__id = supplier_id).order_by('name')
+        brands = Brand.objects.filter(brandgroup__id = groupbrand_id).order_by('title')
     except:
-        brands = Brand.active_objects.all().order_by('name')
+        brands = Brand.objects.all().order_by('title')
     else:
         if not brands:
-            brands = Brand.active_objects.all().order_by('name')
+            brands = Brand.active_objects.all().order_by('title')
 
     return {'list': brands,}
+
+@render_to('client/help/car_list.html')
+def help_car_list(request):
+    return {'list': Car.objects.all(),}

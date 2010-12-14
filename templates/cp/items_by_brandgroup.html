@@ -1,0 +1,66 @@
+{% if orders_by_brand %}
+<style>.admin_table td { padding:4px; }</style>
+<script>
+    sendOrders = function(brand_id){
+        jQuery('#selectedItemsForm').html('');
+        jQuery("#brand_"+brand_id+" input:checked").each(function(){
+           var id = this.id.split('_')[1];
+           if (id) jQuery('#selectedItemsForm').append('<input type="hidden" name="items" value="'+ id +'">')
+        });
+        jQuery('#selectedItemsForm').submit();
+    }
+    
+    selectGroup = function(el, brand_id){
+        if(jQuery(el).attr('checked')) jQuery("#brand_"+brand_id+" input").attr('checked', true);
+        else jQuery("#brand_"+brand_id+" input").attr('checked', false);
+    }
+    
+    selectOrder = function(el, brand_id){
+        if(jQuery(el).attr('checked') && jQuery("#brand_"+brand_id+" input[type=checkbox]").length-1 == jQuery("#brand_"+brand_id+" input:checked").length)
+            jQuery('#selectGroup'+brand_id).attr('checked', true);
+        else if (!jQuery(el).attr('checked') && jQuery("#brand_"+brand_id+" input[type=checkbox]").length != jQuery("#brand_"+brand_id+" input:checked").length)
+            jQuery('#selectGroup'+brand_id).attr('checked', false);
+    }
+</script>
+<table class="admin_table" id="group_{{ brandgroup.id }}">
+    <tr><th colspan="4">{{ brandgroup.title }}</th></tr>
+    <tr>
+        <td style="background: #dbdbdb;padding-left:60px;width:30px;"><b>PO</b></td>
+        <td style="background: #dbdbdb;width:150px;"><b>Part Number</b></td>
+        <td style="background: #dbdbdb;width:200px"><b>QTY</b></td>
+        <td style="background: #dbdbdb;width:20px"></td>
+    </tr>
+    {% for brand, orders in orders_by_brand.items %}
+    <tr>
+        <table class="admin_table" style="margin-top:-30px;" id="brand_{{ brand.id }}">
+            <tr>
+                <td style="padding-left:30px;background:white;" colspan="3"><h3>{{ brand.title }}</h3></td>
+                <td style="background:white;"><input type="checkbox" id="selectGroup{{ brand.id }}" name="selectGroup" onchange="selectGroup(this, '{{ brand.id }}');" ></td>
+            </tr>
+            {% for order in orders %}
+            <tr id="order_{{ order.id }}">
+                <td style="padding-left:60px;width:30px;">{{ order.get_po_verbose }}</td>
+                <td style="width:150px;">{{ order.part_number }}</td>
+                <td style="width:200px">{{ order.quantity }}</td>
+                <td style="width:20px"><input type="checkbox" onchange="selectOrder(this, '{{ brand.id }}');" id="order_{{ order.id }}" name="order_{{ order.id }}"></td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="4" align="right" style="background: #ffffff">
+                    <b><a href="javascript:void(0);" onclick="sendOrders('{{ brand.id }}');" style="color: #666;">Отправить в заказ</a></b>
+                </td>
+            </tr>
+        </table>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td colspan="4" align="right" style="background: #ffffff">
+            <div class="submit-row">
+            <b><a href="/cp/export/{{ brandgroup.id }}/" class="export_link" style="color: #0190bf">Экспорт</a></b>
+            </div>
+        </td>
+    </tr>
+</table>
+<form id="selectedItemsForm" style="display: none;" method="POST" action="/cp/position/change_status/">
+</form>
+{% endif %}

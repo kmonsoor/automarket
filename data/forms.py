@@ -8,7 +8,7 @@ class OrderedItemsFilterForm(forms.Form):
     supplier__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10, 'class':'qs_filter'}))
     brand__name__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))
     part_number__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))
-    comment_customer__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':12,'class':'qs_filter'}))
+    comment_supplier__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':12,'class':'qs_filter'}))
     price_invoice__gte = forms.CharField(label='от', required=False, widget=forms.TextInput(attrs={'size':5, 'class':'qs_filter'}))
     price_invoice__lte = forms.CharField(label='до', required=False, widget=forms.TextInput(attrs={'size':6, 'class':'qs_filter'}))
     part_number_superseded__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':12,'class':'qs_filter'}))
@@ -22,7 +22,7 @@ class OrderedItemsFilterForm(forms.Form):
 
 class OrderedItemForm(forms.Form):
     part_number = forms.CharField(required=False)
-    comment_customer = forms.CharField(required=False)
+    comment_supplier = forms.CharField(required=False)
     price_invoice = forms.FloatField(required=False)
     part_number_superseded = forms.CharField(required=False)
     description_ru = forms.CharField(required=False)
