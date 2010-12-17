@@ -11,7 +11,7 @@ from lib.dynamicforms import Form
 
 
 def users():
-    users = [(x.id, str(x)) for x in User.objects.filter(is_staff=False)]
+    users = [(x.id, str(x)) for x in User.objects.filter(groups=1)]
     users.insert(0, ('', 'выбрать',))
     return users
 
