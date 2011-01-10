@@ -29,7 +29,7 @@ class OrderItemForm(Form):
     brand = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'BRAND', required=True)
     part_number = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'PART #',required=True)
     comment_customer = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'COMMENT 1', required=False)
-    comment_supplier = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'COMMENT 2', required=True)
+    comment_supplier = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'COMMENT 2', required=True)
     quantity = forms.IntegerField(min_value=1, widget=forms.TextInput(attrs={'size':5, 'class':'quantity'}), label=u'Q', required=True)
     client_id = forms.CharField(widget=forms.Select(choices=users()), label=u'CL', required=True)
     description_ru = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'RUS', required=False)
@@ -49,21 +49,12 @@ class OrderItemForm(Form):
         except Brand.DoesNotExist:
             raise forms.ValidationError(u"Такого бренда не существует")
         else:
-            if self.cleaned_data['supplier']:
+            if 'supplier' in self.cleaned_data and self.cleaned_data['supplier']:
                 brandgroup = BrandGroup.objects.get(id = self.cleaned_data['supplier'])
                 if brand not in brandgroup.brands.all():
                     raise forms.ValidationError(u"Этот бренд не входит в выбранное направление")
 
         return brand
-    
-    def clean_comment_supplier(self):
-        car = self.cleaned_data['comment_supplier']
-        try:
-            car = Car.objects.get(title=car)
-        except Car.DoesNotExist:
-            raise forms.ValidationError(u"Такой марки не существует")
-        
-        return car
 
 def makers():
     list = PartSearch().get_make_options()

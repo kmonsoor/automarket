@@ -402,7 +402,7 @@ def export(request, group_id):
 @login_required
 def import_order(request):
     CELLS = (
-       (0,'brandgroup','DIR'),
+       (0,'supplier','DIR'),
        (1,'brand','BRAND'),
        (2,'part_number','PART#'),
        (3,'comment_customer','COMENT 1'),
@@ -429,7 +429,7 @@ def import_order(request):
                 except BrandGroup.DoesNotExist:
                     _data[get_field_name(k)+'.%d' % num] = v
             elif k == 'BRAND':
-                _data[get_field_name(k)+'.%d' % num] = [v[0].lower()]
+                _data[get_field_name(k)+'.%d' % num] = [v[0]]
             elif k == 'CL':
                 try:
                     _data[get_field_name(k)+'.%d' % num] = [User.objects.get(username=v[0]).id]
