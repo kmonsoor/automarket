@@ -1,92 +1,92 @@
 <table width="100%" id="tableOrderForm">
 <tr>
 
-<td {% if form.direction.errors %}class="error"{% endif %}>
-{{ form.supplier.label }}*<br /><br />
-{{ form.supplier }}
+<td {% if form.supplier.errors %}class="error"{% endif %}>
+{{ form.supplier.label }}*<br />
 {% if form.supplier.errors %}
-<span>{{ form.supplier.errors }}</span>
+{{ form.supplier.errors }}
 {% endif %}
+{{ form.supplier }}
 </td>
 
 <td {% if form.brand.errors %}class="error"{% endif %}>
-{{ form.brand.label }}*<br /><br />
-{{ form.brand }}<br /><a class="help" id="c.#" href="javascript:void(0);" onclick="showListBrand(this)">Список</a><br />
+{{ form.brand.label }}*<br />
 {% if form.brand.errors %}
-<span>{{ form.brand.errors }}</span>
+{{ form.brand.errors }}
 {% endif %}
+{{ form.brand }}<br /><a class="help" id="c.#" href="javascript:void(0);" onclick="showListBrand(this)">Список</a><br />
 </td>
 
 <td {% if form.part_number.errors %}class="error"{% endif %}>
-{{ form.part_number.label }}*<br /><br />
-{{ form.part_number }}
+{{ form.part_number.label }}*<br />
 {% if form.part_number.errors %}
-<span>{{ form.part_number.errors }}</span>
+{{ form.part_number.errors }}
 {% endif %}
+{{ form.part_number }}
 </td>
 
 <td {% if form.comment_customer.errors %}class="error"{% endif %}>
-{{ form.comment_customer.label }}<br /><br />
-{{ form.comment_customer }}
+{{ form.comment_customer.label }}<br />
 {% if form.comment_customer.errors %}
-<span>{{ form.comment_customer.errors }}</span>
+{{ form.comment_customer.errors }}
 {% endif %}
+{{ form.comment_customer }}
 </td>
 
 <td {% if form.comment_supplier.errors %}class="error"{% endif %}>
-{{ form.comment_supplier.label }}<br /><br />
-{{ form.comment_supplier }}<br />
+{{ form.comment_supplier.label }}<br />
 {% if form.comment_supplier.errors %}
-<span>{{ form.comment_supplier.errors }}</span>
+{{ form.comment_supplier.errors }}
 {% endif %}
+{{ form.comment_supplier }}
 </td>
 
 <td {% if form.quantity.errors %}class="error"{% endif %}>
-{{ form.quantity.label }}*<br /><br />
-{{ form.quantity }}
+{{ form.quantity.label }}*<br />
 {% if form.quantity.errors %}
-<span>{{ form.quantity.errors }}</span>
+{{ form.quantity.errors }}
 {% endif %}
+{{ form.quantity }}
 </td>
 
 <td {% if form.client_id.errors %}class="error"{% endif %}>
-{{ form.client_id.label }}*<br /><br />
-{{ form.client_id }}
+{{ form.client_id.label }}*<br />
 {% if form.client_id.errors %}
-<span>{{ form.client_id.errors }}</span>
+{{ form.client_id.errors }}
 {% endif %}
+{{ form.client_id }}
 </td>
 
 <td {% if form.description_ru.errors %}class="error"{% endif %}>
-{{ form.description_ru.label }}<br /><br />
-{{ form.description_ru }}
+{{ form.description_ru.label }}<br />
 {% if form.description_ru.errors %}
-<span>{{ form.description_ru.errors }}</span>
+{{ form.description_ru.errors }}
 {% endif %}
+{{ form.description_ru }}
 </td>
 
 <td {% if form.description_en.errors %}class="error"{% endif %}>
-{{ form.description_en.label }}<br /><br />
-{{ form.description_en }}
+{{ form.description_en.label }}<br />
 {% if form.description_en.errors %}
-<span>{{ form.description_en.errors }}</span>
+{{ form.description_en.errors }}
 {% endif %}
+{{ form.description_en }}
 </td>
 
 <td {% if form.price_base.errors %}class="error"{% endif %}>
-{{ form.price_base.label }}<br /><br />
-{{ form.price_base }}
+{{ form.price_base.label }}*<br />
 {% if form.price_base.errors %}
-<span>{{ form.price_base.errors }}</span>
+{{ form.price_base.errors }}
 {% endif %}
+{{ form.price_base }}
 </td>
 
 <td {% if form.price_sale.errors %}class="error"{% endif %}>
-{{ form.price_sale.label }}<br /><br />
-{{ form.price_sale }}
+{{ form.price_sale.label }}*<br />
 {% if form.price_sale.errors %}
-<span>{{ form.price_sale.errors }}</span>
+{{ form.price_sale.errors }}
 {% endif %}
+{{ form.price_sale }}
 </td>
 
 </tr>

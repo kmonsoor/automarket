@@ -84,8 +84,8 @@ def index(request):
 
     LIST_HEADERS = (
                     (u'PO', 'ponumber'),
-                    (u'Поставщик', 'brandgroup'),
-                    (u'BRAND', 'brandgroup__brands'),
+                    (u'Поставщик', 'brandgroup__title'),
+                    (u'BRAND', 'brand__title'),
                     (u'PART #', 'part_number'),
                     (u'COMMENT 2', None),
                     (u'Q', None),
@@ -151,7 +151,7 @@ def order(request):
                 data['brandgroup'] = BrandGroup.objects.get(id=supplier_id)
                 data.pop('supplier')
                 item = OrderedItem(**data).save()
-            return HttpResponseRedirect('/cp/order/')
+            return HttpResponseRedirect('/cp/order/success/')
     else:
         item_data = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
 
@@ -161,6 +161,12 @@ def order(request):
     # search_form
     response['search_form'] = SearchForm()
     return response
+
+
+@render_to('cp/order_success.html')
+def order_success(request):
+    return {}
+
 
 @render_to('cp/groups.html')
 def groups(request):

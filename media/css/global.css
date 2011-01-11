@@ -104,11 +104,11 @@ input[type=submit].default:active { background-image:url(../img/admin/default-bg
 ul.messagelist { padding:0 0 5px 0; margin:0; }
 ul.messagelist li { font-size:12px; display:block; padding:4px 5px 4px 25px; margin:0 0 3px 0; border-bottom:1px solid #ddd; color:#666; background:#ffc url(../img/admin/icon_success.gif) 5px .3em no-repeat; }
 .errornote { font-size:12px !important; display:block; padding:4px 5px 4px 25px; margin:0 0 3px 0; border:1px solid red; color:red;background:#ffc url(../img/admin/icon_error.gif) 5px .3em no-repeat; }
-ul.errorlist { margin:0 !important; padding:0 !important; }
-.errorlist li { font-size:12px !important; display:block; padding:4px 5px 4px 25px; margin:0 0 3px 0; border:1px solid red; color:white; background:red url(../img/admin/icon_alert.gif) 5px .3em no-repeat; }
+ul.errorlist { margin:0 !important; padding:0 !important; width:130px;}
+.errorlist li { font-size:11px !important; display:block; text-align: left; margin:0 0 3px 0; color:red; padding: 3px;}
 td ul.errorlist { margin:0 !important; padding:0 !important; }
 td ul.errorlist li { margin:0 !important; }
-.error { background:#ffc; }
+.error { background:#ffc; border: 2px solid white;}
 .error input, .error select { border:1px solid red; }
 div.system-message { background: #ffc; margin: 10px; padding: 6px 8px; font-size: .8em; }
 div.system-message p.system-message-title { padding:4px 5px 4px 25px; margin:0; color:red; background:#ffc url(../img/admin/icon_error.gif) 5px .3em no-repeat; }

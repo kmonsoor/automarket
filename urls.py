@@ -24,6 +24,7 @@ urlpatterns += patterns('common.views',
 
 urlpatterns += patterns('cp.views',
     url(r'^cp/search/$', 'search', name="search"),
+    url(r'^cp/order/success/$', 'order_success', name="order_success"),
     url(r'^cp/order/$', 'order', name="order"),
     url(r'^cp/groups/$', 'groups', name="groups"),
     url(r'^cp/position/edit/(?P<content_type>\w+)/(?P<id>\d+)/$', 'position_edit'),
