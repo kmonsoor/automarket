@@ -17,6 +17,7 @@ class DirectionAdmin(admin.ModelAdmin):
 class BrandGroupAdmin(admin.ModelAdmin):
     list_display = ('title', 'direction', 'description',)
     list_filter = ('direction',)
+    filter_horizontal = ['brands']
 
     
 class BrandAdmin(admin.ModelAdmin):

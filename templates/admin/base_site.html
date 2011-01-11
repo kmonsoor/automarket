@@ -1,0 +1,16 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+{% block extrahead %}
+<style>
+.aligned label {
+    width: 12em;
+}
+</style>
+{% endblock %}
+{% block title %}{{ title }} | {% trans 'Newparts-online.com' %}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">{% trans 'Newparts-online.com administration' %}</h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
