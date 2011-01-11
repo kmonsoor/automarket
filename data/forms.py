@@ -5,8 +5,8 @@ from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES
 
 class OrderedItemsFilterForm(forms.Form):
     ponumber = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10, 'class':'qs_filter'}))
-    supplier__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10, 'class':'qs_filter'}))
-    brand__name__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))
+    brandgroup__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10, 'class':'qs_filter'}))
+    brandgroup__brands__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))
     part_number__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))
     comment_supplier__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':12,'class':'qs_filter'}))
     price_invoice__gte = forms.CharField(label='от', required=False, widget=forms.TextInput(attrs={'size':5, 'class':'qs_filter'}))
