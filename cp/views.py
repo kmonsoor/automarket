@@ -75,11 +75,12 @@ def index(request):
     if not items_per_page:
         items_per_page = 20
     items_per_page = int(items_per_page)
+    
     context['items_per_page'] = items_per_page
-    filter = QSFilter(request, OrderedItemsFilterForm)
-    if filter.modified:
+    _filter = QSFilter(request, OrderedItemsFilterForm)
+    if _filter.modified:
         current_page = 1
-    context['filter'] = filter
+    context['filter'] = _filter
 
     LIST_HEADERS = (
                     (u'PO', 'ponumber'),
@@ -120,7 +121,7 @@ def index(request):
 
     context['headers'] = list(sort_headers.headers())
 
-    qs = OrderedItem.objects.select_related().filter(**filter.get_filters()).exclude(status='shipped')
+    qs = OrderedItem.objects.select_related().filter(**_filter.get_filters()).exclude(status='shipped')
 
     if order_by:
         qs = qs.order_by(order_by)
