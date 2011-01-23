@@ -198,24 +198,24 @@ class PartSearch(object):
         return self.parse_response(response)
     
 
-from SOAPpy import WSDL
-class SoapClient(object):
-    login = settings.SOAP_LOGIN
-    pwd = settings.SOAP_PASSWORD
-    wsdl = settings.WSDL_URL
+#from SOAPpy import WSDL
+#class SoapClient(object):
+    #login = settings.SOAP_LOGIN
+    #pwd = settings.SOAP_PASSWORD
+    #wsdl = settings.WSDL_URL
     
-    def __init__(*args,**kwargs):
-        self.server = WSDL.Proxy(self.wsdl)
+    #def __init__(*args,**kwargs):
+        #self.server = WSDL.Proxy(self.wsdl)
         
-    def get_client_id(self):
-        return self.server.getClientId(Login=self.login, Passwd=self.pwd)
+    #def get_client_id(self):
+        #return self.server.getClientId(Login=self.login, Passwd=self.pwd)
     
-    def get_invoice_list(self):
-        return self.server.getCliengetInvoiceListtId({'login':self.login,'passwd':self.pwd})
+    #def get_invoice_list(self):
+        #return self.server.getCliengetInvoiceListtId({'login':self.login,'passwd':self.pwd})
     
-    def insert_in_basket(self):
-        pass
+    #def insert_in_basket(self):
+        #pass
 
-    def send_order(self):
-        return self.server.sendOrder({'login':self.login,'passwd':self.pwd})
+    #def send_order(self):
+        #return self.server.sendOrder({'login':self.login,'passwd':self.pwd})
     
