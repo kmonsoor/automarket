@@ -104,7 +104,7 @@ backend_url = '/cp/position/edit/ordered_item/';
 			<span id="part_number_superseded_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
 		</td>
 		<td>{{ i.manager }}</td>
-		<td>{{ i.client }}</td>
+		<td>{{ i.client }} ({{ i.client_order_id }})</td>
 		<td class="editable" onclick="editDescriptionRu({{ i.id }})">
 			<div id="description_ru_display_{{ i.id }}" style="overflow: hidden">{{ i.description_ru|default:"" }}</div>
 			<div id="description_ru_{{ i.id }}" style="display: none">{{ i.description_ru|default:"" }}</div>

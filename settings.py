@@ -85,6 +85,12 @@ INSTALLED_APPS = (
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 3600
 
+
+# SOAP settings
+SOAP_LOGIN = 'garage242'
+SOAP_PASSWORD = 'e0glsx'
+WSDL_URL = 'http://automototrade.com/wsdl/server.php?wsdl'
+
 try:
     from settings_local import *
 except:

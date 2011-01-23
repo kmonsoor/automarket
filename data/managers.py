@@ -1,19 +1,21 @@
 # -*- coding=utf-8 -*-
 
-from django.db.models import Manager
-from lib.lists import sort_by_attr
+from django.db import models
 
-class OrderedItemManager(Manager):
+class OrderedItemManager(models.Manager):
     
-    def get_next_ponumber(self, brandgroup_id):
-        from django.db import connection
-        cursor = connection.cursor()
-        table = self.model._meta.db_table
+    def get_next_ponumber(self, direction_id):
         try:
-            cursor.execute("""SELECT MAX(ponumber) FROM %s WHERE brandgroup_id = %d""" % (table, int(brandgroup_id)))
-            ponumber = int(cursor.fetchone()[0]) or 1
-        except TypeError:
-            return 1
-        else:
+            ponumber = self.filter(brandgroup__direction = direction_id).aggregate(models.Max('ponumber'))['ponumber__max']
             return ponumber + 1
+        except:
+            return 1
+        
+        
+    def get_next_client_order_id(self, client_id):
+        try:
+            client_order_id = self.filter(client__id = client_id).aggregate(models.Max('client_order_id'))['client_order_id__max']
+            return client_order_id + 1
+        except:
+            return 1
                      

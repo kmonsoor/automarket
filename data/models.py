@@ -26,6 +26,7 @@ class BrandGroup(models.Model):
     description = models.TextField(verbose_name=u"Описание", null=True, blank=True)
     brands = models.ManyToManyField('Brand', verbose_name=u"Производители")
     delivery = models.FloatField(verbose_name=u"Доставка", default=0)
+    add_brand_to_comment = models.BooleanField(verbose_name=u"В поле 'Comment2' добавляется значение поля 'Brand'", default = False)
 
     class Meta:
         verbose_name = u'Группа производителей'
@@ -33,8 +34,8 @@ class BrandGroup(models.Model):
 
     def __unicode__(self):
         return u"%s::%s" % (self.direction, self.title)
-# производитель
 
+# производитель
 class Brand(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
 
@@ -77,7 +78,7 @@ ORDER_ITEM_STATUSES = (
 class OrderedItem(models.Model):
     brandgroup = models.ForeignKey(BrandGroup, verbose_name=u"Группа производителей")
     brand = models.ForeignKey(Brand, verbose_name=u"Бренд")
-    ponumber = models.IntegerField(verbose_name=u"Номер заказа")
+    ponumber = models.IntegerField(verbose_name=u"Номер заказа", blank=True, null=True)
     part_number = models.CharField(verbose_name=u"Номер детали", max_length=255)
     part_number_superseded = models.CharField(max_length=255, null=True, blank=True , verbose_name=u"Новый номер(замена)")
     comment_customer = models.TextField(verbose_name=u"Комментарий заказчика", blank=True, null=True)
@@ -89,6 +90,7 @@ class OrderedItem(models.Model):
     total_w_ship = models.FloatField(verbose_name=u"TOTAL", null=True, blank=True)
 
     client = models.ForeignKey(User, verbose_name=u"Клиент", related_name=u"client")
+    client_order_id = models.IntegerField(verbose_name=u"Номер заказа для клиента", blank=True, null=True)
     manager = models.ForeignKey(User, verbose_name=u"Менеджер", related_name=u"manager")
     description_ru = models.TextField(verbose_name=u"Описание RUS", blank=True, null=True)
     description_en = models.TextField(verbose_name=u"Описание ENG", blank=True, null=True)
@@ -145,5 +147,4 @@ class OrderedItem(models.Model):
         return dict(ORDER_ITEM_STATUSES).get(self.status,self.status)
 
     def get_po_verbose(self):
-        return u"%s%s" % (self.brandgroup.direction.po, self.ponumber,)
-
+        return u"%s%s" % (self.brandgroup.direction.po, self.ponumber,) if self.ponumber else ''

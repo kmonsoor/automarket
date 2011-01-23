@@ -145,10 +145,9 @@ def order(request):
             for form in item_forms:
                 data = form.cleaned_data
                 supplier_id = data['supplier']
-                ponumber = OrderedItem.objects.get_next_ponumber(supplier_id)
-                data['ponumber'] = ponumber
                 data['manager'] = request.user
                 data['brandgroup'] = BrandGroup.objects.get(id=supplier_id)
+                data['client_order_id'] =  OrderedItem.objects.get_next_client_order_id(data['client_id'])
                 data.pop('supplier')
                 item = OrderedItem(**data).save()
             return HttpResponseRedirect('/cp/order/success/')
@@ -199,6 +198,14 @@ class OrderedItemSaver(object):
         except Exception, e:
             pass
         return obj.comment_customer
+    
+    def save_comment_supplier(self, obj, value):
+        try:
+            obj.comment_supplier = value
+            obj.save()
+        except Exception, e:
+            pass
+        return obj.comment_supplier
 
     def save_price_invoice(self, obj, value):
         try:
@@ -329,7 +336,11 @@ def change_status(request):
     if request.method == 'POST':
         ids = request.POST.getlist('items')
         try:
-            OrderedItem.objects.filter(id__in=ids, status='order').update(status='in_processing')
+            orders = OrderedItem.objects.filter(id__in=ids, status='order')
+            for x in orders:
+                x.ponumber = OrderedItem.objects.get_next_ponumber(x.brandgroup.direction.id)
+                x.status = 'in_processing'
+                x.save()
         except:
             pass
         return HttpResponseRedirect('/cp/groups/')
@@ -436,7 +447,7 @@ def import_order(request):
                 except BrandGroup.DoesNotExist:
                     _data[get_field_name(k)+'.%d' % num] = v
             elif k == 'BRAND':
-                _data[get_field_name(k)+'.%d' % num] = [v[0]]
+                _data[get_field_name(k)+'.%d' % num] = [v[0].capitalize()]
             elif k == 'CL':
                 try:
                     _data[get_field_name(k)+'.%d' % num] = [User.objects.get(username=v[0]).id]
@@ -521,6 +532,11 @@ def export_order(request):
                 value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber)
             elif value == 'status':
                 value = order.get_status_verbose()
+            elif value == 'comment_supplier':
+                if order.brandgroup.add_brand_to_comment:
+                    value = u'%s  %s' % (order.comment_supplier, order.brand.title)
+                else:
+                    value = order.comment_supplier
             else:
                 value = unicode(getattr(order, value)) if getattr(order, value) is not None else ''
             sheet.write(curr_line,i,value)

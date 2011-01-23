@@ -23,10 +23,9 @@
     }
 </script>
 <table class="admin_table" id="group_{{ brandgroup.id }}">
-    <tr><th colspan="4">{{ brandgroup.title }}</th></tr>
+    <tr><th colspan="3">{{ brandgroup.title }}</th></tr>
     <tr>
-        <td style="background: #dbdbdb;padding-left:60px;width:30px;"><b>PO</b></td>
-        <td style="background: #dbdbdb;width:150px;"><b>Part Number</b></td>
+        <td style="background: #dbdbdb;padding-left:60px;width:150px;"><b>Part Number</b></td>
         <td style="background: #dbdbdb;width:200px"><b>QTY</b></td>
         <td style="background: #dbdbdb;width:20px"></td>
     </tr>
@@ -34,19 +33,18 @@
     <tr>
         <table class="admin_table" style="margin-top:-30px;" id="brand_{{ brand.id }}">
             <tr>
-                <td style="padding-left:30px;background:white;" colspan="3"><h3>{{ brand.title }}</h3></td>
+                <td style="padding-left:30px;background:white;" colspan="2"><h3>{{ brand.title }}</h3></td>
                 <td style="background:white;"><input type="checkbox" id="selectGroup{{ brand.id }}" name="selectGroup" onchange="selectGroup(this, '{{ brand.id }}');" ></td>
             </tr>
             {% for order in orders %}
             <tr id="order_{{ order.id }}">
-                <td style="padding-left:60px;width:30px;">{{ order.get_po_verbose }}</td>
-                <td style="width:150px;">{{ order.part_number }}</td>
+                <td style="padding-left:60px;width:150px;">{{ order.part_number }}</td>
                 <td style="width:200px">{{ order.quantity }}</td>
                 <td style="width:20px"><input type="checkbox" onchange="selectOrder(this, '{{ brand.id }}');" id="order_{{ order.id }}" name="order_{{ order.id }}"></td>
             </tr>
             {% endfor %}
             <tr>
-                <td colspan="4" align="right" style="background: #ffffff">
+                <td colspan="3" align="right" style="background: #ffffff">
                     <b><a href="javascript:void(0);" onclick="sendOrders('{{ brand.id }}');" style="color: #666;">Отправить в заказ</a></b>
                 </td>
             </tr>
@@ -54,7 +52,7 @@
     </tr>
     {% endfor %}
     <tr>
-        <td colspan="4" align="right" style="background: #ffffff">
+        <td colspan="3" align="right" style="background: #ffffff">
             <div class="submit-row">
             <b><a href="/cp/export/{{ brandgroup.id }}/" class="export_link" style="color: #0190bf">Экспорт</a></b>
             </div>
