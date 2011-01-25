@@ -78,6 +78,7 @@ ORDER_ITEM_STATUSES = (
 class OrderedItem(models.Model):
     brandgroup = models.ForeignKey(BrandGroup, verbose_name=u"Группа производителей")
     brand = models.ForeignKey(Brand, verbose_name=u"Бренд")
+    area = models.CharField(max_length = 255, verbose_name=u"Area", blank=True, null=True)
     ponumber = models.IntegerField(verbose_name=u"Номер заказа", blank=True, null=True)
     part_number = models.CharField(verbose_name=u"Номер детали", max_length=255)
     part_number_superseded = models.CharField(max_length=255, null=True, blank=True , verbose_name=u"Новый номер(замена)")

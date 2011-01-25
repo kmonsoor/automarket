@@ -9,14 +9,16 @@
 <script type="text/javascript" src="{{ MEDIA_URL }}js/mootools/dynamicforms.js"></script>
 <script type="text/javascript">
 	var current = null;
+	var curr_field = null;
 	
 	function setBrand(value) {
-		document.getElementById('id_brand.'+current).value = value;
+		document.getElementById(curr_field +'.'+ current).value = value;
 		current = null;
 	}
 	
 	function showListBrand(e)	{
 		id = e.id;
+		curr_field = jQuery(e).attr('rel');
 		current = id.split('.')[1]
 		supplier_id = jQuery(e).parents('tr').find('#id_supplier\\.'+current+' :selected').attr('value');
 		if (supplier_id)

@@ -44,6 +44,7 @@ backend_url = '/cp/position/edit/ordered_item/';
 <td></td>
 <td>{{ filter.form.brandgroup__title__contains }}</td>
 <td>{{ filter.form.brandgroup__brands__title__contains }}</td>
+<td>{{ filter.form.area__contains }}</td>
 <td>{{ filter.form.part_number__contains }}</td>
 <td>{{ filter.form.comment_supplier__contains }}</td>
 <td>&nbsp;</td>
@@ -71,6 +72,7 @@ backend_url = '/cp/position/edit/ordered_item/';
 		<td>{{ i.get_po_verbose }}</td>
 		<td>{{ i.brandgroup }}</td>
 		<td>{{ i.brand }}</td>
+		<td>{% if i.area %}{{ i.area }}{% endif %}</td>
 		{% comment %}
 		<td class="editable" onclick="editPartNumber({{ i.id }})">
 			<div id="part_number_display_{{ i.id }}">{{ i.part_number|default:"" }}</div>

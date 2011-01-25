@@ -86,6 +86,7 @@ def index(request):
                     (u'PO', 'ponumber'),
                     (u'Поставщик', 'brandgroup__title'),
                     (u'BRAND', 'brand__title'),
+                    (u'AREA', 'area'),
                     (u'PART #', 'part_number'),
                     (u'COMMENT 2', None),
                     (u'Q', None),
@@ -422,15 +423,16 @@ def import_order(request):
     CELLS = (
        (0,'supplier','DIR'),
        (1,'brand','BRAND'),
-       (2,'part_number','PART#'),
-       (3,'comment_customer','COMENT 1'),
-       (4,'comment_supplier','COMENT 2'),
-       (5,'quantity','Q'),
-       (6,'client_id','CL'),
-       (7,'description_ru','RUS'),
-       (8,'description_en','ENG'),
-       (9,'price_base','LIST'),
-       (10,'price_sale','PRICE'),
+       (2, 'area', 'AREA'),
+       (3,'part_number','PART#'),
+       (4,'comment_customer','COMENT 1'),
+       (5,'comment_supplier','COMENT 2'),
+       (6,'quantity','Q'),
+       (7,'client_id','CL'),
+       (8,'description_ru','RUS'),
+       (9,'description_en','ENG'),
+       (10,'price_base','LIST'),
+       (11,'price_sale','PRICE'),
     )
 
     def get_field_name(cell_title):
@@ -446,7 +448,7 @@ def import_order(request):
                     _data[get_field_name(k)+'.%d' % num] = [BrandGroup.objects.get(title=v[0]).id]
                 except BrandGroup.DoesNotExist:
                     _data[get_field_name(k)+'.%d' % num] = v
-            elif k == 'BRAND':
+            elif k == 'BRAND' or k == 'AREA':
                 _data[get_field_name(k)+'.%d' % num] = [v[0].capitalize()]
             elif k == 'CL':
                 try:
@@ -490,6 +492,7 @@ LIST_HEADERS = (
     (u'PO', 'ponumber'),
     (u'Поставщик', 'brandgroup'),
     (u'BRAND', 'brand'),
+    (u'AREA', 'area'),
     (u'PART #', 'part_number'),
     (u'COMMENT 2', 'comment_supplier'),
     (u'Q', 'quantity'),
@@ -529,7 +532,7 @@ def export_order(request):
         curr_line += 1
         for key, value in LIST_HEADERS:
             if value == 'ponumber':
-                value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber)
+                value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber or '--')
             elif value == 'status':
                 value = order.get_status_verbose()
             elif value == 'comment_supplier':
