@@ -38,7 +38,7 @@ urlpatterns += patterns('cp.views',
 
 urlpatterns += patterns('client.views',
     url(r'^client/search/$', 'search', name='client_search'),
-    url(r'^client/help/(?P<groupbrand_id>[\d]+)/brands/$', 'help_brand_list', name='brand_list'),
-    url(r'^client/help/cars/$', 'help_car_list', name='car_list'),
+    url(r'^client/help/(?P<brandgroup_id>[\d]+)/area/$', 'help_area_list', name='area_list'),
+    url(r'^client/help/(?P<area_id>[\d]+)/brands/$', 'help_brands_list', name='brands_list'),
     url(r'^client/','index'),
 )

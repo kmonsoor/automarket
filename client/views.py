@@ -6,7 +6,7 @@ from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from data.models import OrderedItem, Brand, Car
+from data.models import OrderedItem, Brand, BrandGroup, Area
 from data.forms import OrderedItemsFilterForm
 from client.forms import SearchForm
 from common.views import PartSearch
@@ -106,18 +106,27 @@ def index(request):
     return response
 
 
-@render_to('client/help/brand_list.html')
-def help_brand_list(request, groupbrand_id):
+@render_to('client/help/list.html')
+def help_area_list(request, brandgroup_id):
     try:
-        brands = Brand.objects.filter(brandgroup__id = groupbrand_id).order_by('title')
-    except:
-        brands = Brand.objects.all().order_by('title')
+        area = BrandGroup.objects.get(id = brandgroup_id).area.all()
+    except BrandGroup.DoesNotExist:
+        area = BrandGroup.objects.all()
+    else:
+        if not area:
+            area = BrandGroup.objects.all()
+
+    return {'list': area,}
+
+
+@render_to('client/help/list.html')
+def help_brands_list(request, area_id):
+    try:
+        brands = Area.objects.get(id = area_id).brands.all().order_by('title')
+    except Area.DoesNotExist:
+        brands = Brand.objects.all()
     else:
         if not brands:
-            brands = []
-
+            brands = Brand.objects.all()
+    
     return {'list': brands,}
-
-@render_to('client/help/car_list.html')
-def help_car_list(request):
-    return {'list': Car.objects.all(),}

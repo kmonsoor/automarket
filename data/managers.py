@@ -12,9 +12,9 @@ class OrderedItemManager(models.Manager):
             return 1
         
         
-    def get_next_client_order_id(self, client_id):
+    def get_next_client_order_id(self, client):
         try:
-            client_order_id = self.filter(client__id = client_id).aggregate(models.Max('client_order_id'))['client_order_id__max']
+            client_order_id = self.filter(client = client).aggregate(models.Max('client_order_id'))['client_order_id__max']
             return client_order_id + 1
         except:
             return 1

@@ -7,7 +7,6 @@ from data.managers import OrderedItemManager
 
 Group.add_to_class('discount', models.PositiveIntegerField(blank=True, null=True, default=0, verbose_name=u'Скидка в %'))
 
-# направление
 class Direction(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     po = models.CharField(max_length=255, verbose_name=u"PO")
@@ -19,44 +18,44 @@ class Direction(models.Model):
     def __unicode__(self):
         return u"%s" % self.title
 
-# группа производителей
+
 class BrandGroup(models.Model):
     direction = models.ForeignKey(Direction, verbose_name=u"Направление")
     title = models.CharField(verbose_name=u"Название", max_length=10)
     description = models.TextField(verbose_name=u"Описание", null=True, blank=True)
-    brands = models.ManyToManyField('Brand', verbose_name=u"Производители")
+    area = models.ManyToManyField('Area', verbose_name=u"Area", null=True, blank=True)
     delivery = models.FloatField(verbose_name=u"Доставка", default=0)
     add_brand_to_comment = models.BooleanField(verbose_name=u"В поле 'Comment2' добавляется значение поля 'Brand'", default = False)
 
     class Meta:
-        verbose_name = u'Группа производителей'
-        verbose_name_plural = u'Группы производителей'
+        verbose_name = u'Группа поставщиков'
+        verbose_name_plural = u'Группы поставщиков'
 
     def __unicode__(self):
         return u"%s::%s" % (self.direction, self.title)
+    
+    
+class Area(models.Model):
+    title = models.CharField(max_length=255, verbose_name=u"Название")
+    brands = models.ManyToManyField('Brand', null=True, blank=True, verbose_name=u'Бренды')
+    
+    class Meta:
+        verbose_name = u"Поставщик"
+        verbose_name_plural = u"Поставщики"
 
-# производитель
+    def __unicode__(self):
+        return u"%s" % self.title    
+
+
 class Brand(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
 
     class Meta:
-        verbose_name = u"Производитель"
-        verbose_name_plural = u"Производители"
+        verbose_name = u"Бренд"
+        verbose_name_plural = u"Бренды"
 
     def __unicode__(self):
         return u"%s" % self.title
-
-# марки авто
-class Car(models.Model):
-    title = models.CharField(max_length=255, verbose_name=u"Название")
-
-    class Meta:
-        verbose_name = u"Марка авто"
-        verbose_name_plural = u"Марки авто"
-
-    def __unicode__(self):
-        return u"%s" % self.title
-
 
 ORDER_ITEM_STATUSES = (
     ('order',u'новый заказ'),
@@ -76,9 +75,9 @@ ORDER_ITEM_STATUSES = (
 )
 
 class OrderedItem(models.Model):
-    brandgroup = models.ForeignKey(BrandGroup, verbose_name=u"Группа производителей")
+    brandgroup = models.ForeignKey(BrandGroup, verbose_name=u"Группа поставщиков")
+    area = models.ForeignKey(Area, verbose_name=u"Area")
     brand = models.ForeignKey(Brand, verbose_name=u"Бренд")
-    area = models.CharField(max_length = 255, verbose_name=u"Area", blank=True, null=True)
     ponumber = models.IntegerField(verbose_name=u"Номер заказа", blank=True, null=True)
     part_number = models.CharField(verbose_name=u"Номер детали", max_length=255)
     part_number_superseded = models.CharField(max_length=255, null=True, blank=True , verbose_name=u"Новый номер(замена)")

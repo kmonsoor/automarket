@@ -20,7 +20,7 @@ from lib.helpers import next, reverse
 from lib import xlsreader
 
 from cp.forms import OrderItemForm, ImportXlsForm, SearchForm
-from data.models import Direction, BrandGroup, Brand, Car, OrderedItem, ORDER_ITEM_STATUSES
+from data.models import Direction, BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES
 from data.forms import OrderedItemsFilterForm, OrderedItemForm
 from common.views import PartSearch
 
@@ -85,8 +85,8 @@ def index(request):
     LIST_HEADERS = (
                     (u'PO', 'ponumber'),
                     (u'Поставщик', 'brandgroup__title'),
+                    (u'AREA', 'area__title'),
                     (u'BRAND', 'brand__title'),
-                    (u'AREA', 'area'),
                     (u'PART #', 'part_number'),
                     (u'COMMENT 2', None),
                     (u'Q', None),
@@ -145,11 +145,10 @@ def order(request):
         if item_forms.are_valid():
             for form in item_forms:
                 data = form.cleaned_data
-                supplier_id = data['supplier']
+                supplier_id = data.pop('supplier')
                 data['manager'] = request.user
                 data['brandgroup'] = BrandGroup.objects.get(id=supplier_id)
-                data['client_order_id'] =  OrderedItem.objects.get_next_client_order_id(data['client_id'])
-                data.pop('supplier')
+                data['client_order_id'] =  OrderedItem.objects.get_next_client_order_id(data['client'])
                 item = OrderedItem(**data).save()
             return HttpResponseRedirect('/cp/order/success/')
     else:

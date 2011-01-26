@@ -4,8 +4,8 @@
 ul li {	list-style: none;}
 </style>
 <script type="text/javascript">
-function selectBrand(value) {
-    window.opener.setBrand(value);
+function selectField(value,id) {
+    window.opener.setField(value,id);
     window.close();
 }
 </script>
@@ -13,7 +13,7 @@ function selectBrand(value) {
 <body>
 <ul>
 {% for l in list %}
-<li><a href="javascript:void(0)" onclick="selectBrand('{{ l.title }}')">{{ l.title }}</a></li>
+<li><a href="javascript:void(0)" onclick="selectField('{{ l.title }}','{{ l.id }}')">{{ l.title }}</a></li>
 {% endfor %}
 </ul>
 </body>

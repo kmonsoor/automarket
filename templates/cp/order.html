@@ -11,20 +11,33 @@
 	var current = null;
 	var curr_field = null;
 	
-	function setBrand(value) {
-		document.getElementById(curr_field +'.'+ current).value = value;
+	function setField(value,id) {
+		jQuery('#'+curr_field +'\\.'+ current).attr({'value':value, 'rel':id});
 		current = null;
+	}
+	
+	function showListArea(e)	{
+		id = e.id;
+		curr_field = jQuery(e).attr('rel');
+		current = id.split('.')[1]
+		direction_id = jQuery(e).parents('tr').find('#id_supplier\\.'+current+' :selected').attr('value');
+		if (direction_id)
+			showPopUp('/client/help/'+ direction_id +'/area/', 200, 600, 'area', 1);
+		else	
+			alert('Выберите направление');
+		return false;
 	}
 	
 	function showListBrand(e)	{
 		id = e.id;
 		curr_field = jQuery(e).attr('rel');
 		current = id.split('.')[1]
-		supplier_id = jQuery(e).parents('tr').find('#id_supplier\\.'+current+' :selected').attr('value');
-		if (supplier_id)
-			showPopUp('/client/help/'+ supplier_id +'/brands/', 200, 600, 'brands', 1);
+		area = jQuery('#id_area\\.'+current).attr('value');
+		area_id = jQuery('#id_area\\.'+current).attr('rel');
+		if (area && area_id)
+			showPopUp('/client/help/'+ area_id +'/brands/', 200, 600, 'brands', 1);
 		else	
-			alert('Выберите направление');
+			alert('Выберите поставщика');
 		return false;
 	}
 	
@@ -38,7 +51,6 @@
 		current = id.split('.')[1]
 		showPopUp('/client/help/cars/', 200, 600, 'cars', 1);
 	}
-	
 	
 	var PageForm = Form.extend({
 		initialize: function(value) {
@@ -76,7 +88,6 @@
 	}
 	
 	function setPart(data){
-		console.log(data);
 		data = jQuery.unserialize(data);
 		id = getFreeRow();
 		jQuery('#id_part_number\\.'+id).attr('value', data.partnumber);

@@ -9,20 +9,20 @@
 {{ form.supplier }}
 </td>
 
+<td {% if form.area.errors %}class="error"{% endif %}>
+{{ form.area.label }}*<br />
+{% if form.area.errors %}
+{{ form.area.errors }}
+{% endif %}
+{{ form.area }}<br /><a class="help" rel="id_area" id="a.#" href="javascript:void(0);" onclick="showListArea(this)">Список</a><br />
+</td>
+
 <td {% if form.brand.errors %}class="error"{% endif %}>
 {{ form.brand.label }}*<br />
 {% if form.brand.errors %}
 {{ form.brand.errors }}
 {% endif %}
 {{ form.brand }}<br /><a class="help" rel="id_brand" id="c.#" href="javascript:void(0);" onclick="showListBrand(this)">Список</a><br />
-</td>
-
-<td {% if form.area.errors %}class="error"{% endif %}>
-{{ form.area.label }}<br />
-{% if form.area.errors %}
-{{ form.area.errors }}
-{% endif %}
-{{ form.area }}<br /><a class="help" rel="id_area" id="a.#" href="javascript:void(0);" onclick="showListBrand(this)">Список</a><br />
 </td>
 
 <td {% if form.part_number.errors %}class="error"{% endif %}>
@@ -57,12 +57,12 @@
 {{ form.quantity }}
 </td>
 
-<td {% if form.client_id.errors %}class="error"{% endif %}>
-{{ form.client_id.label }}*<br />
-{% if form.client_id.errors %}
-{{ form.client_id.errors }}
+<td {% if form.client.errors %}class="error"{% endif %}>
+{{ form.client.label }}*<br />
+{% if form.client.errors %}
+{{ form.client.errors }}
 {% endif %}
-{{ form.client_id }}
+{{ form.client }}
 </td>
 
 <td {% if form.description_ru.errors %}class="error"{% endif %}>

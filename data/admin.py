@@ -5,10 +5,9 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User as DjangoUser
 from django.utils.translation import ugettext_lazy as _
-from data.models import Direction, BrandGroup, Brand, Car, OrderedItem
+from data.models import Direction, BrandGroup, Brand, OrderedItem, Area
 
 admin.site.unregister(DjangoUser)
-
 
 class DirectionAdmin(admin.ModelAdmin):
     list_display = ('title', 'po',)
@@ -17,13 +16,15 @@ class DirectionAdmin(admin.ModelAdmin):
 class BrandGroupAdmin(admin.ModelAdmin):
     list_display = ('title', 'direction', 'description', 'add_brand_to_comment')
     list_filter = ('direction',)
+    filter_horizontal = ['area']
+    
+    
+class AreaAdmin(admin.ModelAdmin):
+    list_display = ('title',)
     filter_horizontal = ['brands']
 
     
 class BrandAdmin(admin.ModelAdmin):
-    list_display = ('title',)
-    
-class CarAdmin(admin.ModelAdmin):
     list_display = ('title',)
 
     
@@ -43,7 +44,7 @@ class MyUserAdmin(UserAdmin):
     
     def groups_list(self, obj):
         groups = [x['name'] for x in obj.groups.values()] 
-        return (',').join(groups) if groups else u'Нет группы' 
+        return (',').join(groups) if groups else u'Нет группы'
     groups_list.allow_tags = True
     groups_list.short_description = u'Группа'
     filter_horizontal = ['groups']
@@ -51,7 +52,7 @@ class MyUserAdmin(UserAdmin):
     
 admin.site.register(Direction, DirectionAdmin) 
 admin.site.register(BrandGroup, BrandGroupAdmin)
+admin.site.register(Area, AreaAdmin)
 admin.site.register(Brand, BrandAdmin)
-admin.site.register(Car, CarAdmin)
 admin.site.register(OrderedItem, OrderedItemAdmin)
 admin.site.register(DjangoUser, MyUserAdmin)
