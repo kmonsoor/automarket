@@ -23,7 +23,7 @@ class BrandGroup(models.Model):
     direction = models.ForeignKey(Direction, verbose_name=u"Направление")
     title = models.CharField(verbose_name=u"Название", max_length=10)
     description = models.TextField(verbose_name=u"Описание", null=True, blank=True)
-    area = models.ManyToManyField('Area', verbose_name=u"Area", null=True, blank=True)
+    area = models.ManyToManyField('Area', verbose_name=u"Поставщики", null=True, blank=True)
     delivery = models.FloatField(verbose_name=u"Доставка", default=0)
     add_brand_to_comment = models.BooleanField(verbose_name=u"В поле 'Comment2' добавляется значение поля 'Brand'", default = False)
 

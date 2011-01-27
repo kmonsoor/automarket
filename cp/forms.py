@@ -26,8 +26,8 @@ class OrderItemForm(Form):
     CORE = ('part_number',)
 
     supplier = forms.CharField(widget=forms.Select(choices=(),attrs={'onchange': 'changeDir(this);'}), label=u'DIR', required=True)
-    area = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'AREA', required=True)
-    brand = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'BRAND', required=True)
+    area = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'Поставщик', required=True)
+    brand = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'Бренд', required=True)
     part_number = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'PART #',required=True)
     comment_customer = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'COMMENT 1', required=False)
     comment_supplier = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'COMMENT 2', required=False)
