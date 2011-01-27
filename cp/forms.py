@@ -69,11 +69,7 @@ class OrderItemForm(Form):
                 raise forms.ValidationError(u"Такого бренда не существует")
             else:
                 if 'area' in self.cleaned_data and self.cleaned_data['area']:
-                    try:
-                        area = Area.objects.get(title = self.cleaned_data['area'])
-                    except Area.DoesNotExist:
-                        area = []
-                    if brand not in area.brands.all():
+                    if brand not in self.cleaned_data['area'].brands.all():
                         raise forms.ValidationError(u"Этот бренд не входит в выбранное направление")
     
             return brand
