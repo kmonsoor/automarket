@@ -84,8 +84,8 @@ def index(request):
 
     LIST_HEADERS = (
                     (u'PO', 'ponumber'),
-                    (u'Поставщик', 'brandgroup__title'),
-                    (u'AREA', 'area__title'),
+                    (u'Направление', 'brandgroup__title'),
+                    (u'Поставщик', 'area__title'),
                     (u'BRAND', 'brand__title'),
                     (u'PART #', 'part_number'),
                     (u'COMMENT 2', None),
