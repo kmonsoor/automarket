@@ -68,6 +68,9 @@ backend_url = '/cp/position/edit/ordered_item/';
 </tr>
 </thead>
 <tbody>
+<style>
+	table td {padding:1px 5px; vertical-align: middle;}
+</style>
 {% for i in items %}
 	<tr class="{% cycle row1,row2 %}">
 		<td>{{ i.get_po_verbose }}</td>
