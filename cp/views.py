@@ -89,6 +89,7 @@ def index(request):
                     (u'BRAND', 'brand__title'),
                     (u'PART #', 'part_number'),
                     (u'COMMENT 2', None),
+                    (u'Дата', 'created'),
                     (u'Q', None),
                     (u'PRICE IN', None),
                     (u'TOTAL', None),
