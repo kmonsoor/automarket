@@ -111,10 +111,7 @@ def help_area_list(request, brandgroup_id):
     try:
         area = BrandGroup.objects.get(id = brandgroup_id).area.all()
     except BrandGroup.DoesNotExist:
-        area = Area.objects.all()
-    else:
-        if not area:
-            area = Area.objects.all()
+        area = []
 
     return {'list': area,}
 
@@ -124,9 +121,6 @@ def help_brands_list(request, area_id):
     try:
         brands = Area.objects.get(id = area_id).brands.all().order_by('title')
     except Area.DoesNotExist:
-        brands = Brand.objects.all()
-    else:
-        if not brands:
-            brands = Brand.objects.all()
+        brands = []
     
     return {'list': brands,}
