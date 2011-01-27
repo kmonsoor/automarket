@@ -111,10 +111,10 @@ def help_area_list(request, brandgroup_id):
     try:
         area = BrandGroup.objects.get(id = brandgroup_id).area.all()
     except BrandGroup.DoesNotExist:
-        area = BrandGroup.objects.all()
+        area = Area.objects.all()
     else:
         if not area:
-            area = BrandGroup.objects.all()
+            area = Area.objects.all()
 
     return {'list': area,}
 
