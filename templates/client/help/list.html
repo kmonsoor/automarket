@@ -12,9 +12,13 @@ function selectField(value,id) {
 </head>
 <body>
 <ul>
+{% if list %}
 {% for l in list %}
 <li><a href="javascript:void(0)" onclick="selectField('{{ l.title }}','{{ l.id }}')">{{ l.title }}</a></li>
 {% endfor %}
+{% else %}
+    <li>Список пуст.</li>
+{% endif %}
 </ul>
 </body>
 </html>
