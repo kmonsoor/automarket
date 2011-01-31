@@ -8,6 +8,22 @@
     var ajax_loader_img_path = '{{ MEDIA_URL }}img/icons/ajax-loader.gif';
     var caller = 'groups';
 </script>
+<script>
+    sendOrders = function(direction_id){
+        jQuery('#selectedItemsForm').html('');
+        jQuery("#direction_"+direction_id+" input:checked").each(function(){
+           var id = this.id.split('_')[1];
+           if (id) jQuery('#selectedItemsForm').append('<input type="hidden" name="items" value="'+ id +'">')
+        });
+        jQuery('#selectedItemsForm').submit();
+    }
+    
+    selectGroup = function(el, brand_id, brandgroup_id, direction_id){
+        console.log(jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input"));
+        if(jQuery(el).attr('checked')) jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input").attr('checked', true);
+        else jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input").attr('checked', false);
+    }
+</script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
 <script>
     backend_url = '/cp/position/edit/ordered_item/';
@@ -16,9 +32,17 @@
 {% endblock %}
 
 {% block content %}
-    {% if orders_by_brandgroup %}
-        {% for brandgroup, orders in orders_by_brandgroup.items %}
-            {% ordereditems_by_brandgroup brandgroup orders %}
+    {% if orders_by_direction %}
+        {% for direction, elements in orders_by_direction.items %}
+            <div id="direction_{{ direction.id }}">
+                <h1>{{ direction.title }}</h1>
+                {% for brandgroup, orders in elements.items %}
+                    {% ordereditems_by_brandgroup direction brandgroup orders %}
+                {% endfor %}
+                <b><a href="javascript:void(0);" onclick="sendOrders('{{ direction.id }}');" style="color: #666; float: right; margin: 10px 0px; font-size:14px;">заказать выделенные позиции для {{ direction.title }}</a></b>
+                <div style="clear: both;"></div>
+            </div>
         {% endfor %}
     {% endif %}
+    <form id="selectedItemsForm" style="display: none;" method="POST" action="/cp/position/change_status/"></form>
 {% endblock %}

@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User as DjangoUser
 from django.utils.translation import ugettext_lazy as _
-from data.models import Direction, BrandGroup, Brand, OrderedItem, Area
+from data.models import Direction, BrandGroup, Brand, OrderedItem, Area, Discount
 
 admin.site.unregister(DjangoUser)
 
@@ -26,10 +26,15 @@ class AreaAdmin(admin.ModelAdmin):
     
 class BrandAdmin(admin.ModelAdmin):
     list_display = ('title',)
+    
+
+class DiscountAdmin(admin.ModelAdmin):
+    list_display = ('user', 'area', 'discount',)
+    list_filter = ('user', 'discount',)
 
     
 class OrderedItemAdmin(admin.ModelAdmin):
-    list_display =('po_number', 'created', 'manager', 'client','part_number','part_number_superseded','quantity')
+    list_display =('po_number', 'created', 'manager', 'client', 'part_number', 'quantity')
     list_filter = ('created',)
     search_fieldsets = ('part_number',)
 
@@ -54,5 +59,6 @@ admin.site.register(Direction, DirectionAdmin)
 admin.site.register(BrandGroup, BrandGroupAdmin)
 admin.site.register(Area, AreaAdmin)
 admin.site.register(Brand, BrandAdmin)
+admin.site.register(Discount, DiscountAdmin)
 admin.site.register(OrderedItem, OrderedItemAdmin)
 admin.site.register(DjangoUser, MyUserAdmin)

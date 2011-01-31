@@ -74,9 +74,24 @@ ORDER_ITEM_STATUSES = (
     ('issued',u'выдано'),
 )
 
+
+class Discount(models.Model):
+    user = models.ForeignKey(User, verbose_name = u"Пользователь")
+    area = models.ForeignKey(Area, verbose_name = u"Поставщик")
+    discount = models.FloatField(verbose_name = u"Скидка (%)")
+    
+    class Meta:
+        verbose_name = u"Скидка"
+        verbose_name_plural = u"Скидки"
+        unique_together = ('user', 'area',)
+
+    def __unicode__(self):
+        return u"%s:%s: %s" % (self.user.username, self.area.title, self.discount)
+
+
 class OrderedItem(models.Model):
     brandgroup = models.ForeignKey(BrandGroup, verbose_name=u"Группа поставщиков")
-    area = models.ForeignKey(Area, verbose_name=u"Area")
+    area = models.ForeignKey(Area, verbose_name=u"Поставщик")
     brand = models.ForeignKey(Brand, verbose_name=u"Бренд")
     ponumber = models.IntegerField(verbose_name=u"Номер заказа", blank=True, null=True)
     part_number = models.CharField(verbose_name=u"Номер детали", max_length=255)
@@ -133,6 +148,13 @@ class OrderedItem(models.Model):
         if self.quantity and self.price_invoice:
             self.total_w_ship = self.price_invoice*self.quantity
 
+        if self.price_sale and self.client and self.area and not self.price_discount:
+            try:
+                discount = Discount.objects.get(user=self.client, area=self.area)
+                self.price_discount = self.price_sale - self.price_sale*discount.discount/100
+            except Discount.DoesNotExist:
+                self.price_discount = ''
+            
         if self.delivery and self.price_sale and not self.price_discount:
             self.cost = self.delivery + self.price_sale
         elif self.delivery and self.price_discount:

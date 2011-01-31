@@ -149,7 +149,6 @@ def order(request):
                 supplier_id = data.pop('supplier')
                 data['manager'] = request.user
                 data['brandgroup'] = BrandGroup.objects.get(id=supplier_id)
-                data['client_order_id'] =  OrderedItem.objects.get_next_client_order_id(data['client'])
                 item = OrderedItem(**data).save()
             return HttpResponseRedirect('/cp/order/success/')
     else:
@@ -171,14 +170,16 @@ def order_success(request):
 @render_to('cp/groups.html')
 def groups(request):
     qs = OrderedItem.objects.filter(status='order')
-    orders_by_brandgroup = {}
+    orders_by_direction = {}
     for order in qs:
-        if order.brandgroup not in orders_by_brandgroup:
-            orders_by_brandgroup[order.brandgroup] = []
-        orders_by_brandgroup[order.brandgroup].append(order)
+        if order.brandgroup.direction not in orders_by_direction:
+            orders_by_direction[order.brandgroup.direction] = {}
+        if order.brandgroup not in orders_by_direction[order.brandgroup.direction]:
+            orders_by_direction[order.brandgroup.direction][order.brandgroup] = []
+        orders_by_direction[order.brandgroup.direction][order.brandgroup].append(order)
 
     return {
-            'orders_by_brandgroup':orders_by_brandgroup
+            'orders_by_direction':orders_by_direction
             }
 
 
@@ -347,11 +348,19 @@ def change_status(request):
             res = client.get_invoice_list()
             if res != '0':
                 return HttpResponseRedirect('/cp/groups/')
-            
-        for x in orders:
-            x.ponumber = OrderedItem.objects.get_next_ponumber(x.brandgroup.direction.id)
-            x.status = 'in_processing'
-            x.save()
+
+        if orders:
+            ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
+            clients = {}
+            for x in orders:
+                
+                if x.client not in clients:
+                    clients[x.client] = OrderedItem.objects.get_next_client_order_id(x.client)
+                    
+                x.client_order_id = clients[x.client]
+                x.ponumber = ponumber
+                x.status = 'in_processing'
+                x.save()
         
         return HttpResponseRedirect('/cp/groups/')
     else:
@@ -397,7 +406,7 @@ def export(request, group_id):
 
     it = {}
     for i in items:
-        k = "%s%d" % (i.brandgroup.direction.po,i.ponumber)
+        k = "%s%s" % (i.brandgroup.direction.po,i.ponumber or '-')
         if not it.has_key(k) :
             it[k] = []
         it[k].append(i)
@@ -432,12 +441,12 @@ def import_order(request):
     CELLS = (
        (0,'supplier','DIR'),
        (1,'brand','BRAND'),
-       (2, 'area', 'AREA'),
+       (2,'area', 'AREA'),
        (3,'part_number','PART#'),
        (4,'comment_customer','COMENT 1'),
        (5,'comment_supplier','COMENT 2'),
        (6,'quantity','Q'),
-       (7,'client_id','CL'),
+       (7,'client','CL'),
        (8,'description_ru','RUS'),
        (9,'description_en','ENG'),
        (10,'price_base','LIST'),
@@ -461,7 +470,7 @@ def import_order(request):
                 _data[get_field_name(k)+'.%d' % num] = [v[0].capitalize()]
             elif k == 'CL':
                 try:
-                    _data[get_field_name(k)+'.%d' % num] = [User.objects.get(username=v[0]).id]
+                    _data[get_field_name(k)+'.%d' % num] = [User.objects.get(username=v[0].lower()).id]
                 except User.DoesNotExist:
                     _data[get_field_name(k)+'.%d' % num] = v
             else:
