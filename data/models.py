@@ -153,7 +153,7 @@ class OrderedItem(models.Model):
                 discount = Discount.objects.get(user=self.client, area=self.area)
                 self.price_discount = self.price_sale - self.price_sale*discount.discount/100
             except Discount.DoesNotExist:
-                self.price_discount = ''
+                pass
             
         if self.delivery and self.price_sale and not self.price_discount:
             self.cost = self.delivery + self.price_sale
