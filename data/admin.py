@@ -39,7 +39,7 @@ class OrderedItemAdmin(admin.ModelAdmin):
     search_fieldsets = ('part_number',)
 
     def po_number(self, obj):
-        return '%s%s' % (obj.brandgroup.direction.po, obj.ponumber,)
+        return '%s%s' % (obj.brandgroup.direction.po, obj.ponumber or '-',)
     po_number.allow_tags = True
     po_number.short_description = u'PO'
         
