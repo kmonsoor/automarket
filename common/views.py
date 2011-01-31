@@ -10,6 +10,7 @@ from decimal import Decimal
 from common.forms import UserAuthForm
 from data.models import *
 from BeautifulSoup import BeautifulSoup, NavigableString
+from SOAPpy import WSDL
 
 
 @render_to('common/start.html')
@@ -197,25 +198,71 @@ class PartSearch(object):
         response = self.get_response(maker_id, partnumber)
         return self.parse_response(response)
     
+import SOAPpy
+class SoapClient(object):
+    login = settings.SOAP_LOGIN
+    pwd = settings.SOAP_PASSWORD
+    wsdl = settings.WSDL_URL
+    user_param = {'login':login,'passwd':pwd}
 
-#from SOAPpy import WSDL
-#class SoapClient(object):
-    #login = settings.SOAP_LOGIN
-    #pwd = settings.SOAP_PASSWORD
-    #wsdl = settings.WSDL_URL
     
-    #def __init__(*args,**kwargs):
-        #self.server = WSDL.Proxy(self.wsdl)
+    def __init__(self, *args, **kwargs):
+        if 'login' in kwargs and kwargs['login']\
+           and 'pwd' in  kwargs and kwargs['pwd']:
+            self.login = kwargs['login']
+            self.pwd = kwargs['pwd']
         
-    #def get_client_id(self):
-        #return self.server.getClientId(Login=self.login, Passwd=self.pwd)
+        self.server = WSDL.Proxy(self.wsdl)
+        SOAPpy.Config.debug = 1
+        #SOAPpy.Config.dict_encoding = 'cp1251'
+        
+    # test function
+    def get_invoice_list(self):
+        print self.server.getInvoiceList(self.user_param)
     
-    #def get_invoice_list(self):
-        #return self.server.getCliengetInvoiceListtId({'login':self.login,'passwd':self.pwd})
     
-    #def insert_in_basket(self):
-        #pass
+    def insert_in_basket(self, orders):
+        data = []
+        for order in orders:
+            if order.brandgroup.add_brand_to_comment\
+                   and order.brandgroup.direction.title == 'US':
+                comment_supplier = u'%s  %s' % (order.comment_supplier, order.brand.title)
+            else:
+                comment_supplier = order.comment_supplier
+                
+            detail = {
+                'Brand': order.area.title,
+                'Coment': comment_supplier,
+                'Description': order.description_ru,
+                'DescriptionEng': order.description_en,
+                'Qty': order.quantity,
+                'OemCode': order.part_number,
+                'CustomerId': '',
+                'Weight': order.weight if order.weight else '',
+            }
+            data.append(detail)
+            
+        try:
+            code,res = 0, self.server.insertBasket(PartsArray = data, UserParam = self.user_param)
+        except:
+            code, res = 500, None
 
-    #def send_order(self):
-        #return self.server.sendOrder({'login':self.login,'passwd':self.pwd})
+        return [code, res]
     
+    
+    def get_client_id(self):
+        try:
+            code, res = 0, self.server.getClientId(Login=self.login, Passwd=self.pwd)
+        except:
+            code, res = 500, None
+    
+        return [code, res]
+    
+        
+    def send_order(self):
+        try:
+            code, res =  0, self.server.sendOrder(self.user_param)
+        except:
+            code, res = 500, None
+            
+        return [code, res]

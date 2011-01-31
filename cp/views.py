@@ -22,7 +22,7 @@ from lib import xlsreader
 from cp.forms import OrderItemForm, ImportXlsForm, SearchForm
 from data.models import Direction, BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES
 from data.forms import OrderedItemsFilterForm, OrderedItemForm
-from common.views import PartSearch
+from common.views import PartSearch, SoapClient
 
 @login_required
 @render_to('cp/search.html')
@@ -338,12 +338,21 @@ def change_status(request):
         ids = request.POST.getlist('items')
         try:
             orders = OrderedItem.objects.filter(id__in=ids, status='order')
-            for x in orders:
-                x.ponumber = OrderedItem.objects.get_next_ponumber(x.brandgroup.direction.id)
-                x.status = 'in_processing'
-                x.save()
         except:
-            pass
+            orders = []
+            
+        if settings.SOAP_ENABLE:
+            client = SoapClient()
+            #client.insert_in_basket(orders)
+            res = client.get_invoice_list()
+            if res != '0':
+                return HttpResponseRedirect('/cp/groups/')
+            
+        for x in orders:
+            x.ponumber = OrderedItem.objects.get_next_ponumber(x.brandgroup.direction.id)
+            x.status = 'in_processing'
+            x.save()
+        
         return HttpResponseRedirect('/cp/groups/')
     else:
         raise Http404
@@ -536,7 +545,8 @@ def export_order(request):
             elif value == 'status':
                 value = order.get_status_verbose()
             elif value == 'comment_supplier':
-                if order.brandgroup.add_brand_to_comment:
+                if order.brandgroup.add_brand_to_comment \
+                   and order.brandgroup.direction.title == 'US':
                     value = u'%s  %s' % (order.comment_supplier, order.brand.title)
                 else:
                     value = order.comment_supplier

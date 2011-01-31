@@ -16,7 +16,7 @@ def users():
     return users
 
 def brandgroups():
-    list = [(x.id, "%s :: %s" % (x.direction, x.title)) for x in BrandGroup.objects.all()]
+    list = [(x.id, "%s :: %s" % (x.direction, x.title)) for x in BrandGroup.objects.all().order_by('-direction__title')]
     list.insert(0, ('', 'выбрать'))
     return list
 
