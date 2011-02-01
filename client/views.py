@@ -71,10 +71,10 @@ def index(request):
     
     LIST_HEADERS = (
         (u'PO', 'ponumber'),
+        (u'AREA', 'area'),
         (u'BRAND', 'brand'),
         (u'PART #', 'part_number'),
         (u'Q', None),
-        (u'ЗАМЕНА', None),
         (u'Manager', 'manager'),
         (u'COST', None),
         (u'Статус', None),

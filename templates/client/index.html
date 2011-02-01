@@ -29,10 +29,10 @@
     {% table_header_sort headers %}
     <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
     <td></td>
-    <td>{{ filter.form.brand__name__contains }}</td>
+    <td>{{ filter.form.area__title__contains }}</td>
+	<td>{{ filter.form.brand__title__contains }}</td>
     <td>{{ filter.form.part_number__contains }}</td>
     <td></td>
-    <td>{{ filter.form.part_number_superseded__contains }}</td>
     <td>{{ filter.form.manager__username__contains }}</td>
     <td></td>
     <td></td>
@@ -44,16 +44,10 @@
 	{% for i in items %}
 	<tr class="{% cycle row1,row2 %}">
 		<td>{{ i.get_po_verbose }}</td>
+		<td>{{ i.area }}</td>
 		<td>{{ i.brand }}</td>
 		<td>{{ i.part_number }}</td>
 		<td>{{ i.quantity }}</td>
-		<td>
-		{% if i.part_number_superseded %}
-			{{ i.part_number_superseded }}
-			<!--<a class="add_link" href="/client/order/superseded/accept/{{ i.id }}">Принять замену</a>-->
-			<!--<a class="delete_link" href="/client/order/superseded/decline/{{ i.id }}">Отказаться</a>-->
-		{% endif %}
-		</td>
 		<td>{{ i.manager }}</td>
 		<td>{{ i.total_cost|default:"" }}</td>
 		<td>{{ i.get_status_verbose }}</td>
