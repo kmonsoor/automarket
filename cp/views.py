@@ -380,48 +380,35 @@ def export(request, group_id):
     book = xl.Workbook()
 
     # styles
-    header_style = xl.XFStyle()
-    header_style.font = xl.Font()
-    header_style.font.bold = True
-    header_style.font.italic = True
-    header_style.font.height = 0x0190
-
     sub_header_style = xl.XFStyle()
     sub_header_style.font = xl.Font()
     sub_header_style.bold = True
-    sub_header_style.font.height = 0x0190-100
+    sub_header_style.font.height = 0x0190-150
 
-    big_style = xl.XFStyle()
-    big_style.font = xl.Font()
-    big_style.font.height = 0x0190
-    big_style.font.bold = True
-
-    # Create sheet
     sheet = book.add_sheet(brandgroup.title)
-    #sheet.cols[0].width = 0x1724
 
-    sheet.write_merge(0,0,0,6, "Luke Auto Parts International, Inc",header_style)
-
-    sheet.write_merge(1,0,0,6, "102 53 Street",sub_header_style)
-    sheet.write_merge(2,0,0,6, "BROOKLYN, NY 11232",sub_header_style)
-    sheet.write_merge(3,0,0,6, "FAX: (718) 247-5962, TEL.: (718)701-3151",sub_header_style)
-
-    sheet.write(5,0,"Date %s" % datetime.now().strftime('%m/%d/%Y'), big_style)
-
-    it = {}
+    header = (u'Brand', u'Part Number', u'Описание (русское)', u'Q-ty', u'Customer_id', u'Comment', u'Описание (англ.)')
+    col = 0
+    row = 0
+    for x in header:
+        sheet.write(row, col, x, sub_header_style)
+        col += 1
+      
+    sub_header_style.bold = False
+    row += 1
     for i in items:
-        k = "%s%s" % (i.brandgroup.direction.po,i.ponumber or '-')
-        if not it.has_key(k) :
-            it[k] = []
-        it[k].append(i)
-    num = 5
-    for po_number, data in it.items():
-        num += 2
-        sheet.write(num,0,"PO Alex %s" % po_number, big_style)
-        for d in data:
-           num += 1
-           sheet.write_merge(num,num,0,2, d.part_number)
-           sheet.write(num,3,int(d.quantity))
+        sheet.write(row, 0, i.brand.title, sub_header_style)
+        sheet.write(row, 1, i.part_number, sub_header_style)
+        sheet.write(row, 2, i.description_ru, sub_header_style)
+        sheet.write(row, 3, i.quantity, sub_header_style)
+        sheet.write(row, 4, 'SP', sub_header_style)
+        sheet.write(row, 5, i.comment_supplier, sub_header_style)
+        sheet.write(row, 6, i.description_en, sub_header_style)
+        row += 1
+        i.status = 'in_processing'
+        i.status_modified = datetime.now()
+        i.save()
+    
     # Save book
     book.save(filename)
     os.chmod(filename, 0777)
@@ -430,12 +417,7 @@ def export(request, group_id):
     name = '%s-%s.xls' % (brandgroup.title,datetime.now().strftime('%m-%d-%Y-%H-%M'))
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
-
-    # Set items' status to 'in_processing'
-    for i in items:
-        i.status = 'in_processing'
-        i.status_modified = datetime.now()
-        i.save()
+        
     return response
 
 
