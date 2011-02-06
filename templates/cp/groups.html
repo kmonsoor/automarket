@@ -19,9 +19,15 @@
     }
     
     selectGroup = function(el, brand_id, brandgroup_id, direction_id){
-        console.log(jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input"));
         if(jQuery(el).attr('checked')) jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input").attr('checked', true);
         else jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input").attr('checked', false);
+    }
+    
+     selectOrder = function(el, brand_id, brandgroup_id, direction_id){
+        if(jQuery(el).attr('checked') && jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input[type=checkbox]").length-1 == jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input:checked").length)
+            jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input[name=selectGroup]").attr('checked', true);
+        else if (!jQuery(el).attr('checked') && jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input[type=checkbox]").length != jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input:checked").length)
+            jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input[name=selectGroup]").attr('checked', false);
     }
 </script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
