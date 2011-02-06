@@ -144,12 +144,20 @@ def order(request):
         item_forms = OrderItemForm.get_forms(request)
         item_data = [item_form.render_js('from_template') for item_form in item_forms]
         if item_forms.are_valid():
+            clients = {}
             for form in item_forms:
                 data = form.cleaned_data
+                if data['client'] not in clients:
+                    clients[data['client']] = OrderedItem.objects.get_next_client_order_id(data['client'])
+                data['client_order_id'] = clients[data['client']]
                 supplier_id = data.pop('supplier')
                 data['manager'] = request.user
+                
                 data['brandgroup'] = BrandGroup.objects.get(id=supplier_id)
-                item = OrderedItem(**data).save()
+                if data['brandgroup'].add_brand_to_comment and data['brandgroup'].direction.title == 'US':
+                    data['comment_supplier'] = u'%s %s' % (data['comment_supplier'], data['brand']) if data['comment_supplier'] else data['brand']
+                OrderedItem(**data).save()
+                
             return HttpResponseRedirect('/cp/order/success/')
     else:
         item_data = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
@@ -353,12 +361,8 @@ def change_status(request):
             ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
             clients = {}
             for x in orders:
-                
-                if x.client not in clients:
-                    clients[x.client] = OrderedItem.objects.get_next_client_order_id(x.client)
-                    
-                x.client_order_id = clients[x.client]
-                x.ponumber = ponumber
+                if not x.ponumber:                    
+                    x.ponumber = ponumber
                 x.status = 'in_processing'
                 x.save()
         
@@ -553,12 +557,6 @@ def export_order(request):
                 value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber or '--')
             elif value == 'status':
                 value = order.get_status_verbose()
-            elif value == 'comment_supplier':
-                if order.brandgroup.add_brand_to_comment \
-                   and order.brandgroup.direction.title == 'US':
-                    value = u'%s  %s' % (order.comment_supplier, order.brand.title)
-                else:
-                    value = order.comment_supplier
             else:
                 value = unicode(getattr(order, value)) if getattr(order, value) is not None else ''
             sheet.write(curr_line,i,value)
