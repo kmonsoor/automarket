@@ -396,6 +396,7 @@ def export(request, group_id):
       
     sub_header_style.bold = False
     row += 1
+    ponumber = OrderedItem.objects.get_next_ponumber(brandgroup.direction.id)
     for i in items:
         sheet.write(row, 0, i.brand.title, sub_header_style)
         sheet.write(row, 1, i.part_number, sub_header_style)
@@ -405,6 +406,7 @@ def export(request, group_id):
         sheet.write(row, 5, i.comment_supplier, sub_header_style)
         sheet.write(row, 6, i.description_en, sub_header_style)
         row += 1
+        i.ponumber = ponumber
         i.status = 'in_processing'
         i.status_modified = datetime.now()
         i.save()
