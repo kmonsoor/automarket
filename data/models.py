@@ -62,7 +62,7 @@ ORDER_ITEM_STATUSES = (
     ('obtained',u'получено в заказ'),
     ('in_processing',u'в работе'),
     ('failure',u'отказ'),
-    ('wrong_number',u'нккорректный номер'),
+    ('wrong_number',u'некорректный номер'),
     ('out_of_stock',u'отсутствует на складе'),
     ('superseded',u'замена номера'),
     ('back_order',u'back order'),

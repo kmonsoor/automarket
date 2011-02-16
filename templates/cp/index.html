@@ -155,7 +155,20 @@ backend_url = '/cp/position/edit/ordered_item/';
 		<td class="editable">
 			<select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
 			{% for opt in status_options %}
-			<option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option|lower }}</option>
+				{% ifequal i.status 'order' %}
+					{% ifequal opt.value 'order' %}
+						<option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option|lower }}</option>
+					{% endifequal %}
+				{% else %}
+					{% if i.ponumber %}
+						{% ifequal opt.value 'order' %}
+						{% else %}
+							<option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option|lower }}</option>
+						{% endifequal %}
+					{% else %}
+							<option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option|lower }}</option>
+					{% endif %}
+				{% endifequal %}
 			{% endfor %}
 			</select>
 		</td>
