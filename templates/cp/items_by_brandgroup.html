@@ -27,7 +27,13 @@
     <tr>
         <td colspan="3" align="right" style="background: #ffffff">
             <div class="submit-row">
-            <b><a href="/cp/export/{{ brandgroup.id }}/" class="export_link" style="color: #0190bf">Экспорт</a></b>
+            <script>
+            export_brandgroup = function(brandgroup_id){
+                window.location.href = '/cp/export/'+ brandgroup_id +'/';
+                setTimeout("window.location.reload();", 3000);
+            }
+          </script>
+            <b><a onclick="export_brandgroup('{{ brandgroup.id }}')" href="javascript: void(0);" class="export_link" style="color: #0190bf">Экспорт</a></b>
             </div>
         </td>
     </tr>

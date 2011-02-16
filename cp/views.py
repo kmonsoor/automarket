@@ -401,7 +401,7 @@ def export(request, group_id):
         sheet.write(row, 1, i.part_number, sub_header_style)
         sheet.write(row, 2, i.description_ru, sub_header_style)
         sheet.write(row, 3, i.quantity, sub_header_style)
-        sheet.write(row, 4, 'SP', sub_header_style)
+        sheet.write(row, 4, u'%s %s' % (i.client, i.client_order_id), sub_header_style)
         sheet.write(row, 5, i.comment_supplier, sub_header_style)
         sheet.write(row, 6, i.description_en, sub_header_style)
         row += 1
