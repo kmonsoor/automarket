@@ -60,3 +60,5 @@ fieldset.monospace textarea { font-family:"Bitstream Vera Sans Mono",Monaco,"Cou
 .module table .vPositiveSmallIntegerField { width:2.2em; }
 
 form.fieldset { border: none }
+
+.editable select {width: 191px;}
