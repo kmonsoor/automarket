@@ -88,7 +88,7 @@ SESSION_COOKIE_AGE = 3600
 
 # SOAP settings
 SOAP_ENABLE = True
-SOAP_LOGIN = 'sp'
+SOAP_LOGIN = 'SP'
 SOAP_PASSWORD = 'newmotors'
 WSDL_URL = 'http://automototrade.com/wsdl/server.php?wsdl'
 
