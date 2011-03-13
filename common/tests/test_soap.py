@@ -58,4 +58,4 @@ class TestSoap(TestCase):
         data = cjson.decode(f.read())
         f.close()
         self.assertEquals(data['ok'], False)
-        
+
