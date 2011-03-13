@@ -49,6 +49,7 @@ class TestSoap(TestCase):
         data = cjson.decode(f.read())
         f.close()
         self.assertEquals(data['ok'], True)
+        self.assertEquals(type(data['response']), type(dict()))
     
     def test_04_phpclient_error(self):
         script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
