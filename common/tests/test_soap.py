@@ -5,14 +5,14 @@ sys.path.insert(0, '/home/wc/projects/automoto/lib/python2.6/site-packages')
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))
 import logging
-
+import subprocess
 LOG_FILENAME = 'suds.log'
 logging.basicConfig(filename=LOG_FILENAME,level=logging.DEBUG)
-
+import cjson
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 
 from common.views import SoapClient
-
+from django.conf import settings
 
 from unittest import TestCase
 
@@ -23,7 +23,7 @@ class TestSoap(TestCase):
     def _test_01_invoice_list(self):
         self.client.get_invoice_list()
 
-    def test_02_suds_invoice_list(self):
+    def _test_02_suds_invoice_list(self):
         from django.conf import settings
         url = settings.WSDL_URL
         from suds.xsd.doctor import ImportDoctor, Import
@@ -40,4 +40,12 @@ class TestSoap(TestCase):
         UserParam['login'] = "SM"
         UserParam['password'] = "newparts"
         res = client.service.getInvoiceList()
-
+    
+    def test_03_phpclient(self):
+        script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
+        arg1 = cjson.encode({'login':settings.SOAP_LOGIN, 'passwd':settings.SOAP_PASSWORD})
+        cmd = "php -f %s %s '%s'" % (script_path, 'getInvoiceList', arg1)
+        f = os.popen(cmd)
+        print f.read()
+        f.close()
+        #print cjson.decode(resp)
