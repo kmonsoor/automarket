@@ -10,14 +10,14 @@ class RetrySoapClient extends SoapClient {
                 $result = parent::__call($function_name, $arguments);
             } catch(SoapFault $fault) {
                 if($fault->faultstring != 'Could not connect to host') {
-                    throw $fault;
+                    throw new Exception($fault->faultstring);
                 }
             }
             sleep(1);
             $retry_count ++;
         }
         if($retry_count == $max_retries) {
-            throw new SoapFault('Could not connect to host after 5 attempts');
+            throw new Exception('Could not connect to host after 5 attempts');
         }
         return $result;
     }
@@ -49,42 +49,33 @@ function from_json($json_string) {
     return json_decode($json_string, true);
 }
 
-function getInvoiceList() {
-    $client = get_client();
-    $UserParam = array('login'=>LOGIN,'passwd'=>PASSWD);
-    $InvoiceList = $client->getInvoiceList($UserParam);
-    if ($InvoiceList) {
-        return to_json($InvoiceList);    
-    } else {
-        return to_json(array());
-    }
-      
-}
-
-
-function callMethod($func_name, $args_array) {
-    $client = get_client();
-    $response = $client->__call($func_name, $args_array);
-    return to_json($response);
-}
-
 
 $avalible_methods = array("getPartsStatus", "getOrderStatus", "getInvoiceList", 
 "getInvoiceDetails", "insertBasket", "sendOrder", "setOrderParam");
 
-$function_name = $argv[1];
-if(!in_array($function_name, $avalible_methods)) {
-    print "";
-    exit();
+
+function callMethod($func_name, $args_array) {
+    global $avalible_methods;
+    try {
+        if(!in_array($func_name, $avalible_methods)) {
+            throw new Exception("Function name is unknown");
+        }
+        $client = get_client();
+        $response = $client->__call($func_name, $args_array);
+        return to_json(array("response"=>$response, "ok"=>true));
+    } catch (Exception $error) {
+        return to_json(array("response"=>$error->getMessage(), "ok"=>false));        
+    }
 }
+$function_name = $argv[1];
 $_args = array_slice($argv, 2);
 $args = array();
 if($_args) {
     foreach($_args as $a)
     $args[] = from_json($a);
 }
-//echo callMethod($function_name, $args);
+
 $stdout = fopen('php://stdout', 'w');
-fputs($stdout,"Hello World");
+fputs($stdout, callMethod($function_name, $args));
 exit();
 ?>

@@ -46,6 +46,15 @@ class TestSoap(TestCase):
         arg1 = cjson.encode({'login':settings.SOAP_LOGIN, 'passwd':settings.SOAP_PASSWORD})
         cmd = "php -f %s %s '%s'" % (script_path, 'getInvoiceList', arg1)
         f = os.popen(cmd)
-        print f.read()
+        data = cjson.decode(f.read())
         f.close()
-        #print cjson.decode(resp)
+        self.assertEquals(data['ok'], True)
+    
+    def test_04_phpclient_error(self):
+        script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
+        cmd = "php -f %s abracadabra" % script_path
+        f = os.popen(cmd)
+        data = cjson.decode(f.read())
+        f.close()
+        self.assertEquals(data['ok'], False)
+        
