@@ -50,7 +50,6 @@ class TestSoap(TestCase):
         f.close()
         self.assertEquals(data['ok'], True)
         self.assertEquals(type(data['response']), type(list()))
-        print data['response']
     
     def test_04_phpclient_error(self):
         script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
