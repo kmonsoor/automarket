@@ -1,6 +1,6 @@
 # -*- coding=utf-8 -*-
 
-import os
+import os, cjson
 import pyExcelerator as xl
 from datetime import datetime
 
@@ -63,7 +63,7 @@ def get_status_options():
 
 @login_required
 @render_to('cp/index.html')
-def index(request):
+def index(request):    
     context = {}
     current_page = request.GET.get('page', 1)
     items_per_page = request.GET.get('items_per_page', None)
@@ -342,6 +342,50 @@ def position_edit(request, content_type, id):
     return response
 
 
+def insert_in_basket(items):
+    details = []
+    for x in items:
+        d = {
+            'Brand': x.area.title,
+            'Coment': x.comment_supplier if x.comment_supplier else '',
+            'Description': x.description_ru,
+            'DescriptionEng': x.description_en,
+            'Qty': x.quantity,
+            'OemCode': x.part_number,
+            'CustomerId': '',
+            'Weight': x.weight if x.weight else '',
+        }
+        details.append(d)
+    if getattr(settings, 'SOAP_ENABLE', False):
+        script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
+        arg1 = cjson.encode(details)
+        arg2 = cjson.encode({'login':settings.SOAP_LOGIN, 'passwd':settings.SOAP_PASSWORD})
+        cmd = "php -f %s %s '%s' '%s'" % (script_path, 'insertBasket', arg1, arg2)
+        f = os.popen(cmd)
+        data = cjson.decode(f.read())
+        f.close()
+        if data['ok'] and data['response']:
+            #send = send_order()
+            #if send['ok'] and send['response']:
+                #return sent
+            pass
+        
+        return data
+    else:
+        return {'ok': False, 'response': None}
+    
+def send_order():
+    if getattr(settings, 'SOAP_ENABLE', False):
+        script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
+        arg1 = cjson.encode({'login':settings.SOAP_LOGIN, 'passwd':settings.SOAP_PASSWORD})
+        cmd = "php -f %s %s '%s'" % (script_path, 'sendOrder', arg1)
+        f = os.popen(cmd)
+        data = cjson.decode(f.read())
+        f.close()
+        return data
+    else:
+        return {'ok': False, 'response': None}
+
 def change_status(request):
     if request.method == 'POST':
         ids = request.POST.getlist('items')
@@ -350,30 +394,37 @@ def change_status(request):
         except:
             orders = []
             
-        if settings.SOAP_ENABLE:
-            client = SoapClient()
-            #client.insert_in_basket(orders)
-            res = client.get_invoice_list()
-            if res != '0':
-                return HttpResponseRedirect('/cp/groups/')
-
         if orders:
             ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
-            clients = {}
-            for x in orders:
-                if not x.ponumber:                    
-                    x.ponumber = ponumber
-                x.status = 'in_processing'
-                x.save()
-        
+            data = insert_in_basket(orders)
+            if data['ok'] and data['response']:
+                for x in orders:
+                    if not x.ponumber:                    
+                        x.ponumber = ponumber
+                    x.status = 'in_processing'
+                    x.status_modified = datetime.now()
+                    x.save()
+                    
         return HttpResponseRedirect('/cp/groups/')
     else:
         raise Http404
 
+
 def export(request, group_id):
     brandgroup = BrandGroup.objects.get(id=group_id)
     items = OrderedItem.objects.filter(brandgroup__id = group_id, status='order').order_by("brandgroup__direction__po")
-
+    ponumber = OrderedItem.objects.get_next_ponumber(brandgroup.direction.id)
+    data = insert_in_basket(items)
+    if data['ok'] and data['response']:
+        for x in items:
+            if not x.ponumber:                    
+                x.ponumber = ponumber
+            x.status = 'in_processing'
+            x.status_modified = datetime.now()
+            x.save()
+    else:
+        return HttpResponseRedirect('/cp/groups/')
+    
     filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
 
     # Open new workbook
@@ -396,7 +447,7 @@ def export(request, group_id):
       
     sub_header_style.bold = False
     row += 1
-    ponumber = OrderedItem.objects.get_next_ponumber(brandgroup.direction.id)
+    
     for i in items:
         sheet.write(row, 0, i.brand.title, sub_header_style)
         sheet.write(row, 1, i.part_number, sub_header_style)
@@ -406,11 +457,6 @@ def export(request, group_id):
         sheet.write(row, 5, i.comment_supplier, sub_header_style)
         sheet.write(row, 6, i.description_en, sub_header_style)
         row += 1
-        if not i.ponumber:
-            i.ponumber = ponumber
-        i.status = 'in_processing'
-        i.status_modified = datetime.now()
-        i.save()
     
     # Save book
     book.save(filename)
