@@ -98,8 +98,11 @@ SOAP_LOGIN = 'SP'
 SOAP_PASSWORD = 'newmotors'
 WSDL_URL = 'http://automototrade.com/wsdl/server.php?wsdl'
 
+# SMTP
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = False
 
 try:
