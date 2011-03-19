@@ -11,6 +11,12 @@ ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )
 
+# Emails
+ROOT_URL = 'newparts-online.com'
+EMAILS = ['ermalinsky@gmail.com',]
+EMAIL_FROM = 'no-reply@%s' % ROOT_URL
+EMAIL_SUBJECT = u'Новые заказы на %s' % ROOT_URL
+
 ROLES = []
 
 MANAGERS = ADMINS
@@ -91,6 +97,10 @@ SOAP_ENABLE = True
 SOAP_LOGIN = 'SP'
 SOAP_PASSWORD = 'newmotors'
 WSDL_URL = 'http://automototrade.com/wsdl/server.php?wsdl'
+
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
+EMAIL_USE_TLS = False
 
 try:
     from settings_local import *

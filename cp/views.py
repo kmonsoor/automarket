@@ -4,6 +4,8 @@ import os, cjson
 import pyExcelerator as xl
 from datetime import datetime
 
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render_to_response
@@ -344,6 +346,8 @@ def position_edit(request, content_type, id):
 
 def insert_in_basket(items):
     details = []
+    not_us_details = []
+    data = {'ok': False, 'response': None}
     for x in items:
         d = {
             'Brand': x.area.title,
@@ -355,24 +359,38 @@ def insert_in_basket(items):
             'CustomerId': '',
             'Weight': x.weight if x.weight else '',
         }
-        details.append(d)
-    if getattr(settings, 'SOAP_ENABLE', False):
-        script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
-        arg1 = cjson.encode(details)
-        arg2 = cjson.encode({'login':settings.SOAP_LOGIN, 'passwd':settings.SOAP_PASSWORD})
-        cmd = "php -f %s %s '%s' '%s'" % (script_path, 'insertBasket', arg1, arg2)
-        f = os.popen(cmd)
-        data = cjson.decode(f.read())
-        f.close()
-        if data['ok'] and data['response']:
-            #send = send_order()
-            #if send['ok'] and send['response']:
-                #return sent
-            pass
+        if x.brandgroup.direction.title.lower() in ('us',):
+            details.append(d)
+        else:
+            not_us_details.append(d)
+    
+    if not_us_details:
+        context = {
+            'details': not_us_details,
+            'root_url': settings.ROOT_URL
+        }
+        text = render_to_string('cp/mails/new_orders.txt', context)
+        if text:
+            send_mail(settings.EMAIL_SUBJECT, text, settings.EMAIL_FROM, settings.EMAILS, fail_silently=False)
+            data = {'ok': True, 'response': 'sent'}
+            
+    if details:     
+        if getattr(settings, 'SOAP_ENABLE', False):
+            script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
+            arg1 = cjson.encode(details)
+            arg2 = cjson.encode({'login':settings.SOAP_LOGIN, 'passwd':settings.SOAP_PASSWORD})
+            cmd = "php -f %s %s '%s' '%s'" % (script_path, 'insertBasket', arg1, arg2)
+            f = os.popen(cmd)
+            data = cjson.decode(f.read())
+            f.close()
+            if data['ok'] and data['response']:
+                send = send_order()
+                if send['ok'] and send['response']:
+                    return sent
+            else:
+                data = {'ok': False, 'response': None}
         
-        return data
-    else:
-        return {'ok': False, 'response': None}
+    return data
     
 def send_order():
     if getattr(settings, 'SOAP_ENABLE', False):

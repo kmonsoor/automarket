@@ -1,0 +1,14 @@
+Здравствуйте, с сайта {{ root_url }} поступили новые заказы.
+
+Заказы:
+
+{% for x in details %}
+   Бренд: {{ x.Brand }},
+   Комментарий: {{ x.Coment }}
+   Описание: {{ x.Description }}
+   Описание англ.: {{ x.DescriptionEng }}
+   Количество: {{ x.Qty }}
+   Код: {{ x.OemCode }}
+   Вес: {{ x.Weight }}
+
+{% endfor %}
