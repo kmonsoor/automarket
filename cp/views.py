@@ -344,7 +344,7 @@ def position_edit(request, content_type, id):
     return response
 
 
-def insert_in_basket(items):
+def insert_in_basket(items, ponumber, send_order=True):
     details = []
     not_us_details = []
     data = {'ok': False, 'response': None}
@@ -372,9 +372,21 @@ def insert_in_basket(items):
         text = render_to_string('cp/mails/new_orders.txt', context)
         if text:
             send_mail(settings.EMAIL_SUBJECT, text, settings.EMAIL_FROM, settings.EMAILS, fail_silently=False)
-            data = {'ok': True, 'response': 'sent'}
+            data = {'ok': True, 'response': 'mail_sent'}
             
-    if details:     
+    if details:
+        err = 0
+        fails = (
+                u'Детали не были добавлены в корзину. Попробуйте еще раз.',
+                u'Способ доставки не указан. PO не задано.',
+                u'Детали не отправлены в заказ'
+        )
+        succ = (
+                u'Детали были добавлены в корзину.',
+                u'Способ доставки и PO заданы.',
+                u'Детали отправлены в заказ.'
+        )
+        
         if getattr(settings, 'SOAP_ENABLE', False):
             script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
             arg1 = cjson.encode(details)
@@ -384,25 +396,38 @@ def insert_in_basket(items):
             data = cjson.decode(f.read())
             f.close()
             if data['ok'] and data['response']:
-                send = send_order()
-                if send['ok'] and send['response']:
-                    return sent
+                response = succ[0]
+                arg3 = cjson.encode({'ClientOrderNum':ponumber, 'DostavkaType': getattr(settings, 'DELIVERY_TYPE', 3)})
+                cmd = "php -f %s %s '%s' '%s'" % (script_path, 'setOrderParam', arg3, arg2)
+                f = os.popen(cmd)
+                data = cjson.decode(f.read())
+                f.close()
+                if data['ok'] and data['response'] and send_order:
+                    response += succ[1]
+                    if send_order:
+                        cmd = "php -f %s %s '%s'" % (script_path, 'sendOrder', arg2)
+                        f = os.popen(cmd)
+                        data = cjson.decode(f.read())
+                        f.close()
+                        if data['ok'] and data['response']:
+                            response += succ[2]
+                        else:
+                            response += fails[2]                        
+                            err += 1
+                        return data
+                else:
+                    err += 1
+                    response += fails[1]
             else:
-                data = {'ok': False, 'response': None}
-        
-    return data
-    
-def send_order():
-    if getattr(settings, 'SOAP_ENABLE', False):
-        script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
-        arg1 = cjson.encode({'login':settings.SOAP_LOGIN, 'passwd':settings.SOAP_PASSWORD})
-        cmd = "php -f %s %s '%s'" % (script_path, 'sendOrder', arg1)
-        f = os.popen(cmd)
-        data = cjson.decode(f.read())
-        f.close()
-        return data
-    else:
-        return {'ok': False, 'response': None}
+                response += fails[0]
+                err += 1
+                
+            if err > 0:
+                ok = False
+            else:
+                ok = True
+
+            return {'ok': ok, 'response': response}
 
 def change_status(request):
     if request.method == 'POST':
@@ -414,7 +439,8 @@ def change_status(request):
             
         if orders:
             ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
-            data = insert_in_basket(orders)
+            full_po = '%s%s' % (orders[0].brandgroup.direction.title,ponumber)
+            data = insert_in_basket(orders, full_po)
             if data['ok'] and data['response']:
                 for x in orders:
                     if not x.ponumber:                    
@@ -432,7 +458,8 @@ def export(request, group_id):
     brandgroup = BrandGroup.objects.get(id=group_id)
     items = OrderedItem.objects.filter(brandgroup__id = group_id, status='order').order_by("brandgroup__direction__po")
     ponumber = OrderedItem.objects.get_next_ponumber(brandgroup.direction.id)
-    data = insert_in_basket(items)
+    full_po = '%s%s' % (brandgroup.direction.title, ponumber)
+    data = insert_in_basket(items, full_po)
     if data['ok'] and data['response']:
         for x in items:
             if not x.ponumber:                    

@@ -98,6 +98,8 @@ SOAP_LOGIN = 'SP'
 SOAP_PASSWORD = 'newmotors'
 WSDL_URL = 'http://automototrade.com/wsdl/server.php?wsdl'
 
+DELIVERY_TYPE = 3
+
 # SMTP
 EMAIL_HOST = 'localhost'
 EMAIL_PORT = 25
