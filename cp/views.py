@@ -458,15 +458,13 @@ def export(request, group_id):
     brandgroup = BrandGroup.objects.get(id=group_id)
     items = OrderedItem.objects.filter(brandgroup__id = group_id, status='order').order_by("brandgroup__direction__po")
     ponumber = OrderedItem.objects.get_next_ponumber(brandgroup.direction.id)
-    full_po = '%s%s' % (brandgroup.direction.title, ponumber)
-    data = insert_in_basket(items, full_po)
-    if data['ok'] and data['response']:
-        for x in items:
-            if not x.ponumber:                    
-                x.ponumber = ponumber
-            x.status = 'in_processing'
-            x.status_modified = datetime.now()
-            x.save()
+
+    for x in items:
+        if not x.ponumber:                    
+            x.ponumber = ponumber
+        x.status = 'in_processing'
+        x.status_modified = datetime.now()
+        x.save()
     else:
         return HttpResponseRedirect('/cp/groups/')
     
