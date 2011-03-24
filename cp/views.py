@@ -156,8 +156,6 @@ def order(request):
                 data['manager'] = request.user
                 
                 data['brandgroup'] = BrandGroup.objects.get(id=supplier_id)
-                if data['brandgroup'].add_brand_to_comment and data['brandgroup'].direction.title == 'US':
-                    data['comment_supplier'] = u'%s %s' % (data['comment_supplier'], data['brand']) if data['comment_supplier'] else data['brand']
                 OrderedItem(**data).save()
                 
             return HttpResponseRedirect('/cp/order/success/')
@@ -344,11 +342,11 @@ def position_edit(request, content_type, id):
     return response
 
 
-def insert_in_basket(items, ponumber, send_order=True):
+def insert_in_basket(items, ponumber, send_order=False):
     details = []
     not_us_details = []
     data = {'ok': False, 'response': None}
-    for x in items:
+    for x in items:    
         d = {
             'Brand': x.area.title,
             'Coment': x.comment_supplier if x.comment_supplier else '',
@@ -359,6 +357,10 @@ def insert_in_basket(items, ponumber, send_order=True):
             'CustomerId': '',
             'Weight': x.weight if x.weight else '',
         }
+        
+        if x.brandgroup.add_brand_to_comment and x.brandgroup.direction.title.lower() in ('us',):
+            d['Coment'] = u'%s %s' % (d['Coment'], x.brand) if d['Coment'] else x.brand
+            
         if x.brandgroup.direction.title.lower() in ('us',):
             details.append(d)
         else:
@@ -402,7 +404,7 @@ def insert_in_basket(items, ponumber, send_order=True):
                 f = os.popen(cmd)
                 data = cjson.decode(f.read())
                 f.close()
-                if data['ok'] and data['response'] and send_order:
+                if data['ok'] and data['response']:
                     response += succ[1]
                     if send_order:
                         cmd = "php -f %s %s '%s'" % (script_path, 'sendOrder', arg2)
@@ -439,7 +441,7 @@ def change_status(request):
             
         if orders:
             ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
-            full_po = '%s%s' % (orders[0].brandgroup.direction.title,ponumber)
+            full_po = '%s%s' % (orders[0].brandgroup.direction.po,ponumber)
             data = insert_in_basket(orders, full_po)
             if data['ok'] and data['response']:
                 for x in orders:
