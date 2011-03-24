@@ -397,7 +397,7 @@ def insert_in_basket(items, ponumber, send_order=False):
             f = os.popen(cmd)
             data = cjson.decode(f.read())
             f.close()
-            if data['ok'] and data['response']:
+            if data and data['ok'] and data['response']:
                 response = succ[0]
                 arg3 = cjson.encode({'ClientOrderNum':ponumber, 'DostavkaType': getattr(settings, 'DELIVERY_TYPE', 1)})
                 cmd = "php -f %s %s '%s' '%s'" % (script_path, 'setOrderParam', arg3, arg2)
