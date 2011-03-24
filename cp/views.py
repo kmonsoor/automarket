@@ -404,7 +404,7 @@ def insert_in_basket(items, ponumber, send_order=False):
                 f = os.popen(cmd)
                 data = cjson.decode(f.read())
                 f.close()
-                if data['ok'] and data['response']:
+                if data and data['ok'] and data['response']:
                     response += succ[1]
                     if send_order:
                         cmd = "php -f %s %s '%s'" % (script_path, 'sendOrder', arg2)
@@ -443,7 +443,7 @@ def change_status(request):
             ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
             full_po = '%s%s' % (orders[0].brandgroup.direction.po,ponumber)
             data = insert_in_basket(orders, full_po)
-            if data['ok'] and data['response']:
+            if data and data['ok'] and data['response']:
                 for x in orders:
                     if not x.ponumber:                    
                         x.ponumber = ponumber
