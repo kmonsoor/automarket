@@ -442,14 +442,14 @@ def change_status(request):
         if orders:
             ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
             full_po = '%s%s' % (orders[0].brandgroup.direction.po,ponumber)
-        #data = insert_in_basket(orders, full_po)
-        #if data and data['ok'] and data['response']:
-            for x in orders:
-                if not x.ponumber:                    
-                    x.ponumber = ponumber
-                x.status = 'in_processing'
-                x.status_modified = datetime.now()
-                x.save()
+            data = insert_in_basket(orders, full_po)
+            if data and data['ok'] and data['response']:
+                for x in orders:
+                    if not x.ponumber:                    
+                        x.ponumber = ponumber
+                    x.status = 'in_processing'
+                    x.status_modified = datetime.now()
+                    x.save()
                     
         return HttpResponseRedirect('/cp/groups/')
     else:
