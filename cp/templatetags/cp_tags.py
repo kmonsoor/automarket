@@ -6,15 +6,15 @@ register = template.Library()
 
 @register.inclusion_tag('cp/items_by_brandgroup.html')
 def ordereditems_by_brandgroup(direction, brandgroup, orders):
-    orders_by_brand = {}
+    orders_by_area = {}
     for order in orders:
-        if order.brand not in orders_by_brand.keys():
-            orders_by_brand[order.brand] = []
-        orders_by_brand[order.brand].append(order)
+        if order.area not in orders_by_area.keys():
+            orders_by_area[order.area] = []
+        orders_by_area[order.area].append(order)
     return {
             'direction': direction,
             'brandgroup' : brandgroup,
-            'orders_by_brand' : orders_by_brand,
+            'orders_by_area' : orders_by_area,
             }
 
 @register.inclusion_tag('lib/table_header_sort.html', takes_context=True)
