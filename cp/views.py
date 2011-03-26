@@ -455,6 +455,69 @@ def change_status(request):
     else:
         raise Http404
 
+def export_selected(request):
+    
+    ids = request.POST.getlist('items')
+    try:
+        items = OrderedItem.objects.filter(id__in=ids, status='order')
+    except:
+        items = []
+    
+    if items:
+        for x in items:
+            ponumber = OrderedItem.objects.get_next_ponumber(x.brandgroup.direction.id)
+            if not x.ponumber:                    
+                x.ponumber = ponumber
+            x.status = 'in_processing'
+            x.status_modified = datetime.now()
+            x.save()
+        
+        filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
+    
+        # Open new workbook
+        book = xl.Workbook()
+    
+        # styles
+        sub_header_style = xl.XFStyle()
+        sub_header_style.font = xl.Font()
+        sub_header_style.bold = True
+        sub_header_style.font.height = 0x0190-150
+    
+        sheet = book.add_sheet('Export')
+    
+        header = (u'Brand', u'Part Number', u'Описание (русское)', u'Q-ty', u'Customer_id', u'Comment', u'Описание (англ.)')
+        col = 0
+        row = 0
+        for x in header:
+            sheet.write(row, col, x, sub_header_style)
+            col += 1
+          
+        sub_header_style.bold = False
+        row += 1
+        
+        for i in items:
+            sheet.write(row, 0, i.brand.title, sub_header_style)
+            sheet.write(row, 1, i.part_number, sub_header_style)
+            sheet.write(row, 2, i.description_ru, sub_header_style)
+            sheet.write(row, 3, i.quantity, sub_header_style)
+            sheet.write(row, 4, u'%s %s' % (i.client, i.client_order_id), sub_header_style)
+            sheet.write(row, 5, i.comment_supplier, sub_header_style)
+            sheet.write(row, 6, i.description_en, sub_header_style)
+            row += 1
+        
+        # Save book
+        book.save(filename)
+        os.chmod(filename, 0777)
+        content = open(filename,'rb').read()
+        response = HttpResponse(content, mimetype='application/vnd.ms-excel')
+        name = '%s-%s.xls' % ('export',datetime.now().strftime('%m-%d-%Y-%H-%M'))
+        response['Content-Disposition'] = 'inline; filename=%s' % name
+        os.remove(filename)
+            
+        return response
+    else:
+        return HttpResponseRedirect('/cp/groups/')
+
 
 def export(request, group_id):
     brandgroup = BrandGroup.objects.get(id=group_id)
