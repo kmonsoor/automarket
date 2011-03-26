@@ -464,8 +464,8 @@ def export_selected(request):
         items = []
     
     if items:
+        ponumber = OrderedItem.objects.get_next_ponumber(items[0].brandgroup.direction.id)
         for x in items:
-            ponumber = OrderedItem.objects.get_next_ponumber(x.brandgroup.direction.id)
             if not x.ponumber:                    
                 x.ponumber = ponumber
             x.status = 'in_processing'
