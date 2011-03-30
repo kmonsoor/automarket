@@ -398,7 +398,6 @@ def insert_in_basket(items, ponumber, send_order=False):
             f = os.popen(cmd)
             data = cjson.decode(f.read())
             f.close()
-            print data
             if data and data['ok'] and data['response']:
                 response = succ[0]
                 arg3 = cjson.encode({'ClientOrderNum':ponumber, 'DostavkaType': getattr(settings, 'DELIVERY_TYPE', 1)})
