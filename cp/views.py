@@ -377,6 +377,7 @@ def insert_in_basket(items, ponumber, send_order=False):
             data = {'ok': True, 'response': 'mail_sent'}
             
     if details:
+        response = ''
         err = 0
         fails = (
                 u'Детали не были добавлены в корзину. Попробуйте еще раз.',
