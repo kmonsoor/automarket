@@ -9,12 +9,6 @@
     var caller = 'groups';
 </script>
 <script>
-    $(document).ready(function() {
-        $('#exportItemsForm').ajaxForm(function() {
-            setTimeout("window.location.reload();", 2500);
-        });   
-    });
-
     sendOrders = function(direction_id){
         jQuery('#selectedItemsForm').html('');
         jQuery("#direction_"+direction_id+" input:checked").each(function(){
@@ -31,6 +25,7 @@
            if (id) jQuery('#exportItemsForm').append('<input type="hidden" name="items" value="'+ id +'">')
         });
         jQuery('#exportItemsForm').submit();
+        setTimeout("window.location.reload();", 2500);
     }
     
     selectGroup = function(el, brand_id, brandgroup_id, direction_id){
