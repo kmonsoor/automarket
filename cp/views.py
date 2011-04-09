@@ -65,7 +65,7 @@ def get_status_options():
 
 @login_required
 @render_to('cp/index.html')
-def index(request):    
+def index(request):
     context = {}
     current_page = request.GET.get('page', 1)
     items_per_page = request.GET.get('items_per_page', None)
@@ -77,7 +77,7 @@ def index(request):
     if not items_per_page:
         items_per_page = 20
     items_per_page = int(items_per_page)
-    
+
     context['items_per_page'] = items_per_page
     _filter = QSFilter(request, OrderedItemsFilterForm)
     if _filter.modified:
@@ -154,10 +154,10 @@ def order(request):
                 data['client_order_id'] = clients[data['client']]
                 supplier_id = data.pop('supplier')
                 data['manager'] = request.user
-                
+
                 data['brandgroup'] = BrandGroup.objects.get(id=supplier_id)
                 OrderedItem(**data).save()
-                
+
             return HttpResponseRedirect('/cp/order/success/')
     else:
         item_data = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
@@ -208,7 +208,7 @@ class OrderedItemSaver(object):
         except Exception, e:
             pass
         return obj.comment_customer
-    
+
     def save_comment_supplier(self, obj, value):
         try:
             obj.comment_supplier = value
@@ -346,7 +346,7 @@ def insert_in_basket(items, ponumber, send_order=False):
     details = []
     not_us_details = []
     data = {'ok': False, 'response': None}
-    for x in items:    
+    for x in items:
         d = {
             'Brand': x.area.title,
             'Coment': x.comment_supplier if x.comment_supplier else '',
@@ -354,18 +354,18 @@ def insert_in_basket(items, ponumber, send_order=False):
             'DescriptionEng': x.description_en,
             'Qty': x.quantity,
             'OemCode': x.part_number,
-            'CustomerId': '',
+            'CustomerId': x.client.username or '',
             'Weight': x.weight if x.weight else '',
         }
-        
+
         if x.brandgroup.add_brand_to_comment and x.brandgroup.direction.title.lower() in ('us',):
-            d['Coment'] = u'%s %s' % (d['Coment'], x.brand) if d['Coment'] else x.brand
-            
+            d['Coment'] = u'%s %s' % (d['Coment'], x.brand.title) if d['Coment'] else x.brand.title
+
         if x.brandgroup.direction.title.lower() in ('us',):
             details.append(d)
         else:
             not_us_details.append(d)
-    
+
     if not_us_details:
         context = {
             'details': not_us_details,
@@ -375,7 +375,7 @@ def insert_in_basket(items, ponumber, send_order=False):
         if text:
             send_mail(settings.EMAIL_SUBJECT, text, settings.EMAIL_FROM, settings.EMAILS, fail_silently=False)
             data = {'ok': True, 'response': 'mail_sent'}
-            
+
     if details:
         response = ''
         err = 0
@@ -389,7 +389,7 @@ def insert_in_basket(items, ponumber, send_order=False):
                 u'Способ доставки и PO заданы.',
                 u'Детали отправлены в заказ.'
         )
-        
+
         if getattr(settings, 'SOAP_ENABLE', False):
             script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
             arg1 = cjson.encode(details)
@@ -415,7 +415,7 @@ def insert_in_basket(items, ponumber, send_order=False):
                         if data['ok'] and data['response']:
                             response += succ[2]
                         else:
-                            response += fails[2]                        
+                            response += fails[2]
                             err += 1
                         return data
                 else:
@@ -424,7 +424,7 @@ def insert_in_basket(items, ponumber, send_order=False):
             else:
                 response += fails[0]
                 err += 1
-                
+
             if err > 0:
                 ok = False
             else:
@@ -439,63 +439,63 @@ def change_status(request):
             orders = OrderedItem.objects.filter(id__in=ids, status='order')
         except:
             orders = []
-            
+
         if orders:
             ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
             full_po = '%s%s' % (orders[0].brandgroup.direction.po,ponumber)
             data = insert_in_basket(orders, full_po)
             if data and data['ok'] and data['response']:
                 for x in orders:
-                    if not x.ponumber:                    
+                    if not x.ponumber:
                         x.ponumber = ponumber
                     x.status = 'in_processing'
                     x.status_modified = datetime.now()
                     x.save()
-                    
+
         return HttpResponseRedirect('/cp/groups/')
     else:
         raise Http404
 
 def export_selected(request):
-    
+
     ids = request.POST.getlist('items')
     try:
         items = OrderedItem.objects.filter(id__in=ids, status='order')
     except:
         items = []
-    
+
     if items:
         ponumber = OrderedItem.objects.get_next_ponumber(items[0].brandgroup.direction.id)
         for x in items:
-            if not x.ponumber:                    
+            if not x.ponumber:
                 x.ponumber = ponumber
             x.status = 'in_processing'
             x.status_modified = datetime.now()
             x.save()
-        
+
         filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
-    
+
         # Open new workbook
         book = xl.Workbook()
-    
+
         # styles
         sub_header_style = xl.XFStyle()
         sub_header_style.font = xl.Font()
         sub_header_style.bold = True
         sub_header_style.font.height = 0x0190-150
-    
+
         sheet = book.add_sheet('Export')
-    
+
         header = (u'Brand', u'Part Number', u'Описание (русское)', u'Q-ty', u'Customer_id', u'Comment', u'Описание (англ.)')
         col = 0
         row = 0
         for x in header:
             sheet.write(row, col, x, sub_header_style)
             col += 1
-          
+
         sub_header_style.bold = False
         row += 1
-        
+
         for i in items:
             sheet.write(row, 0, i.brand.title, sub_header_style)
             sheet.write(row, 1, i.part_number, sub_header_style)
@@ -505,7 +505,7 @@ def export_selected(request):
             sheet.write(row, 5, i.comment_supplier, sub_header_style)
             sheet.write(row, 6, i.description_en, sub_header_style)
             row += 1
-        
+
         # Save book
         book.save(filename)
         os.chmod(filename, 0777)
@@ -514,7 +514,7 @@ def export_selected(request):
         name = '%s-%s.xls' % ('export',datetime.now().strftime('%m-%d-%Y-%H-%M'))
         response['Content-Disposition'] = 'inline; filename=%s' % name
         os.remove(filename)
-            
+
         return response
     else:
         return HttpResponseRedirect('/cp/groups/')
@@ -524,14 +524,14 @@ def export(request, group_id):
     brandgroup = BrandGroup.objects.get(id=group_id)
     items = OrderedItem.objects.filter(brandgroup__id = group_id, status='order').order_by("brandgroup__direction__po")
     ponumber = OrderedItem.objects.get_next_ponumber(brandgroup.direction.id)
-    
+
     for x in items:
-        if not x.ponumber:                    
+        if not x.ponumber:
             x.ponumber = ponumber
         x.status = 'in_processing'
         x.status_modified = datetime.now()
         x.save()
-    
+
     filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
 
     # Open new workbook
@@ -551,10 +551,10 @@ def export(request, group_id):
     for x in header:
         sheet.write(row, col, x, sub_header_style)
         col += 1
-      
+
     sub_header_style.bold = False
     row += 1
-    
+
     for i in items:
         sheet.write(row, 0, i.brand.title, sub_header_style)
         sheet.write(row, 1, i.part_number, sub_header_style)
@@ -564,7 +564,7 @@ def export(request, group_id):
         sheet.write(row, 5, i.comment_supplier, sub_header_style)
         sheet.write(row, 6, i.description_en, sub_header_style)
         row += 1
-    
+
     # Save book
     book.save(filename)
     os.chmod(filename, 0777)
@@ -573,7 +573,7 @@ def export(request, group_id):
     name = '%s-%s.xls' % (brandgroup.title,datetime.now().strftime('%m-%d-%Y-%H-%M'))
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
-        
+
     return response
 
 
@@ -686,7 +686,7 @@ def export_order(request):
     for key, value in LIST_HEADERS:
         sheet.write(curr_line,i,key)
         i += 1
-        
+
     for order in orders:
         i = 0
         curr_line += 1
@@ -699,7 +699,7 @@ def export_order(request):
                 value = unicode(getattr(order, value)) if getattr(order, value) is not None else ''
             sheet.write(curr_line,i,value)
             i += 1
-        
+
     book.save(filename)
     os.chmod(filename, 0777)
     content = open(filename,'rb').read()
