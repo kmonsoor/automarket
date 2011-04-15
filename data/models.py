@@ -10,11 +10,11 @@ Group.add_to_class('discount', models.PositiveIntegerField(blank=True, null=True
 class Direction(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     po = models.CharField(max_length=255, verbose_name=u"PO")
-    
+
     class Meta:
         verbose_name = u'Направление'
         verbose_name_plural = u'Направления'
-    
+
     def __unicode__(self):
         return u"%s" % self.title
 
@@ -33,18 +33,19 @@ class BrandGroup(models.Model):
 
     def __unicode__(self):
         return u"%s::%s" % (self.direction, self.title)
-    
-    
+
+
 class Area(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     brands = models.ManyToManyField('Brand', null=True, blank=True, verbose_name=u'Бренды')
-    
+
     class Meta:
         verbose_name = u"Поставщик"
         verbose_name_plural = u"Поставщики"
+        ordering = ['title',]
 
     def __unicode__(self):
-        return u"%s" % self.title    
+        return u"%s" % self.title
 
 
 class Brand(models.Model):
@@ -53,7 +54,7 @@ class Brand(models.Model):
     class Meta:
         verbose_name = u"Бренд"
         verbose_name_plural = u"Бренды"
-
+        ordering = ['title',]
     def __unicode__(self):
         return u"%s" % self.title
 
@@ -79,7 +80,7 @@ class Discount(models.Model):
     user = models.ForeignKey(User, verbose_name = u"Пользователь")
     area = models.ForeignKey(Area, verbose_name = u"Поставщик")
     discount = models.FloatField(verbose_name = u"Скидка (%)")
-    
+
     class Meta:
         verbose_name = u"Скидка"
         verbose_name_plural = u"Скидки"
@@ -154,7 +155,7 @@ class OrderedItem(models.Model):
                 self.price_discount = self.price_sale - self.price_sale*discount.discount/100
             except Discount.DoesNotExist:
                 pass
-            
+
         if self.delivery and self.price_sale and not self.price_discount:
             self.cost = self.delivery + self.price_sale
         elif self.delivery and self.price_discount:
@@ -170,3 +171,4 @@ class OrderedItem(models.Model):
 
     def get_po_verbose(self):
         return u"%s%s" % (self.brandgroup.direction.po, self.ponumber,) if self.ponumber else ''
+

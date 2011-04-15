@@ -41,12 +41,16 @@ USE_I18N = True
 # Example: "/home/media/media.lawrence.com/"
 
 MEDIA_ROOT = os.path.abspath('./media/')
-
 MEDIA_URL = '/media/'
-
-ADMIN_MEDIA_PREFIX = '/admin_media/'
-
+ADMIN_MEDIA_PREFIX = "/media/admin/"
 SECRET_KEY = '%^i)f6-(3d$&n2l0-=wnnj0=vldr@xtakth%50htl9s3a1510!'
+
+# Admin tools settings
+ADMIN_TOOLS_INDEX_DASHBOARD = 'admin_tools_dashboard.MyDashboard'
+ADMIN_TOOLS_APP_INDEX_DASHBOARD = 'admin_tools_dashboard.CustomAppIndexDashboard'
+ADMIN_TOOLS_MENU = 'admin_tools_menu.CustomMenu'
+
+ADMIN_TOOLS_THEMING_CSS = 'css/admin_tools_theming.css'
 
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -76,6 +80,10 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
+    'admin_tools',
+    'admin_tools.theming',
+    'admin_tools.menu',
+    'admin_tools.dashboard',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -85,7 +93,8 @@ INSTALLED_APPS = (
     'client',
     'cp',
     'common',
-    'lib'
+    'lib',
+    'south',
 )
 
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
@@ -111,3 +120,4 @@ try:
     from settings_local import *
 except:
     pass
+

@@ -9,6 +9,7 @@ class OrderedItemsFilterForm(forms.Form):
     area__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))
     brand__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))
     part_number__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))
+    comment_customer__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':12,'class':'qs_filter'}))
     comment_supplier__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':12,'class':'qs_filter'}))
     price_invoice__gte = forms.CharField(label='от', required=False, widget=forms.TextInput(attrs={'size':5, 'class':'qs_filter'}))
     price_invoice__lte = forms.CharField(label='до', required=False, widget=forms.TextInput(attrs={'size':6, 'class':'qs_filter'}))

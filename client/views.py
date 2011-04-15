@@ -33,7 +33,7 @@ def search(request):
                 for x in request.user.groups.values('discount'):
                     if x['discount'] > discount:
                         discount = float(x['discount'])/100
-                
+
                 found['your_price'] = found['MSRP'] - found['MSRP']*discount
                 found['your_economy'] = found['MSRP'] - found['your_price']
                 found['your_economy_perc'] = 100 - (found['your_price']/found['MSRP'])*100
@@ -42,7 +42,7 @@ def search(request):
                 found['your_price'] = "%.2f" % found['your_price']
                 found['your_economy'] = "%.2f" % found['your_economy']
             maker_name = PartSearch().get_maker_name(maker)
-            
+
     else:
         form = SearchForm()
 
@@ -63,46 +63,56 @@ def index(request):
         items_per_page = 20
     items_per_page = int(items_per_page)
     response['items_per_page'] = items_per_page
-    
-    filter = QSFilter(request, OrderedItemsFilterForm)
-    if filter.modified:
+
+    _filter = QSFilter(request, OrderedItemsFilterForm)
+    if _filter.modified:
         current_page = 1
-    response['filter'] = filter
-    
+    response['filter'] = _filter
+
     LIST_HEADERS = (
-        (u'PO', 'ponumber'),
-        (u'AREA', 'area'),
-        (u'BRAND', 'brand'),
-        (u'PART #', 'part_number'),
-        (u'Q', None),
-        (u'Manager', 'manager'),
-        (u'COST', None),
-        (u'Статус', None),
-    )
-    
+                (u'PO', 'ponumber'),
+                (u'Направление', 'brandgroup__title'),
+                (u'Поставщик', 'area__title'),
+                (u'BRAND', 'brand__title'),
+                (u'PART #', 'part_number'),
+                (u'Дата', 'created'),
+                (u'Q', None),
+                (u'ЗАМЕНА', None),
+                (u'RUS', None),
+                (u"Комментарий", None),
+                (u'WEIGHT', None),
+                (u'SHIPPING', None),
+                (u'PRICE', None),
+                (u'NEW PRICE', None),
+                (u'COST', None),
+                (u'TOTAL COST', None),
+                (u'Инвойс', 'invoice_code'),
+                (u'Статус', 'status'),
+                )
+
     sort_headers = SortHeaders(request, LIST_HEADERS)
     order_field = request.GET.get('o', None)
     order_direction = request.GET.get('ot', None)
-    
+
     order_by = '-created'
     if order_field:
         if order_direction == 'desc':
             order_direction = '-'
         else:
-            order_direction = ''            
+            order_direction = ''
         order_by = order_direction + LIST_HEADERS[int(order_field)][1]
 
     response['headers'] = list(sort_headers.headers())
-    
-    qs = OrderedItem.objects.select_related().filter(client=request.user).filter(**filter.get_filters())
+
+    qs = OrderedItem.objects.select_related().filter(client=request.user).filter(**_filter.get_filters())
     if order_by:
         qs = qs.order_by(order_by)
-    
+
     paginator = SimplePaginator(request, qs, items_per_page, 'page')
-    
+
     response['items'] = paginator.get_page_items()
     response['paginator'] = paginator
-    
+
     return response
 
 
@@ -122,5 +132,6 @@ def help_brands_list(request, area_id):
         brands = Area.objects.get(id = area_id).brands.all().order_by('title')
     except Area.DoesNotExist:
         brands = []
-    
+
     return {'list': brands,}
+

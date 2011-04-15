@@ -1,0 +1,56 @@
+/**
+ * theming styles
+ *
+ */
+
+#header {
+    background: #417690;
+    color: #ffc;
+    overflow: hidden;
+}
+
+#header a:link, #header a:visited {
+    color: white;
+}
+
+#header a:hover {
+    text-decoration: underline;
+}
+
+#branding h1 {
+    padding: 0 10px;
+    font-size: 18px;
+    margin: 8px 0;
+    font-weight: normal;
+    color: #f4f379;
+}
+
+#branding h2 {
+    padding: 0 10px;
+    font-size: 14px;
+    margin: -8px 0 8px 0;
+    font-weight: normal;
+    color: #ffc;
+}
+
+#user-tools {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1.2em 10px;
+    font-size: 11px;
+    text-align: right;
+}
+
+div.breadcrumbs {
+    display: block;
+    padding: 10px 15px;
+    border: 0;
+    background-position: 0 -8px;
+    border-bottom: 1px solid #ededed;
+}
+
+div.breadcrumbs a {
+    display: inline;
+}
+
