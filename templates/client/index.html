@@ -44,52 +44,21 @@ text-align: right;
 <div class="aligned" id="changelist">
 <table>
 <thead>
-<tr>{% table_header_sort headers %}</tr>
-<tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
-<td></td>
-<td>{{ filter.form.brandgroup__title__contains }}</td>
-<td>{{ filter.form.area__title__contains }}</td>
-<td>{{ filter.form.brand__title__contains }}</td>
-<td>{{ filter.form.part_number__contains }}</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>{{ filter.form.part_number_superseded__contains }}</td>
-<td>{{ filter.form.description_ru__contains }}</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>{{ filter.form.invoice_code__contains }}</td>
-<td>{{ filter.form.status }}</td>
+<tr>{% table_header_sort cl.headers %}</tr>
+<tr{% if cl.filter.is_set %} style="border: solid 2px green;"{% endif %}>
+{% for f in cl.list_filters %}
+<td>{{ f }}</td>
+{% endfor %}
 </tr>
 </thead>
 <tbody>
-	{% for i in items %}
+	{% for row in cl.results %}
 	<tr class="{% cycle row1,row2 %}">
-		<td>{{ i.get_po_verbose }}</td>
-		<td class="center">{{ i.brandgroup }}</td>
-		<td class="center">{{ i.area }}</td>
-		<td class="center">{{ i.brand }}</td>
-		<td class="center">{{ i.part_number|default:"" }}</td>
-    <td class="center">{{ i.created|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}</td>
-    <td class="center">{{ i.quantity|default:"" }}</td>
-    <td class="center">{{ i.part_number_superseded|default:"" }}</td>
-    <td>{{ i.description_ru|default:"" }}</td>
-    <td>{{ i.comment_customer|default:"" }}</td>
-    <td>{{ i.weight|default:"" }}</td>
-    <td>{{ i.delivery|default:"" }}</td>
-    <td>{{ i.price_sale|default:"" }}</td>
-    <td>{{ i.price_discount|default:"" }}</td>
-    <td>{{ i.cost|default:"" }}</td>
-    <td>{{ i.total_cost|default:"" }}</td>
-    <td>{{ i.invoice_code|default:"" }}</td>
-    <td>{{ i.get_status_display }}</td>
-	</tr>
-	{% endfor %}
-
+	  {% for res in row %}
+  	  <td>{{ res }}</td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
 	</tbody>
 	</table>
 </div>

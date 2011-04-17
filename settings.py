@@ -116,6 +116,8 @@ EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = False
 
+AUTH_PROFILE_MODULE = 'data.UserProfile'
+
 try:
     from settings_local import *
 except:

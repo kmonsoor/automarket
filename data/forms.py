@@ -22,6 +22,28 @@ class OrderedItemsFilterForm(forms.Form):
     status = forms.ChoiceField(required=False, choices=(('', u'Отображать все'),) + ORDER_ITEM_STATUSES,\
             widget=forms.Select(attrs={'class':'qs_filter'}))
 
+
+CLIENT_FIELD_LIST = [
+    (u'PO', 'ponumber', 'po_verbose', u"%s", "ponumber"),
+    (u'Направление', 'brandgroup__title', 'brandgroup', u"%s", "brandgroup__title__contains"),
+    (u'Поставщик', 'area__title', 'area', u"%s", "area__title__contains"),
+    (u'BRAND', 'brand__title', 'brand', u"%s", "brand__title__contains"),
+    (u'PART #', 'part_number', 'part_number', u"%s", "part_number__contains"),
+    (u'Дата', 'created', 'created', u"date::%Y-%m-%d", None),
+    (u'Q', None, 'quantity', u"%s", None),
+    (u'ЗАМЕНА', None, 'part_number_superseded', u"%s", "part_number_superseded__contains"),
+    (u'RUS', None, 'description_ru', u"%s", "description_ru__contains"),
+    (u"Комментарий", None, 'comment_customer', u"%s", "comment_customer__contains"),
+    (u'WEIGHT', None, 'weight', u"%s", None),
+    (u'SHIPPING', None, 'delivery', u"%s", None),
+    (u'PRICE', None, 'price_sale', u"%s", None),
+    (u'NEW PRICE', None, 'price_discount', u"%s", None),
+    (u'COST', None, 'cost', u"%s", None),
+    (u'TOTAL COST', None, 'total_cost', u"%s", None),
+    (u'Инвойс', 'invoice_code', 'invoice_code', u"%s", "invoice_code__contains"),
+    (u'Статус', 'status', 'status_display', u"%s", "status"),
+]
+
 class OrderedItemForm(forms.Form):
     part_number = forms.CharField(required=False)
     comment_supplier = forms.CharField(required=False)

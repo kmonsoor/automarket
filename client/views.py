@@ -10,7 +10,9 @@ from data.models import OrderedItem, Brand, BrandGroup, Area
 from data.forms import OrderedItemsFilterForm
 from client.forms import SearchForm
 from common.views import PartSearch
-
+from data.settings import AREA_MULTIPLIER_DEFAULT
+from decimal import Decimal
+from data.forms import CLIENT_FIELD_LIST
 
 @login_required
 @render_to('client/search.html')
@@ -25,14 +27,19 @@ def search(request):
             part_number = form.cleaned_data['part_number']
             found = PartSearch().search(maker, part_number)
             if not found:
-                msg = u"Not Found"
+                msg = u"Ничего не найдено"
             else:
-                # TO DO исправить все это, сделать нормально
-                found['MSRP'] = float(found['MSRP'])*1.1 # +10%
+                # try to find brand and get multiplier
+                try:
+                    brand = Brand.objects.get(title__icontains=found['brandname'])
+                except Brand.DoesNotExist:
+                    brand = None
+                m = brand and brand.get_multiplier() or AREA_MULTIPLIER_DEFAULT
+                found['MSRP'] = Decimal(found['MSRP']) * m
                 discount = 0
                 for x in request.user.groups.values('discount'):
                     if x['discount'] > discount:
-                        discount = float(x['discount'])/100
+                        discount = Decimal(x['discount'])/100
 
                 found['your_price'] = found['MSRP'] - found['MSRP']*discount
                 found['your_economy'] = found['MSRP'] - found['your_price']
@@ -48,71 +55,121 @@ def search(request):
 
     return {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
 
+class ClientOrderItemDisplay(object):
+    def __init__(self, obj, field, format):
+        val = getattr(obj, field, u"")
+        if val == None:
+            val = u""
+        self.value = val
+        self.format = format
+
+    def __unicode__(self):
+        if 'date' in self.format:
+            dateformat = self.format.split("::")[1]
+            try:
+                return self.value.strftime(dateformat)
+            except AttributeError:
+                return u"%s" % self.value
+        return self.format % self.value
+
+
+class ClientOrderItemRow(object):
+    def __init__(self, fields, obj):
+        self.fields = fields
+        self.obj = obj
+
+    def __iter__(self):
+        for field_name, field_format in self.fields:
+            yield ClientOrderItemDisplay(self.obj, field_name, field_format)
+
+
+class ClientOrderItemList(object):
+    def __init__(self, request, filter_form):
+        self.user = request.user
+        self.set_fields()
+        self.request = request
+
+        _filter = QSFilter(request, filter_form)
+        if _filter.modified:
+            current_page = 1
+        self.filter = _filter
+
+        current_page = request.GET.get('page', 1)
+        items_per_page = request.GET.get('items_per_page', None)
+        if not items_per_page:
+            items_per_page = request.session.get('items_per_page', None)
+        else:
+            request.session['items_per_page'] = items_per_page
+            request.session.modified = True
+        if not items_per_page:
+            items_per_page = 20
+        self.items_per_page = int(items_per_page)
+
+        self.results = self.result_list()
+        self.headers = self.list_headers()
+        self.filters = self.list_filters()
+
+    def set_fields(self):
+        try:
+            user_fields = self.user.get_profile().visible_orderitem_fields()
+        except Exception:
+            user_fields = None
+        if user_fields:
+            self.CLIENT_FIELDS = [x for x in CLIENT_FIELD_LIST if x[3] in user_fields]
+        else:
+            self.CLIENT_FIELDS = CLIENT_FIELD_LIST
+        self.LIST_HEADERS = [(x[0],x[1]) for x in self.CLIENT_FIELDS]
+
+    def result_list(self):
+        return [ClientOrderItemRow([(x[2],x[3]) \
+                 for x in self.CLIENT_FIELDS], obj) \
+                 for obj in self.get_query_set()]
+
+
+    def list_headers(self):
+        sort_headers = SortHeaders(self.request, self.LIST_HEADERS)
+        return list(sort_headers.headers())
+
+    def list_filters(self):
+        def _inner():
+            for x in self.CLIENT_FIELDS:
+                try:
+                    form_field = self.filter.form.__getitem__(x[4])
+                    yield form_field
+                except Exception, e:
+                    yield ""
+
+        return list(_inner())
+
+    def get_query_set(self):
+        order_field = self.request.GET.get('o', None)
+        order_direction = self.request.GET.get('ot', None)
+
+        order_by = '-created'
+        if order_field:
+            if order_direction == 'desc':
+                order_direction = '-'
+            else:
+                order_direction = ''
+            order_by = order_direction + self.LIST_HEADERS[int(order_field)][1]
+
+        qs = OrderedItem.objects.select_related() \
+                        .filter(client=self.request.user) \
+                        .filter(**self.filter.get_filters())
+        if order_by:
+            qs = qs.order_by(order_by)
+
+        self.paginator = SimplePaginator(self.request, qs, self.items_per_page, 'page')
+        return self.paginator.get_page_items()
+
 @login_required
 @render_to('client/index.html')
 def index(request):
     response = {}
-    current_page = request.GET.get('page', 1)
-    items_per_page = request.GET.get('items_per_page', None)
-    if not items_per_page:
-        items_per_page = request.session.get('items_per_page', None)
-    else:
-        request.session['items_per_page'] = items_per_page
-        request.session.modified = True
-    if not items_per_page:
-        items_per_page = 20
-    items_per_page = int(items_per_page)
-    response['items_per_page'] = items_per_page
-
-    _filter = QSFilter(request, OrderedItemsFilterForm)
-    if _filter.modified:
-        current_page = 1
-    response['filter'] = _filter
-
-    LIST_HEADERS = (
-                (u'PO', 'ponumber'),
-                (u'Направление', 'brandgroup__title'),
-                (u'Поставщик', 'area__title'),
-                (u'BRAND', 'brand__title'),
-                (u'PART #', 'part_number'),
-                (u'Дата', 'created'),
-                (u'Q', None),
-                (u'ЗАМЕНА', None),
-                (u'RUS', None),
-                (u"Комментарий", None),
-                (u'WEIGHT', None),
-                (u'SHIPPING', None),
-                (u'PRICE', None),
-                (u'NEW PRICE', None),
-                (u'COST', None),
-                (u'TOTAL COST', None),
-                (u'Инвойс', 'invoice_code'),
-                (u'Статус', 'status'),
-                )
-
-    sort_headers = SortHeaders(request, LIST_HEADERS)
-    order_field = request.GET.get('o', None)
-    order_direction = request.GET.get('ot', None)
-
-    order_by = '-created'
-    if order_field:
-        if order_direction == 'desc':
-            order_direction = '-'
-        else:
-            order_direction = ''
-        order_by = order_direction + LIST_HEADERS[int(order_field)][1]
-
-    response['headers'] = list(sort_headers.headers())
-
-    qs = OrderedItem.objects.select_related().filter(client=request.user).filter(**_filter.get_filters())
-    if order_by:
-        qs = qs.order_by(order_by)
-
-    paginator = SimplePaginator(request, qs, items_per_page, 'page')
-
-    response['items'] = paginator.get_page_items()
-    response['paginator'] = paginator
-
+    cl = ClientOrderItemList(request, OrderedItemsFilterForm)
+    response['cl'] = cl
+    response['paginator'] = cl.paginator
+    response['items_per_page'] = cl.items_per_page
     return response
 
 

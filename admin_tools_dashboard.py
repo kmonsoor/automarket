@@ -22,13 +22,18 @@ class MyDashboard(Dashboard):
              'data.models.Area',
              'data.models.Brand',
              'data.models.OrderedItem',
-             'data.models.Discount' ]
+             'data.models.Discount',
+             'data.models.ClientGroup',
+             ]
         ))
 
         # append an app list module for "Administration"
         self.children.append(modules.ModelList(
             u'Управление пользователями',
-            ['django.contrib.auth.*']))
+            ['data.admin.Staff',
+             'data.admin.CustomerAccount',
+             'django.contrib.auth.models.Group',
+             ]))
 
         # append a recent actions module
         self.children.append(modules.RecentActions(
