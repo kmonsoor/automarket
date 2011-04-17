@@ -82,6 +82,7 @@ class Staff(User):
 
 # User administration
 
+
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email','first_name', 'last_name', 'groups_list', 'is_staff', 'last_login',)
     list_filter = ['is_active']
@@ -91,6 +92,17 @@ class CustomUserAdmin(UserAdmin):
     groups_list.allow_tags = True
     groups_list.short_description = u'Группа'
     filter_horizontal = ['groups']
+
+
+    def profile(self, request, object_id):
+        user = get_object_or_404(User, pk=object_id)
+        try:
+            user.get_profile()
+        except Exception, e:
+            UserProfile.create(user=user, group=ClientGroup.objects)
+
+        if request.method == 'POST':
+            form = ProfileForm()
 
 class StaffAdmin(CustomUserAdmin):
     readonly_fields = ['is_staff']
@@ -118,6 +130,7 @@ class ClientDiscountInline(admin.TabularInline):
 
 class UserProfileInline(admin.StackedInline):
 	model = UserProfile
+	extra = 0
 
 class CustomerAdmin(CustomUserAdmin):
     readonly_fields = ['is_staff', 'is_superuser', 'last_login','date_joined']
@@ -145,6 +158,41 @@ class CustomerAdmin(CustomUserAdmin):
 
     change_form_template = 'admin/data/user/change_form.html'
     list_display = ['username', 'email','first_name', 'last_name','is_active']
+
+    def change_view(self, request, object_id, extra_context=None):
+        extra_context = {}
+        obj = get_object_or_404(User, pk=object_id)
+        try:
+            profile = obj.get_profile()
+        except Exception, e:
+            profile = None
+        if not profile:
+            profile = \
+            UserProfile(user=obj, client_group=ClientGroup.objects.all()[0]).save()
+
+        extra_context['client_order_item_fields'] = []
+
+        fff = profile.order_item_fields
+
+        if not fff:
+            fff = profile.client_group.order_item_fields
+
+        if fff:
+            extra_context['original_order_item_fields'] = \
+                fff.split(',')
+        else:
+            extra_context['original_order_item_fields'] = ""
+        if request.POST:
+            extra_context['original_order_item_fields'] = \
+            request.POST.get("order_item_fields", "").split(",")
+        for a in [(x[2], x[0]) for x in CLIENT_FIELD_LIST]:
+            a = list(a)
+            if a[0] in extra_context['original_order_item_fields']:
+                a.append(True)
+            else:
+                a.append(False)
+            extra_context['client_order_item_fields'].append(a)
+        return super(CustomerAdmin, self).change_view(request, object_id, extra_context)
 
 class ClientGroupAddForm(forms.ModelForm):
     class Meta:

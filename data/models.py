@@ -233,7 +233,7 @@ models.signals.post_save.connect(on_client_group_create, sender=ClientGroup)
 
 class UserProfile(models.Model):
     client_group = models.ForeignKey(ClientGroup)
-    order_item_fields = models.TextField()
+    order_item_fields = models.TextField(blank=True, default="")
     user = models.ForeignKey(User, unique=True)
 
     def get_discount(self, area):
