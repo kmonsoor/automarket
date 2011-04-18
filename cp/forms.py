@@ -11,15 +11,15 @@ from lib.dynamicforms import Form
 
 
 def users():
-    users = [(x.id, str(x)) for x in User.objects.filter(groups=1).order_by('username')]
+    users = [(x.id, str(x)) for x in User.objects.filter(is_staff=False).order_by('username')]
     users.insert(0, ('', 'выбрать',))
     return users
 
 def brandgroups():
-    list = [(x.id, "%s :: %s" % (x.direction, x.title)) \
+    g = [(x.id, "%s :: %s" % (x.direction, x.title)) \
              for x in BrandGroup.objects.all().order_by('-direction__title')]
-    list.insert(0, ('', 'выбрать'))
-    return list
+    g.insert(0, ('', 'выбрать'))
+    return g
 
 
 class OrderItemForm(Form):
@@ -87,9 +87,9 @@ class OrderItemForm(Form):
 
 
 def makers():
-    list = PartSearch().get_make_options()
-    list.insert(0, ('', 'Select Make'))
-    return list
+    _list = PartSearch().get_make_options()
+    _list.insert(0, ('', 'Select Make'))
+    return _list
 
 class SearchForm(forms.Form):
     maker = forms.CharField(widget=forms.Select(choices=makers()), label=u'MAKE', required=True)

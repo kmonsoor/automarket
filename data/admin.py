@@ -94,16 +94,6 @@ class CustomUserAdmin(UserAdmin):
     filter_horizontal = ['groups']
 
 
-    def profile(self, request, object_id):
-        user = get_object_or_404(User, pk=object_id)
-        try:
-            user.get_profile()
-        except Exception, e:
-            UserProfile.create(user=user, group=ClientGroup.objects)
-
-        if request.method == 'POST':
-            form = ProfileForm()
-
 class StaffAdmin(CustomUserAdmin):
     readonly_fields = ['is_staff']
     def queryset(self, request):

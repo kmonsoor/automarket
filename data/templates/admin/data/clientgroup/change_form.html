@@ -38,6 +38,7 @@ $(document).ready(function(){
   $("#id_order_item_fields").parent("div").css("display", "none");
   {% endif %}
 </script>
+{% if change %}
 <div class="module aligned">
 <h2>Настройки отображения колонок</h2>
 <div>
@@ -46,5 +47,7 @@ $(document).ready(function(){
 {% endfor %}
 </div>
 </div>
+{% endif %}
+
 {% endblock %}
 
