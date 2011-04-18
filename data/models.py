@@ -192,6 +192,10 @@ class ClientGroup(models.Model):
     def __unicode__(self):
         return self.title
 
+    class Meta:
+        verbose_name = u"запись группы клиентов"
+        verbose_name_plural = u"Группы клиентов"
+
 class Discount(models.Model):
     user = models.ForeignKey(User, verbose_name = u"Пользователь")
     area = models.ForeignKey(Area, verbose_name = u"Поставщик")
@@ -223,8 +227,8 @@ def on_client_group_create(sender, instance, created, **kwargs):
         ClientGroupDiscount.objects.create(area=area, \
                client_group=instance, discount=AREA_DISCOUNT_DEFAULT)
 
-    from data.form import CLIENT_FIELD_LIST
-    fields = [x[4] for x in CLIENT_FIELD_LIST]
+    from data.forms import CLIENT_FIELD_LIST
+    fields = [x[2] for x in CLIENT_FIELD_LIST]
     instance.order_item_fields = ','.join(fields)
     instance.save()
 
@@ -232,7 +236,7 @@ models.signals.post_save.connect(on_client_group_create, sender=ClientGroup)
 
 
 class UserProfile(models.Model):
-    client_group = models.ForeignKey(ClientGroup)
+    client_group = models.ForeignKey(ClientGroup, verbose_name=u"группа")
     order_item_fields = models.TextField(blank=True, default="")
     user = models.ForeignKey(User, unique=True)
 
@@ -258,6 +262,9 @@ class UserProfile(models.Model):
             return [x[2] for x in CLIENT_FIELD_LIST]
         return fields
 
+    class Meta:
+        verbose_name = u"профиль пользователя"
+        verbose_name_plural = u"Профили пользователей"
 
 #def on_client_create(sender, instance, created, **kwargs):
 #    if not created:

@@ -131,6 +131,7 @@ class ClientDiscountInline(admin.TabularInline):
 class UserProfileInline(admin.StackedInline):
 	model = UserProfile
 	extra = 0
+	template = 'admin/data/user/userprofile_inline.html'
 
 class CustomerAdmin(CustomUserAdmin):
     readonly_fields = ['is_staff', 'is_superuser', 'last_login','date_joined']
@@ -168,7 +169,8 @@ class CustomerAdmin(CustomUserAdmin):
             profile = None
         if not profile:
             profile = \
-            UserProfile(user=obj, client_group=ClientGroup.objects.all()[0]).save()
+            UserProfile.objects.create(user=obj, \
+                                       client_group=ClientGroup.objects.all()[0])
 
         extra_context['client_order_item_fields'] = []
 

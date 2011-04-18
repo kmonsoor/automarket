@@ -20,26 +20,21 @@ $(document).ready(function(){
   $("input[name=_save]").remove();
   $("input[name=_continue]").addClass("default");
 
+
   {% if add %}
   $("#discount_set-group").remove();
   {% endif %}
 
   {% if change %}
-  $("#id_userprofile_set-0-order_item_fields").parent("div").css("display", "none");
+  $("div.order_item_fields").css("display", "none");
+  $("#add_id_userprofile_set-0-client_group").remove();
+  $("a[id^=add_id_discount_set]").remove();
+  $("div[id^=userprofile_set]").children("h3").css("display", 'none');
   {% endif %}
+
+
 
 });
 </script>
-{% endblock %}
-
-{% block after_field_sets %}
-<div class="form-row">
-<label>Настройки отображения колонок</label>
-<div>
-{% for val, label, checked in client_order_item_fields %}
-<input type="checkbox" {% if checked %}checked="checked"{% endif %} name="order_item_fields_selector" onclick="build_fields_string()" value="{{ val }}">&nbsp;{{ label }}<br />
-{% endfor %}
-</div>
-</div>
 {% endblock %}
 
