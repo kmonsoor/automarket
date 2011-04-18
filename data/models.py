@@ -241,13 +241,24 @@ class UserProfile(models.Model):
     user = models.ForeignKey(User, unique=True)
 
     def get_discount(self, area):
+        user_discount = None
+        group_discount = None
+        # first try to find self discount
         try:
-            group_discount = \
-            ClientGroupDiscount.get(client_group=self.client_group, \
+            user_discount = Discount.objects.get(user=self.user, area=area).discount
+        except (Discount.DoesNotExist, AttributeError):
+            pass
+        # try to find group discount
+        try:
+            cgd = ClientGroupDiscount.objects.get(client_group=self.client_group, \
                                     area=area)
-        except ClientGroupDiscount.DoesNotExist:
-            group_discount = AREA_DISCOUNT_DEFAULT
-        return group_discount
+            group_discount = cgd.discount
+        except (ClientGroupDiscount.DoesNotExist, AttributeError):
+            pass
+        # Return first not null value
+        for x in (user_discount, group_discount, AREA_DISCOUNT_DEFAULT):
+            if x:
+                return x
 
     def get_order_fields(self):
         try:

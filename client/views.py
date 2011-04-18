@@ -10,7 +10,7 @@ from data.models import OrderedItem, Brand, BrandGroup, Area
 from data.forms import OrderedItemsFilterForm
 from client.forms import SearchForm
 from common.views import PartSearch
-from data.settings import AREA_MULTIPLIER_DEFAULT
+from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
 from decimal import Decimal
 from data.forms import CLIENT_FIELD_LIST
 
@@ -31,17 +31,18 @@ def search(request):
             else:
                 # try to find brand and get multiplier
                 try:
-                    brand = Brand.objects.get(title__icontains=found['brandname'])
-                except Brand.DoesNotExist:
-                    brand = None
-                m = brand and brand.get_multiplier() or AREA_MULTIPLIER_DEFAULT
-                found['MSRP'] = Decimal(found['MSRP']) * m
-                discount = 0
-                for x in request.user.groups.values('discount'):
-                    if x['discount'] > discount:
-                        discount = Decimal(x['discount'])/100
-
-                found['your_price'] = found['MSRP'] - found['MSRP']*discount
+                    area = Area.objects.get(title__icontains=found['brandname'])
+                    m = area.multiplier or AREA_MULTIPLIER_DEFAULT
+                except (Area.DoesNotExist, Area.MultipleObjectsReturned):
+                    m = AREA_MULTIPLIER_DEFAULT
+                try:
+                    discount = request.user.get_profile().get_discount(area)
+                except Exception, e:
+                    print e
+                    discount = AREA_DISCOUNT_DEFAULT
+                discount = float(discount)
+                found['MSRP'] = float(found['MSRP']) * float(m)
+                found['your_price'] = found['MSRP']*(100-discount)/100
                 found['your_economy'] = found['MSRP'] - found['your_price']
                 found['your_economy_perc'] = 100 - (found['your_price']/found['MSRP'])*100
                 # output
@@ -111,11 +112,11 @@ class ClientOrderItemList(object):
 
     def set_fields(self):
         try:
-            user_fields = self.user.get_profile().visible_orderitem_fields()
+            user_fields = self.user.get_profile().get_order_fields()
         except Exception:
             user_fields = None
         if user_fields:
-            self.CLIENT_FIELDS = [x for x in CLIENT_FIELD_LIST if x[3] in user_fields]
+            self.CLIENT_FIELDS = [x for x in CLIENT_FIELD_LIST if x[2] in user_fields]
         else:
             self.CLIENT_FIELDS = CLIENT_FIELD_LIST
         self.LIST_HEADERS = [(x[0],x[1]) for x in self.CLIENT_FIELDS]
