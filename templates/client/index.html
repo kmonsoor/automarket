@@ -5,25 +5,7 @@
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/qs_filter.css" />
-<style type="text/css">
-td {
-    padding: 1px;
-    font-size: 80%;
-}
-input, select {
-  font-size: 90%;
-}
-td.center {
-text-align: center;
 
-}
-
-td.right {
-text-align: right;
-}
-
-
-</style>
 {% endblock %}
 
 {% load lib_tags %}
@@ -31,37 +13,49 @@ text-align: right;
 {% block page_title %}Мои заказы{% endblock %}
 {% block page_content %}
 <div class="" id="changelist">
-<form method="{{ filter.method }}" action="/client/{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
+<form method="{{ filter.method }}">
 <input type="hidden" name="qs_filter" value="1">
 <input type="submit" value="Фильтр">
 <input type="submit" name="qs_filter_clear" value="Очистить">
-Количество записей на странице:
+Количество записей на странице: 
 <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
 <option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
 <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
 <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
 </select>
-<div class="aligned" id="changelist">
+<div class="module" id="changelist">
 <table>
-<thead>
-<tr>{% table_header_sort cl.headers %}</tr>
-<tr{% if cl.filter.is_set %} style="border: solid 2px green;"{% endif %}>
-{% for f in cl.list_filters %}
-<td>{{ f }}</td>
-{% endfor %}
-</tr>
-</thead>
-<tbody>
-	{% for row in cl.results %}
+	<thead>
+    {% table_header_sort headers %}
+    <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+    <td></td>
+    <td>{{ filter.form.area__title__contains }}</td>
+	<td>{{ filter.form.brand__title__contains }}</td>
+    <td>{{ filter.form.part_number__contains }}</td>
+    <td></td>
+    <td>{{ filter.form.manager__username__contains }}</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    </thead>
+	<tbody>
+	{% for i in items %}
 	<tr class="{% cycle row1,row2 %}">
-	  {% for res in row %}
-  	  <td>{{ res }}</td>
-    {% endfor %}
-  </tr>
-  {% endfor %}
+		<td>{{ i.get_po_verbose }}</td>
+		<td>{{ i.area }}</td>
+		<td>{{ i.brand }}</td>
+		<td>{{ i.part_number }}</td>
+		<td>{{ i.quantity }}</td>
+		<td>{{ i.manager }}</td>
+		<td>{{ i.total_cost|default:"" }}</td>
+		<td>{{ i.get_status_verbose }}</td>
+	</tr>
+	{% endfor %}
+
 	</tbody>
 	</table>
 </div>
 {% include 'paginator.html' %}
 {% endblock %}
-

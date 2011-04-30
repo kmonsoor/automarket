@@ -92,7 +92,7 @@ function postSave() {
 	}
 	if (current.type == 'weight') {
 		//var shipping = parseFloat(jQuery('#delivery_supplier_input_'+current.id).attr('value'))*parseFloat(current.display_value)*parseInt(jQuery('#quantity_display_'+current.id).html());
-		var shipping = parseFloat(current.display_value)*12.5;
+		var shipping = parseFloat(current.display_value)*13;
 		jQuery('#delivery_display_'+current.id).html(shipping.toFixed(2));
 		var shipping = parseFloat(jQuery('#delivery_display_'+current.id).html())
 		if (jQuery('#price_discount_display_'+current.id).html())

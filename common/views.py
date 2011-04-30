@@ -125,7 +125,7 @@ class PartSearch(object):
                      if x[1].lower() == maker_string.lower()][0]
         except IndexError:
             return None
-
+        
     def get_maker_name(self, maker_id):
         try:
             return [x[1].lower() for x in self.get_make_options() \
@@ -195,12 +195,9 @@ class PartSearch(object):
     def search(self, maker_id, partnumber):
         if maker_id not in [x[0] for x in self.get_make_options()]:
             raise Exception('Invalid maker')
-
         response = self.get_response(maker_id, partnumber)
-        data = self.parse_response(response)
-        data.update({'brandname':self.get_maker_name(maker_id)})
-        return data
-
+        return self.parse_response(response)
+    
 import SOAPpy
 class SoapClient(object):
     login = settings.SOAP_LOGIN
@@ -208,22 +205,22 @@ class SoapClient(object):
     wsdl = settings.WSDL_URL
     user_param = {'login':login,'passwd':pwd}
 
-
+    
     def __init__(self, *args, **kwargs):
         if 'login' in kwargs and kwargs['login']\
            and 'pwd' in  kwargs and kwargs['pwd']:
             self.login = kwargs['login']
             self.pwd = kwargs['pwd']
-
+        
         self.server = WSDL.Proxy(self.wsdl)
         SOAPpy.Config.debug = 1
         #SOAPpy.Config.dict_encoding = 'cp1251'
-
+        
     # test function
     def get_invoice_list(self):
         print self.server.getInvoiceList(self.user_param)
-
-
+    
+    
     def insert_in_basket(self, orders):
         data = []
         for order in orders:
@@ -232,7 +229,7 @@ class SoapClient(object):
                 comment_supplier = u'%s  %s' % (order.comment_supplier, order.brand.title)
             else:
                 comment_supplier = order.comment_supplier
-
+                
             detail = {
                 'Brand': order.area.title,
                 'Coment': comment_supplier,
@@ -244,29 +241,28 @@ class SoapClient(object):
                 'Weight': order.weight if order.weight else '',
             }
             data.append(detail)
-
+            
         try:
             code,res = 0, self.server.insertBasket(PartsArray = data, UserParam = self.user_param)
         except:
             code, res = 500, None
 
         return [code, res]
-
-
+    
+    
     def get_client_id(self):
         try:
             code, res = 0, self.server.getClientId(Login=self.login, Passwd=self.pwd)
         except:
             code, res = 500, None
-
+    
         return [code, res]
-
-
+    
+        
     def send_order(self):
         try:
             code, res =  0, self.server.sendOrder(self.user_param)
         except:
             code, res = 500, None
-
+            
         return [code, res]
-

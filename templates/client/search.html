@@ -1,39 +1,24 @@
 {% extends 'client_base.html' %}
 {% load i18n %}
 
-{% block extrahead %}
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/changelists.css" />
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css" />
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/qs_filter.css" />
-{% endblock %}
-
 {% block page_title %}Поиск{% endblock %}
 
 {% block content %}
 <div id="divSearch" style="text-align: left; min-width: 800px;">
-  <div style="width:30%" class="aligned">
-    <form method="post" id="formSearch" action="">
-      <div class="form-row">
-        {{ form.maker.errors }}
-        <label for="id_maker">Выберите марку* :</label> {{ form.maker }}
-      </div>
-      <div class="form-row">
-        {{ form.part_number.errors }}
-        <label for="id_part_number">Введите номер* :</label> {{ form.part_number }}
-      </div>
-      <div class="submit-row">
-      <input type="submit" value="Искать" class="default" /></div>
-
+    <form method="POST" id="formSearch">
+        {{ form.maker.errors }}<b>{{ form.maker.label }}* :</b> {{ form.maker }}<br/><br/>
+        {{ form.part_number.errors }}<b>{{ form.part_number.label }}* :</b> {{ form.part_number }}
+        <br/><br/>
+        <input type="submit" value="Search" />
     </form>
-  </div>
+    <br/>
     <h2>{{ msg|default:"" }}</h2>
     {% if found %}
     <form id="formFound">
         <table id="dataTable" width="750px">
             <tr>
-                <td><b>Номер</b></td>
-                <td><b>Описание</b></td>
+                <td><b>Item Number</b></td>
+                <td><b>Description</b></td>
                 <td><b>Цена</b></td>
                 <td><b>Ваша Цена</b></td>
                 <td><b>Вы экономите</b></td>
@@ -50,4 +35,3 @@
     {% endif %}
 </div>
 {% endblock %}
-

@@ -11,7 +11,7 @@ if settings.DEBUG:
     )
 
 urlpatterns += patterns('',
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/(.*)', admin.site.root),
 )
 
 
@@ -21,9 +21,6 @@ urlpatterns += patterns('common.views',
     url(r'^accounts/logout/$','exit'),
 )
 
-urlpatterns += patterns('',
-    url(r'^admin_tools/', include('admin_tools.urls')),
-)
 
 urlpatterns += patterns('cp.views',
     url(r'^cp/search/$', 'search', name="search"),
@@ -32,7 +29,7 @@ urlpatterns += patterns('cp.views',
     url(r'^cp/groups/$', 'groups', name="groups"),
     url(r'^cp/position/edit/(?P<content_type>\w+)/(?P<id>\d+)/$', 'position_edit'),
     url(r'^cp/position/change_status/$', 'change_status'),
-
+    
     url(r'^cp/export/(?P<group_id>\d+)/$', 'export'),
     url(r'^cp/export/$', 'export_selected'),
     url(r'^cp/import_order/', 'import_order', name='import_to_csv'),
@@ -47,4 +44,3 @@ urlpatterns += patterns('client.views',
     url(r'^client/help/(?P<area_id>[\d]+)/brands/$', 'help_brands_list', name='brands_list'),
     url(r'^client/','index'),
 )
-

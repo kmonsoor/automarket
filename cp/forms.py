@@ -11,15 +11,14 @@ from lib.dynamicforms import Form
 
 
 def users():
-    users = [(x.id, str(x)) for x in User.objects.filter(is_staff=False).order_by('username')]
+    users = [(x.id, str(x)) for x in User.objects.filter(groups=1)]
     users.insert(0, ('', 'выбрать',))
     return users
 
 def brandgroups():
-    g = [(x.id, "%s :: %s" % (x.direction, x.title)) \
-             for x in BrandGroup.objects.all().order_by('-direction__title')]
-    g.insert(0, ('', 'выбрать'))
-    return g
+    list = [(x.id, "%s :: %s" % (x.direction, x.title)) for x in BrandGroup.objects.all().order_by('-direction__title')]
+    list.insert(0, ('', 'выбрать'))
+    return list
 
 
 class OrderItemForm(Form):
@@ -38,13 +37,13 @@ class OrderItemForm(Form):
     description_en = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'ENG', required=False)
     price_base = forms.FloatField(widget=forms.TextInput(attrs={'size':5}), label=u'LIST', required=True)
     price_sale = forms.FloatField(widget=forms.TextInput(attrs={'size':5, 'class': 'priceSale'}), label=u'PRICE', required=True)
-
+    
     def __init__(self, *args, **kwargs):
         super(OrderItemForm, self).__init__(*args, **kwargs)
         self.fields['client'].widget.choices = users()
         self.fields['supplier'].widget.choices = brandgroups()
 
-
+    
     def clean_area(self):
         if 'area' in self.cleaned_data and self.cleaned_data['area']:
             area = self.cleaned_data['area']
@@ -57,9 +56,9 @@ class OrderItemForm(Form):
                     brandgroup = BrandGroup.objects.get(id = self.cleaned_data['supplier'])
                     if area not in brandgroup.area.all():
                         raise forms.ValidationError(u"Этот поставщик не входит в выбранное направление")
-
+    
             return area
-
+    
 
     def clean_brand(self):
         if 'brand' in self.cleaned_data and self.cleaned_data['brand']:
@@ -72,9 +71,9 @@ class OrderItemForm(Form):
                 if 'area' in self.cleaned_data and self.cleaned_data['area']:
                     if brand not in self.cleaned_data['area'].brands.all():
                         raise forms.ValidationError(u"Этот бренд не входит в выбранное направление")
-
+    
             return brand
-
+        
     def clean_client(self):
         if 'client' in self.cleaned_data and self.cleaned_data['client']:
             client = self.cleaned_data['client']
@@ -82,14 +81,14 @@ class OrderItemForm(Form):
                 client = User.objects.get(id = client)
             except User.DoesNotExist:
                 raise forms.ValidationError(u"Такого пользователя не существует")
-
+    
             return client
-
+    
 
 def makers():
-    _list = PartSearch().get_make_options()
-    _list.insert(0, ('', 'Select Make'))
-    return _list
+    list = PartSearch().get_make_options()
+    list.insert(0, ('', 'Select Make'))
+    return list
 
 class SearchForm(forms.Form):
     maker = forms.CharField(widget=forms.Select(choices=makers()), label=u'MAKE', required=True)
@@ -97,4 +96,3 @@ class SearchForm(forms.Form):
 
 class ImportXlsForm(forms.Form):
     xls_file = forms.Field(widget=forms.FileInput(), required=False, label="Файл")
-
