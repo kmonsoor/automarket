@@ -5,7 +5,25 @@
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/qs_filter.css" />
+<style type="text/css">
+td {
+    padding: 1px;
+    font-size: 80%;
+}
+input, select {
+  font-size: 90%;
+}
+td.center {
+text-align: center;
 
+}
+
+td.right {
+text-align: right;
+}
+
+
+</style>
 {% endblock %}
 
 {% load lib_tags %}
@@ -13,44 +31,62 @@
 {% block page_title %}Мои заказы{% endblock %}
 {% block page_content %}
 <div class="" id="changelist">
-<form method="{{ filter.method }}">
+<form method="{{ filter.method }}" action="/client/{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
 <input type="hidden" name="qs_filter" value="1">
 <input type="submit" value="Фильтр">
 <input type="submit" name="qs_filter_clear" value="Очистить">
-Количество записей на странице: 
+Количество записей на странице:
 <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
 <option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
 <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
 <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
 </select>
-<div class="module" id="changelist">
+<div class="aligned" id="changelist">
 <table>
-	<thead>
-    {% table_header_sort headers %}
-    <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
-    <td></td>
-    <td>{{ filter.form.area__title__contains }}</td>
-	<td>{{ filter.form.brand__title__contains }}</td>
-    <td>{{ filter.form.part_number__contains }}</td>
-    <td></td>
-    <td>{{ filter.form.manager__username__contains }}</td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td></td>
-    </tr>
-    </thead>
-	<tbody>
+<thead>
+<tr>{% table_header_sort headers %}</tr>
+<tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+<td></td>
+<td>{{ filter.form.brandgroup__title__contains }}</td>
+<td>{{ filter.form.area__title__contains }}</td>
+<td>{{ filter.form.brand__title__contains }}</td>
+<td>{{ filter.form.part_number__contains }}</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>{{ filter.form.part_number_superseded__contains }}</td>
+<td>{{ filter.form.description_ru__contains }}</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>{{ filter.form.invoice_code__contains }}</td>
+<td>{{ filter.form.status }}</td>
+</tr>
+</thead>
+<tbody>
 	{% for i in items %}
 	<tr class="{% cycle row1,row2 %}">
 		<td>{{ i.get_po_verbose }}</td>
-		<td>{{ i.area }}</td>
-		<td>{{ i.brand }}</td>
-		<td>{{ i.part_number }}</td>
-		<td>{{ i.quantity }}</td>
-		<td>{{ i.manager }}</td>
-		<td>{{ i.total_cost|default:"" }}</td>
-		<td>{{ i.get_status_verbose }}</td>
+		<td class="center">{{ i.brandgroup }}</td>
+		<td class="center">{{ i.area }}</td>
+		<td class="center">{{ i.brand }}</td>
+		<td class="center">{{ i.part_number|default:"" }}</td>
+    <td class="center">{{ i.created|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}</td>
+    <td class="center">{{ i.quantity|default:"" }}</td>
+    <td class="center">{{ i.part_number_superseded|default:"" }}</td>
+    <td>{{ i.description_ru|default:"" }}</td>
+    <td>{{ i.comment_customer|default:"" }}</td>
+    <td>{{ i.weight|default:"" }}</td>
+    <td>{{ i.delivery|default:"" }}</td>
+    <td>{{ i.price_sale|default:"" }}</td>
+    <td>{{ i.price_discount|default:"" }}</td>
+    <td>{{ i.cost|default:"" }}</td>
+    <td>{{ i.total_cost|default:"" }}</td>
+    <td>{{ i.invoice_code|default:"" }}</td>
+    <td>{{ i.get_status_display }}</td>
 	</tr>
 	{% endfor %}
 
@@ -59,3 +95,4 @@
 </div>
 {% include 'paginator.html' %}
 {% endblock %}
+

@@ -90,6 +90,7 @@ def index(request):
                     (u'Поставщик', 'area__title'),
                     (u'BRAND', 'brand__title'),
                     (u'PART #', 'part_number'),
+                    (u'COMMENT 1', None),
                     (u'COMMENT 2', None),
                     (u'Дата', 'created'),
                     (u'Q', None),
@@ -150,7 +151,8 @@ def order(request):
             for form in item_forms:
                 data = form.cleaned_data
                 if data['client'] not in clients:
-                    clients[data['client']] = OrderedItem.objects.get_next_client_order_id(data['client'])
+                    clients[data['client']] = \
+                        OrderedItem.objects.get_next_client_order_id(data['client'])
                 data['client_order_id'] = clients[data['client']]
                 supplier_id = data.pop('supplier')
                 data['manager'] = request.user
@@ -708,3 +710,4 @@ def export_order(request):
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
     return response
+
