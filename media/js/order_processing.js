@@ -102,19 +102,27 @@ function postSave() {
 		jQuery('#cost_'+current.id).html(cost.toFixed(2));
 		calculateTotalCost();
 	}
+	
 	if (current.type == 'price_discount') {
-		if (current.display_value)
-			var cost = parseFloat(jQuery('#delivery_display_'+current.id).html()) + parseFloat(current.display_value);
-		else if (jQuery('#price_sale_'+current.id).html())
-			var cost = parseFloat(jQuery('#delivery_display_'+current.id).html()) + parseFloat(jQuery('#price_sale_'+current.id).html());
-		jQuery('#cost_'+current.id).html(cost.toFixed(2));
+	    delivery = parseFloat(jQuery('#delivery_display_'+current.id).html());
+	    alert(typeof delivery);
+        if (isNaN(delivery) || delivery == null) {
+            delivery = 0.0;
+        } 
+        alert(delivery);
+		if (current.display_value) {
+    		var cost = delivery + parseFloat(current.display_value);
+		} else if (jQuery('#price_sale_'+current.id).html()) {
+			var cost = delivery + parseFloat(jQuery('#price_sale_'+current.id).html());
+		}
+		jQuery('#cost_'+current.id).html(cost);
 		calculateTotalCost();
 	}
 }
 
 function calculateTotalCost() {
 	var total_cost = parseInt(jQuery('#quantity_display_'+current.id).html())*parseFloat(jQuery('#cost_'+current.id).html());
-	jQuery('#total_cost_'+current.id).html(total_cost.toFixed(2));
+	jQuery('#total_cost_'+current.id).html(total_cost.toFixed(3));
 }
 
 function restore() {

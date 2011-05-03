@@ -152,18 +152,16 @@ class OrderedItem(models.Model):
         if self.price_sale and self.client and self.area and not self.price_discount:
             try:
                 discount = Discount.objects.get(user=self.client, area=self.area)
-                self.price_discount = self.price_sale - self.price_sale*discount.discount/100
+                self.price_discount = self.price_sale - \
+                                      self.price_sale*discount.discount/100
             except Discount.DoesNotExist:
                 pass
-
-        if self.delivery and self.price_sale and not self.price_discount:
-            self.cost = self.delivery + self.price_sale
-        elif self.delivery and self.price_discount:
-            self.cost = self.delivery + self.price_discount
-
-        if self.cost and self.quantity:
-            self.total_cost = self.cost*self.quantity
-
+        
+        self.cost = (self.delivery or 0) + \
+                    [x for x in \
+                        [self.price_discount, self.price_sale, 0] \
+                           if x is not None][0]
+        self.total_cost = self.cost * self.quantity
         super(OrderedItem, self).save(*args, **kwargs)
 
     def get_status_verbose(self):
