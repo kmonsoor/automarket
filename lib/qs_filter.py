@@ -7,17 +7,18 @@ class QSFilter(object):
     modified = False
     is_set = False
     
-    def __init__(self, request, form, use_session=True):
+    def __init__(self, request, form, use_session=True, clear_old=True):
 
         self.use_session = use_session
         self.method = self.use_session and 'post' or 'get'
-        self.data = self.process_request(request)         
+        
+        self.data = self.process_request(request, clear_old)
         if self.data:
             self.form = form(self.data)
         else:
-            self.form = form()           
+            self.form = form()
             
-    def process_request(self, request):
+    def process_request(self, request, clear_old=True):
         
         if request.REQUEST.has_key('qs_filter_clear'):
             self.clear_session(request)
@@ -34,7 +35,7 @@ class QSFilter(object):
         elif self.use_session:
             data = request.session.get('qs_filter', None)
             if data:
-                if data['path'] != request.path:
+                if data['path'] != request.path and clear_old:
                     self.clear_session(request)
                     return None
                 self.is_set = True

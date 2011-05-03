@@ -127,6 +127,31 @@ def index(request):
     context['headers'] = list(sort_headers.headers())
 
     qs = OrderedItem.objects.select_related().filter(**_filter.get_filters()).exclude(status='shipped')
+    
+    # calculate totals by filter
+    total_row = None
+    if _filter.is_set:
+        from django.db import connection
+        
+        td = "U0"
+        q, params = qs._as_sql(connection)
+        from_clause = q.split("FROM")[1]
+        sql = \
+        """
+        SELECT
+            SUM(%(p)s.total_cost) as TOTAL_COST,
+            SUM(%(p)s.weight*%(p)s.quantity) as TOTAL_WEIGHT,
+            SUM(%(p)s.delivery) as TOTAL_DELIVERY,
+            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)) AS TOTAL_PRICE
+            FROM %(from)s
+        """ % {'p': td, 'from': from_clause}
+        cursor = connection.cursor()
+        cursor.execute(sql, params)
+        res = cursor.fetchall()
+        if len(res) > 0:
+            total_row = dict(zip( \
+                ('COST', 'WEIGHT', 'DELIVERY', 'PRICE'), \
+                res[0]))
 
     if order_by:
         qs = qs.order_by(order_by)
@@ -136,6 +161,7 @@ def index(request):
     context['items'] = paginator.get_page_items();
     context['paginator'] = paginator
     context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
+    context['total_row'] = total_row
     return context
 
 
@@ -678,7 +704,11 @@ LIST_HEADERS = (
 
 @login_required
 def export_order(request):
-    orders = OrderedItem.objects.all().order_by('brandgroup__direction__po', 'ponumber')
+    _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
+    
+    orders = OrderedItem.objects.select_related() \
+                        .filter(**_filter.get_filters()) \
+                        .order_by('brandgroup__direction__po', 'ponumber')
     filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
     book = xl.Workbook()
     sheet = book.add_sheet('ORDERS')
