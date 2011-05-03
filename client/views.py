@@ -1,5 +1,6 @@
 # -*- coding=UTF-8 -*-
-
+import os, cjson
+import pyExcelerator as xl
 from datetime import datetime
 from django.contrib.auth.decorators import login_required, permission_required
 from lib.decorators import render_to
@@ -10,6 +11,8 @@ from data.models import OrderedItem, Brand, BrandGroup, Area
 from data.forms import OrderedItemsFilterForm
 from client.forms import SearchForm
 from common.views import PartSearch
+from django.http import HttpResponse
+from django.conf import settings
 
 
 @login_required
@@ -68,28 +71,28 @@ def index(request):
     if _filter.modified:
         current_page = 1
     response['filter'] = _filter
-
+    
     LIST_HEADERS = (
-                (u'PO', 'ponumber'),
-                (u'Направление', 'brandgroup__title'),
-                (u'Поставщик', 'area__title'),
-                (u'BRAND', 'brand__title'),
-                (u'PART #', 'part_number'),
-                (u'Дата', 'created'),
-                (u'Q', None),
-                (u'ЗАМЕНА', None),
-                (u'RUS', None),
-                (u"Комментарий", None),
-                (u'WEIGHT', None),
-                (u'SHIPPING', None),
-                (u'PRICE', None),
-                (u'NEW PRICE', None),
-                (u'COST', None),
-                (u'TOTAL COST', None),
-                (u'Инвойс', 'invoice_code'),
-                (u'Статус', 'status'),
-                )
-
+            (u'PO', 'ponumber'),
+            (u'Направление', 'brandgroup__title'),
+            (u'Поставщик', 'area__title'),
+            (u'BRAND', 'brand__title'),
+            (u'PART #', 'part_number'),
+            (u'Дата', 'created'),
+            (u'Q', None),
+            (u'ЗАМЕНА', None),
+            (u'RUS', None),
+            (u"Комментарий", None),
+            (u'WEIGHT', None),
+            (u'SHIPPING', None),
+            (u'PRICE', None),
+            (u'NEW PRICE', None),
+            (u'COST', None),
+            (u'TOTAL COST', None),
+            (u'Инвойс', 'invoice_code'),
+            (u'Статус', 'status'),
+            )
+    
     sort_headers = SortHeaders(request, LIST_HEADERS)
     order_field = request.GET.get('o', None)
     order_direction = request.GET.get('ot', None)
@@ -161,3 +164,65 @@ def help_brands_list(request, area_id):
 
     return {'list': brands,}
 
+
+
+@login_required
+def export_order(request):
+    LIST_HEADERS = (
+        (u'PO', 'ponumber'),
+        (u'Поставщик', 'brandgroup'),
+        (u'BRAND', 'brand'),
+        (u'AREA', 'area'),
+        (u'PART #', 'part_number'),
+        (u'Q', 'quantity'),
+        (u'ЗАМЕНА', 'part_number_superseded'),
+        (u'RUS', 'description_ru'),
+        (u'ENG', 'description_en'),
+        (u'WEIGHT', 'weight'),
+        (u'SHIPPING', 'delivery'),
+        (u'PRICE', 'price_sale'),
+        (u'NEW PRICE', 'price_discount'),
+        (u'COST', 'cost'),
+        (u'TOTAL COST', 'total_cost'),
+        (u'Инвойс', 'invoice_code'),
+        (u'Статус', 'status'),
+    )
+   
+    _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
+    
+    orders = OrderedItem.objects.select_related() \
+                        .filter(client=request.user) \
+                        .filter(**_filter.get_filters()) \
+                        .order_by('brandgroup__direction__po', 'ponumber')
+   
+    filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
+    book = xl.Workbook()
+    sheet = book.add_sheet('ORDERS')
+
+    i = 0
+    curr_line = 0
+    for key, value in LIST_HEADERS:
+        sheet.write(curr_line,i,key)
+        i += 1
+
+    for order in orders:
+        i = 0
+        curr_line += 1
+        for key, value in LIST_HEADERS:
+            if value == 'ponumber':
+                value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber or '--')
+            elif value == 'status':
+                value = order.get_status_verbose()
+            else:
+                value = unicode(getattr(order, value)) if getattr(order, value) is not None else ''
+            sheet.write(curr_line,i,value)
+            i += 1
+
+    book.save(filename)
+    os.chmod(filename, 0777)
+    content = open(filename,'rb').read()
+    response = HttpResponse(content, mimetype='application/vnd.ms-excel')
+    name = '%s-%s.xls' % ('orders',datetime.now().strftime('%m-%d-%Y-%H-%M'))
+    response['Content-Disposition'] = 'inline; filename=%s' % name
+    os.remove(filename)
+    return response

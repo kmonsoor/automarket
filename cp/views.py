@@ -704,7 +704,12 @@ LIST_HEADERS = (
 
 @login_required
 def export_order(request):
-    orders = OrderedItem.objects.all().order_by('brandgroup__direction__po', 'ponumber')
+    
+    _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
+    
+    orders = OrderedItem.objects.select_related() \
+                        .filter(**_filter.get_filters()) \
+                        .order_by('brandgroup__direction__po', 'ponumber')
     filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
     book = xl.Workbook()
     sheet = book.add_sheet('ORDERS')

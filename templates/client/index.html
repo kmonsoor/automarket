@@ -39,6 +39,7 @@ tr.alt td {
 {% block page_content %}
 <div class="" id="changelist">
 <form method="{{ filter.method }}" action="/client/{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
+<a href="/client/export_order/">Экспорт</a><br/><br/>
 <input type="hidden" name="qs_filter" value="1">
 <input type="submit" value="Фильтр">
 <input type="submit" name="qs_filter_clear" value="Очистить">
