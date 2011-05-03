@@ -105,11 +105,9 @@ function postSave() {
 	
 	if (current.type == 'price_discount') {
 	    delivery = parseFloat(jQuery('#delivery_display_'+current.id).html());
-	    alert(typeof delivery);
         if (isNaN(delivery) || delivery == null) {
             delivery = 0.0;
         } 
-        alert(delivery);
 		if (current.display_value) {
     		var cost = delivery + parseFloat(current.display_value);
 		} else if (jQuery('#price_sale_'+current.id).html()) {
