@@ -105,6 +105,32 @@ def index(request):
     response['headers'] = list(sort_headers.headers())
 
     qs = OrderedItem.objects.select_related().filter(client=request.user).filter(**_filter.get_filters())
+    
+    # calculate totals by filter
+    total_row = None
+    if _filter.is_set:
+        from django.db import connection
+        
+        td = "U0"
+        q, params = qs._as_sql(connection)
+        from_clause = q.split("FROM")[1]
+        sql = \
+        """
+        SELECT
+            SUM(%(p)s.total_cost) as TOTAL_COST,
+            SUM(%(p)s.weight*%(p)s.quantity) as TOTAL_WEIGHT,
+            SUM(%(p)s.delivery) as TOTAL_DELIVERY,
+            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)) AS TOTAL_PRICE
+            FROM %(from)s
+        """ % {'p': td, 'from': from_clause}
+        cursor = connection.cursor()
+        cursor.execute(sql, params)
+        res = cursor.fetchall()
+        if len(res) > 0:
+            total_row = dict(zip( \
+                ('COST', 'WEIGHT', 'DELIVERY', 'PRICE'), \
+                res[0]))
+        
     if order_by:
         qs = qs.order_by(order_by)
 
@@ -112,7 +138,7 @@ def index(request):
 
     response['items'] = paginator.get_page_items()
     response['paginator'] = paginator
-
+    response['total_row'] = total_row
     return response
 
 

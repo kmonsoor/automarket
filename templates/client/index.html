@@ -22,6 +22,13 @@ td.right {
 text-align: right;
 }
 
+table {
+	border: 1px solid #DDD;
+}
+
+tr.alt td {
+	font-weight: 600;
+}
 
 </style>
 {% endblock %}
@@ -89,7 +96,28 @@ text-align: right;
     <td>{{ i.get_status_display }}</td>
 	</tr>
 	{% endfor %}
-
+	{% if total_row %}
+	<tr class="alt">
+		<td><strong>Итого:</strong></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td>&nbsp;</td>
+		<td>&nbsp;</td>
+		<td></td>
+		<td></td>
+		<td>&nbsp;</td>
+		<td>{{ total_row.WEIGHT|default:0|floatformat:3 }}</td>
+		<td>{{ total_row.DELIVERY|default:0|floatformat:3 }}</td>
+		<td>{{ total_row.PRICE|default:0|floatformat:3 }}</td>
+		<td>&nbsp;</td>
+		<td>&nbsp;</td>
+		<td>{{ total_row.COST|default:0|floatformat:3 }}</td>
+		<td></td>
+		<td></td>
+	</tr>
+	{% endif %}
 	</tbody>
 	</table>
 </div>
