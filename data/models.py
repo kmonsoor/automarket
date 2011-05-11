@@ -1,17 +1,20 @@
-# -*- coding=UTF-8 -*-
+# -*- coding=utf-8 -*-
 
-import datetime, time
+import datetime
+import time
 from django.db import models
 from django.contrib.auth.models import User, Group
 from data.managers import OrderedItemManager
-from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
-
-Group.add_to_class('discount', models.PositiveIntegerField(blank=True, null=True, default=0, verbose_name=u'Скидка в %'))
+from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT, DELIVERY_DEFAULT
 
 class Direction(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     po = models.CharField(max_length=255, verbose_name=u"PO")
-
+    
+    delivery = models.FloatField(verbose_name=u"доставка", blank=True, null=True)
+    multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
+                                     blank=True, null=True)
+    
     class Meta:
         verbose_name = u'Направление'
         verbose_name_plural = u'Направления'
@@ -24,8 +27,12 @@ class BrandGroup(models.Model):
     direction = models.ForeignKey(Direction, verbose_name=u"Направление")
     title = models.CharField(verbose_name=u"Название", max_length=10)
     description = models.TextField(verbose_name=u"Описание", null=True, blank=True)
+    
+    delivery = models.FloatField(verbose_name=u"доставка", blank=True, null=True)
+    multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
+                                     blank=True, null=True)
+    
     area = models.ManyToManyField('Area', verbose_name=u"Поставщики", null=True, blank=True)
-    delivery = models.FloatField(verbose_name=u"Доставка", default=0)
     add_brand_to_comment = models.BooleanField(verbose_name=u"В поле 'Comment2' добавляется значение поля 'Brand'", default = False)
 
     class Meta:
@@ -36,10 +43,23 @@ class BrandGroup(models.Model):
         return u"%s::%s" % (self.direction, self.title)
 
 
+    def price_settings(self):
+        class ps(dict):
+            __slots__ = ['area', 'multiplier', 'delivery']
+
+        current_settings = dict(tuple([(x.area.id, x) for x in \
+            BrandGroupAreaSettings.objects.select_related().filter(brand_group=self)]))
+        for area in self.area.all():
+            if area.id in current_settings:
+                multiplier, delivery = (getattr(current_settings.get(area.id), x) \
+                for x in ['multiplier', 'delivery'])
+            else:
+                multiplier = delivery = None
+            yield ps(area=area, multiplier=multiplier, delivery=delivery)
+
 class Area(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     brands = models.ManyToManyField('Brand', null=True, blank=True, verbose_name=u'Бренды')
-    multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, default=AREA_MULTIPLIER_DEFAULT)
 
     class Meta:
         verbose_name = u"Поставщик"
@@ -50,6 +70,41 @@ class Area(models.Model):
         return u"%s" % self.title
 
 
+class BrandGroupAreaSettings(models.Model):
+  
+    brand_group = models.ForeignKey(BrandGroup, verbose_name=BrandGroup._meta.verbose_name)
+    area = models.ForeignKey(Area, verbose_name=Area._meta.verbose_name)
+    
+    delivery = models.FloatField(verbose_name=u"доставка", blank=True, null=True)
+    multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
+                                     blank=True, null=True)
+    
+    def __unicode__(self):
+        return u"%s - %s"%(self.brand_group, self.area)
+    
+    class Meta:
+        unique_together = ('area', 'brand_group')
+        verbose_name = u"запись настроек"
+        verbose_name_plural = u"Настройки для поставщиков"
+    
+# M2M brand_group - area
+'''
+def brangroup_area_changed(sender, instance, action, reverse, model, pk_set, **kwargs):
+    # Delete removed
+    if pk_set:
+    BrandGroupAreaSettings.objects.filter(brand_group=instance) \
+                              .exclude(area__id__in=list(pk_set)) \
+                              .delete()
+    # Will be created for new ones
+    for area_id in pk_set:
+        obj, created = \
+        BrandGroupSettings.objects.get_or_create(brand_group=instance, \
+                                                 area=model.objects.get(pk=area_id))
+
+models.signals.m2m_changed.connect(brangroup_area_changed, sender=BrandGroup.area.through,
+dispatch_uid="38fy3f73")
+'''
+
 class Brand(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
 
@@ -59,16 +114,6 @@ class Brand(models.Model):
         ordering = ['title',]
     def __unicode__(self):
         return u"%s" % self.title
-
-    def get_multiplier(self):
-        '''
-        Returns max multiplier for set of areas linked for this brand
-        '''
-        try:
-            return max([x.multiplier \
-                for x in Area.objects.filter(brands=self)])
-        except ValueError: # empty Area queryset
-            return AREA_MULTIPLIER_DEFAULT
 
 
 ORDER_ITEM_STATUSES = (
@@ -182,8 +227,7 @@ class OrderedItem(models.Model):
     def po_verbose(self):
         return self.get_po_verbose()
 
-
-
+# ----------------------------------------------------------
 
 class ClientGroup(models.Model):
     title = models.CharField(u'название', max_length=255)
@@ -196,10 +240,17 @@ class ClientGroup(models.Model):
         verbose_name = u"запись группы клиентов"
         verbose_name_plural = u"Группы клиентов"
 
+
+class BrandGroupDiscount(models.Model):
+    user = models.ForeignKey(User)
+    brand_group = models.ForeignKey(BrandGroup)
+    discount = models.FloatField(verbose_name=u"Скидка (%)")
+
 class Discount(models.Model):
-    user = models.ForeignKey(User, verbose_name = u"Пользователь")
-    area = models.ForeignKey(Area, verbose_name = u"Поставщик")
-    discount = models.FloatField(verbose_name = u"Скидка (%)")
+    user = models.ForeignKey(User, verbose_name=u"Пользователь")
+    brand_group = models.ForeignKey(BrandGroup, verbose_name=u"группа поставщиков", null=True)
+    area = models.ForeignKey(Area, verbose_name=u"Поставщик")
+    discount = models.FloatField(verbose_name=u"Скидка (%)")
 
     class Meta:
         verbose_name = u"скидки"
@@ -209,23 +260,39 @@ class Discount(models.Model):
     def __unicode__(self):
         return u"%s:%s: %s" % (self.user.username, self.area.title, self.discount)
 
+class BrandGroupClientGroupDiscount(models.Model):
+    client_group = models.ForeignKey(ClientGroup, verbose_name = u"Группа клиента")
+    brand_group = models.ForeignKey(BrandGroup, null=True, blank=True)
+    discount = models.FloatField(verbose_name = u"Скидка (%)")
+
+    class Meta:
+        verbose_name = u"Скидка группы клиента"
+        verbose_name_plural = u"Скидки групп клиентов"
+        unique_together = ('client_group', 'brand_group')
+
+
 class ClientGroupDiscount(models.Model):
     client_group = models.ForeignKey(ClientGroup, verbose_name = u"Группа клиента")
+    brand_group = models.ForeignKey(BrandGroup, null=True, blank=True)
     area = models.ForeignKey(Area, verbose_name = u"Поставщик")
     discount = models.FloatField(verbose_name = u"Скидка (%)")
 
     class Meta:
         verbose_name = u"Скидка группы клиента"
         verbose_name_plural = u"Скидки групп клиентов"
-        unique_together = ('client_group', 'area',)
+        unique_together = ('client_group', 'area', 'brand_group')
+
 
 def on_client_group_create(sender, instance, created, **kwargs):
     if not created:
         return
-
-    for area in Area.objects.all():
-        ClientGroupDiscount.objects.create(area=area, \
-               client_group=instance, discount=AREA_DISCOUNT_DEFAULT)
+    for brand_group in BrandGroup.objects.all():
+        BrandGroupClientGroupDiscount.objects.create(brand_group = brand_group,
+                   client_group=instance, discount=AREA_DISCOUNT_DEFAULT)
+        for area in brand_group.area.all():
+            ClientGroupDiscount.objects.create(area=area,
+                   brand_group = brand_group,
+                   client_group=instance, discount=AREA_DISCOUNT_DEFAULT)
 
     from data.forms import CLIENT_FIELD_LIST
     fields = [x[2] for x in CLIENT_FIELD_LIST]
@@ -240,25 +307,50 @@ class UserProfile(models.Model):
     order_item_fields = models.TextField(blank=True, default="")
     user = models.ForeignKey(User, unique=True)
 
-    def get_discount(self, area):
+    def get_discount(self, brand_group, area):
         user_discount = None
         group_discount = None
-        # first try to find self discount
+        brand_group_user_discount = None
+        brand_group_discount = None
+
+        # first try to find self discount for selected brand_group and area
         try:
-            user_discount = Discount.objects.get(user=self.user, area=area).discount
+            user_discount = Discount.objects.get(user=self.user, \
+                                                 brand_group=brand_group, \
+                                                 area=area).discount
         except (Discount.DoesNotExist, AttributeError):
             pass
-        # try to find group discount
+        # try to find group discount got selected barand group and area
         try:
             cgd = ClientGroupDiscount.objects.get(client_group=self.client_group, \
-                                    area=area)
+                                    brand_group=brand_group, area=area)
             group_discount = cgd.discount
         except (ClientGroupDiscount.DoesNotExist, AttributeError):
             pass
+
+        # try to find self discount only for brand_group
+        try:
+            brand_group_user_discount = \
+            BrandGroupDiscount.objects.get(user=self.user, brand_group=brand_group) \
+                                      .discount
+        except (BrandGroupDiscount.DoesNotExist, AttributeError):
+            pass
+
+        # try to find group discount only for brand_group
+        try:
+            brand_group_discount = \
+            BrandGroupClientGroupDiscount.objects \
+               .get(client_group=self.client_group, brand_group=brand_group) \
+               .discount
+        except (BrandGroupClientGroupDiscount.DoesNotExist, AttributeError):
+            pass
+
+
         # Return first not null value
-        for x in (user_discount, group_discount, AREA_DISCOUNT_DEFAULT):
-            if x:
-                return x
+        return [x for x in \
+                [user_discount, group_discount,
+                 brand_group_user_discount, brand_group_discount,
+                 AREA_DISCOUNT_DEFAULT] if x is not None][0]
 
     def get_order_fields(self):
         try:
@@ -276,10 +368,4 @@ class UserProfile(models.Model):
     class Meta:
         verbose_name = u"профиль пользователя"
         verbose_name_plural = u"Профили пользователей"
-
-#def on_client_create(sender, instance, created, **kwargs):
-#    if not created:
-#        return
-
-#    UserProfile.create
 

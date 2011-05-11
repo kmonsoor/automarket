@@ -72,6 +72,7 @@ class PartSearch(object):
 
     SEARCH_URL = 'http://www.parts.com/oemcatalog/index.cfm?action=searchCatalogOEM'
     FORM_NAME = 'partnumberSearch'
+    BRAND_GROUP_TITLE = 'OEM'
 
     def get_make_options(self):
         """

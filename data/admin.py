@@ -5,30 +5,72 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
-from data.models import Direction, BrandGroup, Brand, OrderedItem, Area, Discount
+from django.core.urlresolvers import reverse
+from data.models import *
 from django import forms
 from data.models import ClientGroup
 from django.shortcuts import get_object_or_404
-
-
-from data.models import ClientGroup, ClientGroupDiscount, UserProfile
 from data.forms import CLIENT_FIELD_LIST
 
 class DirectionAdmin(admin.ModelAdmin):
     list_display = ('title', 'po',)
 
 
+class BrandGroupAreaSettingsInline(admin.TabularInline):
+    model = BrandGroupAreaSettings
+    extra = 0
+    
+    def get_formset(self, request, obj=None, **kwargs):
+        return super(BrandGroupAreaSettingsInline, self).get_formset(request, obj, **kwargs)
+
+    def get_object(self, request):
+        object_id = request.META['PATH_INFO'].strip('/').split('/')[-1]
+        try:
+            object_id = int(object_id)
+        except ValueError:
+            return None
+        return BrandGroup.objects.get(pk=object_id)
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'area':
+            brand_group = self.get_object(request)
+            if brand_group:
+                kwargs['queryset'] = brand_group.area.all().order_by('title')
+        return super(BrandGroupAreaSettingsInline, self) \
+               .formfield_for_foreignkey(db_field, request, **kwargs)
+
 class BrandGroupAdmin(admin.ModelAdmin):
-    list_display = ('title', 'direction', 'description', 'add_brand_to_comment')
+    list_display = ('title', 'direction', 'description', 'add_brand_to_comment', 'show_delivery', 'show_multiplier')
     list_filter = ('direction',)
     filter_horizontal = ['area']
-
+    inlines = [BrandGroupAreaSettingsInline]
+       
+    def show_multiplier(self, obj):
+        return obj.multiplier if obj.multiplier is not None else u''
+    show_multiplier.short_description = \
+    BrandGroup._meta.get_field_by_name('multiplier')[0].verbose_name
+  
+    
+    def show_delivery(self, obj):
+        return obj.delivery if obj.delivery is not None else u''
+    show_delivery.short_description = \
+    BrandGroup._meta.get_field_by_name('delivery')[0].verbose_name
 
 class AreaAdmin(admin.ModelAdmin):
-    list_display = ('title',)
+    list_display = ('title', 'in_groups')
     search_fields = ['title', 'brands__title']
     filter_horizontal = ['brands']
-
+    
+    def in_groups(self, obj):
+        links = []
+        for b in obj.brandgroup_set.all():
+            links.append((reverse("admin:data_brandgroup_change", args=[b.id]), b.title))
+        if links:
+            return u", ".join(map(lambda x: '<a href="%s">%s</a>' % x, links))
+        return '---'
+    in_groups.short_description = u"Входит в группы"
+    in_groups.allow_tags = True
+        
 
 class BrandAdmin(admin.ModelAdmin):
     list_display = ('title',)
@@ -191,14 +233,15 @@ class ClientGroupAddForm(forms.ModelForm):
         model = ClientGroup
         fields = ['title']
 
-class ClientGroupDiscountInline(admin.TabularInline):
-    extra = 1
-    model = ClientGroupDiscount
+class BrandGroupClientGroupDiscountInline(admin.TabularInline):
+    extra = 0
+    model = BrandGroupClientGroupDiscount
+    can_delete = False
 
 class ClientGroupAdmin(admin.ModelAdmin):
     display_list = ['title']
     add_form = ClientGroupAddForm
-    inlines = [ClientGroupDiscountInline]
+    inlines = [BrandGroupClientGroupDiscountInline]
 
     def get_form(self, request, obj=None, **kwargs):
         """
