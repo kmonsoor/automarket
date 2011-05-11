@@ -56,7 +56,13 @@ class BrandGroup(models.Model):
             else:
                 multiplier = delivery = None
             yield ps(area=area, multiplier=multiplier, delivery=delivery)
-
+    
+    def get_settings(self):
+        m = [self.multiplier, self.direction.multiplier, AREA_MULTIPLIER_DEFAULT]
+        d = [self.delivery, self.direction.delivery, DELIVERY_DEFAULT]
+        first = lambda xs: [x for x in xs if x is not None][0]
+        return first(m), first(d)
+        
 class Area(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     brands = models.ManyToManyField('Brand', null=True, blank=True, verbose_name=u'Бренды')
@@ -68,7 +74,21 @@ class Area(models.Model):
 
     def __unicode__(self):
         return u"%s" % self.title
-
+    
+    def get_brandgroup_settings(self, brand_group):
+        try:
+            s = BrandGroupAreaSettings.objects.get(area=self, brand_group=brand_group)
+        except BrandGroupAreaSettings.DoesNotExist:
+            return brand_group.get_settings()
+        else:
+            m = [s.multiplier, brand_group.multiplier,
+                  brand_group.direction.multiplier, 
+                  AREA_MULTIPLIER_DEFAULT]
+            d = [s.delivery, brand_group.delivery, 
+                  brand_group.direction.delivery, 
+                  DELIVERY_DEFAULT]
+            first = lambda xs: [x for x in xs if x is not None][0]
+            return first(m), first(d)
 
 class BrandGroupAreaSettings(models.Model):
   

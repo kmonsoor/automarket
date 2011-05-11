@@ -7,7 +7,7 @@ from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from data.models import OrderedItem, Brand, BrandGroup, Area
+from data.models import OrderedItem, Brand, BrandGroup, Area, BrandGroupAreaSettings
 from data.forms import OrderedItemsFilterForm
 from client.forms import SearchForm
 from common.views import PartSearch
@@ -32,31 +32,25 @@ def search(request):
             if not found:
                 msg = u"Ничего не найдено"
             else:
-                
                 # try to find area and get multiplier
                 try:
                     # find an area by title
                     area = Area.objects.get(title__icontains=found['brandname'])
+                    brand_group = BrandGroup.objects.get(title="OEM")
                     # we need to find a valid multiplier for this area 
                     # TODO - hardcoded 'OEM', we need do more sofisticated algo
-                    price_settings = PriceSettings.objects \
-                                     .get(brand_group__title='OEM', area=area)
-                    if price_settings.multiplier is not None:
-                        m = price_settings.multiplier
-                    else:
-                        raise ValueError
-                except PriceSettings.DoesNotExist: # not price_setings for OEM and this area
-                    m = area.multiplier or AREA_MULTIPLIER_DEFAULT
-                except (Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
+                except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
+                    # not price_setings for OEM and this area
                     m = AREA_MULTIPLIER_DEFAULT
-                    area = None
-                
+                else:
+                    m, d = area.get_brandgroup_settings(brand_group)
                 # TODO - add brand_group to get_discount
                 try:
                     discount = request.user.get_profile().get_discount(area)
                 except Exception, e:
                     discount = AREA_DISCOUNT_DEFAULT
                 discount = float(discount)
+                
                 found['MSRP'] = float(found['MSRP']) * float(m)
                 found['your_price'] = found['MSRP']*(100-discount)/100
                 found['your_economy'] = found['MSRP'] - found['your_price']
