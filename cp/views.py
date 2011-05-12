@@ -22,7 +22,7 @@ from lib.helpers import next, reverse
 from lib import xlsreader
 
 from cp.forms import OrderItemForm, ImportXlsForm, SearchForm
-from data.models import Direction, BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES
+from data.models import Direction, BrandGroup, Area, Brand, OrderedItem, ORDER_ITEM_STATUSES
 from data.forms import OrderedItemsFilterForm, OrderedItemForm
 from common.views import PartSearch, SoapClient
 
@@ -741,3 +741,14 @@ def export_order(request):
     os.remove(filename)
     return response
 
+@ajax_request
+@login_required
+def get_brandgroup_settings(request, ordered_item_id):
+    try:
+        ordered_item = OrderedItem.objects.get(pk=ordered_item_id)
+    except OrderedItem.DoesNotExist:
+        pass
+    else:
+        response = ordered_item.area.get_brandgroup_settings(ordered_item.brandgroup)
+        return map(float, list(response))
+    return []

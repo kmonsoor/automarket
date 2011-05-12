@@ -27,7 +27,7 @@ def ajax_request(func):
             response = func(request, *args, **kwargs)
         else:
             response = {'error': {'type': 403, 'message': 'Accepts only POST request'}}
-        if isinstance(response, dict):
+        if isinstance(response, (dict, list)):
             return JsonResponse(response)
         else:
             return response

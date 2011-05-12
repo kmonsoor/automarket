@@ -92,7 +92,22 @@ function postSave() {
 	}
 	if (current.type == 'weight') {
 		//var shipping = parseFloat(jQuery('#delivery_supplier_input_'+current.id).attr('value'))*parseFloat(current.display_value)*parseInt(jQuery('#quantity_display_'+current.id).html());
-		var shipping = parseFloat(current.display_value)*12.5;
+		
+		// get price settings for given area and brandgroup
+		function get_delivery() {
+		    var delivery = 12.5;
+            $.ajax({
+                url: get_brandgroup_settings_url + current.id + '/',
+                async: false,
+                success: function(data) {
+                    delivery = data[1];
+                }        
+            } 
+            );
+            return delivery;
+		}
+		delivery = parseFloat(get_delivery())
+		var shipping = parseFloat(current.display_value)*delivery;
 		jQuery('#delivery_display_'+current.id).html(shipping.toFixed(2));
 		var shipping = parseFloat(jQuery('#delivery_display_'+current.id).html())
 		if (jQuery('#price_discount_display_'+current.id).html())

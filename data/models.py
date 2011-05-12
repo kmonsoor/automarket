@@ -203,11 +203,9 @@ class OrderedItem(models.Model):
         verbose_name_plural = u"Заказанные позиции"
 
     def save(self, *args, **kwargs):
-
-        #if self.brandgroup.delivery and self.weight and self.quantity:
-            #self.delivery = self.brandgroup.delivery*self.weight*self.quantity
-        #if self.weight and self.quantity:
-        #    self.delivery = 12.5*self.weight
+        if self.area and self.brandgroup and self.weight:
+            multiplier, delivery = self.area.get_brandgroup_settings(self.brandgroup)
+            self.delivery = delivery*self.weight
 
         if self.quantity and self.price_invoice:
             self.total_w_ship = self.price_invoice*self.quantity
