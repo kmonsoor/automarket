@@ -10,11 +10,11 @@ from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT, DELIVE
 class Direction(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     po = models.CharField(max_length=255, verbose_name=u"PO")
-    
+
     delivery = models.FloatField(verbose_name=u"доставка", blank=True, null=True)
     multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
                                      blank=True, null=True)
-    
+
     class Meta:
         verbose_name = u'Направление'
         verbose_name_plural = u'Направления'
@@ -27,11 +27,11 @@ class BrandGroup(models.Model):
     direction = models.ForeignKey(Direction, verbose_name=u"Направление")
     title = models.CharField(verbose_name=u"Название", max_length=10)
     description = models.TextField(verbose_name=u"Описание", null=True, blank=True)
-    
+
     delivery = models.FloatField(verbose_name=u"доставка", blank=True, null=True)
     multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
                                      blank=True, null=True)
-    
+
     area = models.ManyToManyField('Area', verbose_name=u"Поставщики", null=True, blank=True)
     add_brand_to_comment = models.BooleanField(verbose_name=u"В поле 'Comment2' добавляется значение поля 'Brand'", default = False)
 
@@ -56,13 +56,13 @@ class BrandGroup(models.Model):
             else:
                 multiplier = delivery = None
             yield ps(area=area, multiplier=multiplier, delivery=delivery)
-    
+
     def get_settings(self):
         m = [self.multiplier, self.direction.multiplier, AREA_MULTIPLIER_DEFAULT]
         d = [self.delivery, self.direction.delivery, DELIVERY_DEFAULT]
         first = lambda xs: [x for x in xs if x is not None][0]
         return first(m), first(d)
-        
+
 class Area(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     brands = models.ManyToManyField('Brand', null=True, blank=True, verbose_name=u'Бренды')
@@ -74,7 +74,7 @@ class Area(models.Model):
 
     def __unicode__(self):
         return u"%s" % self.title
-    
+
     def get_brandgroup_settings(self, brand_group):
         try:
             s = BrandGroupAreaSettings.objects.get(area=self, brand_group=brand_group)
@@ -82,31 +82,31 @@ class Area(models.Model):
             return brand_group.get_settings()
         else:
             m = [s.multiplier, brand_group.multiplier,
-                  brand_group.direction.multiplier, 
+                  brand_group.direction.multiplier,
                   AREA_MULTIPLIER_DEFAULT]
-            d = [s.delivery, brand_group.delivery, 
-                  brand_group.direction.delivery, 
+            d = [s.delivery, brand_group.delivery,
+                  brand_group.direction.delivery,
                   DELIVERY_DEFAULT]
             first = lambda xs: [x for x in xs if x is not None][0]
             return first(m), first(d)
 
 class BrandGroupAreaSettings(models.Model):
-  
+
     brand_group = models.ForeignKey(BrandGroup, verbose_name=BrandGroup._meta.verbose_name)
     area = models.ForeignKey(Area, verbose_name=Area._meta.verbose_name)
-    
+
     delivery = models.FloatField(verbose_name=u"доставка", blank=True, null=True)
     multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
                                      blank=True, null=True)
-    
+
     def __unicode__(self):
         return u"%s - %s"%(self.brand_group, self.area)
-    
+
     class Meta:
         unique_together = ('area', 'brand_group')
         verbose_name = u"запись настроек"
         verbose_name_plural = u"Настройки для поставщиков"
-    
+
 # M2M brand_group - area
 '''
 def brangroup_area_changed(sender, instance, action, reverse, model, pk_set, **kwargs):
@@ -260,19 +260,24 @@ class ClientGroup(models.Model):
 
 
 class BrandGroupDiscount(models.Model):
-    user = models.ForeignKey(User)
-    brand_group = models.ForeignKey(BrandGroup)
-    discount = models.FloatField(verbose_name=u"Скидка (%)")
-
-class Discount(models.Model):
-    user = models.ForeignKey(User, verbose_name=u"Пользователь")
-    brand_group = models.ForeignKey(BrandGroup, verbose_name=u"группа поставщиков", null=True)
-    area = models.ForeignKey(Area, verbose_name=u"Поставщик")
-    discount = models.FloatField(verbose_name=u"Скидка (%)")
+    user = models.ForeignKey(User, verbose_name=u"пользователь")
+    brand_group = models.ForeignKey(BrandGroup, verbose_name=u"группа поставщиков")
+    discount = models.FloatField(verbose_name=u"скидка (%)")
 
     class Meta:
-        verbose_name = u"скидки"
-        verbose_name_plural = u"Скидки"
+        verbose_name = u"скидки для группы поставщиков"
+        verbose_name_plural = u"Скидки для группы поставщиков"
+        unique_together = ('user', 'brand_group',)
+
+class Discount(models.Model):
+    user = models.ForeignKey(User, verbose_name=u"пользователь")
+    brand_group = models.ForeignKey(BrandGroup, verbose_name=u"группа поставщиков", null=True)
+    area = models.ForeignKey(Area, verbose_name=u"поставщик")
+    discount = models.FloatField(verbose_name=u"скидка (%)")
+
+    class Meta:
+        verbose_name = u"скидки для поставшика"
+        verbose_name_plural = u"Скидки для поставщика"
         unique_together = ('user', 'area',)
 
     def __unicode__(self):

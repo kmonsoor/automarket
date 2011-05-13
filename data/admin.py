@@ -19,7 +19,7 @@ class DirectionAdmin(admin.ModelAdmin):
 class BrandGroupAreaSettingsInline(admin.TabularInline):
     model = BrandGroupAreaSettings
     extra = 0
-    
+
     def get_formset(self, request, obj=None, **kwargs):
         return super(BrandGroupAreaSettingsInline, self).get_formset(request, obj, **kwargs)
 
@@ -30,7 +30,7 @@ class BrandGroupAreaSettingsInline(admin.TabularInline):
         except ValueError:
             return None
         return BrandGroup.objects.get(pk=object_id)
-    
+
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'area':
             brand_group = self.get_object(request)
@@ -44,13 +44,13 @@ class BrandGroupAdmin(admin.ModelAdmin):
     list_filter = ('direction',)
     filter_horizontal = ['area']
     inlines = [BrandGroupAreaSettingsInline]
-       
+
     def show_multiplier(self, obj):
         return obj.multiplier if obj.multiplier is not None else u''
     show_multiplier.short_description = \
     BrandGroup._meta.get_field_by_name('multiplier')[0].verbose_name
-  
-    
+
+
     def show_delivery(self, obj):
         return obj.delivery if obj.delivery is not None else u''
     show_delivery.short_description = \
@@ -60,7 +60,7 @@ class AreaAdmin(admin.ModelAdmin):
     list_display = ('title', 'in_groups')
     search_fields = ['title', 'brands__title']
     filter_horizontal = ['brands']
-    
+
     def in_groups(self, obj):
         links = []
         for b in obj.brandgroup_set.all():
@@ -70,7 +70,7 @@ class AreaAdmin(admin.ModelAdmin):
         return '---'
     in_groups.short_description = u"Входит в группы"
     in_groups.allow_tags = True
-        
+
 
 class BrandAdmin(admin.ModelAdmin):
     list_display = ('title',)
@@ -124,10 +124,10 @@ class Staff(User):
 
 # User administration
 
-
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email','first_name', 'last_name', 'groups_list', 'is_staff', 'last_login',)
     list_filter = ['is_active']
+
     def groups_list(self, obj):
         groups = [x['name'] for x in obj.groups.values()]
         return (',').join(groups) if groups else u'Нет группы'
@@ -156,9 +156,9 @@ class CUserCreationForm(UserCreationForm):
         queryset=ClientGroup.objects.all().order_by('title'), \
         label="Группа")
 
-class ClientDiscountInline(admin.TabularInline):
-    extra = 1
-    model = Discount
+class BrandGroupDiscountInline(admin.TabularInline):
+    model = BrandGroupDiscount
+    extra = 0
 
 class UserProfileInline(admin.StackedInline):
 	model = UserProfile
@@ -171,7 +171,7 @@ class CustomerAdmin(CustomUserAdmin):
 
     add_form = CUserCreationForm
 
-    inlines = [UserProfileInline, ClientDiscountInline]
+    inlines = [UserProfileInline, BrandGroupDiscountInline]
 
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
