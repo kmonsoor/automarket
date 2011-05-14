@@ -75,8 +75,6 @@ class AreaAdmin(admin.ModelAdmin):
 class BrandAdmin(admin.ModelAdmin):
     list_display = ('title',)
 
-
-
 class DiscountAdmin(admin.ModelAdmin):
     list_display = ('user', 'area', 'discount',)
     list_filter = ('user', 'discount',)
@@ -156,7 +154,7 @@ class CUserCreationForm(UserCreationForm):
         queryset=ClientGroup.objects.all().order_by('title'), \
         label="Группа")
 
-class BrandGroupDiscountInline(admin.TabularInline):
+class UserBrandGroupDiscountInline(admin.TabularInline):
     model = BrandGroupDiscount
     extra = 0
 
@@ -171,7 +169,7 @@ class CustomerAdmin(CustomUserAdmin):
 
     add_form = CUserCreationForm
 
-    inlines = [UserProfileInline, BrandGroupDiscountInline]
+    inlines = [UserProfileInline, UserBrandGroupDiscountInline]
 
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
@@ -238,10 +236,28 @@ class BrandGroupClientGroupDiscountInline(admin.TabularInline):
     model = BrandGroupClientGroupDiscount
     can_delete = False
 
+
+class ClientGroupDiscountInlineForm(forms.ModelForm):
+    class Meta:
+        model = ClientGroupDiscount
+    def __init__(self, *args, **kwargs):
+        super(ClientGroupDiscountInlineForm, self).__init__(*args, **kwargs)
+        if self.instance.brand_group:
+            self.fields['area'].queryset = Area.objects.filter(brandgroup_set.brand_group=self.instance.brand_group)
+
+
+class ClientGroupDiscountInline(admin.TabularInline):
+    extra = 0
+    model = ClientGroupDiscount
+    form = ClientGroupDiscountInlineForm
+    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+        field = super(ClientGroupDiscountInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        return field
+
 class ClientGroupAdmin(admin.ModelAdmin):
     display_list = ['title']
     add_form = ClientGroupAddForm
-    inlines = [BrandGroupClientGroupDiscountInline]
+    inlines = [BrandGroupClientGroupDiscountInline, ClientGroupDiscountInline]
 
     def get_form(self, request, obj=None, **kwargs):
         """

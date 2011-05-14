@@ -285,38 +285,40 @@ class Discount(models.Model):
 
 class BrandGroupClientGroupDiscount(models.Model):
     client_group = models.ForeignKey(ClientGroup, verbose_name = u"Группа клиента")
-    brand_group = models.ForeignKey(BrandGroup, null=True, blank=True)
+    brand_group = models.ForeignKey(BrandGroup, null=True, blank=True, verbose_name=u"группа поставщиков")
     discount = models.FloatField(verbose_name = u"Скидка (%)")
 
     class Meta:
         verbose_name = u"Скидка группы клиента"
-        verbose_name_plural = u"Скидки групп клиентов"
+        verbose_name_plural = u"Скидки групп клиентов по группам поставщиков"
         unique_together = ('client_group', 'brand_group')
 
 
 class ClientGroupDiscount(models.Model):
     client_group = models.ForeignKey(ClientGroup, verbose_name = u"Группа клиента")
-    brand_group = models.ForeignKey(BrandGroup, null=True, blank=True)
+    brand_group = models.ForeignKey(BrandGroup, null=True, blank=True, verbose_name=u"группа поставщиков")
     area = models.ForeignKey(Area, verbose_name = u"Поставщик")
     discount = models.FloatField(verbose_name = u"Скидка (%)")
 
     class Meta:
         verbose_name = u"Скидка группы клиента"
-        verbose_name_plural = u"Скидки групп клиентов"
+        verbose_name_plural = u"Скидки групп клиентов по поставщикам"
         unique_together = ('client_group', 'area', 'brand_group')
 
 
 def on_client_group_create(sender, instance, created, **kwargs):
     if not created:
         return
-    for brand_group in BrandGroup.objects.all():
-        BrandGroupClientGroupDiscount.objects.create(brand_group = brand_group,
-                   client_group=instance, discount=AREA_DISCOUNT_DEFAULT)
-        for area in brand_group.area.all():
-            ClientGroupDiscount.objects.create(area=area,
-                   brand_group = brand_group,
-                   client_group=instance, discount=AREA_DISCOUNT_DEFAULT)
+    def discounts():
+        for brand_group in BrandGroup.objects.all():
+            BrandGroupClientGroupDiscount.objects.create(brand_group = brand_group,
+                       client_group=instance, discount=AREA_DISCOUNT_DEFAULT)
+            for area in brand_group.area.all():
+                ClientGroupDiscount.objects.create(area=area,
+                       brand_group = brand_group,
+                       client_group=instance, discount=AREA_DISCOUNT_DEFAULT)
 
+    #discounts()
     from data.forms import CLIENT_FIELD_LIST
     fields = [x[2] for x in CLIENT_FIELD_LIST]
     instance.order_item_fields = ','.join(fields)
