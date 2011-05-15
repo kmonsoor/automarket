@@ -266,7 +266,7 @@ class BrandGroupDiscount(models.Model):
 
     class Meta:
         verbose_name = u"скидки для группы поставщиков"
-        verbose_name_plural = u"Скидки для группы поставщиков"
+        verbose_name_plural = u"Скидки пользователя для групп поставщиков"
         unique_together = ('user', 'brand_group',)
 
 class Discount(models.Model):
@@ -277,8 +277,8 @@ class Discount(models.Model):
 
     class Meta:
         verbose_name = u"скидки для поставшика"
-        verbose_name_plural = u"Скидки для поставщика"
-        unique_together = ('user', 'area',)
+        verbose_name_plural = u"Скидки пользователяы для поставщиков в группах поставщиков"
+        unique_together = ('user', 'brand_group', 'area',)
 
     def __unicode__(self):
         return u"%s:%s: %s" % (self.user.username, self.area.title, self.discount)
@@ -290,7 +290,7 @@ class BrandGroupClientGroupDiscount(models.Model):
 
     class Meta:
         verbose_name = u"Скидка группы клиента"
-        verbose_name_plural = u"Скидки групп клиентов по группам поставщиков"
+        verbose_name_plural = u"Скидки группы для групп поставщиков"
         unique_together = ('client_group', 'brand_group')
 
 
@@ -301,8 +301,8 @@ class ClientGroupDiscount(models.Model):
     discount = models.FloatField(verbose_name = u"Скидка (%)")
 
     class Meta:
-        verbose_name = u"Скидка группы клиента"
-        verbose_name_plural = u"Скидки групп клиентов по поставщикам"
+        verbose_name = u"Скидка группы"
+        verbose_name_plural = u"Скидки группы для поставщиков в группах поставщиков"
         unique_together = ('client_group', 'area', 'brand_group')
 
 
@@ -332,43 +332,44 @@ class UserProfile(models.Model):
     order_item_fields = models.TextField(blank=True, default="")
     user = models.ForeignKey(User, unique=True)
 
-    def get_discount(self, brand_group, area):
+    def get_discount(self, brand_group=None, area=None):
         user_discount = None
         group_discount = None
         brand_group_user_discount = None
         brand_group_discount = None
-
+        
         # first try to find self discount for selected brand_group and area
-        try:
-            user_discount = Discount.objects.get(user=self.user, \
-                                                 brand_group=brand_group, \
-                                                 area=area).discount
-        except (Discount.DoesNotExist, AttributeError):
-            pass
-        # try to find group discount got selected barand group and area
-        try:
-            cgd = ClientGroupDiscount.objects.get(client_group=self.client_group, \
-                                    brand_group=brand_group, area=area)
-            group_discount = cgd.discount
-        except (ClientGroupDiscount.DoesNotExist, AttributeError):
-            pass
+        if brand_group and area:
+            try:
+                user_discount = Discount.objects.get(user=self.user, \
+                                                     brand_group=brand_group, \
+                                                     area=area).discount
+            except (Discount.DoesNotExist, AttributeError):
+                pass
+            # try to find group discount got selected barand group and area
+            try:
+                cgd = ClientGroupDiscount.objects.get(client_group=self.client_group, \
+                                        brand_group=brand_group, area=area)
+                group_discount = cgd.discount
+            except (ClientGroupDiscount.DoesNotExist, AttributeError):
+                pass
 
-        # try to find self discount only for brand_group
-        try:
-            brand_group_user_discount = \
-            BrandGroupDiscount.objects.get(user=self.user, brand_group=brand_group) \
-                                      .discount
-        except (BrandGroupDiscount.DoesNotExist, AttributeError):
-            pass
+            # try to find self discount only for brand_group
+            try:
+                brand_group_user_discount = \
+                BrandGroupDiscount.objects.get(user=self.user, brand_group=brand_group) \
+                                          .discount
+            except (BrandGroupDiscount.DoesNotExist, AttributeError):
+                pass
 
-        # try to find group discount only for brand_group
-        try:
-            brand_group_discount = \
-            BrandGroupClientGroupDiscount.objects \
-               .get(client_group=self.client_group, brand_group=brand_group) \
-               .discount
-        except (BrandGroupClientGroupDiscount.DoesNotExist, AttributeError):
-            pass
+            # try to find group discount only for brand_group
+            try:
+                brand_group_discount = \
+                BrandGroupClientGroupDiscount.objects \
+                   .get(client_group=self.client_group, brand_group=brand_group) \
+                   .discount
+            except (BrandGroupClientGroupDiscount.DoesNotExist, AttributeError):
+                pass
 
 
         # Return first not null value

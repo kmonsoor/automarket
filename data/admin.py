@@ -6,11 +6,14 @@ from django.contrib.auth.models import User
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
-from data.models import *
 from django import forms
-from data.models import ClientGroup
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
+from django.core import serializers
+
+from data.models import *
 from data.forms import CLIENT_FIELD_LIST
+
 
 class DirectionAdmin(admin.ModelAdmin):
     list_display = ('title', 'po',)
@@ -55,7 +58,25 @@ class BrandGroupAdmin(admin.ModelAdmin):
         return obj.delivery if obj.delivery is not None else u''
     show_delivery.short_description = \
     BrandGroup._meta.get_field_by_name('delivery')[0].verbose_name
-
+    
+    def get_urls(self):
+        from django.conf.urls.defaults import patterns
+        urls = super(BrandGroupAdmin, self).get_urls()
+        my_urls = patterns('',
+            (r'^(.+)/areas/$', self.admin_site.admin_view(self.get_areas))
+        )
+        return my_urls + urls
+    
+    def get_areas(self, request, object_id):
+        response = ''
+        try:
+            brand_group = BrandGroup.objects.get(pk=object_id)
+        except BrandGroup.DoesNotExist:
+            response = ''
+        else:
+            response = serializers.serialize('json', brand_group.area.all(), fields=('id','title'))
+        return HttpResponse(response, mimetype="text/json")
+    
 class AreaAdmin(admin.ModelAdmin):
     list_display = ('title', 'in_groups')
     search_fields = ['title', 'brands__title']
@@ -158,6 +179,21 @@ class UserBrandGroupDiscountInline(admin.TabularInline):
     model = BrandGroupDiscount
     extra = 0
 
+class UserDiscountInlineForm(forms.ModelForm):
+    class Meta:
+        model = Discount
+    def __init__(self, *args, **kwargs):
+        super(UserDiscountInlineForm, self).__init__(*args, **kwargs)
+        if self.instance.brand_group:
+            self.fields['area'].queryset = self.instance.brand_group.area.all()
+        else:
+            self.fields['area'].queryset = Area.objects.all()
+
+class DiscountInline(admin.TabularInline):
+    model = Discount
+    extra = 0
+    form = UserDiscountInlineForm
+
 class UserProfileInline(admin.StackedInline):
 	model = UserProfile
 	extra = 0
@@ -169,7 +205,7 @@ class CustomerAdmin(CustomUserAdmin):
 
     add_form = CUserCreationForm
 
-    inlines = [UserProfileInline, UserBrandGroupDiscountInline]
+    inlines = [UserProfileInline, UserBrandGroupDiscountInline, DiscountInline]
 
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
@@ -188,6 +224,7 @@ class CustomerAdmin(CustomUserAdmin):
         return qs
 
     change_form_template = 'admin/data/user/change_form.html'
+    add_form_template = 'admin/data/user/change_form.html'
     list_display = ['username', 'email','first_name', 'last_name','is_active']
 
     def change_view(self, request, object_id, extra_context=None):
@@ -243,16 +280,15 @@ class ClientGroupDiscountInlineForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(ClientGroupDiscountInlineForm, self).__init__(*args, **kwargs)
         if self.instance.brand_group:
-            self.fields['area'].queryset = Area.objects.filter(brandgroup_set.brand_group=self.instance.brand_group)
+            self.fields['area'].queryset = self.instance.brand_group.area.all()
+        else:
+            self.fields['area'].queryset = Area.objects.get_empty_query_set()
 
 
 class ClientGroupDiscountInline(admin.TabularInline):
     extra = 0
     model = ClientGroupDiscount
     form = ClientGroupDiscountInlineForm
-    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
-        field = super(ClientGroupDiscountInline, self).formfield_for_foreignkey(db_field, request, **kwargs)
-        return field
 
 class ClientGroupAdmin(admin.ModelAdmin):
     display_list = ['title']

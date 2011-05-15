@@ -46,7 +46,8 @@ def search(request):
                     m, d = area.get_brandgroup_settings(brand_group)
                 # TODO - add brand_group to get_discount
                 try:
-                    discount = request.user.get_profile().get_discount(area)
+                    discount = request.user.get_profile() \
+                                      .get_discount(brand_group=brand_group, area=area)
                 except Exception, e:
                     discount = AREA_DISCOUNT_DEFAULT
                 discount = float(discount)

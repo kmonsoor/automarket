@@ -4,6 +4,7 @@
 {{ block.super }}
 <script type="text/javascript">
 $ = django.jQuery;
+var brand_group_base_url = "{% url admin:data_brandgroup_changelist %}";
 
 function build_fields_string() {
   var value = new Array();
@@ -15,6 +16,27 @@ function build_fields_string() {
   $("#id_userprofile_set-0-order_item_fields").val(value.join(","));
 }
 
+function populate_area_boxes() {
+  var id = $(this).attr('id');
+  var row = id.match(/(\d*)-brand_group$/);
+  if(row) {
+     var row_id = row[1]; 
+     var brand_group_id = $(this).val();
+     $.ajax({
+      url: brand_group_base_url + brand_group_id + "/areas/",
+      dataType: 'json', 
+      success: function (data) {
+        area_select = $("#id_discount_set-" + row_id + "-area");
+        area_select.find('option').remove().end();
+        for(i in data) {
+          opt = data[i];
+          area_select.append('<option value="' + opt.pk + '">'+ opt.fields.title +'</option>');
+        }
+      }
+     });
+  }
+}
+
 $(document).ready(function(){
   $("input[name=_addanother]").remove();
   $("input[name=_save]").remove();
@@ -22,7 +44,10 @@ $(document).ready(function(){
 
 
   {% if add %}
-  $("#discount_set-group").remove();
+  $("#discount_set-group").css("border", "none").children("h2, div").css("display",'none');
+  $("#brandgroupdiscount_set-group").css("border", "none").children("h2, div").css("display",'none');
+  $("div[id^=userprofile_set]").css("border", "none").children("h2, div").remove();
+  
   {% endif %}
 
   {% if change %}
@@ -31,10 +56,9 @@ $(document).ready(function(){
   $("a[id^=add_id_discount_set]").remove();
   $("div[id^=userprofile_set]").children("h3").css("display", 'none');
   {% endif %}
-
-
+  
+  $("select[id^=id_discount_set]").live('change', populate_area_boxes);
 
 });
 </script>
 {% endblock %}
-
