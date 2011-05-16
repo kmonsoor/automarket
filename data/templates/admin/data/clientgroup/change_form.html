@@ -44,7 +44,13 @@ $(document).ready(function(){
 
   {% if add %}
   $("#clientgroupdiscount_set-group").css("display","None");
+  
+  $("#discount_set-group").css("border", "none").children("h2, div").css("display",'none');
+  $("#brandgroupclientgroupdiscount_set-group").css("border", "none").children("h2, div").css("display",'none');
+ 
   {% endif %}
+  
+  
   
   $("select[id^=id_clientgroupdiscount_set]").live('change', populate_area_boxes);
     
