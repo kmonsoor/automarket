@@ -58,7 +58,7 @@ class BrandGroupAdmin(admin.ModelAdmin):
         return obj.delivery if obj.delivery is not None else u''
     show_delivery.short_description = \
     BrandGroup._meta.get_field_by_name('delivery')[0].verbose_name
-    
+
     def get_urls(self):
         from django.conf.urls.defaults import patterns
         urls = super(BrandGroupAdmin, self).get_urls()
@@ -66,7 +66,7 @@ class BrandGroupAdmin(admin.ModelAdmin):
             (r'^(.+)/areas/$', self.admin_site.admin_view(self.get_areas))
         )
         return my_urls + urls
-    
+
     def get_areas(self, request, object_id):
         response = ''
         try:
@@ -76,7 +76,7 @@ class BrandGroupAdmin(admin.ModelAdmin):
         else:
             response = serializers.serialize('json', brand_group.area.all(), fields=('id','title'))
         return HttpResponse(response, mimetype="text/json")
-    
+
 class AreaAdmin(admin.ModelAdmin):
     list_display = ('title', 'in_groups')
     search_fields = ['title', 'brands__title']
@@ -282,7 +282,10 @@ class ClientGroupDiscountInlineForm(forms.ModelForm):
         if self.instance.brand_group:
             self.fields['area'].queryset = self.instance.brand_group.area.all()
         else:
-            self.fields['area'].queryset = Area.objects.get_empty_query_set()
+            if not self.is_bound:
+                self.fields['area'].queryset = Area.objects.get_empty_query_set()
+            else:
+                self.fields['area'].queryset = Area.objects.all()
 
 
 class ClientGroupDiscountInline(admin.TabularInline):
@@ -312,7 +315,6 @@ class ClientGroupAdmin(admin.ModelAdmin):
         extra_context = {}
         obj = get_object_or_404(ClientGroup, id=object_id)
         extra_context['client_order_item_fields'] = []
-
         fff = obj.order_item_fields
         if fff:
             extra_context['original_order_item_fields'] = \
