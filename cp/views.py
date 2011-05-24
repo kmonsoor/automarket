@@ -127,12 +127,12 @@ def index(request):
     context['headers'] = list(sort_headers.headers())
 
     qs = OrderedItem.objects.select_related().filter(**_filter.get_filters()).exclude(status='shipped')
-    
+
     # calculate totals by filter
     total_row = None
     if _filter.is_set:
         from django.db import connection
-        
+
         td = "U0"
         q, params = qs._as_sql(connection)
         from_clause = q.split("FROM")[1]
@@ -705,7 +705,7 @@ LIST_HEADERS = (
 @login_required
 def export_order(request):
     _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
-    
+
     orders = OrderedItem.objects.select_related() \
                         .filter(**_filter.get_filters()) \
                         .order_by('brandgroup__direction__po', 'ponumber')
@@ -718,7 +718,6 @@ def export_order(request):
     for key, value in LIST_HEADERS:
         sheet.write(curr_line,i,key)
         i += 1
-
     for order in orders:
         i = 0
         curr_line += 1
@@ -728,9 +727,14 @@ def export_order(request):
             elif value == 'status':
                 value = order.get_status_verbose()
             else:
-                value = unicode(getattr(order, value)) if getattr(order, value) is not None else ''
-            sheet.write(curr_line,i,value)
-            i += 1
+                value = getattr(order, value) or ''
+            try:
+                sheet.write(curr_line,i,value)
+                i += 1
+            except AssertionError:
+                value = unicode(value)
+                sheet.write(curr_line,i,value)
+                i += 1
 
     book.save(filename)
     os.chmod(filename, 0777)
@@ -752,3 +756,4 @@ def get_brandgroup_settings(request, ordered_item_id):
         response = ordered_item.area.get_brandgroup_settings(ordered_item.brandgroup)
         return map(float, list(response))
     return []
+
