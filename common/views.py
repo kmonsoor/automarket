@@ -199,6 +199,8 @@ class PartSearch(object):
 
         response = self.get_response(maker_id, partnumber)
         data = self.parse_response(response)
+        if not data:
+            return None
         data.update({'brandname':self.get_maker_name(maker_id)})
         return data
 
