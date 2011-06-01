@@ -6,6 +6,8 @@ from django.contrib.auth import login, logout, authenticate
 from django.conf import settings
 import re
 import urllib
+import mechanize
+import urllib2
 from decimal import Decimal
 from common.forms import UserAuthForm
 from data.models import *
@@ -134,7 +136,7 @@ class PartSearch(object):
         except IndexError:
             return None
 
-    def get_response(self, maker_id, partnumber):
+    def get_response_urllib(self, maker_id, partnumber):
         """
         Connects to the search page with params:
         @maker string Car maker name, i.e. `mazda` etc.
@@ -148,10 +150,33 @@ class PartSearch(object):
         f = urllib.urlopen(self.SEARCH_URL, params)
         content = f.read()
         f.close()
+        return content
+
+    def get_response_mechanize(self,maker_id, partnumber):
+        browser = mechanize.Browser()
+        params = urllib.urlencode({'Makeid': maker_id, \
+                                   'partnumber': partnumber, \
+                                   'searchAll': '1', \
+                                   'SearchType': '1'})
+        headers = {"User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2.8) Gecko/20100722 Firefox/3.6.8 GTB7.1 (.NET CLR 3.5.30729)",
+        "Referer": "http://www.parts.com"}
+        request = urllib2.Request(self.SEARCH_URL, params, headers)
+        response = browser.open(request, timeout=120.0)
+        content = response.read()
+        browser.close()
+        return content
+
+    def _sanitize_content(self, content=None):
+        if not content:
+            return ''
         content = content.replace('\r','').replace('\n','')
         content = re.sub(r'>[ \t]*', r'>', content)
         content = re.sub(r'[ \t]*<', r'<', content)
         return content
+
+    def get_response(self, maker_id, partnumber):
+        return self._sanitize_content(self.get_response_mechanize(maker_id, partnumber))
+
 
     def parse_response(self, response):
         """
