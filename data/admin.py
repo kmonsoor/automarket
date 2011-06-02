@@ -175,6 +175,18 @@ class CUserCreationForm(UserCreationForm):
         queryset=ClientGroup.objects.all().order_by('title'), \
         label="Группа")
 
+    def save(self, *args, **kwargs):
+        user = super(CUserCreationForm, self).save(*args, **kwargs)
+        user.save()
+        try:
+            profile = user.get_profile()
+        except Exception, e:
+            profile = None
+        if not profile:
+            profile = UserProfile.objects.create(user=user, \
+                                 client_group=self.cleaned_data['client_group'])
+        return user
+
 class UserBrandGroupDiscountInline(admin.TabularInline):
     model = BrandGroupDiscount
     extra = 0
@@ -226,6 +238,7 @@ class CustomerAdmin(CustomUserAdmin):
     change_form_template = 'admin/data/user/change_form.html'
     add_form_template = 'admin/data/user/change_form.html'
     list_display = ['username', 'email','first_name', 'last_name','is_active']
+
 
     def change_view(self, request, object_id, extra_context=None):
         extra_context = {}

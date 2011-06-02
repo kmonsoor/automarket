@@ -20,11 +20,11 @@ function populate_area_boxes() {
   var id = $(this).attr('id');
   var row = id.match(/(\d*)-brand_group$/);
   if(row) {
-     var row_id = row[1]; 
+     var row_id = row[1];
      var brand_group_id = $(this).val();
      $.ajax({
       url: brand_group_base_url + brand_group_id + "/areas/",
-      dataType: 'json', 
+      dataType: 'json',
       success: function (data) {
         area_select = $("#id_discount_set-" + row_id + "-area");
         area_select.find('option').remove().end();
@@ -39,15 +39,18 @@ function populate_area_boxes() {
 
 $(document).ready(function(){
   $("input[name=_addanother]").remove();
+  {% if add %}
   $("input[name=_save]").remove();
   $("input[name=_continue]").addClass("default");
+  {% endif %}
+
 
 
   {% if add %}
   $("#discount_set-group").css("border", "none").children("h2, div").css("display",'none');
   $("#brandgroupdiscount_set-group").css("border", "none").children("h2, div").css("display",'none');
   $("div[id^=userprofile_set]").css("border", "none").children("h2, div").remove();
-  
+
   {% endif %}
 
   {% if change %}
@@ -56,9 +59,10 @@ $(document).ready(function(){
   $("a[id^=add_id_discount_set]").remove();
   $("div[id^=userprofile_set]").children("h3").css("display", 'none');
   {% endif %}
-  
+
   $("select[id^=id_discount_set]").live('change', populate_area_boxes);
 
 });
 </script>
 {% endblock %}
+
