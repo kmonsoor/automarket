@@ -37,7 +37,7 @@ def search(request):
                     # find an area by title
                     area = Area.objects.get(title__icontains=found['brandname'])
                     brand_group = BrandGroup.objects.get(title="OEM")
-                    # we need to find a valid multiplier for this area 
+                    # we need to find a valid multiplier for this area
                     # TODO - hardcoded 'OEM', we need do more sofisticated algo
                 except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
                     # not price_setings for OEM and this area
@@ -51,7 +51,7 @@ def search(request):
                 except Exception, e:
                     discount = AREA_DISCOUNT_DEFAULT
                 discount = float(discount)
-                
+
                 found['MSRP'] = float(found['MSRP']) * float(m)
                 found['your_price'] = found['MSRP']*(100-discount)/100
                 found['your_economy'] = found['MSRP'] - found['your_price']
@@ -115,7 +115,7 @@ class ClientOrderItemList(object):
             request.session.modified = True
         if not items_per_page:
             items_per_page = 20
-        
+
         self.items_per_page = int(items_per_page)
         self.results = self.result_list()
         self.headers = self.list_headers()
@@ -168,7 +168,7 @@ class ClientOrderItemList(object):
         qs = OrderedItem.objects.select_related() \
                         .filter(client=self.request.user) \
                         .filter(**self.filter.get_filters())
-        
+
         # calculate totals by filter
         self.total_row = {}
         if self.filter.is_set:
@@ -192,7 +192,7 @@ class ClientOrderItemList(object):
 	            self.total_row = dict(zip( \
 		        ('total_cost', 'weight', 'delivery', 'price_sale'), \
 		        res[0]))
-    	    
+
         if order_by:
             qs = qs.order_by(order_by)
 
@@ -206,7 +206,7 @@ class ClientOrderItemList(object):
                 yield u"Итого"
             else:
                 yield self.total_row.get(field_name, u"")
-                    
+
 
 
 @login_required
@@ -217,6 +217,7 @@ def index(request):
     response['cl'] = cl
     response['paginator'] = cl.paginator
     response['items_per_page'] = cl.items_per_page
+
     return response
 
 
@@ -262,8 +263,8 @@ def export_order(request):
         (u'Инвойс', 'invoice_code'),
         (u'Статус', 'status'),
     )
-    
-    
+
+
     def get_list_headers():
         try:
             fields = request.user.get_profile().get_order_fields()
@@ -272,15 +273,15 @@ def export_order(request):
         if fields:
             return [(x[0], x[1]) for x in LIST_HEADERS if x[1] in fields]
         return LIST_HEADERS
-    
-   
+
+
     _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
-    
+
     orders = OrderedItem.objects.select_related() \
                         .filter(client=request.user) \
                         .filter(**_filter.get_filters()) \
                         .order_by('brandgroup__direction__po', 'ponumber')
-   
+
     filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
     book = xl.Workbook()
     sheet = book.add_sheet('ORDERS')
@@ -295,10 +296,14 @@ def export_order(request):
         i = 0
         curr_line += 1
         for key, value in get_list_headers():
-            value = unicode(getattr(order, value)) \
-                if getattr(order, value) is not None else ''
-            sheet.write(curr_line,i,value)
-            i += 1
+            value = getattr(order, value) or ''
+            try:
+                sheet.write(curr_line,i,value)
+                i += 1
+            except AssertionError:
+                value = unicode(value)
+                sheet.write(curr_line,i,value)
+                i += 1
 
     book.save(filename)
     os.chmod(filename, 0777)
