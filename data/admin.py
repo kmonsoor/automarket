@@ -173,7 +173,7 @@ from django.contrib.auth.forms import UserCreationForm
 class CUserCreationForm(UserCreationForm):
     client_group = forms.ModelChoiceField( \
         queryset=ClientGroup.objects.all().order_by('title'), \
-        label="Группа")
+        label="Группа", required=False)
 
     def save(self, *args, **kwargs):
         user = super(CUserCreationForm, self).save(*args, **kwargs)
@@ -183,8 +183,10 @@ class CUserCreationForm(UserCreationForm):
         except Exception, e:
             profile = None
         if not profile:
-            profile = UserProfile.objects.create(user=user, \
-                                 client_group=self.cleaned_data['client_group'])
+            group = self.cleaned_data.get('client_group')
+            if not group:
+                group = ClientGroup.objects.get_default()
+            profile = UserProfile.objects.create(user=user, client_group=group)
         return user
 
 class UserBrandGroupDiscountInline(admin.TabularInline):
@@ -250,7 +252,7 @@ class CustomerAdmin(CustomUserAdmin):
         if not profile:
             profile = \
             UserProfile.objects.create(user=obj, \
-                                       client_group=ClientGroup.objects.all()[0])
+                                       client_group=ClientGroup.objects.get_default())
 
         extra_context['client_order_item_fields'] = []
 
@@ -307,7 +309,7 @@ class ClientGroupDiscountInline(admin.TabularInline):
     form = ClientGroupDiscountInlineForm
 
 class ClientGroupAdmin(admin.ModelAdmin):
-    display_list = ['title']
+    list_display = ['title', 'is_default']
     add_form = ClientGroupAddForm
     inlines = [BrandGroupClientGroupDiscountInline, ClientGroupDiscountInline]
 

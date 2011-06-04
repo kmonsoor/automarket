@@ -247,9 +247,20 @@ class OrderedItem(models.Model):
 
 # ----------------------------------------------------------
 
+class ClientGroupManager(models.Manager):
+    def get_default(self):
+        try:
+            return self.filter(is_default=True)[0]
+        except IndexError:
+            return self.all()[0]
+
+
 class ClientGroup(models.Model):
     title = models.CharField(u'название', max_length=255)
     order_item_fields = models.TextField(blank=True, null=True)
+    is_default = models.BooleanField(u'назначать новому пользователю по-умолчанию', default=False, editable=False)
+
+    objects = ClientGroupManager()
 
     def __unicode__(self):
         return self.title
@@ -258,6 +269,12 @@ class ClientGroup(models.Model):
         verbose_name = u"запись группы клиентов"
         verbose_name_plural = u"Группы клиентов"
 
+    #def save(self, *args, **kwargs):
+    #    if self.default:
+    #        for x in ClientGroup.objects.exclude(pk=self.id):
+    #            x.default = False
+    #            x.save()
+    #    super(ClientGroup, self).save(*args, **kwargs)
 
 class BrandGroupDiscount(models.Model):
     user = models.ForeignKey(User, verbose_name=u"пользователь")
@@ -337,7 +354,7 @@ class UserProfile(models.Model):
         group_discount = None
         brand_group_user_discount = None
         brand_group_discount = None
-        
+
         # first try to find self discount for selected brand_group and area
         if brand_group and area:
             try:
