@@ -134,6 +134,7 @@ class CustomerAccount(User):
         verbose_name = u"аккаунт клиента"
         verbose_name_plural = u"аккаунты клиентов"
 
+
 class Staff(User):
     class Meta:
         proxy = True
@@ -153,6 +154,8 @@ class CustomUserAdmin(UserAdmin):
     groups_list.allow_tags = True
     groups_list.short_description = u'Группа'
     filter_horizontal = ['groups']
+
+
 
 
 class StaffAdmin(CustomUserAdmin):
@@ -209,9 +212,16 @@ class DiscountInline(admin.TabularInline):
     form = UserDiscountInlineForm
 
 class UserProfileInline(admin.StackedInline):
-	model = UserProfile
-	extra = 0
-	template = 'admin/data/user/userprofile_inline.html'
+    model = UserProfile
+    extra = 0
+    template = 'admin/data/user/userprofile_inline.html'
+
+    def formfield_for_foreignkey(self, db_field, *args, **kwargs):
+        if db_field.name == 'client_group':
+            kwargs['queryset'] = ClientGroup.objects.all().order_by('title')
+        return super(UserProfileInline, self) \
+                .formfield_for_foreignkey(db_field, *args, **kwargs)
+
 
 class CustomerAdmin(CustomUserAdmin):
     readonly_fields = ['is_staff', 'is_superuser', 'last_login','date_joined']
