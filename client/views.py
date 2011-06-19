@@ -51,8 +51,10 @@ def search(request):
                 except Exception, e:
                     discount = AREA_DISCOUNT_DEFAULT
                 discount = float(discount)
-
-                found['MSRP'] = float(found['MSRP']) * float(m)
+                value = str(found['MSRP'])
+                # we need to remove all "," as separators
+                value = value.replace(',','')
+                found['MSRP'] = float(value) * float(m)
                 found['your_price'] = found['MSRP']*(100-discount)/100
                 found['your_economy'] = found['MSRP'] - found['your_price']
                 found['your_economy_perc'] = 100 - (found['your_price']/found['MSRP'])*100
