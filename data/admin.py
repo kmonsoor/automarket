@@ -117,7 +117,7 @@ class OrderedItemForm(forms.ModelForm):
 class OrderedItemAdmin(admin.ModelAdmin):
     list_display =('po_number', 'created', 'manager', 'client', 'area', 'brand', 'part_number', 'quantity')
     list_filter = ('created',)
-    search_fieldsets = ('part_number',)
+    search_fields = ('part_number', 'ponumber', 'brandgroup__direction__po')
 
     form = OrderedItemForm
 
