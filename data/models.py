@@ -245,6 +245,9 @@ class OrderedItem(models.Model):
     def po_verbose(self):
         return self.get_po_verbose()
 
+    @property
+    def failed(self):
+        return self.status == 'failure'
 # ----------------------------------------------------------
 
 class ClientGroupManager(models.Manager):

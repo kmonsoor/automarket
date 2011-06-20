@@ -136,21 +136,23 @@ def index(request):
         td = "U0"
         q, params = qs._as_sql(connection)
         from_clause = q.split("FROM")[1]
+        print from_clause
         sql = \
         """
         SELECT
             SUM(%(p)s.total_cost) as TOTAL_COST,
             SUM(%(p)s.weight*%(p)s.quantity) as TOTAL_WEIGHT,
             SUM(%(p)s.delivery) as TOTAL_DELIVERY,
-            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)) AS TOTAL_PRICE
-            FROM %(from)s
+            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)) AS TOTAL_PRICE,
+            SUM(%(p)s.price_invoice*%(p)s.quantity) as TOTAL_PRICE_IN
+            FROM %(from)s AND status != 'failure'
         """ % {'p': td, 'from': from_clause}
         cursor = connection.cursor()
         cursor.execute(sql, params)
         res = cursor.fetchall()
         if len(res) > 0:
             total_row = dict(zip( \
-                ('COST', 'WEIGHT', 'DELIVERY', 'PRICE'), \
+                ('COST', 'WEIGHT', 'DELIVERY', 'PRICE', 'PRICE_IN'), \
                 res[0]))
 
     if order_by:
@@ -702,6 +704,15 @@ LIST_HEADERS = (
     (u'Статус', 'status'),
 )
 
+def field_value(order_obj, field_name):
+    price_fields = [
+        'price_invoice', 'total', 'total_w_ship', 'price_base', 'price_sale', 'delivery',
+        'price_discount', 'cost', 'total_cost'
+    ]
+    if field_name in price_fields and order_obj.failed:
+        return ''
+    return getattr(order_obj, field_name) or ''
+
 @login_required
 def export_order(request):
     _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
@@ -710,6 +721,7 @@ def export_order(request):
                         .filter(**_filter.get_filters()) \
                         .order_by('brandgroup__direction__po', 'ponumber')
     filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
+
     book = xl.Workbook()
     sheet = book.add_sheet('ORDERS')
 
@@ -721,19 +733,21 @@ def export_order(request):
     for order in orders:
         i = 0
         curr_line += 1
-        for key, value in LIST_HEADERS:
-            if value == 'ponumber':
-                value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber or '--')
-            elif value == 'status':
+        for key, field_name in LIST_HEADERS:
+
+            if field_name == 'ponumber':
+                value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber \
+                                   or '--')
+            elif field_name == 'status':
                 value = order.get_status_verbose()
             else:
-                value = getattr(order, value) or ''
+                value = field_value(order, field_name)
             try:
-                sheet.write(curr_line,i,value)
+                sheet.write(curr_line, i, value)
                 i += 1
             except AssertionError:
                 value = unicode(value)
-                sheet.write(curr_line,i,value)
+                sheet.write(curr_line, i, value)
                 i += 1
 
     book.save(filename)
