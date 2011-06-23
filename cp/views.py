@@ -644,7 +644,7 @@ def import_order(request):
                 try:
                     _data[get_field_name(k)+'.%d' % num] = [User.objects.get(username=v[0].lower()).id]
                 except User.DoesNotExist:
-                    _data[get_field_name(k)+'.%d' % num] = v
+                    _data[get_field_name(k)+'.%d' % num] = 0
             else:
                 _data[get_field_name(k)+'.%d' % num] = v
             _data['id'+'.%d' % num] = ''
