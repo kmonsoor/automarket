@@ -68,3 +68,18 @@ class OrderedItemForm(forms.Form):
         else:
             return self.cleaned_data['price']
 
+
+class OrderedItemInlineForm(forms.ModelForm):
+    class Meta:
+        model = OrderedItem
+        fields = \
+            ['comment_supplier',
+             'price_invoice',
+             'part_number_superseded',
+             'description_ru',
+             'description_en',
+             'price_base',
+             'weight',
+             'price_discount',
+             'invoice_code']
+

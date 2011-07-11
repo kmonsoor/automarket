@@ -32,13 +32,14 @@ urlpatterns += patterns('cp.views',
     url(r'^cp/groups/$', 'groups', name="groups"),
     url(r'^cp/position/edit/(?P<content_type>\w+)/(?P<id>\d+)/$', 'position_edit'),
     url(r'^cp/position/change_status/$', 'change_status'),
+    url(r'^cp/ordered_item/(?P<item_id>\d+)/$', 'get_ordered_item', name="get_ordered_item"),
     url(r'^cp/get_brandgroup_settings/(?P<ordered_item_id>[\d]+)/$', 'get_brandgroup_settings', name='get_brandgroup_settings'),
     url(r'^cp/export/(?P<group_id>\d+)/$', 'export'),
     url(r'^cp/export/$', 'export_selected'),
     url(r'^cp/import_order/', 'import_order', name='import_to_csv'),
     url(r'^cp/export_order/', 'export_order', name='export_to_csv'),
     url(r'^cp/$', 'index'),
-    
+
 )
 
 

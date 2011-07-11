@@ -6,11 +6,12 @@
 <script>
 var caller = 'index';
 var brands = [
-	{{ brands|safe }}
-	];
+    {{ brands|safe }}
+    ];
 </script>
 
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
+
 <script>
 backend_url = '/cp/position/edit/ordered_item/';
 get_brandgroup_settings_url = '/cp/get_brandgroup_settings/'
@@ -21,8 +22,8 @@ get_brandgroup_settings_url = '/cp/get_brandgroup_settings/'
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/qs_filter.css" />
 
 <style type="text/css">
-td {
-    padding: 1px;
+table td {
+    padding: 1px 1px 1px 1px;
     font-size: 80%;
 }
 input, select {
@@ -46,11 +47,11 @@ text-align: right;
 }
 
 table {
-	border: 1px solid #DDD;
+    border: 1px solid #DDD;
 }
 
 tr.alt td {
-	font-weight: 600;
+    font-weight: 600;
 }
 
 </style>
@@ -105,140 +106,82 @@ tr.alt td {
 </thead>
 <tbody>
 <style>
-	table td {padding:1px 5px; vertical-align: middle;}
+    table td {padding:1px 5px; vertical-align: middle;}
 </style>
 {% for i in items %}
-	<tr class="{% cycle row1,row2 %}{% if i.failed %} failure{% endif %}">
-		<td>{{ i.get_po_verbose }}</td>
-		<td>{{ i.brandgroup }}</td>
-		<td>{{ i.area }}</td>
-		<td>{{ i.brand }}</td>
-		{% comment %}
-		<td class="editable" onclick="editPartNumber({{ i.id }})">
-			<div id="part_number_display_{{ i.id }}">{{ i.part_number|default:"" }}</div>
-			<div id="part_number_{{ i.id }}" style="display: none">{{ i.part_number|default:"" }}</div>
-			<span id="part_number_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
-		</td>
-		{% endcomment %}
-		<td>
-		{{ i.part_number|default:"" }}
-		</td>
-		<td>
-		{{ i.comment_customer|default:"" }}
-		</td>
-		<td class="editable" onclick="editCommentSupplier({{ i.id }})">
-			<div id="comment_supplier_display_{{ i.id }}">{{ i.comment_supplier|default:"" }}</div>
+    <tr class="{% cycle row1,row2 %}{% if i.failed %} failure{% endif %}">
 
-			<div id="comment_supplier_{{ i.id }}" style="display: none">{{ i.comment_supplier|default:"" }}</div>
-			<span id="comment_supplier_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
-		</td>
-		<td align="center">
-			{{ i.created|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
-		</td>
-		<td>
-			<div id="quantity_display_{{ i.id }}">{{ i.quantity|default:"" }}</div>
-			<div id="quantity_{{ i.id }}" style="display: none">{{ i.quantity|default:"" }}</div>
-		</td>
-		<td {% if not i.failed %}class="editable" onclick="editPriceInvoice({{ i.id }})"{% endif %}>
-			<div id="price_invoice_display_{{ i.id }}">{{ i.price_invoice|default:"" }}</div>
-			<div id="price_invoice_{{ i.id }}" style="display: none">{{ i.price_invoice|default:"" }}</div>
-			<span id="price_invoice_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
-		</td>
-		<td>
-			<div id="total_w_ship_{{ i.id }}">{% if not i.failed %}{{ i.total_w_ship|default:"" }}{% endif %}</div>
-		</td>
-		<td {% if not i.failed %}class="editable" onclick="editSuperseded({{ i.id }})"{% endif %}>
-			<div id="part_number_superseded_display_{{ i.id }}">{{ i.part_number_superseded|default:"" }}</div>
-			<div id="part_number_superseded_{{ i.id }}" style="display: none">{{ i.part_number_superseded|default:"" }}</div>
-			<span id="part_number_superseded_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
-		</td>
-		<td>{{ i.manager }}</td>
-		<td>{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</td>
-		<td class="editable" onclick="editDescriptionRu({{ i.id }})">
-			<div id="description_ru_display_{{ i.id }}" style="overflow: hidden">{{ i.description_ru|default:"" }}</div>
-			<div id="description_ru_{{ i.id }}" style="display: none">{{ i.description_ru|default:"" }}</div>
-			<span id="description_ru_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
-		</td>
-		<td class="editable" onclick="editDescriptionEn({{ i.id }})">
-			<div id="description_en_display_{{ i.id }}">{{ i.description_en|default:"" }}</div>
-			<div id="description_en_{{ i.id }}" style="display: none">{{ i.description_en|default:"" }}</div>
-			<span id="description_en_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
-		</td>
-		<td {% if not i.failed %}class="editable" onclick="editPriceBase({{ i.id }})"{% endif %}>
-			<div id="price_base_display_{{ i.id }}">{{ i.price_base|default:"" }}</div>
-			<div id="price_base_{{ i.id }}" style="display: none;">{{ i.price_base|default:"" }}</div>
-			<span id="price_base_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
-		</td>
-		<td {% if not i.failed %}class="editable" onclick="editWeight({{ i.id }})"{% endif %}>
-			<div id="weight_display_{{ i.id }}">{{ i.weight|default:"" }}</div>
-			<div id="weight_{{ i.id }}" style="display: none">{{ i.weight|default:"" }}</div>
-			<span id="weight_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
-		</td>
-		<td id="delivery_{{ i.id }}">
-			<div id="delivery_display_{{ i.id }}">{% if not i.failed %}{{ i.delivery|default:"" }}{% endif %}</div>
-			<input type="hidden" name="delivery_supplier_input_{{ i.id }}" id="delivery_supplier_input_{{ i.id }}" value="{% if i.brandgroup.delivery %}{{ i.brandgroup.delivery }}{% else %}13{% endif %}">
-		</td>
-
-		<td id="price_sale_{{ i.id }}">{% if not i.failed %}{{ i.price_sale|default:"" }}{% endif %}</td>
-		<td {% if not i.failed %}class="editable" onclick="editPriceDiscount({{ i.id }})"{% endif %}>
-			<div id="price_discount_display_{{ i.id }}">{{ i.price_discount|default:"" }}</div>
-			<div id="price_discount_{{ i.id }}" style="display: none">{{ i.price_discount|default:"" }}</div>
-			<span id="price_discount_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
-		</td>
-		<td id="cost_{{ i.id }}">{% if not i.failed %}{{ i.cost|default:"" }}{% endif %}</td>
-		<td id="total_cost_{{ i.id }}">{% if not i.failed %}{{ i.total_cost|default:"" }}{% endif %}</td>
-
-		<td {% if not i.failed %}class="editable" onclick="editInvoiceCode({{ i.id }})"{% endif %}>
-			<div id="invoice_code_display_{{ i.id }}">{{ i.invoice_code|default:"" }}</div>
-			<div id="invoice_code_{{ i.id }}" style="display: none">{{ i.invoice_code|default:"" }}</div>
-			<span id="invoice_code_buttons_{{ i.id }}" style="display: none"><button onclick="save(); return false;">Save</button><button onclick="cancel(); return false;">Cancel</button></span>
-		</td>
-		<td class="editable">
-			<select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
-			{% for opt in status_options %}
-				{% ifequal i.status 'order' %}
-					{% ifequal opt.value 'order' %}
-						<option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option|lower }}</option>
-					{% endifequal %}
-				{% else %}
-					{% ifnotequal opt.value 'order' %}
-						<option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option|lower }}</option>
-					{% endifnotequal %}
-				{% endifequal %}
-			{% endfor %}
-			</select>
-		</td>
-
-	</tr>
+  {% table_td i 'get_po_verbose' 0 '' %}
+  {% table_td i 'brandgroup' 0 '' %}
+  {% table_td i 'area' 0 '' %}
+  {% table_td i 'brand' 0 '' %}
+  {% table_td i 'part_number' 0 '' %}
+  {% table_td i 'comment_customer' 0 '' %}
+  {% table_td i 'comment_supplier' 1 'editCommentSupplier' %}
+  <td align="center">
+  {{ i.created|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
+  </td>
+  {% table_td i 'quantity' 0 '' %}
+  {% table_td i 'price_invoice' 1 'editPriceInvoice' %}
+  {% table_td i 'total_w_ship' 0 '' %}
+  {% table_td i 'part_number_superseded' 1 'editSuperseded' %}
+  {% table_td i 'manager' 0 '' %}
+  <td>{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</td>
+  {% table_td i 'description_ru' 1 'editDescriptionRu' %}
+  {% table_td i 'description_en' 1 'editDescriptionEn' %}
+  {% table_td i 'price_base' 1 'editPriceBase' %}
+  {% table_td i 'weight' 1 'editWeight' %}
+  {% table_td i 'delivery' 0 '' %}
+  {% table_td i 'price_sale' 0 '' %}
+  {% table_td i 'price_discount' 1 'editPriceDiscount' %}
+    {% table_td i 'cost' 0 '' %}
+    {% table_td i 'total_cost' 0 '' %}
+  {% table_td i 'invoice_code' 1 'editInvoiceCode' %}
+    <td class="editable">
+    <select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
+    {% for opt in status_options %}
+        {% ifequal i.status 'order' %}
+            {% ifequal opt.value 'order' %}
+                <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option|lower }}</option>
+            {% endifequal %}
+        {% else %}
+            {% ifnotequal opt.value 'order' %}
+                <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option|lower }}</option>
+            {% endifnotequal %}
+        {% endifequal %}
+    {% endfor %}
+    </select>
+    </td>
+    </tr>
 {% endfor %}
 {% if total_row %}
-	<tr class="alt">
-	<td><strong>Итого:</strong></td>
-	<td></td>
-	<td></td>
-	<td></td>
-	<td></td>
-	<td></td>
-	<td></td>
-	<td>&nbsp;</td>
-	<td>&nbsp;</td>
-	<td>{{ total_row.PRICE_IN|default:0|floatformat:3 }}</td>
-	<td></td>
-	<td></td>
-	<td></td>
-	<td></td>
-	<td></td>
-	<td></td>
-	<td>&nbsp;</td>
-	<td>{{ total_row.WEIGHT|default:0|floatformat:3 }}</td>
-	<td> {{ total_row.DELIVERY|default:0|floatformat:3 }}</td>
-	<td>{{ total_row.PRICE|default:0|floatformat:3 }}</td>
-	<td>&nbsp;</td>
-	<td>&nbsp;</td>
-	<td>{{ total_row.COST|floatformat:".02f" }}</td>
-	<td></td>
-	<td></td>
-	</tr>
+    <tr class="alt">
+    <td><strong>Итого:</strong></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>{{ total_row.PRICE_IN|default:0|floatformat:3 }}</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td>&nbsp;</td>
+    <td>{{ total_row.WEIGHT|default:0|floatformat:3 }}</td>
+    <td> {{ total_row.DELIVERY|default:0|floatformat:3 }}</td>
+    <td>{{ total_row.PRICE|default:0|floatformat:3 }}</td>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    <td>{{ total_row.COST|floatformat:".02f" }}</td>
+    <td></td>
+    <td></td>
+    </tr>
 {% endif %}
 </tbody>
 </table>

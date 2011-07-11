@@ -39,12 +39,10 @@ function save() {
                 current.previous_value = current.value;
                 current.value = response.value;
 				setDisplayValue();
-                if (response.error) alert(response.error);
-				postSave();
-                close();
+                if (response.error) {alert(response.error);}
             }
         });
-
+	postSave();
 }
 
 function setDisplayValue() {
@@ -70,6 +68,7 @@ function postSave() {
 	if (current.type == 'part_number_superseded') {
         if (current.value.toString().length > 0) {
             editStatus(current.id, 'superseded');
+
         }
     }
     if (current.type == 'brand') {
@@ -86,50 +85,26 @@ function postSave() {
             current.display_value = 'Price';
         }
     }
-	if (current.type == 'price_invoice') {
-		var total_w_ship = parseInt(jQuery('#quantity_display_'+current.id).html())*parseFloat(current.display_value);
-		jQuery('#total_w_ship_'+current.id).html(total_w_ship.toFixed(2));
-	}
-	if (current.type == 'weight') {
-		//var shipping = parseFloat(jQuery('#delivery_supplier_input_'+current.id).attr('value'))*parseFloat(current.display_value)*parseInt(jQuery('#quantity_display_'+current.id).html());
 
-		// get price settings for given area and brandgroup
-		function get_delivery() {
-		    var delivery = 12.5;
-            $.ajax({
-                url: get_brandgroup_settings_url + current.id + '/',
-                async: false,
-                success: function(data) {
-                    delivery = data[1];
+    // get calculated values from the server
+    FIELDS = ['price_base', 'price_sale', 'price_discount',
+              'delivery', 'cost', 'total_cost']
+    jQuery.ajax({
+        url: '/cp/ordered_item/' + current.id + '/',
+        data: {'fields': FIELDS.join(',')},
+        success: function(data) {
+            for (i in FIELDS) {
+                field_name = FIELDS[i];
+                if (data[field_name] == null || data[field_name] == 0) {
+                    value = '';
+                } else {
+                    value = data[field_name];
                 }
+                jQuery("#" + field_name + "_display_" + current.id).html(value);
             }
-            );
-            return delivery;
-		}
-		delivery = parseFloat(get_delivery())
-		var shipping = parseFloat(current.display_value)*delivery;
-		jQuery('#delivery_display_'+current.id).html(shipping.toFixed(2));
-		var shipping = parseFloat(jQuery('#delivery_display_'+current.id).html())
-		if (jQuery('#price_discount_display_'+current.id).html())
-			var cost = shipping + parseFloat(jQuery('#price_discount_display_'+current.id).html());
-		else if (jQuery('#price_sale_'+current.id).html())
-			var cost = shipping + parseFloat(jQuery('#price_sale_'+current.id).html());
-		jQuery('#cost_'+current.id).html(cost.toFixed(2));
-		calculateTotalCost();
-	}
-	if (current.type == 'price_discount') {
-		if (current.display_value)
-			var cost = parseFloat(jQuery('#delivery_display_'+current.id).html()) + parseFloat(current.display_value);
-		else if (jQuery('#price_sale_'+current.id).html())
-			var cost = parseFloat(jQuery('#delivery_display_'+current.id).html()) + parseFloat(jQuery('#price_sale_'+current.id).html());
-		jQuery('#cost_'+current.id).html(cost.toFixed(2));
-		calculateTotalCost();
-	}
-}
-
-function calculateTotalCost() {
-	var total_cost = parseInt(jQuery('#quantity_display_'+current.id).html())*parseFloat(jQuery('#cost_'+current.id).html());
-	jQuery('#total_cost_'+current.id).html(total_cost.toFixed(2));
+            close();
+        }
+    });
 }
 
 function restore() {

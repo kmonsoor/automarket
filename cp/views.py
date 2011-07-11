@@ -23,7 +23,7 @@ from lib import xlsreader
 
 from cp.forms import OrderItemForm, ImportXlsForm, SearchForm
 from data.models import Direction, BrandGroup, Area, Brand, OrderedItem, ORDER_ITEM_STATUSES
-from data.forms import OrderedItemsFilterForm, OrderedItemForm
+from data.forms import OrderedItemsFilterForm, OrderedItemForm, OrderedItemInlineForm
 from common.views import PartSearch, SoapClient
 
 @login_required
@@ -136,7 +136,6 @@ def index(request):
         td = "U0"
         q, params = qs._as_sql(connection)
         from_clause = q.split("FROM")[1]
-        print from_clause
         sql = \
         """
         SELECT
@@ -369,6 +368,20 @@ def position_edit(request, content_type, id):
     else:
         response['value'] = old_value and str(old_value) or ''
         response['error'] = u'Wrong value!'
+    return response
+
+@ajax_request
+def get_ordered_item(request, item_id):
+    item = get_object_or_404(OrderedItem, pk=item_id)
+    fields = request.GET.get('fields').split(",")
+    if not fields:
+        return {}
+    response = {}
+    for f in fields:
+        try:
+            response[f] = getattr(item, f)
+        except AttributeError:
+            response[f] = None
     return response
 
 

@@ -23,3 +23,20 @@ def table_header_sort(context, headers):
         'headers': headers,
     }
 
+
+@register.inclusion_tag("cp/tags/table/td.html", takes_context=True)
+def table_td(context, item, field_name, editable, jscallback):
+
+    value = getattr(item, field_name)
+
+    if callable(value):
+        value = value()
+
+    return {
+        'item': item,
+        'editable': editable,
+        'field_name': field_name,
+        'jscallback': jscallback,
+        'value': value
+    }
+

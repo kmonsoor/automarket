@@ -210,18 +210,16 @@ class OrderedItem(models.Model):
         if self.quantity and self.price_invoice:
             self.total_w_ship = self.price_invoice*self.quantity
 
-        if self.price_sale and self.client and self.area and not self.price_discount:
-            try:
-                discount = Discount.objects.get(user=self.client, area=self.area)
-                self.price_discount = self.price_sale - self.price_sale*discount.discount/100
-            except Discount.DoesNotExist:
-                pass
+        # TODO - making dinamic discount. Now price_discount is set manually
+        #if self.price_sale and self.client and self.area and not self.price_discount:
+        #    try:
+        #        discount = Discount.objects.get(user=self.client, area=self.area)
+        #        self.price_discount = self.price_sale - self.price_sale*discount.discount/100
+        #    except Discount.DoesNotExist:
+        #        pass
 
-        if self.delivery and self.price_sale and not self.price_discount:
-            self.cost = self.delivery + self.price_sale
-
-        elif self.delivery and self.price_discount:
-            self.cost = self.delivery + self.price_discount
+        calc_price = [x for x in [self.price_discount, self.price_sale, 0] if x][0]
+        self.cost = self.delivery + calc_price
 
         if self.cost and self.quantity:
             self.total_cost = self.cost*self.quantity
@@ -248,6 +246,8 @@ class OrderedItem(models.Model):
     @property
     def failed(self):
         return self.status == 'failure'
+
+
 # ----------------------------------------------------------
 
 class ClientGroupManager(models.Manager):
@@ -348,6 +348,7 @@ models.signals.post_save.connect(on_client_group_create, sender=ClientGroup)
 
 
 class UserProfile(models.Model):
+
     client_group = models.ForeignKey(ClientGroup, verbose_name=u"группа")
     order_item_fields = models.TextField(blank=True, default="")
     user = models.ForeignKey(User, unique=True)
