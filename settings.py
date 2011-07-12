@@ -123,3 +123,49 @@ try:
 except:
     pass
 
+
+# Logging settings
+import logging
+from log_handlers import NullHandler, TimedRotatingFileHandlerSafe
+# Logging settings
+LOG_DIR = os.path.join(SITE_ROOT, '.logs') # for development only! need to be rewritten
+# A log rollover occurs
+# S - Seconds
+# M - Minutes
+# H - Hours
+# D - Days
+# MIDNIGHT - roll over at midnight
+# W{0-6} - roll over on a certain day; 0 - Monday
+LOG_INTERVAL = 'MIDNIGHT'
+# Loading host depending settings
+LOG_LEVEL = DEBUG and logging.DEBUG or logging.INFO
+try:
+    from settings_local import *
+except ImportError:
+    pass
+
+if not os.path.exists(LOG_DIR):
+    try:
+        os.mkdir(LOG_DIR)
+    except:
+        pass
+
+LOG_FILE = os.path.join(LOG_DIR, 'debug.log')
+ERR_FILE = os.path.join(LOG_DIR, 'error.log')
+
+FORMAT = '[%(asctime)s] [%(levelname)s] [PID: '+str(os.getpid())+'] [%(name)s]:  %(message)s'
+FORMATTER = logging.Formatter(FORMAT)
+
+logging.basicConfig(level=logging.DEBUG, stream=NullHandler())
+
+root = logging.root
+log_handler = TimedRotatingFileHandlerSafe(LOG_FILE, when=LOG_INTERVAL)
+log_handler.setLevel(LOG_LEVEL)
+log_handler.setFormatter(FORMATTER)
+root.addHandler(log_handler)
+
+err_handler = TimedRotatingFileHandlerSafe(ERR_FILE, when=LOG_INTERVAL)
+err_handler.setLevel(logging.ERROR)
+err_handler.setFormatter(FORMATTER)
+root.addHandler(err_handler)
+
