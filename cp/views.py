@@ -230,6 +230,7 @@ class OrderedItemSaver(object):
             obj.part_number = value
             obj.save()
         except Exception, e:
+            logger.exception("save_part_number: %r"%e)
             pass
         return obj.part_number
 
@@ -238,6 +239,7 @@ class OrderedItemSaver(object):
             obj.comment_customer = value
             obj.save()
         except Exception, e:
+            logger.exception("save_comment_customer: %r"%e)
             pass
         return obj.comment_customer
 
@@ -246,6 +248,7 @@ class OrderedItemSaver(object):
             obj.comment_supplier = value
             obj.save()
         except Exception, e:
+            logger.exception("save_comment_supplier: %r"%e)
             pass
         return obj.comment_supplier
 
@@ -254,6 +257,7 @@ class OrderedItemSaver(object):
             obj.price_invoice = value
             obj.save()
         except Exception, e:
+            logger.exception("save_price_invoice: %r"%e)
             pass
         return obj.price_invoice
 
@@ -262,6 +266,7 @@ class OrderedItemSaver(object):
             obj.part_number_superseded = value
             obj.save()
         except Exception, e:
+            logger.exception("save_part_number_superseded: %r"%e)
             pass
         return obj.part_number_superseded
 
@@ -270,6 +275,7 @@ class OrderedItemSaver(object):
             obj.description_ru = value
             obj.save()
         except Exception, e:
+            logger.exception("save_description_ru: %r"%e)
             pass
         return obj.description_ru
 
@@ -278,6 +284,7 @@ class OrderedItemSaver(object):
             obj.description_en = value
             obj.save()
         except Exception, e:
+            logger.exception("save_description_en: %r"%e)
             pass
         return obj.description_en
 
@@ -286,6 +293,7 @@ class OrderedItemSaver(object):
             obj.price_base = value
             obj.save()
         except Exception, e:
+            logger.exception("save_price_base: %r"%e)
             pass
         return obj.price_base
 
@@ -294,6 +302,7 @@ class OrderedItemSaver(object):
             obj.weight = value
             obj.save()
         except Exception, e:
+            logger.exception("save_weight: %r"%e)
             pass
         return obj.weight
 
@@ -302,6 +311,7 @@ class OrderedItemSaver(object):
             obj.price_discount = value
             obj.save()
         except Exception, e:
+            logger.exception("save_price_discount: %r"%e)
             pass
         return obj.price_discount
 
@@ -313,6 +323,7 @@ class OrderedItemSaver(object):
             obj.quantity_ship = value
             obj.save()
         except Exception, e:
+            logger.exception("save_quantity_ship: %r"%e)
             self.error = e
         return obj.quantity_ship
 
@@ -328,6 +339,7 @@ class OrderedItemSaver(object):
             obj.status_modified = datetime.now()
             obj.save()
         except Exception, e:
+            logger.exception("save_status: %r"%e)
             pass
         return obj.status
 
@@ -336,6 +348,7 @@ class OrderedItemSaver(object):
             obj.invoice_code = value
             obj.save()
         except Exception, e:
+            logger.exception("save_invoice_code: %r"%e)
             pass
         return obj.invoice_code
 

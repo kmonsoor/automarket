@@ -39,7 +39,7 @@ USE_I18N = True
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-
+SITE_ROOT = os.path.abspath(os.path.dirname(__file__))
 MEDIA_ROOT = os.path.abspath('./media/')
 MEDIA_URL = '/media/'
 ADMIN_MEDIA_PREFIX = "/media/admin/"
@@ -156,16 +156,21 @@ ERR_FILE = os.path.join(LOG_DIR, 'error.log')
 FORMAT = '[%(asctime)s] [%(levelname)s] [PID: '+str(os.getpid())+'] [%(name)s]:  %(message)s'
 FORMATTER = logging.Formatter(FORMAT)
 
-logging.basicConfig(level=logging.DEBUG, stream=NullHandler())
 
-root = logging.root
-log_handler = TimedRotatingFileHandlerSafe(LOG_FILE, when=LOG_INTERVAL)
-log_handler.setLevel(LOG_LEVEL)
-log_handler.setFormatter(FORMATTER)
-root.addHandler(log_handler)
+logging.basicConfig(level=LOG_LEVEL,
+                    format=FORMAT,
+                    filename=LOG_FILE)
 
-err_handler = TimedRotatingFileHandlerSafe(ERR_FILE, when=LOG_INTERVAL)
-err_handler.setLevel(logging.ERROR)
-err_handler.setFormatter(FORMATTER)
-root.addHandler(err_handler)
+#logging.basicConfig(level=logging.NOTSET, stream=NullHandler())
+
+#root = logging.root
+#log_handler = TimedRotatingFileHandlerSafe(LOG_FILE, when=LOG_INTERVAL)
+#log_handler.setLevel(LOG_LEVEL)
+#log_handler.setFormatter(FORMATTER)
+#root.addHandler(log_handler)
+
+#err_handler = TimedRotatingFileHandlerSafe(ERR_FILE, when=LOG_INTERVAL)
+#err_handler.setLevel(logging.ERROR)
+#err_handler.setFormatter(FORMATTER)
+#root.addHandler(err_handler)
 

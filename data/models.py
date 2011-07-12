@@ -6,6 +6,9 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 from data.managers import OrderedItemManager
 from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT, DELIVERY_DEFAULT
+import inspect
+import logging
+logger = logging.getLogger('data.models')
 
 class Direction(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
@@ -203,11 +206,17 @@ class OrderedItem(models.Model):
         verbose_name_plural = u"Заказанные позиции"
 
     def save(self, *args, **kwargs):
+
+        logger.debug("OrderedItem save: called from %r" % \
+                     inspect.getframeinfo(inspect.currentframe().f_back)[2])
+
         if self.area and self.brandgroup and self.weight:
+            logger.debug("OrderedItem save: area, brandgroup and weight are defined")
             multiplier, delivery = self.area.get_brandgroup_settings(self.brandgroup)
             self.delivery = delivery*self.weight
-
+        logger.debug("OrderedItem save: delivery is: %r"%self.delivery)
         if self.quantity and self.price_invoice:
+            logger.debug("OrderedItem save: quantity and price_invoice defined")
             self.total_w_ship = self.price_invoice*self.quantity
 
         # TODO - making dinamic discount. Now price_discount is set manually
@@ -220,9 +229,13 @@ class OrderedItem(models.Model):
 
         calc_price = [x for x in [self.price_discount, self.price_sale, 0] if x][0]
         self.cost = self.delivery + calc_price
-
+        logger.debug("OrderedItem save: calc_price is %s; self.cost is: %s" % \
+            (calc_price, self.cost))
         if self.cost and self.quantity:
+            logger.debug("OrderedItem save: cost and quantity are defined")
             self.total_cost = self.cost*self.quantity
+
+        logger.debug("OrderedItem save: total_cost is: %s"%self.total_cost)
 
         super(OrderedItem, self).save(*args, **kwargs)
 

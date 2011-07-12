@@ -92,6 +92,7 @@ function postSave() {
     jQuery.ajax({
         url: '/cp/ordered_item/' + current.id + '/',
         data: {'fields': FIELDS.join(',')},
+        dataType: 'json',
         success: function(data) {
             for (i in FIELDS) {
                 field_name = FIELDS[i];
