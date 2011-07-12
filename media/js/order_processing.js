@@ -68,7 +68,6 @@ function postSave() {
 	if (current.type == 'part_number_superseded') {
         if (current.value.toString().length > 0) {
             editStatus(current.id, 'superseded');
-
         }
     }
     if (current.type == 'brand') {
@@ -321,10 +320,10 @@ function editQuantityShip(id) {
 function editStatus(id, value) {
 	if (caller == 'index') {
 	    if (value == 'superseded') {
-	        jQuery('#number_' + id).attr('class', 'cross_out');
+	        jQuery('#part_number_display_' + id).attr('class', 'cross_out');
 	    }
 	    else {
-	        jQuery('#number_' + id).attr('class', 'default');
+	        jQuery('#part_number_display_' + id).attr('class', 'default');
 	    }
 	}
     jQuery('#status_input_' + id).attr('disabled',1)

@@ -115,7 +115,11 @@ tr.alt td {
   {% table_td i 'brandgroup' 0 '' %}
   {% table_td i 'area' 0 '' %}
   {% table_td i 'brand' 0 '' %}
+  {% ifequal i.status 'superseded' %}
+  {% table_td i 'part_number' 0 '' 'cross_out' %}
+  {% else %}
   {% table_td i 'part_number' 0 '' %}
+  {% endifequal %}
   {% table_td i 'comment_customer' 0 '' %}
   {% table_td i 'comment_supplier' 1 'editCommentSupplier' %}
   <td align="center">
@@ -138,21 +142,25 @@ tr.alt td {
     {% table_td i 'total_cost' 0 '' %}
   {% table_td i 'invoice_code' 1 'editInvoiceCode' %}
     <td class="editable">
-    <select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
-    {% for opt in status_options %}
-        {% ifequal i.status 'order' %}
-            {% ifequal opt.value 'order' %}
-                <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option|lower }}</option>
-            {% endifequal %}
-        {% else %}
+        <select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
+        {% for opt in status_options %}
+            {% ifequal i.status 'order' %}
+                {% ifequal opt.value 'order' %}
+                <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>
+                {{ opt.option|lower }}
+                </option>
+                {% endifequal %}
+            {% else %}
             {% ifnotequal opt.value 'order' %}
-                <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>{{ opt.option|lower }}</option>
-            {% endifnotequal %}
+            <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>
+            {{ opt.option|lower }}
+            </option>
+        {% endifnotequal %}
         {% endifequal %}
-    {% endfor %}
-    </select>
+        {% endfor %}
+        </select>
     </td>
-    </tr>
+</tr>
 {% endfor %}
 {% if total_row %}
     <tr class="alt">

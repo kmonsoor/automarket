@@ -25,7 +25,7 @@ def table_header_sort(context, headers):
 
 
 @register.inclusion_tag("cp/tags/table/td.html", takes_context=True)
-def table_td(context, item, field_name, editable, jscallback):
+def table_td(context, item, field_name, editable, jscallback, class_line=None):
 
     value = getattr(item, field_name)
 
@@ -37,6 +37,7 @@ def table_td(context, item, field_name, editable, jscallback):
         'editable': editable,
         'field_name': field_name,
         'jscallback': jscallback,
-        'value': value
+        'value': value,
+        'class_line': class_line
     }
 

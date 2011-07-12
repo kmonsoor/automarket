@@ -8,6 +8,7 @@
 	<a class="deletelink" onclick="cancel(); return false;" href="javascript:void(0);" >{% trans "Cancel" %}</a></span>
 </td>
 {% else %}
-<td id="{{ field_name }}_row_{{ item.id }}" class="{% if item.superseded and field_name == part_number %}superseded{% endif %}"><div id="{{field_name }}_display_{{ item.id }}">{% if not item.failed %}{{ value|default:"" }}</div>{% endif %}</td>
+<td id="{{ field_name }}_row_{{ item.id }}" class="{% if item.superseded and field_name == part_number %}superseded{% endif %}">
+<div id="{{field_name }}_display_{{ item.id }}" {% if class_line %}class="{{ class_line }}"{% endif %}>{% if not item.failed %}{{ value|default:"" }}</div>{% endif %}</td>
 {% endif %}
 
