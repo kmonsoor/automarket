@@ -26,6 +26,9 @@ from data.models import Direction, BrandGroup, Area, Brand, OrderedItem, ORDER_I
 from data.forms import OrderedItemsFilterForm, OrderedItemForm, OrderedItemInlineForm
 from common.views import PartSearch, SoapClient
 
+import logging
+logger = logging.getLogger("cp.views")
+
 @login_required
 @render_to('cp/search.html')
 def search(request):
@@ -337,7 +340,8 @@ class OrderedItemSaver(object):
         return obj.invoice_code
 
 @ajax_request
-def position_edit(request, content_type, id):
+def position_edit(request, content_type, item_id):
+    logger.debug("position_edit called with args: %s, %s" % (content_type, item_id))
     models = {
               'ordered_item':OrderedItem,
               }
@@ -347,25 +351,32 @@ def position_edit(request, content_type, id):
     savers = {
               'ordered_item':OrderedItemSaver,
               }
-    item = get_object_or_404(models[content_type], id=id)
+    item = get_object_or_404(models[content_type], pk=item_id)
+    logger.debug("Item found: %r" % item)
     response = {}
     try:
         old_value = getattr(item, request.POST['type'])
     except:
+        logger.exception('Attribute %s does not exist' % request.POST['type'])
         response['error'] = 'Attribute does not exist'
         return response
     form = forms[content_type]({request.POST['type']:request.POST['value']})
     if form.is_valid():
+        logger.debug("Form is valid")
         try:
             value = form.cleaned_data[request.POST['type']]
+            logger.debug("Got value: %r" % value)
         except Exception, e:
+            logger.error("Value error: %r"%e)
             response['error'] = e
             return response
 
         saver = savers[content_type]()
+        logger.debug("Calling saver: %r" % saver)
         response['value'] = getattr(saver, 'save_' + request.POST['type'])(item, value)
         response['error'] = saver.error
     else:
+        logger.error("Form validation failed")
         response['value'] = old_value and str(old_value) or ''
         response['error'] = u'Wrong value!'
     return response
