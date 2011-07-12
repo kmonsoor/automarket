@@ -35,6 +35,7 @@ function save() {
                     'type':current.type,
                     'value':value
                    },
+            async: false,
             success: function(response) {
                 current.previous_value = current.value;
                 current.value = response.value;
@@ -102,8 +103,8 @@ function postSave() {
                 }
                 jQuery("#" + field_name + "_display_" + current.id).html(value);
             }
-            close();
-        }
+            if (current.id) close();
+        },
     });
 }
 
@@ -331,6 +332,7 @@ function editStatus(id, value) {
         {
             type: 'POST',
             url: backend_url + id + '/',
+            async: false,
             data: {
                     'type':'status',
                     'value':value
@@ -339,7 +341,6 @@ function editStatus(id, value) {
                 jQuery('#status_input_' + id).val(response.value);
                 jQuery('#status_input_' + id).attr('disabled',false)
                 if (response.error) alert(response.value);
-                close();
             }
         });
 
