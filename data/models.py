@@ -228,7 +228,7 @@ class OrderedItem(models.Model):
         #        pass
 
         calc_price = [x for x in [self.price_discount, self.price_sale, 0] if x][0]
-        self.cost = self.delivery + calc_price
+        self.cost = (self.delivery or 0) + calc_price
         logger.debug("OrderedItem save: calc_price is %s; self.cost is: %s" % \
             (calc_price, self.cost))
         if self.cost and self.quantity:
