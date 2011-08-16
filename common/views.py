@@ -326,7 +326,7 @@ class PartSearchAutopartspeople(PartSearch):
                     description, partnumber = [str(x) for x in dr.findall(s1)[0]]
                 except (AttributeError, IndexError):
                     description, partnumber = "", ''
-                return description, partnumber
+            return description, partnumber
         description, partnumber = find_description()
         return {
             'MSRP': find_price_by_label("List Price:"),
