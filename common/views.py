@@ -319,14 +319,15 @@ class PartSearchAutopartspeople(PartSearch):
                 except (ValueError, AttributeError), e:
                     return None
         def find_description():
+            d,p = "",""
             s1 = bs.find("span", {'class': "vb10b"}, text=re.compile("Part#"))
             if s1:
                 dr = re.compile(r'^([-\(\)_.,\w\d\s]+)\[Part\#\s?([\w\d]+)\]$')
                 try:
-                    description, partnumber = [str(x) for x in dr.findall(s1)[0]]
-                except (AttributeError, IndexError):
-                    description, partnumber = "", ''
-            return description, partnumber
+                    d,p = [str(x) for x in dr.findall(s1)[0]]
+                except (AttributeError, IndexError, ValueError):
+                    pass
+            return d,p
         description, partnumber = find_description()
         return {
             'MSRP': find_price_by_label("List Price:"),
