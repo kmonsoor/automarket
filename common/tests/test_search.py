@@ -2,6 +2,7 @@
 
 import unittest
 from common.views import PartSearch
+from common.views import PartSearchAutopartspeople
 from decimal import Decimal
 
 class TestSearch(unittest.TestCase):
@@ -48,4 +49,96 @@ class TestSearch(unittest.TestCase):
         assert res['description'] != '', 'No description'
         assert res['MSRP'] == Decimal('17.15'), 'No MSRP'
         assert res['core_price'] == Decimal('0'), 'No core price'
+
+    from common.views import PartSearchAutopartspeople
+
+class PartswebsiteParserTest(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_parse_response(self):
+        response = """
+
+		<tbody><tr>
+			<td width="60%"><span class="vb10b">WIRE, CHANGE  [Part# 54310SCVA02]</span>
+			<!--
+				<a href="#" onmouseover="TagToTip('core_help', BALLOON, true, FADEIN, 400, FADEOUT, 400, ABOVE, true, WIDTH, 260, PADDING, 8, TEXTALIGN, 'justify', OFFSETX, -17)" onmouseout="UnTip()" style="text-decoration:none">
+					<img src="/images/recycle.png" alt="Core Item" border="0" align="absmiddle">
+				</a>
+				<span id="core_help" style="display:none"><br><br>
+				</span>
+			-->
+			</td>
+			<td rowspan="5" valign="top" width="40%" align="right">
+				<form name="partForm56431692" id="partForm56431692">
+				<table border="0" cellpadding="3" cellspacing="0">
+					<tbody><tr>
+						<td class="vb10" align="right">
+							<span class="vb10b">Quantity:</span>
+							<input name="qty_56431692" id="qty_56431692" value="1" class="vb10" size="3" type="text">
+						</td>
+					</tr>
+					<tr>
+						<td class="vb10" align="center">
+							<table border="0" cellpadding="1" cellspacing="0">
+								<tbody><tr>
+									<td>
+										<span>
+										<table border="0" cellpadding="2" cellspacing="0">
+											<tbody><tr>
+												<td style="cursor:pointer;color:#FFFFFF" onclick="window.location='https://www.partswebsite.com/autopartspeople/index.php?i=6&amp;type=parts&amp;key=&amp;action=additem&amp;o=56431692&amp;qty=' + document.getElementById('partForm56431692').qty_56431692.value + '&amp;modelyear=&amp;stop=rcmfkw69r6t858jzz36ad5204q&amp;price=72.86&amp;core_price=0&amp;rpage=#bottom'" align="center"><img src="../images/buynow.gif" border="0">
+												</td>
+												<td>&nbsp;</td>
+												<td style="cursor:pointer;color:#FFFFFF" onclick="document.getElementById('ifr_neegex').src='https://www.partswebsite.com/autopartspeople/index.php?i=2&amp;key=&amp;action=additem1&amp;o=56431692&amp;qty=' + document.getElementById('partForm56431692').qty_56431692.value + '&amp;modelyear=year&amp;stop=rcmfkw69r6t858jzz36ad5204q&amp;price=72.86&amp;core_price=0&amp;rpage=0#bottom'" nowrap="nowrap" align="center"><img src="../images/add2cart.gif" border="0"></td>
+											</tr>
+										</tbody></table>
+										</span>
+										<span style="display:none">
+										<table border="0" cellpadding="2" cellspacing="0">
+											<tbody><tr>
+												<td style="cursor:pointer;color:#FFFFFF" align="center"><a href="./index.php?i=5&amp;type=parts&amp;start=1"><img src="../images/contact_us.gif" border="0"></a>
+												</td>
+											</tr>
+										</tbody></table>
+										</span>
+									</td>
+								</tr>
+							</tbody></table>
+						</td>
+					</tr>
+				</tbody></table>
+				</form>
+			</td>
+		</tr>
+		<tr>
+			<td><span class="vb10b">Honda</span></td>
+		</tr>
+		<tr style="display:none">
+			<td><span class="vb10b">Price:</span><span class="vb10b">$91.07</span></td>
+		</tr>
+		<tr style="display:">
+			<td>
+				<span class="vb10b">List Price:</span><span style="text-decoration:line-through" class="vb10b">$91.07</span>
+			</td>
+		</tr>
+		<tr style="display:">
+			<td>
+				<span class="vr11b">Your Price:</span><span class="vb10b">$72.86</span>
+			</td>
+		</tr>
+		<!--
+		<tr>
+			<td>
+				<span class="vr11b">Core Price:</span><span class="vb10b">0</span>
+			</td>
+		</tr>
+		-->
+	    </tbody>
+        """
+        ap = PartSearchAutopartspeople()
+        data = ap.parse_response(response)
+
+        self.assertEqual(data['MSRP'], 91.07)
+        self.assertEqual(data['core'], None)
+        self.assertEqual(data['description'], "WIRE, CHANGE  ")
 

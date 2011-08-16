@@ -10,12 +10,12 @@
 <script type="text/javascript">
 	var current = null;
 	var curr_field = null;
-	
+
 	function setField(value,id) {
 		jQuery('#'+curr_field +'\\.'+ current).attr({'value':value, 'rel':id});
 		current = null;
 	}
-	
+
 	function showListArea(e)	{
 		id = e.id;
 		curr_field = jQuery(e).attr('rel');
@@ -23,11 +23,11 @@
 		direction_id = jQuery(e).parents('tr').find('#id_supplier\\.'+current+' :selected').attr('value');
 		if (direction_id)
 			showPopUp('/client/help/'+ direction_id +'/area/', 200, 600, 'area', 1);
-		else	
+		else
 			alert('Выберите направление');
 		return false;
 	}
-	
+
 	function showListBrand(e)	{
 		id = e.id;
 		curr_field = jQuery(e).attr('rel');
@@ -36,22 +36,22 @@
 		area_id = jQuery('#id_area\\.'+current).attr('rel');
 		if (area && area_id)
 			showPopUp('/client/help/'+ area_id +'/brands/', 200, 600, 'brands', 1);
-		else	
+		else
 			alert('Выберите поставщика');
 		return false;
 	}
-	
+
 	function setCar(value) {
 		document.getElementById('id_comment_supplier.'+current).value = value;
 		current = null;
 	}
-	
+
 	function showListCar(e){
 		id = e.id;
 		current = id.split('.')[1]
 		showPopUp('/client/help/cars/', 200, 600, 'cars', 1);
 	}
-	
+
 	var PageForm = Form.extend({
 		initialize: function(value) {
 		this.parent({{ page_template|safe }}, value);
@@ -61,18 +61,18 @@
 		$('page-forms').adopt(this.fieldset);
 		}
 	});
-	
+
 	Window.onDomReady(function() {
-	
+
 		{% for page in page_data %}
 		new PageForm({{ page|safe }});
 		{% endfor %}
-		
+
 		jQuery('.priceSale, .quantity').keyup(function() {
 			calculateTotal();
 		});
 	});
-	
+
 	calculateTotal = function() {
 		total = 0;
 		jQuery('.priceSale').each(function() {
@@ -81,21 +81,21 @@
 		});
 		total ? jQuery('#spanTotalPrice').html('').html(total) : jQuery('#spanTotalPrice').html('0');
 	}
-	
+
 	function showSearchForm(){
 		showPopUp('{% url search %}', 800, 300, 'Search', 1);
 		console.log(jQuery('input[id^=id_part_number\\.]'));
 	}
-	
+
 	function setPart(data){
 		data = jQuery.unserialize(data);
 		id = getFreeRow();
 		jQuery('#id_part_number\\.'+id).attr('value', data.partnumber);
 		jQuery('#id_brand\\.'+id).attr('value', data.maker_name);
 		jQuery('#id_description_en\\.'+id).attr('value', data.description);
-		jQuery('#id_price_sale\\.'+id).attr('value', data.price);
+		jQuery('#id_price_base\\.'+id).attr('value', data.MSRP);
 	}
-	
+
 	function getFreeRow(){
 		freeRow = null;
 		curr_id = null;
@@ -106,7 +106,7 @@
 				return false;
 			}
 		});
-		
+
 		if (!freeRow){
 			jQuery('a.add_link').click();
 			freeRow = parseInt(curr_id) + 1;
@@ -114,14 +114,14 @@
 
 		return freeRow;
 	}
-	
+
 	function changeDir(el){
 		var curr_id = jQuery(el).attr('id').split('.')[1];
 		jQuery('#id_brand\\.'+curr_id).attr('value', '');
-		
+
 		return false;
 	}
-	
+
 	(function(jQuery){
 		jQuery.unserialize = function(serializedString){
 			var str = decodeURI(serializedString);
@@ -144,7 +144,7 @@
 			return obj;
 		};
 	})(jQuery);
-	
+
 </script>
 {% endblock %}
 
@@ -160,3 +160,4 @@
 		</div>
 	</form>
 {% endblock %}
+

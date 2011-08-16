@@ -5,7 +5,7 @@
         data = jQuery('#formFound').serialize() +'&maker_name={{ maker_name }}';
         window.opener.setPart(data);
     }
-    
+
     function selectPartAndClose(){
         selectPart();
         window.close();
@@ -27,7 +27,6 @@
                     <td><b>Item Number</b></td>
                     <td><b>MSRP</b></td>
                     <td><b>Core Price</b></td>
-                    <td><b>Price</b></td>
                     <td><b>Description</b></td>
                     <td>&nbsp;</td>
                 </tr>
@@ -45,10 +44,6 @@
                         <input type="hidden" name="core_price" value="{{ found.core_price }}">
                     </td>
                     <td>
-                        {{ found.price }}
-                        <input type="hidden" name="price" value="{{ found.price }}">
-                    </td>
-                    <td>
                         {{ found.description }}
                         <input type="hidden" name="description" value="{{ found.description }}">
                     </td>
@@ -61,3 +56,4 @@
         </form>
     {% endif %}
 </div>
+

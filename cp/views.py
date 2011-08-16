@@ -21,10 +21,12 @@ from lib.qs_filter import QSFilter
 from lib.helpers import next, reverse
 from lib import xlsreader
 
-from cp.forms import OrderItemForm, ImportXlsForm, SearchForm
+from cp.forms import OrderItemForm, ImportXlsForm
+from client.forms import SearchForm
 from data.models import Direction, BrandGroup, Area, Brand, OrderedItem, ORDER_ITEM_STATUSES
 from data.forms import OrderedItemsFilterForm, OrderedItemForm, OrderedItemInlineForm
-from common.views import PartSearch, SoapClient
+from common.views import PartSearchAutopartspeople as PartSearch
+from common.views import SoapClient
 
 import logging
 logger = logging.getLogger("cp.views")
@@ -35,18 +37,22 @@ def search(request):
     found = None
     maker_name = None
     msg = ''
+    search_class = PartSearch()
+
+    maker_choices = [('','--------')] + search_class.get_make_options()
+
     if request.method == 'POST':
-        form = SearchForm(request.POST)
+        form = SearchForm(request.POST, maker_choices=maker_choices)
         if form.is_valid():
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
-            found = PartSearch().search(maker, part_number)
+            found = search_class.search(maker, part_number)
             if not found:
                 msg = u"Not Found"
-            maker_name = PartSearch().get_maker_name(maker)
+            maker_name = search_class.get_maker_name(maker)
 
     else:
-        form = SearchForm()
+        form = SearchForm(maker_choices=maker_choices)
 
     return {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
 

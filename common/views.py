@@ -71,10 +71,61 @@ def show_balance(request, user=None):
 
 
 class PartSearch(object):
+    BRAND_GROUP_TITLE = 'OEM'
+    SEARCH_URL = None
+    FORM_NAME = None
 
+    def get_make_options(self):
+        """
+        Returns makers in form [(id, name), ]
+        """
+        return []
+
+    def get_maker_id(self, maker_string):
+        try:
+            return [x[0] for x in self.get_make_options() \
+                     if x[1].lower() == maker_string.lower()][0]
+        except IndexError:
+            return None
+
+    def get_maker_name(self, maker_id):
+        try:
+            return [x[1].lower() for x in self.get_make_options() \
+                     if x[0] == str(maker_id)][0]
+        except IndexError:
+            return None
+
+
+
+    def _sanitize_content(self, content=None):
+        if not content:
+            return ''
+        content = content.replace('\r','').replace('\n','')
+        content = re.sub(r'>[ \t]*', r'>', content)
+        content = re.sub(r'[ \t]*<', r'<', content)
+        return content
+
+    def get_response(self, maker_id, partnumber):
+        return self._sanitize_content(self.get_response_mechanize(maker_id, partnumber))
+
+    def parse_response(self):
+        raise NotImplementedError
+
+
+    def search(self, maker_id, partnumber):
+        if maker_id not in [x[0] for x in self.get_make_options()]:
+            raise Exception('Invalid maker')
+
+        response = self.get_response(maker_id, partnumber)
+        data = self.parse_response(response)
+        if not data:
+            return None
+        data.update({'brandname':self.get_maker_name(maker_id)})
+        return data
+
+class PartSearchPartsCom(PartSearch):
     SEARCH_URL = 'http://www.parts.com/oemcatalog/index.cfm?action=searchCatalogOEM'
     FORM_NAME = 'partnumberSearch'
-    BRAND_GROUP_TITLE = 'OEM'
 
     def get_make_options(self):
         """
@@ -122,23 +173,10 @@ class PartSearch(object):
                 ("35","Volkswagen"),
                 ("36","Volvo"),]
 
-    def get_maker_id(self, maker_string):
-        try:
-            return [x[0] for x in self.get_make_options() \
-                     if x[1].lower() == maker_string.lower()][0]
-        except IndexError:
-            return None
-
-    def get_maker_name(self, maker_id):
-        try:
-            return [x[1].lower() for x in self.get_make_options() \
-                     if x[0] == str(maker_id)][0]
-        except IndexError:
-            return None
-
     def get_response_urllib(self, maker_id, partnumber):
         """
         Connects to the search page with params:
+
         @maker string Car maker name, i.e. `mazda` etc.
         @partnumber string Part number of a detail
         """
@@ -152,10 +190,11 @@ class PartSearch(object):
         f.close()
         return content
 
-    def get_response_mechanize(self,maker_id, partnumber):
+    def get_response_mechanize(self, maker_id, partnumber):
         browser = mechanize.Browser()
         params = urllib.urlencode({'Makeid': maker_id, \
                                    'partnumber': partnumber, \
+
                                    'searchAll': '1', \
                                    'SearchType': '1'})
         headers = {"User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2.8) Gecko/20100722 Firefox/3.6.8 GTB7.1 (.NET CLR 3.5.30729)",
@@ -166,25 +205,15 @@ class PartSearch(object):
         browser.close()
         return content
 
-    def _sanitize_content(self, content=None):
-        if not content:
-            return ''
-        content = content.replace('\r','').replace('\n','')
-        content = re.sub(r'>[ \t]*', r'>', content)
-        content = re.sub(r'[ \t]*<', r'<', content)
-        return content
-
-    def get_response(self, maker_id, partnumber):
-        return self._sanitize_content(self.get_response_mechanize(maker_id, partnumber))
-
-
     def parse_response(self, response):
         """
         Parse page for cost and returns dict
         """
         _s = r'<table width="100%" cellpadding="3" cellspacing="0" border="0">'
         parts = response.split(_s)
-        parts = [x for x in parts if (">OEM Catalog<" in x and "Item Number" in x and "MSRP" in x)]
+        parts = [x for x in parts \
+                   if (">OEM Catalog<" in x \
+                                    and "Item Number" in x and "MSRP" in x)]
         p = None
         if len(parts):
             try:
@@ -203,6 +232,7 @@ class PartSearch(object):
             if trs:
                 _data = []
                 for td in trs[0].findAll('td'):
+
                     _data.append(td.renderContents())
                 fields = ['partnumber','MSRP','core_price', 'price']
                 data = dict(zip(fields, _data))
@@ -218,16 +248,97 @@ class PartSearch(object):
         # If something goes wrong
         return None
 
-    def search(self, maker_id, partnumber):
-        if maker_id not in [x[0] for x in self.get_make_options()]:
-            raise Exception('Invalid maker')
+class PartSearchAutopartspeople(PartSearch):
+    SEARCH_URL = 'http://www.partswebsite.com/autopartspeople/index.php?i=2&type=parts&partnum=accept'
+    FORM_NAME = 'searchfrm'
 
-        response = self.get_response(maker_id, partnumber)
-        data = self.parse_response(response)
-        if not data:
+    def get_make_options(self):
+        return [
+         ('109', 'Acura'),
+         ('112', 'Audi'),
+         ('114', 'Buick'),
+         ('115', 'Cadillac'),
+         ('116', 'Chevrolet'),
+         ('117', 'Chrysler'),
+         ('120', 'Dodge'),
+         ('123', 'Ford'),
+         ('125', 'GMC'),
+         ('160', 'Hummer'),
+         ('127', 'Hyundai'),
+         ('128', 'Infiniti'),
+         ('131', 'Jeep'),
+         ('132', 'Kia'),
+         ('135', 'Lincoln'),
+         ('136', 'Mazda'),
+         ('138', 'Mercury'),
+         ('141', 'Mitsubishi'),
+         ('142', 'Nissan'),
+         ('143', 'Oldsmobile'),
+         ('146', 'Pontiac'),
+         ('149', 'Saab'),
+         ('150', 'Saturn'),
+         ('151', 'Scion'),
+         ('153', 'Subaru'),
+         ('154', 'Suzuki'),
+         ('155', 'Toyota'),
+         ('157', 'Volkswagen'),
+         ('158', 'Volvo')
+        ]
+
+
+
+    def get_response_mechanize(self, maker_id, part_number):
+        browser = mechanize.Browser()
+        params = urllib.urlencode(
+            {'model': 'model',
+            'searchpart': part_number,
+            'searchsub': "Search",
+            'section': "section",
+            'srch_make_id':	maker_id,
+            'year':	"year"})
+
+        headers = {"User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2.8) Gecko/20100722 Firefox/3.6.8 GTB7.1 (.NET CLR 3.5.30729)",
+        "Referer": "http://www.partswebsite.com"}
+        request = urllib2.Request(self.SEARCH_URL, params, headers)
+        response = browser.open(request, timeout=120.0)
+        content = response.read()
+        browser.close()
+
+        return content
+
+    def parse_response(self, response):
+        if "No Items Found Please Try Again or Search by Categories." in response:
             return None
-        data.update({'brandname':self.get_maker_name(maker_id)})
-        return data
+        bs = BeautifulSoup(response)
+        def find_price_by_label(label):
+            s1 = bs.find("span", {'class': "vb10b"}, text=re.compile(label))
+            if s1:
+                s2 = str(s1.findNext('span', text=re.compile("\$?")))
+                try:
+                    return float(s2.lstrip("$"))
+                except (ValueError, AttributeError), e:
+                    return None
+        def find_description():
+            s1 = bs.find("span", {'class': "vb10b"}, text=re.compile("Part#"))
+            if s1:
+                dr = re.compile(r'^([-\(\)_.,\w\d\s]+)\[Part\#\s?([\w\d]+)\]$')
+                try:
+                    description, partnumber = [str(x) for x in dr.findall(s1)[0]]
+                except (AttributeError, IndexError):
+                    description, partnumber = "", ''
+                return description, partnumber
+        description, partnumber = find_description()
+        return {
+            'MSRP': find_price_by_label("List Price:"),
+            'core': find_price_by_label("Core Price:"),
+            'description': description,
+            'partnumber': partnumber
+        }
+
+        # Find core price
+
+
+
 
 import SOAPpy
 class SoapClient(object):

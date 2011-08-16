@@ -10,7 +10,8 @@ from lib.qs_filter import QSFilter
 from data.models import OrderedItem, Brand, BrandGroup, Area, BrandGroupAreaSettings
 from data.forms import OrderedItemsFilterForm
 from client.forms import SearchForm
-from common.views import PartSearch
+from common.views import PartSearchAutopartspeople as PartSearch
+
 from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
 from decimal import Decimal
 from data.forms import CLIENT_FIELD_LIST
@@ -23,12 +24,17 @@ def search(request):
     found = None
     maker_name = None
     msg = ''
+
+    search_class = PartSearch()
+
+    maker_choices = [('','--------')] + search_class.get_make_options()
+
     if request.method == 'POST':
-        form = SearchForm(request.POST)
+        form = SearchForm(request.POST, maker_choices=maker_choices)
         if form.is_valid():
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
-            found = PartSearch().search(maker, part_number)
+            found = search_class.search(maker, part_number)
             if not found:
                 msg = u"Ничего не найдено"
             else:
@@ -62,10 +68,10 @@ def search(request):
                 found['MSRP'] = "%.2f" % found['MSRP']
                 found['your_price'] = "%.2f" % found['your_price']
                 found['your_economy'] = "%.2f" % found['your_economy']
-            maker_name = PartSearch().get_maker_name(maker)
+            maker_name = search_class.get_maker_name(maker)
 
     else:
-        form = SearchForm()
+        form = SearchForm(maker_choices=maker_choices)
 
     return {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
 
