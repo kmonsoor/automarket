@@ -14,6 +14,8 @@ from data.models import *
 from BeautifulSoup import BeautifulSoup, NavigableString
 from SOAPpy import WSDL
 
+import logging
+log = logging.getLogger("common.views")
 
 @render_to('common/start.html')
 def start(request):
@@ -322,7 +324,7 @@ class PartSearchAutopartspeople(PartSearch):
             d,p = "",""
             s1 = bs.find("span", {'class': "vb10b"}, text=re.compile("Part#"))
             if s1:
-                dr = re.compile(r'^([-\(\)_.,\w\d\s]+)\[Part\#\s?([\w\d]+)\]$')
+                dr = re.compile(r'^(.*)\[Part\#\s?([\w\d]+)\]$')
                 try:
                     d,p = [str(x) for x in dr.findall(s1)[0]]
                 except (AttributeError, IndexError, ValueError):

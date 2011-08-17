@@ -1,5 +1,5 @@
 
-
+import os
 import unittest
 from common.views import PartSearch
 from common.views import PartSearchAutopartspeople
@@ -135,10 +135,15 @@ class PartswebsiteParserTest(unittest.TestCase):
 		-->
 	    </tbody>
         """
+
+        p = os.path.dirname(os.path.abspath(__file__))
+
+        with open(os.path.join(p, "search_response.html")) as f:
+            response = f.read()
         ap = PartSearchAutopartspeople()
         data = ap.parse_response(response)
 
-        self.assertEqual(data['MSRP'], 91.07)
+        self.assertEqual(data['MSRP'], 19.62)
         self.assertEqual(data['core'], None)
-        self.assertEqual(data['description'], "WIRE, CHANGE  ")
+        self.assertEqual(data['description'], "SPRING SET(R),BRAKE  ")
 
