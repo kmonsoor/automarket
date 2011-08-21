@@ -10,7 +10,7 @@ from lib.qs_filter import QSFilter
 from data.models import OrderedItem, Brand, BrandGroup, Area, BrandGroupAreaSettings
 from data.forms import OrderedItemsFilterForm
 from client.forms import SearchForm
-from common.views import PartSearchAutopartspeople as PartSearch
+from common.views import PartSearch
 
 from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
 from decimal import Decimal
@@ -26,8 +26,7 @@ def search(request):
     msg = ''
 
     search_class = PartSearch()
-
-    maker_choices = [('','--------')] + search_class.get_make_options()
+    maker_choices = search_class.maker_choices()
 
     if request.method == 'POST':
         form = SearchForm(request.POST, maker_choices=maker_choices)
@@ -68,12 +67,12 @@ def search(request):
                 found['MSRP'] = "%.2f" % found['MSRP']
                 found['your_price'] = "%.2f" % found['your_price']
                 found['your_economy'] = "%.2f" % found['your_economy']
-            maker_name = search_class.get_maker_name(maker)
 
     else:
         form = SearchForm(maker_choices=maker_choices)
+        maker = None
 
-    return {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
+    return {'form': form, 'found': found, 'maker_name': maker, 'msg': msg,}
 
 class ClientOrderItemDisplay(object):
     def __init__(self, obj, field, format):

@@ -11,7 +11,7 @@ def makers():
 class SearchForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        maker_choices = kwargs.pop("maker_choices", makers())
+        maker_choices = kwargs.pop("maker_choices")
         super(SearchForm, self).__init__(*args, **kwargs)
         self.fields['maker'].widget.choices = maker_choices
 

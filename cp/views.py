@@ -25,7 +25,7 @@ from cp.forms import OrderItemForm, ImportXlsForm
 from client.forms import SearchForm
 from data.models import Direction, BrandGroup, Area, Brand, OrderedItem, ORDER_ITEM_STATUSES
 from data.forms import OrderedItemsFilterForm, OrderedItemForm, OrderedItemInlineForm
-from common.views import PartSearchAutopartspeople as PartSearch
+from common.views import PartSearch
 from common.views import SoapClient
 
 import logging
@@ -39,8 +39,7 @@ def search(request):
     msg = ''
     search_class = PartSearch()
 
-    maker_choices = [('','--------')] + search_class.get_make_options()
-
+    maker_choices = search_class.maker_choices()
     if request.method == 'POST':
         form = SearchForm(request.POST, maker_choices=maker_choices)
         if form.is_valid():
@@ -49,8 +48,7 @@ def search(request):
             found = search_class.search(maker, part_number)
             if not found:
                 msg = u"Not Found"
-            maker_name = search_class.get_maker_name(maker)
-
+            maker_name = form.cleaned_data['maker']
     else:
         form = SearchForm(maker_choices=maker_choices)
 
@@ -203,8 +201,6 @@ def order(request):
     response['page_template'] = OrderItemForm().render_js('from_template')
     response['page_data'] = item_data
 
-    # search_form
-    response['search_form'] = SearchForm()
     return response
 
 

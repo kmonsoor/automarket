@@ -5,7 +5,6 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
 from data.models import BrandGroup, Brand, OrderedItem, Area
-from common.views import PartSearch
 from lib.widgets import JQueryAutoComplete
 from lib.dynamicforms import Form
 
@@ -85,14 +84,12 @@ class OrderItemForm(Form):
 
             return client
 
-
-def makers():
-    _list = PartSearch().get_make_options()
-    _list.insert(0, ('', 'Select Make'))
-    return _list
-
 class SearchForm(forms.Form):
-    maker = forms.CharField(widget=forms.Select(choices=makers()), label=u'MAKE', required=True)
+    def __init__(self, *args, **kwargs):
+        maker_choices = kwargs.pop("maker_choices")
+        super(SearchForm, self).__init__(*args, **kwargs)
+        self.fields['maker'].widget.choices = maker_choices
+    maker = forms.CharField(widget=forms.Select(choices=()), label=u'MAKE', required=True)
     part_number = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'Part Number', required=True)
 
 class ImportXlsForm(forms.Form):

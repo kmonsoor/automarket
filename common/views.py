@@ -72,7 +72,7 @@ def show_balance(request, user=None):
     return {'select_period_form':form,'user':user, 'debet':debet, 'credit':credit}
 
 
-class PartSearch(object):
+class PartSearchBase(object):
     BRAND_GROUP_TITLE = 'OEM'
     SEARCH_URL = None
     FORM_NAME = None
@@ -125,7 +125,8 @@ class PartSearch(object):
         data.update({'brandname':self.get_maker_name(maker_id)})
         return data
 
-class PartSearchPartsCom(PartSearch):
+class PartSearchPartsCom(PartSearchBase):
+    name = "parts.com"
     SEARCH_URL = 'http://www.parts.com/oemcatalog/index.cfm?action=searchCatalogOEM'
     FORM_NAME = 'partnumberSearch'
 
@@ -250,7 +251,9 @@ class PartSearchPartsCom(PartSearch):
         # If something goes wrong
         return None
 
-class PartSearchAutopartspeople(PartSearch):
+class PartSearchAutopartspeople(PartSearchBase):
+    name = "autopartspeople"
+
     SEARCH_URL = 'http://www.partswebsite.com/autopartspeople/index.php?i=2&type=parts&partnum=accept'
     FORM_NAME = 'searchfrm'
 
@@ -263,6 +266,7 @@ class PartSearchAutopartspeople(PartSearch):
          ('116', 'Chevrolet'),
          ('117', 'Chrysler'),
          ('120', 'Dodge'),
+         ('117', "Eagle"), # = Chrysler
          ('123', 'Ford'),
          ('125', 'GMC'),
          ('160', 'Hummer'),
@@ -277,6 +281,7 @@ class PartSearchAutopartspeople(PartSearch):
          ('142', 'Nissan'),
          ('143', 'Oldsmobile'),
          ('146', 'Pontiac'),
+         ('117', "Plymouth"), # = Chrysler
          ('149', 'Saab'),
          ('150', 'Saturn'),
          ('151', 'Scion'),
@@ -339,6 +344,74 @@ class PartSearchAutopartspeople(PartSearch):
         }
 
         # Find core price
+
+
+class PartSearch(object):
+
+    _search_registry = [PartSearchAutopartspeople, PartSearchPartsCom]
+    makers = [
+        "Acura",
+        "Audi",
+        "BMW",
+        "Buick",
+        "Cadillac"
+        "Chevrolet/Geo",
+        "Chrysler",
+        "Dodge",
+        "Eagle",
+        "Ford",
+        "GMC",
+        "Honda",
+        "Hummer",
+        "Hyundai",
+        "Infiniti",
+        "Isuzu",
+        "Jaguar",
+        "Jeep",
+        "Kia",
+        "LandRover",
+        "Lexus",
+        "Lincoln",
+        "Mazda",
+        "Mercedes-Benz",
+        "Mercury",
+        "MINI",
+        "Mitsubishi",
+        "Nissan",
+        "Oldsmobile",
+        "Plymouth",
+        "Pontiac",
+        "Porsche",
+        "Saab",
+        "Saturn",
+        "Scion",
+        "Subaru",
+        "Suzuki",
+        "Toyota",
+        "Volkswagen",
+        "Volvo"
+        ]
+
+    def maker_choices(self):
+        return [('', '----')] + [(x,x) for x in self.makers]
+
+    def get_search_handler(self, maker_name):
+        for search_class in self._search_registry:
+            s = search_class()
+            maker_names = [x[1] for x in s.get_make_options()]
+            if maker_name in maker_names:
+                return s
+        return None
+
+    def search(self, maker_name, part_number):
+        handler = self.get_search_handler(maker_name)
+        maker_id = handler.get_maker_id(maker_name)
+        try:
+            return handler.search(maker_id, part_number)
+        except Exception, e:
+            log.exception("Search in %s returned an error %r" % \
+                (handler.__class__.__name__, e))
+        return None
 
 
 
