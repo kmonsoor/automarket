@@ -133,13 +133,13 @@ tr.alt td {
   <td>{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</td>
   {% table_td i 'description_ru' 1 'editDescriptionRu' %}
   {% table_td i 'description_en' 1 'editDescriptionEn' %}
-  {% table_td i 'price_base' 1 'editPriceBase' %}
+  {% table_td i 'price_base' 1 'editPriceBase' 0 %}
   {% table_td i 'weight' 1 'editWeight' %}
-  {% table_td i 'delivery' 0 '' %}
-  {% table_td i 'price_sale' 0 '' %}
-  {% table_td i 'price_discount' 1 'editPriceDiscount' %}
-    {% table_td i 'cost' 0 '' %}
-    {% table_td i 'total_cost' 0 '' %}
+  {% table_td i 'delivery' 0 '' 0 %}
+  {% table_td i 'price_sale' 0 '' 0 %}
+  {% table_td i 'price_discount' 1 'editPriceDiscount' 0 %}
+    {% table_td i 'cost' 0 '' 0 %}
+    {% table_td i 'total_cost' 0 '' 0 %}
   {% table_td i 'invoice_code' 1 'editInvoiceCode' %}
     <td class="editable">
         <select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">

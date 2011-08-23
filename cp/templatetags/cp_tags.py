@@ -25,9 +25,11 @@ def table_header_sort(context, headers):
 
 
 @register.inclusion_tag("cp/tags/table/td.html", takes_context=True)
-def table_td(context, item, field_name, editable, jscallback, class_line=None):
+def table_td(context, item, field_name, editable, jscallback, show_if_failed=1):
 
     value = getattr(item, field_name)
+
+    show_if_failed = bool(show_if_failed)
 
     if callable(value):
         value = value()
@@ -38,6 +40,7 @@ def table_td(context, item, field_name, editable, jscallback, class_line=None):
         'field_name': field_name,
         'jscallback': jscallback,
         'value': value,
-        'class_line': class_line
+        #'class_line': class_line,
+        'show_if_failed': show_if_failed
     }
 
