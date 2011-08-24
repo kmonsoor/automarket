@@ -210,7 +210,7 @@ class OrderedItem(models.Model):
         logger.debug("OrderedItem save: called from %r" % \
                      inspect.getframeinfo(inspect.currentframe().f_back)[2])
 
-        if self.area and self.brandgroup and self.weight:
+        if self.area and self.brandgroup and self.weight is not None:
             logger.debug("OrderedItem save: area, brandgroup and weight are defined")
             multiplier, delivery = self.area.get_brandgroup_settings(self.brandgroup)
             self.delivery = delivery*self.weight
