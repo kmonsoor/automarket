@@ -46,7 +46,7 @@ def search(request):
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
             found = search_class.search(maker, part_number)
-            if not found:
+            if not found or not found.get("MSRP") or not found.get("partnumber"):
                 msg = u"Not Found"
             maker_name = form.cleaned_data['maker']
     else:

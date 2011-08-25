@@ -34,7 +34,8 @@ def search(request):
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
             found = search_class.search(maker, part_number)
-            if not found:
+            if not found or not found.get("MSRP") or not found.get("partnumber"):
+                found = None
                 msg = u"Ничего не найдено"
             else:
                 # try to find area and get multiplier
@@ -56,9 +57,10 @@ def search(request):
                 except Exception, e:
                     discount = AREA_DISCOUNT_DEFAULT
                 discount = float(discount)
+
                 value = str(found['MSRP'])
                 # we need to remove all "," as separators
-                value = value.replace(',','')
+                value = value.replace(',','.')
                 found['MSRP'] = float(value) * float(m)
                 found['your_price'] = found['MSRP']*(100-discount)/100
                 found['your_economy'] = found['MSRP'] - found['your_price']
@@ -67,12 +69,13 @@ def search(request):
                 found['MSRP'] = "%.2f" % found['MSRP']
                 found['your_price'] = "%.2f" % found['your_price']
                 found['your_economy'] = "%.2f" % found['your_economy']
+                maker_name = form.cleaned_data['maker']
 
     else:
         form = SearchForm(maker_choices=maker_choices)
         maker = None
 
-    return {'form': form, 'found': found, 'maker_name': maker, 'msg': msg,}
+    return {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
 
 class ClientOrderItemDisplay(object):
     def __init__(self, obj, field, format):
