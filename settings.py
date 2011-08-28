@@ -29,7 +29,7 @@ DATABASE_HOST = ''             # Set to empty string for localhost. Not used wit
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
 
 
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'Europe/Minsk'
 
 LANGUAGE_CODE = 'ru-Ru'
 
