@@ -193,7 +193,9 @@ class OrderedItem(models.Model):
     status_modified = models.DateTimeField(verbose_name=u"Дата изменения статуса", editable=False, null=True, blank=True)
 
     previous_status = models.CharField(max_length=50, verbose_name=u"Прежний статус", null=True, blank=True,)
-    created = models.DateTimeField(auto_now_add=True, verbose_name=u"Дата заказа")
+    created = models.DateTimeField(auto_now_add=True, verbose_name=u"Дата создания")
+    obtained_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Дата заказа")
+    received_office_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Получено офисом")
     modified = models.DateTimeField(auto_now=True, verbose_name=u"Дата изменения", editable=False)
     invoice_code = models.CharField(max_length=255, verbose_name=u'Инвойс', default='')
 
@@ -236,6 +238,7 @@ class OrderedItem(models.Model):
             self.total_cost = self.cost*self.quantity
 
         logger.debug("OrderedItem save: total_cost is: %s"%self.total_cost)
+
 
         super(OrderedItem, self).save(*args, **kwargs)
 

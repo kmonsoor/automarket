@@ -329,7 +329,7 @@ class PartSearchAutopartspeople(PartSearchBase):
             d,p = "",""
             s1 = bs.find("span", {'class': "vb10b"}, text=re.compile("Part#"))
             if s1:
-                dr = re.compile(r'^(.*)\[Part\#\s?([\w\d]+)\]$')
+                dr = re.compile(r'^(.*)\[(?:New\s)?Part\#\s?([\w\d]+)\]$')
                 try:
                     d,p = [str(x) for x in dr.findall(s1)[0]]
                 except (AttributeError, IndexError, ValueError):
