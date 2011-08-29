@@ -154,6 +154,7 @@ ORDER_ITEM_STATUSES = (
     ('sent_representative',u'отправлено представителю'),
     ('received_office',u'получено офисом'),
     ('issued',u'выдано'),
+    ('moderation',u'на модерации')
 )
 
 class OrderedItem(models.Model):

@@ -111,8 +111,7 @@ tr.alt td {
     table td {padding:1px 5px; vertical-align: middle;}
 </style>
 {% for i in items %}
-  {% cycle 'row1' 'row2' as row_class %}
-  <tr id="table_row_{{ i.id }}" class="{{ row_class }}{% if i.failed %} failure{% endif %}">
+  <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}">
   {% include "cp/tags/table/row.html" %}
   </tr>
 {% endfor %}

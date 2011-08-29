@@ -141,3 +141,12 @@ a.deletelink:hover { color:#993333; }
 table#change-history { width:100%; }
 table#change-history tbody th { width:16em; }
 
+/* ITEM STATUSES */
+tr.failure {
+    background:#FFD7C7; border: 2px solid white;
+}
+
+tr.moderation {
+    background:#FAD6AC;
+}
+

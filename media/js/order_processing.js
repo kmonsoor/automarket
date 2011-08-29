@@ -346,6 +346,8 @@ function editStatus(id, value) {
                 if (response.error) alert(response.value);
             }
         });
+    row_class = $("#table_row_"+id).attr('class');
+    $("#table_row_"+id).attr('class', row_class.replace(/(row1|2)\s+(.*)?/g, "$1 "+value));
     if (!current.type) {
         postSave();
     }
