@@ -334,11 +334,11 @@ class PartSearchAutopartspeople(PartSearchBase):
                     d,p = [str(x) for x in dr.findall(s1)[0]]
                 except (AttributeError, IndexError, ValueError):
                     pass
-            return d,p
+            return d, p
         description, partnumber = find_description()
         return {
             'MSRP': find_price_by_label("List Price:"),
-            'core': find_price_by_label("Core Price:"),
+            'core_price': find_price_by_label("Core Price:"),
             'description': description,
             'partnumber': partnumber
         }

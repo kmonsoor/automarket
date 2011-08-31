@@ -61,8 +61,12 @@ def search(request):
                 value = str(found['MSRP'])
                 # we need to remove all "," as separators
                 value = value.replace(',','.')
+                try:
+                    core_price = float(found['core_price'])
+                except Exception, e:
+                    core_price = 0
                 found['MSRP'] = float(value) * float(m)
-                found['your_price'] = found['MSRP']*(100-discount)/100
+                found['your_price'] = found['MSRP']*(100-discount)/100 + core_price
                 found['your_economy'] = found['MSRP'] - found['your_price']
                 found['your_economy_perc'] = 100 - (found['your_price']/found['MSRP'])*100
                 # output
