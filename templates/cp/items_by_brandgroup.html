@@ -3,31 +3,40 @@
 <table class="admin_table" style="margin-bottom: 0px;" id="brandgroup_{{ brandgroup.id }}">
     <tr><th colspan="4">{{ brandgroup.title }}</th></tr>
     <tr>
-        <td style="background: #dbdbdb;padding-left:60px;width:150px;"><b>Brand</b></td>
-        <td style="background: #dbdbdb;width:150px;"><b>Part Number</b></td>
-        <td style="background: #dbdbdb;width:200px"><b>QTY</b></td>
+        <td style="background: #dbdbdb;width:150px;"><b>Brand</b></td>
+        <td style="background: #dbdbdb;width:50px;"><b>Part Number</b></td>
+        <td style="background: #dbdbdb;width:20px"><b>QTY</b></td>
+        <td style="background: #dbdbdb;width:125px"><b>Description</b></td>
+        <td style="background: #dbdbdb;width:70px"><b>CL</b></td>
+        <td style="background: #dbdbdb;width:50px"><b>ID</b></td>
+        <td style="background: #dbdbdb;width:50px"><b>LIST</b></td>
+        <td style="background: #dbdbdb;width:50px"><b>PRICE</b></td>
         <td style="background: #dbdbdb;width:20px"></td>
     </tr>
     {% for area, orders in orders_by_area.items %}
-    <tr>
-        <table class="admin_table" style="margin-bottom: 0px;" id="brand_{{ area.id }}">
+    <tbody id="brand_{{ area.id }}">
             <tr>
-                <td style="padding-left:30px;background:white;" colspan="3"><h3>{{ area.title }}</h3></td>
+                <td style="padding-left:30px;background:white;" colspan="8"><h3>{{ area.title }}</h3></td>
                 <td style="background:white;"><input type="checkbox" name="selectGroup" onchange="selectGroup(this, '{{ area.id }}', '{{ brandgroup.id }}', '{{ direction.id }}');" ></td>
             </tr>
             {% for order in orders %}
             <tr id="order_{{ order.id }}">
-                <td style="padding-left:60px;width:150px;">{{ order.brand }}</td>
-                <td style="width:150px;">{{ order.part_number }}</td>
-                <td style="width:200px">{{ order.quantity }}</td>
+                <td style="width:150px;">{{ order.brand }}</td>
+                <td style="width:50px;">{{ order.part_number }}</td>
+                <td style="width:20px">{{ order.quantity }}</td>
+                <td style="width:125px"><b>{{ order.description_en }}</b></td>
+                <td style="width:70px"><b>{{ order.client }}{% if order.client_order_id %}/{{ order.client_order_id }}{% endif %}</b></td>
+                <td style="width:50px"><b>{{ order.manager }}</b></td>
+                <td style="width:50px"><b>{{ order.price_base }}</b></td>
+                <td style="width:50px"><b>{{ order.price_sale }}</b></td>
+
                 <td style="width:20px"><input type="checkbox" onchange="selectOrder(this, '{{ brand.id }}', '{{ brandgroup.id }}', '{{ direction.id }}');" id="order_{{ order.id }}" name="order_{{ order.id }}"></td>
             </tr>
             {% endfor %}
-        </table>
-    </tr>
+    </tbody>
     {% endfor %}
     <tr>
-        <td colspan="3" align="right" style="background: #ffffff">
+        <td colspan="9" align="right" style="background: #ffffff">
             <div class="submit-row">
             <script>
             export_brandgroup = function(brandgroup_id){
@@ -41,3 +50,4 @@
     </tr>
 </table>
 {% endif %}
+
