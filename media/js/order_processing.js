@@ -87,9 +87,8 @@ function postSave() {
     }
 
     // get calculated values from the server
-
     FIELDS = ['price_base', 'price_sale', 'price_discount',
-              'delivery', 'cost', 'total_cost', 'obtained_at', 'received_office_at']
+              'delivery', 'cost', 'total_cost']
     jQuery.ajax({
         url: '/cp/ordered_item/' + current.id + '/',
         data: {'fields': FIELDS.join(',')},
@@ -107,7 +106,6 @@ function postSave() {
             if (current.id) close();
         },
     });
-
 }
 
 function restore() {
@@ -329,7 +327,6 @@ function editStatus(id, value) {
 	        jQuery('#part_number_display_' + id).attr('class', 'default');
 	    }
 	}
-    current.id = id;
     jQuery('#status_input_' + id).attr('disabled',1)
     jQuery.ajax(
         {
@@ -346,11 +343,7 @@ function editStatus(id, value) {
                 if (response.error) alert(response.value);
             }
         });
-    row_class = $("#table_row_"+id).attr('class');
-    $("#table_row_"+id).attr('class', row_class.replace(/(row1|2)\s+(.*)?/g, "$1 "+value));
-    if (!current.type) {
-        postSave();
-    }
+
 }
 
 

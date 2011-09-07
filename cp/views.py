@@ -13,8 +13,6 @@ from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.utils.datastructures import MultiValueDict
 from django.utils import simplejson
 from django.conf import settings
-from django.template.loader import render_to_string
-from django.template import RequestContext
 
 from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
@@ -101,9 +99,7 @@ def index(request):
                     (u'PART #', 'part_number'),
                     (u'COMMENT 1', None),
                     (u'COMMENT 2', None),
-                    (u'Создано', 'created'),
-                    (u'Заказано', 'obtained_at'),
-                    (u'Получено', 'received_office_at'),
+                    (u'Дата', 'created'),
                     (u'Q', None),
                     (u'PRICE IN', None),
                     (u'TOTAL', None),
@@ -343,10 +339,6 @@ class OrderedItemSaver(object):
             else:
                 obj.status = value
             obj.status_modified = datetime.now()
-            if value == 'obtained':
-                obj.obtained_at = datetime.now()
-            if value == 'received_office':
-                obj.received_office_at = datetime.now()
             obj.save()
         except Exception, e:
             logger.exception("save_status: %r"%e)
@@ -413,14 +405,7 @@ def get_ordered_item(request, item_id):
     response = {}
     for f in fields:
         try:
-            if f in ('created', 'modified', 'obtained_at', 'received_office_at'):
-                try:
-                    attr = getattr(item, f)
-                    response[f] = attr.strftime("%Y-%m-%d %H:%M:%S")
-                except (AttributeError, ValueError):
-                    response[f] = ''
-            else:
-                response[f] = str(getattr(item, f))
+            response[f] = getattr(item, f)
         except AttributeError:
             response[f] = None
     return response
@@ -824,21 +809,4 @@ def get_brandgroup_settings(request, ordered_item_id):
         response = ordered_item.area.get_brandgroup_settings(ordered_item.brandgroup)
         return map(float, list(response))
     return []
-
-@ajax_request
-@login_required
-def ordered_item_row(request, item_id):
-    try:
-        item = OrderedItem.objects.get(pk=item_id)
-    except OrderedItem.DoesNotExist:
-        return {
-            'html': ''
-        }
-    context = RequestContext(request, {
-        'i': item
-    })
-    html = render_to_string("cp/tags/table/row.html", context_instance=context)
-    return {
-        'html': html
-    }
 

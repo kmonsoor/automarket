@@ -88,8 +88,6 @@ tr.alt td {
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
 <td>{{ filter.form.part_number_superseded__contains }}</td>
 <td>{{ filter.form.manager__username__contains }}</td>
 <td>{{ filter.form.client__username__contains }}</td>
@@ -111,9 +109,58 @@ tr.alt td {
     table td {padding:1px 5px; vertical-align: middle;}
 </style>
 {% for i in items %}
-  <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}">
-  {% include "cp/tags/table/row.html" %}
-  </tr>
+    <tr class="{% cycle row1,row2 %}{% if i.failed %} failure{% endif %}">
+
+  {% table_td i 'get_po_verbose' 0 '' %}
+  {% table_td i 'brandgroup' 0 '' %}
+  {% table_td i 'area' 0 '' %}
+  {% table_td i 'brand' 0 '' %}
+  {% ifequal i.status 'superseded' %}
+  {% table_td i 'part_number' 0 '' 'cross_out' %}
+  {% else %}
+  {% table_td i 'part_number' 0 '' %}
+  {% endifequal %}
+  {% table_td i 'comment_customer' 0 '' %}
+  {% table_td i 'comment_supplier' 1 'editCommentSupplier' %}
+  <td align="center">
+  {{ i.created|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
+  </td>
+  {% table_td i 'quantity' 0 '' %}
+  {% table_td i 'price_invoice' 1 'editPriceInvoice' %}
+  {% table_td i 'total_w_ship' 0 '' %}
+  {% table_td i 'part_number_superseded' 1 'editSuperseded' %}
+  {% table_td i 'manager' 0 '' %}
+  <td>{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</td>
+  {% table_td i 'description_ru' 1 'editDescriptionRu' %}
+  {% table_td i 'description_en' 1 'editDescriptionEn' %}
+  {% table_td i 'price_base' 1 'editPriceBase' 0 %}
+  {% table_td i 'weight' 1 'editWeight' %}
+  {% table_td i 'delivery' 0 '' 0 %}
+  {% table_td i 'price_sale' 0 '' 0 %}
+  {% table_td i 'price_discount' 1 'editPriceDiscount' 0 %}
+    {% table_td i 'cost' 0 '' 0 %}
+    {% table_td i 'total_cost' 0 '' 0 %}
+  {% table_td i 'invoice_code' 1 'editInvoiceCode' %}
+    <td class="editable">
+        <select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
+        {% for opt in status_options %}
+            {% ifequal i.status 'order' %}
+                {% ifequal opt.value 'order' %}
+                <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>
+                {{ opt.option|lower }}
+                </option>
+                {% endifequal %}
+            {% else %}
+            {% ifnotequal opt.value 'order' %}
+            <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>
+            {{ opt.option|lower }}
+            </option>
+        {% endifnotequal %}
+        {% endifequal %}
+        {% endfor %}
+        </select>
+    </td>
+</tr>
 {% endfor %}
 {% if total_row %}
     <tr class="alt">

@@ -329,16 +329,16 @@ class PartSearchAutopartspeople(PartSearchBase):
             d,p = "",""
             s1 = bs.find("span", {'class': "vb10b"}, text=re.compile("Part#"))
             if s1:
-                dr = re.compile(r'^(.*)\[(?:New\s)?Part\#\s?([\w\d]+)\]$')
+                dr = re.compile(r'^(.*)\[Part\#\s?([\w\d]+)\]$')
                 try:
                     d,p = [str(x) for x in dr.findall(s1)[0]]
                 except (AttributeError, IndexError, ValueError):
                     pass
-            return d, p
+            return d,p
         description, partnumber = find_description()
         return {
             'MSRP': find_price_by_label("List Price:"),
-            'core_price': find_price_by_label("Core Price:"),
+            'core': find_price_by_label("Core Price:"),
             'description': description,
             'partnumber': partnumber
         }

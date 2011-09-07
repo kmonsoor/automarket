@@ -209,7 +209,7 @@ function editStatus(id, value) {
                    },
             success: function(response) {
                 jQuery('#status_input_' + id).val(response.value);
-                jQuery('#status_input_' + id).attr('disabled',false);
+                jQuery('#status_input_' + id).attr('disabled',false)
                 if (response.error) alert(response.value);
                 close();
             }
