@@ -395,24 +395,39 @@ class PartSearch(object):
     def maker_choices(self):
         return [('', '----')] + [(x,x) for x in self.makers]
 
-    def get_search_handler(self, maker_name):
-        for search_class in self._search_registry:
-            s = search_class()
-            maker_names = [x[1] for x in s.get_make_options()]
-            if maker_name in maker_names:
-                return s
-        return None
 
     def search(self, maker_name, part_number):
-        handler = self.get_search_handler(maker_name)
-        maker_id = handler.get_maker_id(maker_name)
-        try:
-            return handler.search(maker_id, part_number)
-        except Exception, e:
-            log.exception("Search in %s returned an error %r" % \
-                (handler.__class__.__name__, e))
-        return None
 
+        def iterate_registry():
+            for search_class in self._search_registry:
+                yield search_class
+
+        reg_iterator = iterate_registry()
+
+        def _make_search():
+            try:
+                s = reg_iterator.next()
+            except StopIteration:
+                return None
+            handler = s()
+            maker_names = [x[1] for x in handler.get_make_options()]
+            if not maker_name in maker_names:
+                return _make_search()
+            maker_id = handler.get_maker_id(maker_name)
+            try:
+                data = handler.search(maker_id, part_number)
+            except Exception, e:
+                log.exception("Search in %s returned an error %r" % \
+                    (handler.__class__.__name__, e))
+                data = None
+            else:
+                if data and data.get("MSRP") and data.get("partnumber"):
+                    return data
+            return _make_search()
+
+
+        found = _make_search()
+        return found
 
 
 
