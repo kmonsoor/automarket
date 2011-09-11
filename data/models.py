@@ -231,17 +231,37 @@ class OrderedItem(models.Model):
         #        pass
 
         calc_price = [x for x in [self.price_discount, self.price_sale, 0] if x][0]
-        self.cost = (self.delivery or 0) + calc_price
-        logger.debug("OrderedItem save: calc_price is %s; self.cost is: %s" % \
-            (calc_price, self.cost))
-        if self.cost and self.quantity:
-            logger.debug("OrderedItem save: cost and quantity are defined")
-            self.total_cost = self.cost*self.quantity
 
-        logger.debug("OrderedItem save: total_cost is: %s"%self.total_cost)
+        cost = None
+        total_cost = None
 
+        cost = (self.delivery or 0) + calc_price
+        if cost and self.quantity:
+            total_cost = cost * self.quantity
+
+        # US processing
+        if self.brandgroup.direction.title == u'US':
+            if self.weight is not None and self.weight != 0:
+                # calculate cost and total cost
+                self.cost = cost
+                self.total_cost = total_cost
+            if not self.weight and self.status == 'received_office':
+                # weight was removed and status is reseived:
+                self.status, self.previous_status = self.previous_status, self.status
+                self.cost = None
+                self.total_cost = None
+
+        else:
+            # Other directions
+            pass
 
         super(OrderedItem, self).save(*args, **kwargs)
+
+    def switch_status(self, new_status, save=False):
+        self.previous_status = self.status
+        self.status = new_status
+        if save:
+            self.save()
 
     def get_status_verbose(self):
         return dict(ORDER_ITEM_STATUSES).get(self.status,self.status)

@@ -52,7 +52,7 @@
                 {% endifequal %}
             {% else %}
             {% ifnotequal opt.value 'order' %}
-            <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>
+            <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected="selected"{% endifequal %}>
             {{ opt.option|lower }}
             </option>
         {% endifnotequal %}

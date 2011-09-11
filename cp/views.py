@@ -259,6 +259,11 @@ class OrderedItemSaver(object):
         return obj.comment_supplier
 
     def save_price_invoice(self, obj, value):
+        # change status for first time setting
+        # of price invoice for US direction
+        if not obj.price_invoice and value \
+                 and obj.brandgroup.direction.title == u'US':
+            obj.switch_status('in_delivery')
         try:
             obj.price_invoice = value
             obj.save()
@@ -825,20 +830,17 @@ def get_brandgroup_settings(request, ordered_item_id):
         return map(float, list(response))
     return []
 
-@ajax_request
 @login_required
 def ordered_item_row(request, item_id):
     try:
         item = OrderedItem.objects.get(pk=item_id)
     except OrderedItem.DoesNotExist:
-        return {
-            'html': ''
-        }
-    context = RequestContext(request, {
-        'i': item
-    })
-    html = render_to_string("cp/tags/table/row.html", context_instance=context)
-    return {
-        'html': html
+        return HttpResponse(content='')
+    c = {
+        'i': item,
     }
+    c['status_options_str'], c['status_options'] = get_status_options()
+    context = RequestContext(request, c)
+    html = render_to_string("cp/tags/table/row.html", context_instance=context)
+    return HttpResponse(content=html)
 
