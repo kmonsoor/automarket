@@ -261,15 +261,20 @@ class OrderedItemSaver(object):
     def save_price_invoice(self, obj, value):
         # change status for first time setting
         # of price invoice for US direction
-        if not obj.price_invoice and value \
-                 and obj.brandgroup.direction.title == u'US':
-            obj.switch_status('in_delivery')
+        if not obj.price_invoice and value:
+            if str(obj.brandgroup.direction.title.lower()) == 'us':
+                obj.switch_status('in_delivery')
+            if str(obj.brandgroup.direction.title.lower()) == 'msk':
+                obj.switch_status('sent_representative')
+        else:
+            obj.switch_status()
         try:
             obj.price_invoice = value
             obj.save()
+
         except Exception, e:
+            print e
             logger.exception("save_price_invoice: %r"%e)
-            pass
         return obj.price_invoice
 
     def save_part_number_superseded(self, obj, value):

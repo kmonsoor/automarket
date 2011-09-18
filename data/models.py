@@ -225,6 +225,9 @@ class OrderedItem(models.Model):
             logger.debug("OrderedItem save: area, brandgroup and weight are defined")
             multiplier, delivery = self.area.get_brandgroup_settings(self.brandgroup)
             self.delivery = delivery*self.weight
+        if not self.weight:
+            self.delivery = None
+
         logger.debug("OrderedItem save: delivery is: %r"%self.delivery)
         if self.quantity and self.price_invoice:
             logger.debug("OrderedItem save: quantity and price_invoice defined")
@@ -245,18 +248,18 @@ class OrderedItem(models.Model):
             total_cost = cost * self.quantity
 
         # US processing
-        if self.brandgroup.direction.title == u'US':
+        if str(self.brandgroup.direction.title.lower()) == 'us':
             if self.weight is not None and self.weight != 0 and self.do_calc_totals_by_status:
                 # calculate cost and total cost
                 self.cost = cost
                 self.total_cost = total_cost
             if not self.weight and self.status == 'received_office':
                 # weight was removed and status is reseived:
-                self.status, self.previous_status = self.previous_status, self.status
+                self.switch_status()
                 self.cost = None
                 self.total_cost = None
-        if self.brandgroup.direction.title == u'MSK':
-            if self.do_calc_total_by_status:
+        if str(self.brandgroup.direction.title.lower()) == 'msk':
+            if self.do_calc_totals_by_status:
                 self.cost = cost
                 self.total_cost = total_cost
         # clear totals for unappropriate statuses
@@ -266,9 +269,12 @@ class OrderedItem(models.Model):
 
         super(OrderedItem, self).save(*args, **kwargs)
 
-    def switch_status(self, new_status, save=False):
-        self.previous_status = self.status
-        self.status = new_status
+    def switch_status(self, new_status=None, save=False):
+        if new_status:
+            self.previous_status = self.status
+            self.status = new_status
+        else:
+            self.status, self.previous_status = self.previous_status, self.status
         if save:
             self.save()
 
