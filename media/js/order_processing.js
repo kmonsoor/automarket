@@ -3,7 +3,6 @@ var backend_url = null;
 
 function render_row(item_id) {
     jQuery.get('/cp/ordered_item_row/'+ item_id +'/', function(response) {
-        alert(response);
         if (response) {
             $("#table_row_"+item_id).html(reponse);
         }
@@ -46,14 +45,12 @@ function save() {
                    },
             async: false,
             success: function(response) {
-                alert("SAVE RESPONSE");
                 current.previous_value = current.value;
                 current.value = response.value;
 				setDisplayValue();
                 if (response.error) {alert(response.error);}
             }
         });
-    alert(current.id);
 	render_row(current.id);
 	postSave();
 }

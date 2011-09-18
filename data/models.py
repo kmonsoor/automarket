@@ -208,6 +208,14 @@ class OrderedItem(models.Model):
         verbose_name = u"Заказанная позиция"
         verbose_name_plural = u"Заказанные позиции"
 
+    @property
+    def do_calc_totals_by_status(self):
+        _statuses = {
+            'US': ['received_office', 'issued'],
+            'MSK': ['receiced_office', 'sent_representative']
+        }
+        return self.status in _statuses.get(self.brandgroup.direction.title, [])
+
     def save(self, *args, **kwargs):
 
         logger.debug("OrderedItem save: called from %r" % \
@@ -231,17 +239,14 @@ class OrderedItem(models.Model):
         #        pass
 
         calc_price = [x for x in [self.price_discount, self.price_sale, 0] if x][0]
-
-        cost = None
-        total_cost = None
-
+        cost = total_cost = None
         cost = (self.delivery or 0) + calc_price
         if cost and self.quantity:
             total_cost = cost * self.quantity
 
         # US processing
         if self.brandgroup.direction.title == u'US':
-            if self.weight is not None and self.weight != 0:
+            if self.weight is not None and self.weight != 0 and self.do_calc_totals_by_status:
                 # calculate cost and total cost
                 self.cost = cost
                 self.total_cost = total_cost
@@ -250,10 +255,14 @@ class OrderedItem(models.Model):
                 self.status, self.previous_status = self.previous_status, self.status
                 self.cost = None
                 self.total_cost = None
-
-        else:
-            # Other directions
-            pass
+        if self.brandgroup.direction.title == u'MSK':
+            if self.do_calc_total_by_status:
+                self.cost = cost
+                self.total_cost = total_cost
+        # clear totals for unappropriate statuses
+        if self.status != 'moderation' and not self.do_calc_totals_by_status:
+            self.cost = None
+            self.total_cost = None
 
         super(OrderedItem, self).save(*args, **kwargs)
 
