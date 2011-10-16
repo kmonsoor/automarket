@@ -7,16 +7,22 @@ from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from data.models import OrderedItem, Brand, BrandGroup, Area, BrandGroupAreaSettings
+from data.models import OrderedItem, Brand, BrandGroup, Area, BrandGroupAreaSettings, Basket
 from data.forms import OrderedItemsFilterForm
 from client.forms import SearchForm
 from common.views import PartSearch
+from django.shortcuts import get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.models import User
 
 from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
 from decimal import Decimal
 from data.forms import CLIENT_FIELD_LIST
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
+from client.forms import BasketForm
+
+from django.db import connection
 
 @login_required
 @render_to('client/search.html')
@@ -38,6 +44,7 @@ def search(request):
                 found = None
                 msg = u"Ничего не найдено"
             else:
+                print found
                 # try to find area and get multiplier
                 try:
                     # find an area by title
@@ -78,8 +85,11 @@ def search(request):
     else:
         form = SearchForm(maker_choices=maker_choices)
         maker = None
-
-    return {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
+    context = {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
+    context['basket_items'] = Basket.objects.filter(user=request.user, order_item_id__isnull=True)
+    context['basket_msrp_sum'] = reduce(lambda x,y: x+y, [x.msrp*x.quantity for x in context['basket_items']], 0)
+    context['basket_user_price_sum'] = reduce(lambda x,y: x+y, [x.user_price*x.quantity for x in context['basket_items']], 0)
+    return context
 
 class ClientOrderItemDisplay(object):
     def __init__(self, obj, field, format):
@@ -327,4 +337,106 @@ def export_order(request):
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
     return response
+
+@login_required
+def basket_add(request):
+    user = request.user
+    form = BasketForm(request.POST or None, user=request.user)
+
+    if not form.is_valid():
+        messages.add_message(request, messages.ERROR, u"Ошибка корзины")
+        return HttpResponseRedirect("/client/search/?be=1")
+    else:
+        form.save()
+        return HttpResponseRedirect("/client/search/")
+
+@login_required
+def basket_delete(request, item_id):
+    b = get_object_or_404(Basket, user=request.user, pk=item_id)
+    b.delete()
+    return HttpResponseRedirect('/client/search/')
+
+@login_required
+def basket_clear(request):
+    Basket.objects.filter(user=request.user, order_item_id__isnull=True).delete()
+    return HttpResponseRedirect("/client/search/")
+
+@login_required
+def basket_recalculate(request, redirect=True):
+    bitems = [(x,y) for x,y in request.POST.copy().items() if x.startswith("quantity_")]
+    for index, q in bitems:
+        try:
+            q = int(q)
+            assert q >= 0
+            item_id = int(index.split("_")[1])
+            b = Basket.objects.get(user=request.user, pk=item_id)
+        except (AssertionError, TypeError, ValueError, IndexError, Basket.DoesNotExist):
+            pass
+        else:
+            b.quantity = q
+            b.save()
+    if redirect:
+        return HttpResponseRedirect("/client/search/")
+
+
+@login_required
+def basket_order(request):
+    print request.POST
+
+    basket_recalculate(request, redirect=False)
+
+    bi = Basket.objects.filter(user=request.user, order_item_id__isnull=True)
+    if not bi:
+        return HttpResponseRedirect('/client/search/')
+    # common objects
+    adminuser = User.objects.get(pk=1)
+    brandgroup = BrandGroup.objects.get(title="OEM")
+
+    def get_orderitem_data(item):
+
+        sql = """
+        select a.area_id, a.brand_id from data_area_brands a
+        left join data_brand b on (b.id=a.brand_id)
+        left join data_area c on (c.id=a.area_id)
+        where c.id in (select area_id from data_brandgroup_area where brandgroup_id=%s)
+        and b.title=%s;
+        """
+        cursor = connection.cursor()
+        cursor.execute(sql, [brandgroup.id, item.brand_name])
+
+        rows = cursor.fetchall()
+        cursor.close()
+
+        if not rows:
+            return (None, item)
+        row = dict(zip(('area_id', 'brand_id'), rows[0]))
+        # data
+        data = {}
+        data['brandgroup'] = brandgroup
+
+        data['area'] = Area.objects.get(pk=row['area_id'])
+        data['brand'] = Brand.objects.get(pk=row['brand_id'])
+
+        data['description_en'] = item.description
+        data['client'] = request.user
+        data['quantity'] = item.quantity
+        data['part_number'] = item.part_number
+
+        data['manager'] = adminuser
+
+        data['price_base'] = item.msrp
+        data['price_discount'] =item.user_price
+
+
+        return (data, item)
+
+    to_save = [x for x in map(get_orderitem_data, list(bi)) if x[0]]
+    for t, item in to_save:
+        oi = OrderedItem(**t)
+        oi.save()
+        item.order_item_id = oi.id
+        item.save()
+
+    messages.add_message(request, messages.SUCCESS, u"Заказ оформлен")
+    return HttpResponseRedirect("/client/")
 

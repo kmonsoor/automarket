@@ -468,3 +468,19 @@ class UserProfile(models.Model):
         verbose_name = u"профиль пользователя"
         verbose_name_plural = u"Профили пользователей"
 
+
+class Basket(models.Model):
+    user = models.ForeignKey(User)
+    part_number = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    msrp = models.FloatField(null=True, blank=True)
+    user_price = models.FloatField(null=True, blank=True)
+    brand_name = models.CharField(max_length=255, default='')
+    quantity = models.IntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    order_item_id = models.IntegerField(null=True, blank=True, default=None)
+
+
+    def get_user_price_total(self):
+        return self.user_price * self.quantity
+

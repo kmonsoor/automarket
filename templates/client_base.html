@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load cp_messages %}
 {% block extrahead %}
 
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}js/jquery-autocomplete/jquery.autocomplete.css" />
@@ -24,6 +25,13 @@ jQuery.noConflict();
 {% block content %}
 <div id="main">
 <h1>{% block page_title %}{% endblock %}</h1>
+
+{% if messages %}
+    <ul class="messagelist">{% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+{% endfor %}</ul>
+{% endif %}
 {% block page_content %}{% endblock %}
 </div>
 {% endblock %}
+
