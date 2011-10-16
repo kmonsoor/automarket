@@ -72,6 +72,7 @@ function setDisplayValue() {
 function close() {
     restore();
     setDefaultCurrent();
+    window.location.href = '.';
 }
 
 function postSave() {
@@ -120,10 +121,12 @@ function postSave() {
 }
 
 function restore() {
+    item_id = current.id;
     jQuery('#' + current.type + '_' + current.id).html(current.value);
 	jQuery('#' + current.type + '_display_' + current.id).html(current.display_value);
     jQuery('#' + current.type + '_buttons_' + current.id).css("display","none");
 	current.in_process = false;
+	render_row(item_id);
 }
 
 function cancel() {
