@@ -6,7 +6,10 @@
         <td style="background: #dbdbdb;width:150px;"><b>Brand</b></td>
         <td style="background: #dbdbdb;width:50px;"><b>Part Number</b></td>
         <td style="background: #dbdbdb;width:20px"><b>QTY</b></td>
-        <td style="background: #dbdbdb;width:125px"><b>Description</b></td>
+        <td style="background: #dbdbdb;width:125px"><b>Description ENG</b></td>
+        <td style="background: #dbdbdb;width:125px"><b>Description RUS</b></td>
+        <td style="background: #dbdbdb;width:125px"><b>Comment1</b></td>
+        <td style="background: #dbdbdb;width:125px"><b>Comment2</b></td>
         <td style="background: #dbdbdb;width:70px"><b>CL</b></td>
         <td style="background: #dbdbdb;width:50px"><b>ID</b></td>
         <td style="background: #dbdbdb;width:50px"><b>LIST</b></td>
@@ -24,7 +27,10 @@
                 <td style="width:150px;">{{ order.brand }}</td>
                 <td style="width:50px;">{{ order.part_number }}</td>
                 <td style="width:20px">{{ order.quantity }}</td>
-                <td style="width:125px"><b>{{ order.description_en }}</b></td>
+                <td style="width:125px"><b>{{ order.description_en|default:"" }}</b></td>
+                <td style="width:125px"><b>{{ order.description_ru|default:"" }}</b></td>
+                <td style="width:125px"><b>{{ order.comment_customer|default:"" }}</b></td>
+                <td style="width:125px"><b>{{ order.comment_supplier|default:"" }}</b></td>
                 <td style="width:70px"><b>{{ order.client }}{% if order.client_order_id %}/{{ order.client_order_id }}{% endif %}</b></td>
                 <td style="width:50px"><b>{{ order.manager }}</b></td>
                 <td style="width:50px"><b>{{ order.price_base }}</b></td>
