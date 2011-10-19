@@ -1,5 +1,6 @@
 # -*- coding=UTF-8 -*-
 import os, cjson
+import re
 import pyExcelerator as xl
 from datetime import datetime
 from django.contrib.auth.decorators import login_required, permission_required
@@ -14,6 +15,7 @@ from common.views import PartSearch
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.utils.html import escape
 
 from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
 from decimal import Decimal
@@ -23,6 +25,16 @@ from django.conf import settings
 from client.forms import BasketForm
 
 from django.db import connection
+
+re_RUS = re.compile(u'^([.,-_А-я0-9]|\s)+$')
+
+def normalize_sum(value):
+    value = str(value)
+    value = value.replace(',','.')
+    parts = value.split(".")
+    m, d = parts[0:-1], parts[-1]
+    value = "".join(m) + "." + d
+    return value
 
 @login_required
 @render_to('client/search.html')
@@ -44,7 +56,6 @@ def search(request):
                 found = None
                 msg = u"Ничего не найдено"
             else:
-                print found
                 # try to find area and get multiplier
                 try:
                     # find an area by title
@@ -65,11 +76,13 @@ def search(request):
                     discount = AREA_DISCOUNT_DEFAULT
                 discount = float(discount)
 
-                value = str(found['MSRP'])
+                value = normalize_sum(str(found['MSRP']))
+
                 # we need to remove all "," as separators
-                value = value.replace(',','.')
+                # only last dot should be saved
+                
                 try:
-                    core_price = float(found['core_price'])
+                    core_price = float(normalize_sum(str(found['core_price'])))
                 except Exception, e:
                     core_price = 0
                 found['MSRP'] = float(value) * float(m)
@@ -361,37 +374,80 @@ def basket_clear(request):
     Basket.objects.filter(user=request.user, order_item_id__isnull=True).delete()
     return HttpResponseRedirect("/client/search/")
 
+   
+def description_ru_validate(value=None):
+    if value and re_RUS.match(value):
+        return True
+    return False
+
 @login_required
-def basket_recalculate(request, redirect=True):
+def basket_update(request, redirect=True):
     bitems = [(x,y) for x,y in request.POST.copy().items() if x.startswith("quantity_")]
+    errors = {'quantity': False, 'description_ru': False, 'comment1': False}
+    # quantity
     for index, q in bitems:
         try:
             q = int(q)
             assert q >= 0
             item_id = int(index.split("_")[1])
             b = Basket.objects.get(user=request.user, pk=item_id)
-        except (AssertionError, TypeError, ValueError, IndexError, Basket.DoesNotExist):
-            pass
+        except (AssertionError, TypeError, ValueError, IndexEoNrror, Basket.DoesNotExist):
+            errors['quantity'] = True
         else:
             b.quantity = q
             b.save()
+    
+    # find description RUS
+    descriptions = [(x,y) for x,y in request.POST.copy().items() if x.startswith("descriptionru_")]
+    for index, value in descriptions:
+        try:
+            item_id = int(index.split("_")[1])
+            assert description_ru_validate(value) == True
+            
+            b = Basket.objects.get(user=request.user, pk=item_id)
+            b.description_ru = value
+            b.save()
+        except (AssertionError, TypeError, ValueError, Basket.DoesNotExist):
+            errors['description_ru'] = True
+    
+    # find comments
+    comments = [(x,y) for x,y in request.POST.copy().items() if x.startswith("comment1_")]
+
+    for index, value in [(x,y) for x,y in comments if y]:
+        item_id = index.split("_")[1]
+        try:
+            b = Basket.objects.get(user=request.user, pk=item_id)
+            b.comment1 = escape(value)
+            b.save()
+        except Basket.DoesNotExist:
+            pass
+    
+    if errors['quantity']:
+        messages.add_message(request, messages.ERROR, u"Количество должно быть больше 0. Проверьте позиции")
+    if errors['description_ru']:
+        messages.add_message(request, messages.ERROR, u"Поле `Описание RUS` должно быть заполнено русскими буквами для каждой позиции. Пожалуйста, проверьте!")
+    
     if redirect:
         return HttpResponseRedirect("/client/search/")
+    else:
+        return not any(errors.values())
 
 
 @login_required
 def basket_order(request):
-    print request.POST
-
-    basket_recalculate(request, redirect=False)
-
+    # recalculate by quantity field    
+    ok = basket_update(request, redirect=False)
+    if not ok:
+        return HttpResponseRedirect('/client/search/')
+    
     bi = Basket.objects.filter(user=request.user, order_item_id__isnull=True)
     if not bi:
+        messages.add_message(request, messages.ERROR, u"Ваша корзина пуста")
         return HttpResponseRedirect('/client/search/')
     # common objects
     adminuser = User.objects.get(pk=1)
     brandgroup = BrandGroup.objects.get(title="OEM")
-
+    
     def get_orderitem_data(item):
 
         sql = """
@@ -418,6 +474,8 @@ def basket_order(request):
         data['brand'] = Brand.objects.get(pk=row['brand_id'])
 
         data['description_en'] = item.description
+        data['description_ru'] = item.description_ru or u""
+        data['comment_customer'] = item.comment1 or u""
         data['client'] = request.user
         data['quantity'] = item.quantity
         data['part_number'] = item.part_number
@@ -425,12 +483,14 @@ def basket_order(request):
         data['manager'] = adminuser
 
         data['price_base'] = item.msrp
-        data['price_discount'] =item.user_price
+        data['price_sale'] = item.user_price
+        
 
 
         return (data, item)
 
     to_save = [x for x in map(get_orderitem_data, list(bi)) if x[0]]
+
     for t, item in to_save:
         oi = OrderedItem(**t)
         oi.save()

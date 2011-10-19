@@ -476,6 +476,10 @@ class Basket(models.Model):
     msrp = models.FloatField(null=True, blank=True)
     user_price = models.FloatField(null=True, blank=True)
     brand_name = models.CharField(max_length=255, default='')
+    
+    description_ru = models.TextField(null=True, blank=True, default=None)
+    comment1 = models.TextField(null=True, blank=True, default=None)
+    
     quantity = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     order_item_id = models.IntegerField(null=True, blank=True, default=None)

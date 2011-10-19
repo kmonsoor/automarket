@@ -273,7 +273,6 @@ class OrderedItemSaver(object):
             obj.save()
 
         except Exception, e:
-            print e
             logger.exception("save_price_invoice: %r"%e)
         return obj.price_invoice
 

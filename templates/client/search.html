@@ -10,8 +10,8 @@
 
 <script type="text/javascript">
 function onsubmit_basket_form() {
-  if(document.pressed == 'recalculate') {
-   document.basket_form.action ="{% url client_basket_recalculate %}";
+  if(document.pressed == 'update') {
+   document.basket_form.action ="{% url client_basket_update %}";
   }
   if(document.pressed == 'order') {
     document.basket_form.action ="{% url client_basket_order %}";
@@ -24,8 +24,8 @@ function onsubmit_basket_form() {
 
 {% block page_title %}Поиск{% endblock %}
 
-{% block content %}
-<div id="divSearch" style="text-align: left; min-width: 800px;">
+{% block page_content %}
+<div id="divSearch" style="text-align: left; min-width: 850px;">
   <div style="width:30%" class="aligned">
     <form method="post" id="formSearch" action="">
       <div class="form-row">
@@ -69,18 +69,20 @@ function onsubmit_basket_form() {
         </table>
     </form>
     {% endif %}
-<div class=aligned" style="width: 750px">
+<div class=aligned" style="width: 850px">
 {% if basket_items %}
 <h3>Корзина</h3>
 <form method="post" onsubmit="return onsubmit_basket_form();" id="id_basket_form" name="basket_form">
-<table width="750px">
+<table width="850px">
 <tr>
 <td><b>Марка</b></td>
 <td><b>Номер</b></td>
-<td><b>Описание</b></td>
+<td><b>Описание ENG</b></td>
+<td><b>Описание RUS</b></td>
+<td><b>Комментарий</b></td>
 <td><b>Цена за ед.</b></td>
-<td><b>Стоимость</b></td>
 <td><b>Количество</b></td>
+<td><b>Стоимость</b></td>
 <td><b>Удаление</b></td>
 </tr>
 {% for item in basket_items %}
@@ -88,24 +90,26 @@ function onsubmit_basket_form() {
 <td>{{ item.brand_name }}</td>
 <td>{{ item.part_number }}</td>
 <td>{{ item.description }}</td>
+<td><textarea name="descriptionru_{{item.id}}" id="" cols="15" rows="2">{{ item.description_ru|default:"" }}</textarea></td>
+<td><textarea name="comment1_{{item.id}}" id="" cols="15" rows="2">{{ item.comment1|default:"" }}</textarea></td>
 <td>{{ item.user_price }}</td>
-<td>{{ item.get_user_price_total }}</td>
 <td><input size="5" type="text" name="quantity_{{item.id}}" value="{{ item.quantity }}" /></td>
+<td>{{ item.get_user_price_total }}</td>
 <td><a class="delete_link" href="{% url client_basket_delete item.id %}">Удалить</a></td>
 </tr>
 {% endfor %}
-<tr class="alt"><th colspan="4"><b>Общая стоимость:</b></th>
+<tr class="alt"><th colspan="6"><b>Общая стоимость:</b></th>
 <th colspan="2"><b>{{ basket_user_price_sum }}</b></th>
 <td><a class="delete_link" href="{% url client_basket_clear %}">Очистить корзину</a></td>
 </tr>
 </table>
 <div class="submit-row">
 
-<input type="submit" name="operation" onclick="document.pressed='recalculate'" value="Пресчитать" />
-<input type="submit" class="default" name="operation" onclick="document.pressed='order'" value="Заказать" />
+<input type="submit" name="operation" onclick="document.pressed='update'" value="Обновить" />
+<input type="submit" class="default" name="operation" onclick="document.pressed='order'" value="Заказать*" />
 &nbsp;&nbsp;&nbsp;
-
 </div>
+<p class="help">* - перед заказом заполните, пожалуйста, поле "Описание RUS" на русском языке</p>
 </form>
 {% endif %}
 </div>
