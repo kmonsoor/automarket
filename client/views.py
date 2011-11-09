@@ -26,7 +26,7 @@ from client.forms import BasketForm
 
 from django.db import connection
 
-re_RUS = re.compile(u'^([.,-_А-я0-9]|\s)+$')
+re_RUS = re.compile(u'^([-_+.,:;!?><*&%$#@а-яА-Я0-9\u0451\u0401]|\s)+$')
 
 def normalize_sum(value):
     value = str(value)
