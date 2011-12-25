@@ -183,6 +183,7 @@ class OrderedItem(models.Model):
     price_discount = models.FloatField(verbose_name=u"Цена продажи со скидкой", null=True, blank=True)
     weight = models.FloatField(verbose_name=u"Вес одной детали", null=True, blank=True)
     #weight*Const
+    delivery_coef = models.FloatField(verbose_name=u"Цена доставки за кг", blank=True, null=True)
     delivery = models.FloatField(verbose_name=u"Доставка", null=True, blank=True)
 
     # price_discount + delievery OR price_sale + delivery
@@ -221,10 +222,12 @@ class OrderedItem(models.Model):
         logger.debug("OrderedItem save: called from %r" % \
                      inspect.getframeinfo(inspect.currentframe().f_back)[2])
 
-        if self.area and self.brandgroup and self.weight is not None:
-            logger.debug("OrderedItem save: area, brandgroup and weight are defined")
+        if self.delivery_coef is None:
             multiplier, delivery = self.area.get_brandgroup_settings(self.brandgroup)
-            self.delivery = delivery*self.weight
+            self.delivery_coef = delivery
+
+        if self.weight is not None and self.delivery_coef:
+            self.delivery = self.delivery_coef*self.weight
         if not self.weight:
             self.delivery = None
 
