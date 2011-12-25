@@ -263,9 +263,9 @@ class OrderedItem(models.Model):
                 self.cost = cost
                 self.total_cost = total_cost
         # clear totals for unappropriate statuses
-        if self.status != 'moderation' and not self.do_calc_totals_by_status:
-            self.cost = None
-            self.total_cost = None
+        #if self.status != 'moderation' and not self.do_calc_totals_by_status:
+            #self.cost = None
+            #self.total_cost = None
 
         super(OrderedItem, self).save(*args, **kwargs)
 

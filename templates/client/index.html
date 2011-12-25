@@ -57,7 +57,7 @@ tr.alt td {
 </thead>
 <tbody>
 	{% for row in cl.results %}
-	<tr class="{% cycle row1,row2 %}">
+	<tr class="{% cycle row1,row2 %} {{ row.obj.status }}">
 	  {% for res in row %}
   	  <td>{{ res }}</td>
     {% endfor %}

@@ -59,7 +59,7 @@ def search(request):
                 # try to find area and get multiplier
                 try:
                     # find an area by title
-                    area = Area.objects.get(title__icontains=found['brandname'])
+                    area = Area.objects.get(title__iexact=found['brandname'])
                     brand_group = BrandGroup.objects.get(title="OEM")
                     # we need to find a valid multiplier for this area
                     # TODO - hardcoded 'OEM', we need do more sofisticated algo
@@ -211,7 +211,10 @@ class ClientOrderItemList(object):
         if self.filter.is_set:
 	        from django.db import connection
 	        td = "U0"
-	        q, params = qs._as_sql(connection)
+		EXCLUDED_FILTER = {
+		    'status__in': ('failure',)
+		}
+	        q, params = qs.exclude(**EXCLUDED_FILTER)._as_sql(connection)
 	        from_clause = q.split("FROM")[1]
 	        sql = \
 	        """

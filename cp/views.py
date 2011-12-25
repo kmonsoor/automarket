@@ -314,6 +314,8 @@ class OrderedItemSaver(object):
 
     def save_weight(self, obj, value):
         try:
+            if not obj.weight:
+                obj.status = 'received_office'
             obj.weight = value
             obj.save()
         except Exception, e:

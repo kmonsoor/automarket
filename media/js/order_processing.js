@@ -76,7 +76,7 @@ function close() {
 }
 
 function postSave() {
-	if (current.type == 'part_number_superseded') {
+    if (current.type == 'part_number_superseded') {
         if (current.value.toString().length > 0) {
             editStatus(current.id, 'superseded');
         }
@@ -107,7 +107,7 @@ function postSave() {
         success: function(data) {
             for (i in FIELDS) {
                 field_name = FIELDS[i];
-                if (data[field_name] == null || data[field_name] == 0) {
+                if (data[field_name] == null || data[field_name] == 0 || data[field_value] == 'None ') {
                     value = '';
                 } else {
                     value = data[field_name];
