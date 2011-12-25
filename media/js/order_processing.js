@@ -107,7 +107,7 @@ function postSave() {
         success: function(data) {
             for (i in FIELDS) {
                 field_name = FIELDS[i];
-                if (data[field_name] == null || data[field_name] == 0 || data[field_name] == 'None ') {
+                if (data[field_name] == null || data[field_name] == 0 || data[field_name] == 'None') {
                     value = '';
                 } else {
                     value = data[field_name];
