@@ -120,6 +120,10 @@ class OrderedItemAdmin(admin.ModelAdmin):
     search_fields = ('part_number', 'ponumber', 'brandgroup__direction__po')
 
     form = OrderedItemForm
+    
+    def lookup_allowed(self, key, value):
+        if key in ('id__in',):
+            return True        
 
     def po_number(self, obj):
         return '%s%s' % (obj.brandgroup.direction.po, obj.ponumber or '-',)
