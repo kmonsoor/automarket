@@ -118,12 +118,14 @@ class OrderedItemAdmin(admin.ModelAdmin):
     list_display =('po_number', 'created', 'manager', 'client', 'area', 'brand', 'part_number', 'quantity')
     list_filter = ('created',)
     search_fields = ('part_number', 'ponumber', 'brandgroup__direction__po')
+    valid_lookups = ('id',)
 
     form = OrderedItemForm
     
-    def lookup_allowed(self, key, value):
-        if key in ('id__in',):
-            return True        
+    def lookup_allowed(self, lookup, *args, **kwargs):
+        if lookup.startswith(self.valid_lookups):
+            return True
+        return super(OrderedItemAdmin, self).lookup_allowed(lookup, *args, **kwargs)
 
     def po_number(self, obj):
         return '%s%s' % (obj.brandgroup.direction.po, obj.ponumber or '-',)
