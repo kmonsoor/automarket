@@ -268,6 +268,7 @@ class PartSearchAutopartspeople(PartSearchBase):
          ('120', 'Dodge'),
          ('117', "Eagle"), # = Chrysler
          ('123', 'Ford'),
+         ('116', 'Geo'),
          ('125', 'GMC'),
          ('126', 'Honda'),
          ('160', 'Hummer'),
@@ -356,12 +357,13 @@ class PartSearch(object):
         "Audi",
         "BMW",
         "Buick",
-        "Cadillac"
-        "Chevrolet/Geo",
+        "Cadillac",
+        "Chevrolet",
         "Chrysler",
         "Dodge",
         "Eagle",
         "Ford",
+        "Geo",
         "GMC",
         "Honda",
         "Hummer",
