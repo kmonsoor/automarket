@@ -269,6 +269,7 @@ class PartSearchAutopartspeople(PartSearchBase):
          ('117', "Eagle"), # = Chrysler
          ('123', 'Ford'),
          ('125', 'GMC'),
+         ('126', 'Honda'),
          ('160', 'Hummer'),
          ('127', 'Hyundai'),
          ('128', 'Infiniti'),
@@ -276,6 +277,7 @@ class PartSearchAutopartspeople(PartSearchBase):
          ('132', 'Kia'),
          ('135', 'Lincoln'),
          ('136', 'Mazda'),
+         ('137', 'Mercedes Benz'),
          ('138', 'Mercury'),
          ('141', 'Mitsubishi'),
          ('142', 'Nissan'),
@@ -348,7 +350,7 @@ class PartSearchAutopartspeople(PartSearchBase):
 
 class PartSearch(object):
 
-    _search_registry = [PartSearchAutopartspeople, PartSearchPartsCom]
+    _search_registry = [PartSearchAutopartspeople] #, PartSearchPartsCom - temporary disabled
     makers = [
         "Acura",
         "Audi",
