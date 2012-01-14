@@ -268,7 +268,7 @@ class PartSearchAutopartspeople(PartSearchBase):
          ('120', 'Dodge'),
          ('117', "Eagle"), # = Chrysler
          ('123', 'Ford'),
-         ('116', 'Geo'),
+         ('116', 'Geo'), # = Chevrolet
          ('125', 'GMC'),
          ('126', 'Honda'),
          ('160', 'Hummer'),
@@ -276,6 +276,7 @@ class PartSearchAutopartspeople(PartSearchBase):
          ('128', 'Infiniti'),
          ('131', 'Jeep'),
          ('132', 'Kia'),
+         ('155', 'Lexus'), # = Toyota
          ('135', 'Lincoln'),
          ('136', 'Mazda'),
          ('137', 'Mercedes Benz'),
