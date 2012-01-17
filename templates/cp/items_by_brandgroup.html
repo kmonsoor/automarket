@@ -1,7 +1,7 @@
 {% if orders_by_area %}
 <style>.admin_table td { padding:4px; }</style>
 <table class="admin_table" style="margin-bottom: 0px;" id="brandgroup_{{ brandgroup.id }}">
-    <tr><th colspan="4">{{ brandgroup.title }}</th></tr>
+    <tr><th colspan="12">{{ brandgroup.title }}</th></tr>
     <tr>
         <td style="background: #dbdbdb;width:150px;"><b>Brand</b></td>
         <td style="background: #dbdbdb;width:50px;"><b>Part Number</b></td>
@@ -19,7 +19,7 @@
     {% for area, orders in orders_by_area.items %}
     <tbody id="brand_{{ area.id }}">
             <tr>
-                <td style="padding-left:30px;background:white;" colspan="8"><h3>{{ area.title }}</h3></td>
+                <td style="padding-left:30px;background:white;" colspan="11"><h3>{{ area.title }}</h3></td>
                 <td style="background:white;"><input type="checkbox" name="selectGroup" onchange="selectGroup(this, '{{ area.id }}', '{{ brandgroup.id }}', '{{ direction.id }}');" ></td>
             </tr>
             {% for order in orders %}
@@ -42,7 +42,7 @@
     </tbody>
     {% endfor %}
     <tr>
-        <td colspan="9" align="right" style="background: #ffffff">
+        <td colspan="12" align="right" style="background: #ffffff">
             <div class="submit-row">
             <script>
             export_brandgroup = function(brandgroup_id){

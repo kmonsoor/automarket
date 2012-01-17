@@ -273,10 +273,8 @@ class PartSearchAutopartspeople(PartSearchBase):
          ('126', 'Honda'),
          ('160', 'Hummer'),
          ('127', 'Hyundai'),
-         ('128', 'Infiniti'),
          ('131', 'Jeep'),
          ('132', 'Kia'),
-         ('155', 'Lexus'), # = Toyota
          ('135', 'Lincoln'),
          ('136', 'Mazda'),
          ('137', 'Mercedes Benz'),
@@ -295,8 +293,6 @@ class PartSearchAutopartspeople(PartSearchBase):
          ('157', 'Volkswagen'),
          ('158', 'Volvo')
         ]
-
-
 
     def get_response_mechanize(self, maker_id, part_number):
         browser = mechanize.Browser()
@@ -350,9 +346,160 @@ class PartSearchAutopartspeople(PartSearchBase):
         # Find core price
 
 
+class PartSearchTradeMotionCom(PartSearchBase):
+    name = "trademotion.com"
+    SEARCH_URL = 'http://www.trademotion.com/parts/index.cfm'
+    FORM_NAME = 'partSearch'
+    SITE_ID = 214281
+
+    def get_make_options(self):
+        """
+        Returns makers in form [(id, name), ]
+        """
+        # TODO - grab from site and store in memcache
+        return [("Lexus","Lexus"),]
+
+    def get_response_urllib(self, maker_id, partnumber):
+        """
+        Connects to the search page with params:
+
+        @maker string Car maker name, i.e. `mazda` etc.
+        @partnumber string Part number of a detail
+        """
+
+        params = urllib.urlencode({'make': maker_id, \
+                                   'searchText': partnumber, \
+                                   'siteid': self.SITE_ID, \
+                                   'action': 'oePartSearch'})
+        f = urllib.urlopen(self.SEARCH_URL, params)
+        content = f.read()
+        f.close()
+        return content
+
+    def get_response_mechanize(self, maker_id, partnumber):
+        browser = mechanize.Browser()
+        params = urllib.urlencode({'make': maker_id, \
+                                   'searchText': partnumber, \
+                                   'siteid': self.SITE_ID, \
+                                   'action': 'oePartSearch'})
+        headers = {"User-Agent": "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2.8) Gecko/20100722 Firefox/3.6.8 GTB7.1 (.NET CLR 3.5.30729)",
+        "Referer": "http://www.trademotion.com"}
+        request = urllib2.Request(self.SEARCH_URL, params, headers)
+        response = browser.open(request, timeout=120.0)
+        content = response.read()
+        browser.close()
+        return content
+
+    def parse_response(self, response):
+        """
+        Parse page for cost and returns dict
+        """
+        _s = r'<table cellpadding="5" cellspacing="0" border="0" width="100%" align="center">'
+        parts = response.split(_s)
+        parts = [x for x in parts \
+                   if ("Quick Order" in x \
+                       and ">Core<" in x \
+                       and ">Online Price<" in x)]
+        p = None
+        if len(parts):
+            try:
+                p = parts[0].split("</table>")[0]
+                p = p.split('<form name="basepart"')[0]
+            except Exception, mess:
+                pass
+        if p:
+            p = "<table>%s</table>" % p
+            bs = BeautifulSoup(p)
+            def get_price_by_label(label):
+                s1 = bs.find("tr", text=re.compile(label))
+                if s1:
+                    s2 = s1.findParent().findNext('td')\
+                        .find('b').renderContents()
+                    try:
+                        return float(s2.lstrip("$"))
+                    except (ValueError, AttributeError), e:
+                        return None
+            def get_content_by_label(label):
+                s1 = bs.find("tr", text=re.compile(label))
+                if s1:
+                    s2 = s1.findParent().findNext('td').renderContents()
+                    return s2
+            return {
+                'MSRP': get_price_by_label("Online Price"),
+                'core_price': get_price_by_label("Core"),
+                'description': get_content_by_label("Part Name"),
+                'partnumber': get_content_by_label("Part Number")
+            }
+        # If something goes wrong
+        return None
+
+class PartSearchInfinitiPartsOnlineCom(PartSearchTradeMotionCom):
+    name = "infinitipartsonline.com"
+    SEARCH_URL = 'http://www.infinitipartsonline.com/parts/index.cfm'
+    FORM_NAME = 'partSearch'
+    SITE_ID = 214952
+
+    def get_make_options(self):
+        return [("Infiniti","Infiniti"),]
+
+class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
+    name = "porscheoemparts.com"
+    SEARCH_URL = 'http://www.porscheoemparts.com/parts/index.cfm'
+    FORM_NAME = 'partSearch'
+    SITE_ID = 215405
+
+    def get_make_options(self):
+        return [("Porsche","Porsche"),]
+
+    def parse_response(self, response):
+        """
+        Parse page for cost and returns dict
+        """
+        _s = r'<table cellpadding="5" cellspacing="0" border="0" width="100%" align="center">'
+        parts = response.split(_s)
+        parts = [x for x in parts \
+                   if ("Quick Order" in x \
+                       and ">Core<" in x \
+                       and ">Online Price<" in x)]
+        p = None
+        if len(parts):
+            try:
+                p = parts[0].split("</table>")[0]
+                p = p.split('<form name="basepart"')[0]
+            except Exception, mess:
+                pass
+        if p:
+            p = "<table>%s</table>" % p
+            bs = BeautifulSoup(p)
+            def get_price_by_label(label):
+                s1 = bs.find("tr", text=re.compile(label))
+                if s1:
+                    s2 = s1.findParent().findNext('td')\
+                        .find('b').renderContents()
+                    try:
+                        return float(s2.lstrip("$"))
+                    except (ValueError, AttributeError), e:
+                        return None
+            def get_content_by_label(label):
+                s1 = bs.find("tr", text=re.compile(label))
+                if s1:
+                    s2 = s1.findParent().findNext('td').renderContents()
+                    return s2
+            return {
+                'MSRP': get_price_by_label("MSRP"),
+                'core_price': get_price_by_label("Core"),
+                'description': get_content_by_label("Part Name"),
+                'partnumber': get_content_by_label("Part Number")
+            }
+        # If something goes wrong
+        return None
+
 class PartSearch(object):
 
-    _search_registry = [PartSearchAutopartspeople] #, PartSearchPartsCom - temporary disabled
+    _search_registry = [PartSearchAutopartspeople, \
+                        PartSearchTradeMotionCom, \
+                        PartSearchInfinitiPartsOnlineCom, \
+                        PartSearchPorscheOEMPartsCom] # PartSearchPartsCom - temporary disabled
     makers = [
         "Acura",
         "Audi",
