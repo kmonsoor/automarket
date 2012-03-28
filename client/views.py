@@ -286,14 +286,15 @@ def help_brands_list(request, area_id):
 def export_order(request):
     LIST_HEADERS = (
         (u'PO', 'po_verbose'),
-        (u'Поставщик', 'brandgroup'),
-        (u'BRAND', 'brand'),
-        (u'AREA', 'area'),
+        (u'Направление', 'brandgroup'),
+        (u'Поставщик', 'brand'),
+        (u'BRAND', 'area'),
         (u'PART #', 'part_number'),
         (u'Q', 'quantity'),
         (u'ЗАМЕНА', 'part_number_superseded'),
         (u'RUS', 'description_ru'),
         (u'ENG', 'description_en'),
+        (u'Комментарий', 'comment_customer'),
         (u'WEIGHT', 'weight'),
         (u'SHIPPING', 'delivery'),
         (u'PRICE', 'price_sale'),
