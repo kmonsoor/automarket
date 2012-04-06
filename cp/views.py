@@ -316,6 +316,7 @@ class OrderedItemSaver(object):
         try:
             if not obj.weight:
                 obj.status = 'received_office'
+                obj.received_office_at = datetime.now()
             obj.weight = value
             obj.save()
         except Exception, e:
