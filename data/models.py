@@ -1,14 +1,18 @@
 # -*- coding=utf-8 -*-
-
-import datetime
 import time
-from django.db import models
-from django.contrib.auth.models import User, Group
-from data.managers import OrderedItemManager
-from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT, DELIVERY_DEFAULT
+import datetime
 import inspect
 import logging
 logger = logging.getLogger('data.models')
+
+from django.db import models
+from django.conf import settings
+from django.contrib.auth.models import User, Group
+
+from data.managers import OrderedItemManager
+from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT, \
+     DELIVERY_DEFAULT
+
 
 class Direction(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
@@ -69,6 +73,8 @@ class BrandGroup(models.Model):
 class Area(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     brands = models.ManyToManyField('Brand', null=True, blank=True, verbose_name=u'Бренды')
+    pricefile = models.FileField(u"Файл с ценами", null=True, blank=True,
+                                 upload_to=settings.PRICE_UPLOAD_DIR)
 
     class Meta:
         verbose_name = u"Поставщик"
@@ -491,3 +497,37 @@ class Basket(models.Model):
     def get_user_price_total(self):
         return self.user_price * self.quantity
 
+
+class Part(models.Model):
+    area = models.ForeignKey(Area, verbose_name=Area._meta.verbose_name)
+    partnumber = models.CharField(u"номер детали", max_length=255)
+    MSRP = models.FloatField(u"цена")
+    cost = models.FloatField(u"cost", null=True, blank=True)
+    core_price = models.FloatField(u"стоимость детали для восстановления", 
+                                   null=True, blank=True)
+    substitution = models.CharField(u"номер замены", max_length=255, 
+                                    null=True, blank=True)
+    description = models.TextField(u"описание детали на английском языке", 
+                                   null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('area', 'partnumber',)
+        verbose_name = u"цена"
+        verbose_name_plural = u"цены"
+
+    @classmethod
+    def get_data(cls, area, partnumber):
+        try:
+            part = cls.objects.get(area=area, partnumber=partnumber)
+            if part.substitution:
+                return cls.get_data(area, part.substitution)
+            return {
+                'partnumber': part.partnumber,
+                'MSRP': part.MSRP,
+                'core_price': part.core_price,
+                'description': part.description,
+            }
+        except cls.DoesNotExist:
+            return {}

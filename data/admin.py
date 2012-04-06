@@ -3,16 +3,19 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 from django import forms
-from django.shortcuts import get_object_or_404
+from django import template
+from django.shortcuts import get_object_or_404, render_to_response
 from django.http import HttpResponse
 from django.core import serializers
+from django.conf import settings
 
 from data.models import *
-from data.forms import CLIENT_FIELD_LIST
+from data.forms import CLIENT_FIELD_LIST, PartPriceUploadForm
 
 
 class DirectionAdmin(admin.ModelAdmin):
@@ -81,16 +84,35 @@ class AreaAdmin(admin.ModelAdmin):
     list_display = ('title', 'in_groups')
     search_fields = ['title', 'brands__title']
     filter_horizontal = ['brands']
-
+    
     def in_groups(self, obj):
         links = []
         for b in obj.brandgroup_set.all():
-            links.append((reverse("admin:data_brandgroup_change", args=[b.id]), b.title))
+            links.append((reverse("admin:data_brandgroup_change", 
+                                  args=[b.id]), b.title))
         if links:
-            return u", ".join(map(lambda x: '<a href="%s">%s</a>' % x, links))
+            return u", ".join(map(lambda x: '<a href="%s">%s</a>' % \
+                                  x, links))
         return '---'
     in_groups.short_description = u"Входит в группы"
     in_groups.allow_tags = True
+
+    def save_model(self, request, obj, form, change):
+        super(AreaAdmin, self).save_model(request, obj, form, change)
+        field = u'pricefile'
+        if change and field in form.changed_data:
+            from data.tasks import SavePriceFileTask
+            SavePriceFileTask.apply_async([obj])
+            if field in form.cleaned_data and form.cleaned_data[field]:
+                self.message_user(request, 
+                                  u"Файл `%s` отправлен на обработку. Цены для поставщика `%s` будут изменены в ближайшее время. Уведомление о завершении будет выслано на %s." % \
+                                  (unicode(form.cleaned_data[field]), 
+                                   unicode(obj.title),
+                                   ",".join(settings.MANAGERS_EMAILS)))
+            else:
+                self.message_user(request, 
+                                  u"Цены для поставщика `%s` удалены." % \
+                                  unicode(obj.title))
 
 
 class BrandAdmin(admin.ModelAdmin):
@@ -366,6 +388,27 @@ class ClientGroupAdmin(admin.ModelAdmin):
                       .change_view(request, object_id, extra_context)
 
 
+class PartAdmin(admin.ModelAdmin):
+    list_display = ('partnumber', 'area', 'MSRP', 'cost', 'description', 
+                    'substitution_link',)
+    search_fields = ('partnumber', 'substitution',)
+    list_filter = ('area',)
+    
+    
+    def substitution_link(self, obj):
+        if obj.substitution:
+            try:
+                part = self.model.objects\
+                    .get(partnumber=obj.substitution, area=obj.area)
+                href = reverse("admin:data_part_change", args=[part.id])
+            except self.model.DoesNotExist:
+                return unicode(obj.substitution)
+            else:
+                return u'<a href="%s">%s</a>' % (href, part.partnumber)
+        return u'Ничего'
+    substitution_link.short_description = u"Замена"
+    substitution_link.allow_tags = True
+
 
 admin.site.register(Brand, BrandAdmin)
 admin.site.register(Direction, DirectionAdmin)
@@ -376,4 +419,4 @@ admin.site.unregister(User)
 admin.site.register(Staff, StaffAdmin)
 admin.site.register(CustomerAccount, CustomerAdmin)
 admin.site.register(ClientGroup, ClientGroupAdmin)
-
+admin.site.register(Part, PartAdmin)

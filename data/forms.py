@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from django import forms
-from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES
+from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES, Area
 
 class OrderedItemsFilterForm(forms.Form):
     brandgroup__direction__po__icontains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':2, 'class':'qs_filter'}))
@@ -83,3 +83,8 @@ class OrderedItemInlineForm(forms.ModelForm):
              'price_discount',
              'invoice_code']
 
+
+class PartPriceUploadForm(forms.Form):
+    area = forms.ModelChoiceField(queryset=Area.objects.all(), 
+                                  to_field_name='title')
+    data = forms.FileField()

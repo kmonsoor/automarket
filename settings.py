@@ -14,6 +14,7 @@ ADMINS = (
 # Emails
 ROOT_URL = 'newparts-online.com'
 EMAILS = ['ermalinsky@gmail.com',]
+MANAGERS_EMAILS = ['amt.inter@gmail.com',]
 EMAIL_FROM = 'no-reply@%s' % ROOT_URL
 EMAIL_SUBJECT = u'Новые заказы на %s' % ROOT_URL
 
@@ -99,6 +100,17 @@ INSTALLED_APPS = (
     'south',
 )
 
+INSTALLED_APPS += (
+    'djcelery', 
+    'kombu.transport.django',
+)
+import djcelery
+djcelery.setup_loader()
+
+BROKER_URL = "django://"
+CELERYBEAT_SCHEDULER = "djcelery.schedulers.DatabaseScheduler"
+CELERY_SEND_TASK_ERROR_EMAILS = True
+
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 3600
 
@@ -119,6 +131,8 @@ EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = False
 
 AUTH_PROFILE_MODULE = 'data.UserProfile'
+
+PRICE_UPLOAD_DIR = 'uploads/prices/' #override in production
 
 try:
     from settings_local import *

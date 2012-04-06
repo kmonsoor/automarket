@@ -125,6 +125,7 @@ class PartSearchBase(object):
         data.update({'brandname':self.get_maker_name(maker_id)})
         return data
 
+
 class PartSearchPartsCom(PartSearchBase):
     name = "parts.com"
     SEARCH_URL = 'http://www.parts.com/oemcatalog/index.cfm?action=searchCatalogOEM'
@@ -140,7 +141,8 @@ class PartSearchPartsCom(PartSearchBase):
                 ("3","BMW"),
                 ("4","Buick"),
                 ("5","Cadillac"),
-                ("6","Chevrolet/Geo"),
+                ("6","Chevrolet"),
+                ("6","Geo"), # = Chevrolet
                 ("7","Chrysler"),
                 ("8","Dodge"),
                 ("9","Eagle"),
@@ -250,6 +252,7 @@ class PartSearchPartsCom(PartSearchBase):
                 return data
         # If something goes wrong
         return None
+
 
 class PartSearchAutopartspeople(PartSearchBase):
     name = "autopartspeople"
@@ -433,6 +436,7 @@ class PartSearchTradeMotionCom(PartSearchBase):
         # If something goes wrong
         return None
 
+
 class PartSearchInfinitiPartsOnlineCom(PartSearchTradeMotionCom):
     name = "infinitipartsonline.com"
     SEARCH_URL = 'http://www.infinitipartsonline.com/parts/index.cfm'
@@ -441,6 +445,7 @@ class PartSearchInfinitiPartsOnlineCom(PartSearchTradeMotionCom):
 
     def get_make_options(self):
         return [("Infiniti","Infiniti"),]
+
 
 class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
     name = "porscheoemparts.com"
@@ -494,12 +499,81 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
         # If something goes wrong
         return None
 
+
+class PartSearchLocal(PartSearchBase):
+    def get_make_options(self):
+        makers = [
+            ("Acura", "Acura"),
+            ("Audi", "Audi"),
+            ("BMW", "BMW"),
+            ("Buick", "Buick"),
+            ("Cadillac", "Cadillac"),
+            ("Chevrolet", "Chevrolet"),
+            ("Chrysler", "Chrysler"),
+            ("Dodge", "Dodge"),
+            ("Eagle", "Eagle"),
+            ("Ford", "Ford"),
+            ("Geo", "Geo"),
+            ("GMC", "GMC"),
+            ("Honda", "Honda"),
+            ("Hummer", "Hummer"),
+            ("Hyundai", "Hyundai"),
+            ("Infiniti", "Infiniti"),
+            ("Isuzu", "Isuzu"),
+            ("Jaguar", "Jaguar"),
+            ("Jeep", "Jeep"),
+            ("Kia", "Kia"),
+            ("LandRover", "LandRover"),
+            ("Lexus", "Lexus"),
+            ("Lincoln", "Lincoln"),
+            ("Mazda", "Mazda"),
+            ("Mercedes-Benz", "Mercedes-Benz"),
+            ("Mercury", "Mercury"),
+            ("MINI", "MINI"),
+            ("Mitsubishi", "Mitsubishi"),
+            ("Nissan", "Nissan"),
+            ("Oldsmobile", "Oldsmobile"),
+            ("Plymouth", "Plymouth"),
+            ("Pontiac", "Pontiac"),
+            ("Porsche", "Porsche"),
+            ("Saab", "Saab"),
+            ("Saturn", "Saturn"),
+            ("Scion", "Scion"),
+            ("Subaru", "Subaru"),
+            ("Suzuki", "Suzuki"),
+            ("Toyota", "Toyota"),
+            ("Volkswagen", "Volkswagen"),
+            ("Volvo", "Volvo"),
+        ]
+        return makers
+
+    def search(self, maker_id, partnumber):
+        if maker_id not in [x[0] for x in self.get_make_options()]:
+            raise Exception('Invalid maker')
+
+        area_title = self.get_maker_name(maker_id)
+        try:
+            area = Area.objects.get(title__iexact=area_title)
+        except Area.DoesNotExist:
+            raise Exception('Invalid maker')
+
+        data = Part.get_data(area, partnumber)
+        if not data:
+            return None
+        data.update({'brandname': area_title})
+        return data
+
+
 class PartSearch(object):
 
-    _search_registry = [PartSearchAutopartspeople, \
-                        PartSearchTradeMotionCom, \
-                        PartSearchInfinitiPartsOnlineCom, \
-                        PartSearchPorscheOEMPartsCom] # PartSearchPartsCom - temporary disabled
+    _search_registry = [
+        PartSearchLocal,
+        PartSearchAutopartspeople,
+        PartSearchTradeMotionCom,
+        PartSearchInfinitiPartsOnlineCom,
+        PartSearchPorscheOEMPartsCom,
+    ]# PartSearchPartsCom - temporary disabled
+
     makers = [
         "Acura",
         "Audi",

@@ -24,6 +24,7 @@ class MyDashboard(Dashboard):
              'data.models.OrderedItem',
              'data.models.Discount',
              'data.models.ClientGroup',
+             'data.models.Part',
              ]
         ))
 
@@ -68,7 +69,7 @@ class CustomAppIndexDashboard(AppIndexDashboard):
                  'data.models.OrderedItem',
                  'data.models.Discount' ]
             ))
-       # default
+        # default
         else:
             self.children.append(modules.ModelList(
                 title=self.app_title,
