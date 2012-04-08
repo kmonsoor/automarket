@@ -389,12 +389,23 @@ class ClientGroupAdmin(admin.ModelAdmin):
 
 
 class PartAdmin(admin.ModelAdmin):
-    list_display = ('partnumber', 'area', 'MSRP', 'cost', 'description', 
+    list_display = ('partnumber', 'area_link', 'MSRP', 'cost', 'description', 
                     'substitution_link',)
     search_fields = ('partnumber', 'substitution',)
     list_filter = ('area',)
-    
-    
+
+    def area_link(self, obj):
+        if obj.area:
+            try:
+                href = reverse("admin:data_area_change", args=[obj.area.id])
+            except:
+                return unicode(obj.area)
+            else:
+                return u'<a href="%s">%s</a>' % (href, obj.area)
+        return u'Ничего'
+    area_link.short_description = u"Поставщик"
+    area_link.allow_tags = True
+
     def substitution_link(self, obj):
         if obj.substitution:
             try:
