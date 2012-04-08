@@ -551,16 +551,22 @@ class PartSearchLocal(PartSearchBase):
         if maker_id not in [x[0] for x in self.get_make_options()]:
             raise Exception('Invalid maker')
 
-        area_title = self.get_maker_name(maker_id)
+        brand_title = self.get_maker_name(maker_id)
         try:
-            area = Area.objects.get(title__iexact=area_title)
-        except Area.DoesNotExist:
+            brand = Brand.objects.get(title__iexact=brand_title)
+            areas = brand.area_set.all()
+        except Brand.DoesNotExist:
             raise Exception('Invalid maker')
 
-        data = Part.get_data(area, partnumber)
+        data = {}
+        for area in areas:
+            data = Part.get_data(area, partnumber)
+            if data:
+                break
         if not data:
             return None
-        data.update({'brandname': area_title})
+
+        data.update({'brandname': brand_title})
         return data
 
 
