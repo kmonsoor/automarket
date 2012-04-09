@@ -514,8 +514,8 @@ class Part(models.Model):
 
     class Meta:
         unique_together = ('area', 'partnumber',)
-        verbose_name = u"цена"
-        verbose_name_plural = u"цены"
+        verbose_name = u"деталь"
+        verbose_name_plural = u"детали"
 
     @classmethod
     def get_data(cls, area, partnumber):
