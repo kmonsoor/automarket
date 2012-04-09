@@ -53,6 +53,7 @@ function onsubmit_basket_form() {
                 <td><b>Вы экономите</b></td>
             </tr>
             <tr>
+              {% if found.MSRP %}
                 <input type="hidden" name="brand_name" value="{{ maker_name }}" />
                 <td>{{ found.partnumber }}</td>
                 <input type="hidden" name="part_number" value="{{ found.partnumber }}" />
@@ -65,6 +66,9 @@ function onsubmit_basket_form() {
                 <input type="hidden" name="quantity" value="1" />
                 <td>{{ found.your_economy}}$ или {{ found.your_economy_perc}}%</td>
                 <td><input type="submit" name="_add_to_basket" value="В корзину" />
+              {% else %}
+                <td colspan=5>Не поставляется</td>
+              {% endif %}
             </tr>
         </table>
     </form>

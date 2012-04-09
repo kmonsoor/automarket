@@ -17,6 +17,7 @@ class SavePriceFileTask(Task):
     @transaction.commit_manually
     def run(self, area):
         Part.objects.filter(area=area).delete()
+        errors = []
         try:
             f = area.pricefile
             if not f:
@@ -35,6 +36,7 @@ class SavePriceFileTask(Task):
             fields_types_map = dict([x[1:3] for x in mapping])
             fields = [fields_map[x.strip()] for x in f.readline().split(sep)]
 
+            success_counter = 0
             for line in f.xreadlines():
                 data = {}
                 for field, value in zip(fields, [x.strip() \
@@ -45,21 +47,26 @@ class SavePriceFileTask(Task):
                     except:
                         continue
                 data.update({'area': area})
-                Part(**data).save()
+                try:
+                    Part(**data).save()
+                except:
+                    continue
+                else:
+                    success_counter += 1
         except Exception, e:
             transaction.rollback()
+            area.pricefile = None
+            area.save()
             logger.exception("%r" % e)
-            send_mail(u"Загрузка цен для `%s` прошла с ошибкой", 
-                      u"Цены из файла `%s` загружены не были." % \
-                      area.pricefile.name, 
+            send_mail(u"Загрузка деталей для `%s` прошла с ошибкой." % area.title, 
+                      u"Детали загружены не были.", 
                       settings.EMAIL_FROM, settings.MANAGERS_EMAILS, 
                       fail_silently=True)
             response = 'error!'
         else:
             transaction.commit()
-            send_mail(u"Загрузка цен для `%s` прошла успешно" % area.title, 
-                      u"Цены из файла `%s` успешно загружены." % \
-                      area.pricefile.name, 
+            send_mail(u"Загрузка деталей для `%s` прошла успешно." % area.title, 
+                      u"Всего загружено %s деталей." % success_counter, 
                       settings.EMAIL_FROM, settings.MANAGERS_EMAILS, 
                       fail_silently=True)
             response = 'ok!'

@@ -653,7 +653,7 @@ class PartSearch(object):
                     (handler.__class__.__name__, e))
                 data = None
             else:
-                if data and data.get("MSRP") and data.get("partnumber"):
+                if data and data.get("partnumber"):
                     return data
             return _make_search()
 

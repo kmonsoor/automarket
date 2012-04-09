@@ -13,8 +13,8 @@ ADMINS = (
 
 # Emails
 ROOT_URL = 'newparts-online.com'
-EMAILS = ['ermalinsky@gmail.com',]
-MANAGERS_EMAILS = ['amt.inter@gmail.com',]
+EMAILS = []
+MANAGERS_EMAILS = []
 EMAIL_FROM = 'no-reply@%s' % ROOT_URL
 EMAIL_SUBJECT = u'Новые заказы на %s' % ROOT_URL
 

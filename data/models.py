@@ -501,7 +501,7 @@ class Basket(models.Model):
 class Part(models.Model):
     area = models.ForeignKey(Area, verbose_name=Area._meta.verbose_name)
     partnumber = models.CharField(u"номер детали", max_length=255)
-    MSRP = models.FloatField(u"цена")
+    MSRP = models.FloatField(u"цена", null=True, blank=True)
     cost = models.FloatField(u"cost", null=True, blank=True)
     core_price = models.FloatField(u"стоимость детали для восстановления", 
                                    null=True, blank=True)
@@ -522,7 +522,11 @@ class Part(models.Model):
         try:
             part = cls.objects.get(area=area, partnumber=partnumber)
             if part.substitution:
-                return cls.get_data(area, part.substitution)
+                try:
+                    cls.objects.get(area=area, partnumber=part.substitution)
+                    return cls.get_data(area, part.substitution)
+                except cls.DoesNotExist:
+                    pass
             return {
                 'partnumber': part.partnumber,
                 'MSRP': part.MSRP,

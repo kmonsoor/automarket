@@ -52,9 +52,12 @@ def search(request):
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
             found = search_class.search(maker, part_number)
-            if not found or not found.get("MSRP") or not found.get("partnumber"):
+            if not found or not found.get("partnumber"):
                 found = None
                 msg = u"Ничего не найдено"
+	    elif found and not found.get("MSRP"):
+		found = None
+		msg = u"Деталь не поставляется"
             else:
                 # try to find area and get multiplier
                 try:
