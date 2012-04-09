@@ -500,13 +500,13 @@ class Basket(models.Model):
 
 class Part(models.Model):
     area = models.ForeignKey(Area, verbose_name=Area._meta.verbose_name)
-    partnumber = models.CharField(u"номер детали", max_length=255)
+    partnumber = models.CharField(u"номер детали", max_length=255, db_index=True)
     MSRP = models.FloatField(u"цена", null=True, blank=True)
     cost = models.FloatField(u"cost", null=True, blank=True)
     core_price = models.FloatField(u"стоимость детали для восстановления", 
                                    null=True, blank=True)
     substitution = models.CharField(u"номер замены", max_length=255, 
-                                    null=True, blank=True)
+                                    null=True, blank=True, db_index=True)
     description = models.TextField(u"описание детали на английском языке", 
                                    null=True, blank=True)
 

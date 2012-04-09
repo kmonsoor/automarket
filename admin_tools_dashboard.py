@@ -67,7 +67,9 @@ class CustomAppIndexDashboard(AppIndexDashboard):
                  'data.models.Area',
                  'data.models.Brand',
                  'data.models.OrderedItem',
-                 'data.models.Discount' ]
+                 'data.models.Discount',
+                 'data.models.ClientGroup',
+                 'data.models.Part',]
             ))
         # default
         else:
