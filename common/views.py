@@ -562,12 +562,10 @@ class PartSearchLocal(PartSearchBase):
         for area in areas:
             data = Part.get_data(area, partnumber)
             if data:
-                break
-        if not data:
-            return None
-
-        data.update({'brandname': brand_title})
-        return data
+                data.update({'brandname': area.title})
+                return data
+        return None
+        
 
 
 class PartSearch(object):
