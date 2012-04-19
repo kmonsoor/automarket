@@ -72,7 +72,10 @@ class SimplePaginator(object):
             self.delimeter = '?'
             
         paginator = Paginator(qs, per_page)
-        self.page = paginator.page(self.current_page)
+        try:
+            self.page = paginator.page(self.current_page)
+        except:
+            self.page = paginator.page(1)
         
         self.pages = self.page.paginator.num_pages
     
