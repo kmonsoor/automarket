@@ -737,24 +737,28 @@ def import_order(request):
     response = {}
     data = {}
     if request.method == 'POST':
-        form = ImportXlsForm()
-        f = request.FILES.get('xls_file', None)
-        if f:
-            xls = xlsreader.readexcel(file_contents=f.read())
-            i = 1
-            for row in xls.iter_dict(xls.book.sheet_names()[0]):
-                row = dict([(x,[y]) for x,y in list(row.iteritems())])
-                data.update(swap_keys(row,i))
-                i = i+1
-
-            if data:
-                request.POST = MultiValueDict(data)
-                item_forms = OrderItemForm.get_forms(request)
-                form_list = [item_form.render_js('from_template') for item_form in item_forms]
-                response['page_data'] = form_list
-            else:
-                pass
-            f.close()
+        try:
+            form = ImportXlsForm()
+            f = request.FILES.get('xls_file', None)
+            if f:
+                xls = xlsreader.readexcel(file_contents=f.read())
+                i = 1
+                for row in xls.iter_dict(xls.book.sheet_names()[0]):
+                    row = dict([(x,[y]) for x,y in list(row.iteritems())])
+                    data.update(swap_keys(row,i))
+                    i = i+1
+    
+                if data:
+                    request.POST = MultiValueDict(data)
+                    item_forms = OrderItemForm.get_forms(request)
+                    form_list = [item_form.render_js('from_template') for item_form in item_forms]
+                    response['page_data'] = form_list
+                else:
+                    pass
+                f.close()
+        except Exception, mess:
+            logger.exception("%r" % mess)
+            messages.add_message(request, messages.ERROR, u"При импорте произошла ошибка. Проверьте, пожалуйста, формат загружаемой таблицы и повторите загрузку.")
     else:
         form = ImportXlsForm()
     response['form'] = form
