@@ -51,7 +51,8 @@ tr.alt td {
 <tr>{% table_header_sort cl.headers %}</tr>
 <tr{% if cl.filter.is_set %} style="border: solid 2px green;"{% endif %}>
 {% for f in cl.list_filters %}
-<td>{{ f }}</td>
+<td>{% ifequal f.name 'ponumber' %}<input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" size="2">{% endifequal %}
+{{ f }}</td>
 {% endfor %}
 </tr>
 </thead>

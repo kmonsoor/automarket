@@ -5,7 +5,7 @@ from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES, Area
 
 class OrderedItemsFilterForm(forms.Form):
     brandgroup__direction__po__icontains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':2, 'class':'qs_filter'}))
-    ponumber = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':2, 'class':'qs_filter'}))
+    ponumber = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'size':2, 'class':'qs_filter'}))
     brandgroup__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10, 'class':'qs_filter'}))
     area__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))
     brand__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':10,'class':'qs_filter'}))

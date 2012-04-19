@@ -2,3 +2,8 @@ INPUT.qs_filter, SELECT.qs_filter {
 	border: solid 1px #ffca00;
 
 }
+
+table td {
+	padding: 1px 5px;
+	vertical-align: middle;
+}

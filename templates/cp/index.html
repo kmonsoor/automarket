@@ -77,7 +77,7 @@ tr.alt td {
 <thead>
 <tr>{% table_header_sort headers %}</tr>
 <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
-<td>{{ filter.form.brandgroup__direction__po__icontains }}&nbsp;{{ filter.form.ponumber }}</td>
+<td>{{ filter.form.brandgroup__direction__po__icontains }}{{ filter.form.ponumber }}</td>
 <td>{{ filter.form.brandgroup__title__contains }}</td>
 <td>{{ filter.form.area__title__contains }}</td>
 <td>{{ filter.form.brand__title__contains }}</td>
