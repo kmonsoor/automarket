@@ -16,8 +16,8 @@ class SearchForm(forms.Form):
         super(SearchForm, self).__init__(*args, **kwargs)
         self.fields['maker'].widget.choices = maker_choices
 
-    maker = forms.CharField(widget=forms.Select(choices=[]), label=u'MAKE', required=True)
-    part_number = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'Part Number', required=True)
+    maker = forms.CharField(widget=forms.Select(choices=[], attrs={'style':'width: 200px'}), label=u'MAKE', required=True)
+    part_number = forms.CharField(widget=forms.TextInput(attrs={'style':'width: 192px'}), label=u'Part Number', required=True)
 
 
 class BasketForm(forms.Form):
