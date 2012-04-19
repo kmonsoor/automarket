@@ -250,7 +250,10 @@ class OrderedItem(models.Model):
         #    except Discount.DoesNotExist:
         #        pass
 
-        calc_price = [x for x in [self.price_discount, self.price_sale, 0] if x][0]
+        try:
+            calc_price = [x for x in [self.price_discount, self.price_sale] if x][0]
+        except IndexError:
+            calc_price = 0
         cost = total_cost = None
         cost = (self.delivery or 0) + calc_price
         if cost and self.quantity:
