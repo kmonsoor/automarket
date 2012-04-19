@@ -560,7 +560,7 @@ class PartSearchLocal(PartSearchBase):
 
         data = {}
         for area in areas:
-            data = Part.get_data(area, partnumber)
+            data = Part.get_data(area, partnumber, [])
             if data:
                 data.update({'brandname': area.title})
                 return data

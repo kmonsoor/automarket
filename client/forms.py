@@ -26,6 +26,7 @@ class BasketForm(forms.Form):
     msrp = forms.FloatField(required=False)
     user_price = forms.FloatField(required=False)
     brand_name = forms.CharField(required=False)
+    core_price = forms.FloatField(required=False)
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')

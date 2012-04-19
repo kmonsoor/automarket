@@ -15,7 +15,7 @@ from common.views import PartSearch
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.utils.html import escape
+from django.utils.html import escape, mark_safe
 
 from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
 from decimal import Decimal
@@ -85,26 +85,36 @@ def search(request):
                 # only last dot should be saved
                 
                 try:
-                    core_price = float(normalize_sum(str(found['core_price'])))
+                    found['core_price'] = "%.2f" % float(normalize_sum(str(found['core_price'])))
                 except Exception, e:
-                    core_price = 0
+                    found['core_price'] = 0.00
                 found['MSRP'] = float(value) * float(m)
-                found['your_price'] = found['MSRP']*(100-discount)/100 + core_price
+                found['your_price'] = found['MSRP']*(100-discount)/100
                 found['your_economy'] = found['MSRP'] - found['your_price']
-                found['your_economy_perc'] = 100 - (found['your_price']/found['MSRP'])*100
+                found['your_economy_perc'] = "%.2f" % (100 - (found['your_price']/found['MSRP'])*100)
                 # output
                 found['MSRP'] = "%.2f" % found['MSRP']
                 found['your_price'] = "%.2f" % found['your_price']
                 found['your_economy'] = "%.2f" % found['your_economy']
                 maker_name = form.cleaned_data['maker']
 
+		#local search
+		if 'sub_chain' in found and len(found['sub_chain']) > 1:
+		    last = found['sub_chain'].pop(-1)
+		    found['sub_chain'] = mark_safe(u"Номер заменён: " + \
+		        " -> ".join(found['sub_chain']) + \
+		        " -> <b>%s</b>" % last)
+		else:
+		    del found['sub_chain']
     else:
         form = SearchForm(maker_choices=maker_choices)
         maker = None
     context = {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
-    context['basket_items'] = Basket.objects.filter(user=request.user, order_item_id__isnull=True)
-    context['basket_msrp_sum'] = reduce(lambda x,y: x+y, [x.msrp*x.quantity for x in context['basket_items']], 0)
-    context['basket_user_price_sum'] = reduce(lambda x,y: x+y, [x.user_price*x.quantity for x in context['basket_items']], 0)
+    context['basket_items'] = Basket.objects\
+        .filter(user=request.user, order_item_id__isnull=True)
+    context['basket_price_sum'] = reduce(lambda x,y: x+y, 
+                                         [x.get_price_total() 
+                                          for x in context['basket_items']], 0)
     return context
 
 class ClientOrderItemDisplay(object):
@@ -490,7 +500,7 @@ def basket_order(request):
         data['manager'] = adminuser
 
         data['price_base'] = item.msrp
-        data['price_sale'] = item.user_price
+        data['price_sale'] = item.get_price()
         
 
 

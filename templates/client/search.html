@@ -43,6 +43,7 @@ function onsubmit_basket_form() {
   </div>
     <h2>{{ msg|default:"" }}</h2>
     {% if found %}
+    <div style="margin: 40px 0 15px 0;">{{ found.sub_chain }}&nbsp;</div>
     <form id="formFound" action="{% url client_basket_add %}" method="post">
         <table id="dataTable" width="750px">
             <tr>
@@ -51,6 +52,8 @@ function onsubmit_basket_form() {
                 <td><b>Цена</b></td>
                 <td><b>Ваша Цена</b></td>
                 <td><b>Вы экономите</b></td>
+                {% if found.core_price %}<td><b>Цена невозвратной детали*</b></td>{% endif %}
+                <td></td>
             </tr>
             <tr>
               {% if found.MSRP %}
@@ -65,11 +68,18 @@ function onsubmit_basket_form() {
                 <input type="hidden" name="user_price" value="{{ found.your_price }}" />
                 <input type="hidden" name="quantity" value="1" />
                 <td>{{ found.your_economy}}$ или {{ found.your_economy_perc}}%</td>
+                {% if found.core_price %}
+                <td>{{ found.core_price }}$</td>
+                <input type="hidden" name="core_price" value="{{ found.core_price }}" />
+                {% endif %}
                 <td><input type="submit" name="_add_to_basket" value="В корзину" />
               {% else %}
-                <td colspan=5>Не поставляется</td>
+                <td colspan=7>Не поставляется</td>
               {% endif %}
             </tr>
+            {% if found.core_price %}
+            <tr><td colspan=7 style="border: none;"><b>*</b>будет добавлена к стоимости заказанной позиции</td></tr>
+            {% endif %}
         </table>
     </form>
     {% endif %}
@@ -96,14 +106,14 @@ function onsubmit_basket_form() {
 <td>{{ item.description }}</td>
 <td><textarea name="descriptionru_{{item.id}}" id="" cols="15" rows="2">{{ item.description_ru|default:"" }}</textarea></td>
 <td><textarea name="comment1_{{item.id}}" id="" cols="15" rows="2">{{ item.comment1|default:"" }}</textarea></td>
-<td>{{ item.user_price }}</td>
+<td>{{ item.get_price }}</td>
 <td><input size="5" type="text" name="quantity_{{item.id}}" value="{{ item.quantity }}" /></td>
-<td>{{ item.get_user_price_total }}</td>
+<td>{{ item.get_price_total }}</td>
 <td><a class="delete_link" href="{% url client_basket_delete item.id %}">Удалить</a></td>
 </tr>
 {% endfor %}
-<tr class="alt"><th colspan="6"><b>Общая стоимость:</b></th>
-<th colspan="2"><b>{{ basket_user_price_sum }}</b></th>
+<tr class="alt"><th colspan="7"><b>Общая стоимость:</b></th>
+<th colspan="1"><b>{{ basket_price_sum }}</b></th>
 <td><a class="delete_link" href="{% url client_basket_clear %}">Очистить корзину</a></td>
 </tr>
 </table>

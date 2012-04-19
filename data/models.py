@@ -492,10 +492,13 @@ class Basket(models.Model):
     quantity = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     order_item_id = models.IntegerField(null=True, blank=True, default=None)
+    core_price = models.FloatField(null=True, blank=True, default=0.0)
 
+    def get_price_total(self):
+        return (self.user_price + (self.core_price or 0)) * self.quantity
 
-    def get_user_price_total(self):
-        return self.user_price * self.quantity
+    def get_price(self):
+        return self.user_price + (self.core_price or 0)
 
 
 class Part(models.Model):
@@ -518,13 +521,14 @@ class Part(models.Model):
         verbose_name_plural = u"детали"
 
     @classmethod
-    def get_data(cls, area, partnumber):
+    def get_data(cls, area, partnumber, sub_chain=[]):
         try:
             part = cls.objects.get(area=area, partnumber=partnumber)
+            sub_chain.append(part.partnumber)
             if part.substitution:
                 try:
                     cls.objects.get(area=area, partnumber=part.substitution)
-                    return cls.get_data(area, part.substitution)
+                    return cls.get_data(area, part.substitution, sub_chain)
                 except cls.DoesNotExist:
                     pass
             return {
@@ -532,6 +536,7 @@ class Part(models.Model):
                 'MSRP': part.MSRP,
                 'core_price': part.core_price,
                 'description': part.description,
+                'sub_chain': sub_chain,
             }
         except cls.DoesNotExist:
             return {}
