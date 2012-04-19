@@ -7,6 +7,7 @@ from datetime import datetime
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.contrib.auth.models import User
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render_to_response
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -476,14 +477,12 @@ def insert_in_basket(items, ponumber, send_order=False):
         response = ''
         err = 0
         fails = (
-                u'Детали не были добавлены в корзину. Попробуйте еще раз.',
-                u'Способ доставки не указан. PO не задано.',
-                u'Детали не отправлены в заказ'
+                u'Произошла ошибка. Детали не были добавлены в корзину на automototrade.com. Проверьте, пожалуйста, правильность введенных данных и попробуйте еще раз.',
+                u'Произошла ошибка. Детали были добавлены в корзину на automototrade.com, но способ доставки и PO не были заданы.',
+                u'Произошла ошибка. Детали были добавлены в корзину, способ доставки и PO были заданы на automototrade.com, но детали не были отправлены в заказ.'
         )
         succ = (
-                u'Детали были добавлены в корзину.',
-                u'Способ доставки и PO заданы.',
-                u'Детали отправлены в заказ.'
+                u'Детали были успешно добавлены в корзину, способ доставки(авиа) и PO были успешно заданы на automototrade.com.',
         )
 
         if getattr(settings, 'SOAP_ENABLE', False):
@@ -492,34 +491,48 @@ def insert_in_basket(items, ponumber, send_order=False):
             arg2 = cjson.encode({'login':settings.SOAP_LOGIN, 'passwd':settings.SOAP_PASSWORD})
             cmd = "php -f %s %s '%s' '%s'" % (script_path, 'insertBasket', arg1, arg2)
             f = os.popen(cmd)
-            data = cjson.decode(f.read())
+            data = f.read()
             f.close()
-            if data and data['ok'] and data['response']:
-                response = succ[0]
-                arg3 = cjson.encode({'ClientOrderNum':ponumber, 'DostavkaType': getattr(settings, 'DELIVERY_TYPE', 1)})
-                cmd = "php -f %s %s '%s' '%s'" % (script_path, 'setOrderParam', arg3, arg2)
-                f = os.popen(cmd)
-                data = cjson.decode(f.read())
-                f.close()
+            response = ''
+            if data:
+                data = cjson.decode(data)
                 if data and data['ok'] and data['response']:
-                    response += succ[1]
-                    if send_order:
-                        cmd = "php -f %s %s '%s'" % (script_path, 'sendOrder', arg2)
-                        f = os.popen(cmd)
-                        data = cjson.decode(f.read())
-                        f.close()
-                        if data['ok'] and data['response']:
-                            response += succ[2]
+                    arg3 = cjson.encode({'ClientOrderNum':ponumber, 'DostavkaType': getattr(settings, 'DELIVERY_TYPE', 1)})
+                    cmd = "php -f %s %s '%s' '%s'" % (script_path, 'setOrderParam', arg3, arg2)
+                    f = os.popen(cmd)
+                    data = f.read()
+                    f.close()
+                    if data:
+                        data = cjson.decode(data)
+                        if data and data['ok'] and data['response']:
+                            response += succ[0]
+                            if send_order:
+                                cmd = "php -f %s %s '%s'" % (script_path, 'sendOrder', arg2)
+                                f = os.popen(cmd)
+                                data = f.read()
+                                f.close()
+                                if data:
+                                    data = cjson.decode(data)
+                                    if data['ok'] and data['response']:
+                                        pass
+                                    else:
+                                        err += 1
+                                        response += fails[2]
+                                else:
+                                    err += 1
+                                    response += fails[2]
                         else:
-                            response += fails[2]
                             err += 1
-                        return data
+                            response += fails[1]
+                    else:
+                        err += 1
+                        response += fails[1]
                 else:
                     err += 1
-                    response += fails[1]
+                    response += fails[0]
             else:
-                response += fails[0]
                 err += 1
+                response += fails[0]
 
             if err > 0:
                 ok = False
@@ -540,14 +553,19 @@ def change_status(request):
             ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
             full_po = '%s%s' % (orders[0].brandgroup.direction.po,ponumber)
             data = insert_in_basket(orders, full_po)
-            if data and data['ok'] and data['response']:
-                for x in orders:
-                    if not x.ponumber:
-                        x.ponumber = ponumber
-                    x.status = 'in_processing'
-                    x.status_modified = datetime.now()
-                    x.save()
-
+            if data:
+                if data['ok']:
+                    if 'response' in data and data['response']:
+                        messages.add_message(request, messages.SUCCESS, data['response'])
+                    for x in orders:
+                        if not x.ponumber:
+                            x.ponumber = ponumber
+                        x.status = 'in_processing'
+                        x.status_modified = datetime.now()
+                        x.save()
+                else:
+                    if 'response' in data and data['response']:
+                        messages.add_message(request, messages.ERROR, data['response'])
         return HttpResponseRedirect('/cp/groups/')
     else:
         raise Http404
