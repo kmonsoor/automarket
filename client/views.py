@@ -105,7 +105,8 @@ def search(request):
 		        " -> ".join(found['sub_chain']) + \
 		        " -> <b>%s</b>" % last)
 		else:
-		    del found['sub_chain']
+		    if 'sub_chain' in found:
+			del found['sub_chain']
     else:
         form = SearchForm(maker_choices=maker_choices)
         maker = None
