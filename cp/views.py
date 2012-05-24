@@ -717,18 +717,18 @@ def import_order(request):
     def swap_keys(kwargs, num):
         _data = {}
         for k,v in kwargs.items():
-            if k == 'DIR':
+            if k.upper() == 'DIR':
                 try:
                     _data[get_field_name(k)+'.%d' % num] = [BrandGroup.objects.get(title=v[0]).id]
                 except BrandGroup.DoesNotExist:
                     _data[get_field_name(k)+'.%d' % num] = v
-            elif k == 'BRAND' or k == 'AREA':
+            elif k.upper() == 'BRAND' or k.upper() == 'AREA':
                 _data[get_field_name(k)+'.%d' % num] = [v[0].capitalize()]
-            elif k == 'CL':
+            elif k.upper() == 'CL':
                 try:
                     _data[get_field_name(k)+'.%d' % num] = [User.objects.get(username=v[0].lower()).id]
                 except User.DoesNotExist:
-                    _data[get_field_name(k)+'.%d' % num] = 0
+                    _data[get_field_name(k)+'.%d' % num] = ''
             else:
                 _data[get_field_name(k)+'.%d' % num] = v
             _data['id'+'.%d' % num] = ''
@@ -737,28 +737,27 @@ def import_order(request):
     response = {}
     data = {}
     if request.method == 'POST':
-        try:
-            form = ImportXlsForm()
-            f = request.FILES.get('xls_file', None)
-            if f:
+        form = ImportXlsForm()
+        f = request.FILES.get('xls_file', None)
+        if f:
+            i = 1
+            try:
                 xls = xlsreader.readexcel(file_contents=f.read())
-                i = 1
                 for row in xls.iter_dict(xls.book.sheet_names()[0]):
                     row = dict([(x,[y]) for x,y in list(row.iteritems())])
                     data.update(swap_keys(row,i))
                     i = i+1
-    
+            except Exception, mess:
+                logger.error("%r" % mess)
+                messages.add_message(request, messages.ERROR, u"При импорте произошла критическая ошибка %s-ой(-ей) строке." % i)
+            else:
                 if data:
                     request.POST = MultiValueDict(data)
                     item_forms = OrderItemForm.get_forms(request)
                     form_list = [item_form.render_js('from_template') for item_form in item_forms]
                     response['page_data'] = form_list
-                else:
-                    pass
+            finally:
                 f.close()
-        except Exception, mess:
-            logger.exception("%r" % mess)
-            messages.add_message(request, messages.ERROR, u"При импорте произошла ошибка. Проверьте, пожалуйста, формат загружаемой таблицы и повторите загрузку.")
     else:
         form = ImportXlsForm()
     response['form'] = form
