@@ -719,9 +719,9 @@ def import_order(request):
         for k,v in kwargs.items():
             if k.upper() == 'DIR':
                 try:
-                    _data[get_field_name(k)+'.%d' % num] = [BrandGroup.objects.get(title=v[0]).id]
+                    _data[get_field_name(k)+'.%d' % num] = [BrandGroup.objects.get(title__iexact=v[0]).id]
                 except BrandGroup.DoesNotExist:
-                    _data[get_field_name(k)+'.%d' % num] = v
+                    _data[get_field_name(k)+'.%d' % num] = ''
             elif k.upper() == 'BRAND' or k.upper() == 'AREA':
                 _data[get_field_name(k)+'.%d' % num] = [v[0].capitalize()]
             elif k.upper() == 'CL':
