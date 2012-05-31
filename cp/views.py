@@ -726,7 +726,7 @@ def import_order(request):
                 _data[get_field_name(k)+'.%d' % num] = [v[0].capitalize()]
             elif k.upper() == 'CL':
                 try:
-                    _data[get_field_name(k)+'.%d' % num] = [User.objects.get(username=v[0].lower()).id]
+                    _data[get_field_name(k)+'.%d' % num] = [User.objects.get(username__iexact=v[0].lower()).id]
                 except User.DoesNotExist:
                     _data[get_field_name(k)+'.%d' % num] = ''
             else:

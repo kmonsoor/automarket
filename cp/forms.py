@@ -48,7 +48,7 @@ class OrderItemForm(Form):
         if 'area' in self.cleaned_data and self.cleaned_data['area']:
             area = self.cleaned_data['area']
             try:
-                area = Area.objects.get(title=area)
+                area = Area.objects.get(title__iexact=area)
             except Area.DoesNotExist:
                 raise forms.ValidationError(u"Такого поставщика не существует")
             else:
@@ -64,7 +64,7 @@ class OrderItemForm(Form):
         if 'brand' in self.cleaned_data and self.cleaned_data['brand']:
             brand = self.cleaned_data['brand']
             try:
-                brand = Brand.objects.get(title=brand)
+                brand = Brand.objects.get(title__iexact=brand)
             except Brand.DoesNotExist:
                 raise forms.ValidationError(u"Такого бренда не существует")
             else:
