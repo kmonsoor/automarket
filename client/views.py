@@ -47,6 +47,8 @@ def search(request):
     maker_choices = search_class.maker_choices()
 
     if request.method == 'POST':
+	_post = request.POST.copy()
+	_post['part_number'] = re.sub('[^\w\s]', '', _post['part_number']).strip()
         form = SearchForm(request.POST, maker_choices=maker_choices)
         if form.is_valid():
             maker = form.cleaned_data['maker']
