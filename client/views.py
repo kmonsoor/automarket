@@ -49,7 +49,7 @@ def search(request):
     if request.method == 'POST':
 	_post = request.POST.copy()
 	_post['part_number'] = re.sub('[^\w\s]', '', _post['part_number']).strip()
-        form = SearchForm(request.POST, maker_choices=maker_choices)
+        form = SearchForm(_post, maker_choices=maker_choices)
         if form.is_valid():
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
