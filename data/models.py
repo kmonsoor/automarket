@@ -526,11 +526,11 @@ class Part(models.Model):
     @classmethod
     def get_data(cls, area, partnumber, sub_chain=[]):
         try:
-            part = cls.objects.get(area=area, partnumber=partnumber)
+            part = cls.objects.get(area=area, partnumber__iexact=partnumber)
             sub_chain.append(part.partnumber)
             if part.substitution:
                 try:
-                    cls.objects.get(area=area, partnumber=part.substitution)
+                    cls.objects.get(area=area, partnumber__iexact=part.substitution)
                     return cls.get_data(area, part.substitution, sub_chain)
                 except cls.DoesNotExist:
                     pass
