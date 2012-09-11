@@ -36,7 +36,7 @@ class Command(BaseCommand):
         """
         Update orders from automototrade.com
         """
-        logger.debug('Start update orders from automototrade.com')
+        logger.info('Start update orders from automototrade.com')
 
         if options.get('po'):
             try:
@@ -52,7 +52,7 @@ class Command(BaseCommand):
 
             ponumbers = sorted(set([x.get_po_verbose() for x in orders]))
 
-        logger.debug("Found %s po's for update. %r." % (len(ponumbers), ponumbers))
+        logger.info("Found %s po's for update. %r." % (len(ponumbers), ponumbers))
 
         for po in ponumbers:
             for _order in self.get_orders(po):
@@ -151,7 +151,7 @@ class Command(BaseCommand):
                         order.status = status
                         order.save()
 
-        logger.debug('Finish update orders from automototrade.com')
+        logger.info('Finish update orders from automototrade.com')
         sys.exit()
 
     def get_orders(self, po):

@@ -699,7 +699,7 @@ class SoapClient(object):
                 'DescriptionEng': order.description_en,
                 'Qty': order.quantity,
                 'OemCode': order.part_number,
-                'CustomerId': '',
+                'CustomerId': int(order.id),
                 'Weight': order.weight if order.weight else '',
             }
             data.append(detail)
