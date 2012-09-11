@@ -4,7 +4,7 @@ var backend_url = null;
 function render_row(item_id) {
     jQuery.get('/cp/ordered_item_row/'+ item_id +'/', function(response) {
         if (response) {
-            $("#table_row_"+item_id).html(reponse);
+            $("#table_row_"+item_id).html(response);
         }
     });
 }
@@ -99,7 +99,7 @@ function postSave() {
     // get calculated values from the server
 
     FIELDS = ['price_base', 'price_sale', 'price_discount',
-              'deliveroy', 'cost', 'total_cost', 'obtained_at', 'received_office_at']
+              'delivery', 'cost', 'total_cost', 'received_office_at']
     jQuery.ajax({
         url: '/cp/ordered_item/' + current.id + '/',
         data: {'fields': FIELDS.join(',')},

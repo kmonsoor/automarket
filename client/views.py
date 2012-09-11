@@ -1,14 +1,14 @@
 # -*- coding=UTF-8 -*-
-import os, cjson
+import os
 import re
 import pyExcelerator as xl
 from datetime import datetime
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from data.models import OrderedItem, Brand, BrandGroup, Area, BrandGroupAreaSettings, Basket
+from data.models import OrderedItem, Brand, BrandGroup, Area, Basket
 from data.forms import OrderedItemsFilterForm
 from client.forms import SearchForm
 from common.views import PartSearch
@@ -18,7 +18,6 @@ from django.contrib.auth.models import User
 from django.utils.html import escape, mark_safe
 
 from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
-from decimal import Decimal
 from data.forms import CLIENT_FIELD_LIST
 from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
@@ -57,9 +56,9 @@ def search(request):
             if not found or not found.get("partnumber"):
                 found = None
                 msg = u"Ничего не найдено"
-	    elif found and not found.get("MSRP"):
-		found = None
-		msg = u"Деталь не поставляется"
+    	    elif found and not found.get("MSRP"):
+        		found = None
+        		msg = u"Деталь не поставляется"
             else:
                 # try to find area and get multiplier
                 try:
@@ -77,7 +76,7 @@ def search(request):
                 try:
                     discount = request.user.get_profile() \
                                       .get_discount(brand_group=brand_group, area=area)
-                except Exception, e:
+                except Exception:
                     discount = AREA_DISCOUNT_DEFAULT
                 discount = float(discount)
 
@@ -85,15 +84,21 @@ def search(request):
 
                 # we need to remove all "," as separators
                 # only last dot should be saved
-                
+
                 try:
                     found['core_price'] = "%.2f" % float(normalize_sum(str(found['core_price'])))
-                except Exception, e:
+                except Exception:
                     found['core_price'] = 0.00
+
                 found['MSRP'] = float(value) * float(m)
-                found['your_price'] = found['MSRP']*(100-discount)/100
+                if 'cost' in found and found['cost']:
+                    _msrp = found['cost'] * (float(100) + settings.COST_DEFAULT_MARGIN) / float(100)
+                    if _msrp > found['MSRP']:
+                        found['MSRP'] = _msrp
+
+                found['your_price'] = found['MSRP'] * (100 - discount) / 100
                 found['your_economy'] = found['MSRP'] - found['your_price']
-                found['your_economy_perc'] = "%.2f" % (100 - (found['your_price']/found['MSRP'])*100)
+                found['your_economy_perc'] = "%.2f" % (100 - (found['your_price'] / found['MSRP']) * 100)
                 # output
                 found['MSRP'] = "%.2f" % found['MSRP']
                 found['your_price'] = "%.2f" % found['your_price']
@@ -108,7 +113,7 @@ def search(request):
 		        " -> <b>%s</b>" % last)
 		else:
 		    if 'sub_chain' in found:
-			del found['sub_chain']
+			 del found['sub_chain']
     else:
         form = SearchForm(maker_choices=maker_choices)
         maker = None

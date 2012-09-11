@@ -39,6 +39,13 @@
         else if (!jQuery(el).attr('checked') && jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input[type=checkbox]").length != jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input:checked").length)
             jQuery("#direction_"+direction_id+" #brand_"+brand_id+" input[name=selectGroup]").attr('checked', false);
     }
+    jQuery(function(){
+        jQuery('input[name=selectGroup]').each(function(){
+            $this = jQuery(this);
+            if ($this.parents('tbody').find(':checkbox').length == 1)
+                $this.remove();
+        })
+    })
 </script>
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
 <script>

@@ -1,18 +1,16 @@
 # -*- coding=utf-8 -*-
-
-import os, cjson
+import os
+import cjson
 import pyExcelerator as xl
 from datetime import datetime
 
 from django.core.mail import send_mail
-from django.template.loader import render_to_string
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, render_to_response
+from django.shortcuts import get_object_or_404
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.utils.datastructures import MultiValueDict
-from django.utils import simplejson
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.template import RequestContext
@@ -21,18 +19,17 @@ from lib.decorators import render_to, ajax_request
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from lib.helpers import next, reverse
 from lib import xlsreader
 
 from cp.forms import OrderItemForm, ImportXlsForm
 from client.forms import SearchForm
-from data.models import Direction, BrandGroup, Area, Brand, OrderedItem, ORDER_ITEM_STATUSES
-from data.forms import OrderedItemsFilterForm, OrderedItemForm, OrderedItemInlineForm
+from data.models import BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES
+from data.forms import OrderedItemsFilterForm, OrderedItemForm
 from common.views import PartSearch
-from common.views import SoapClient
 
 import logging
 logger = logging.getLogger("cp.views")
+
 
 @login_required
 @render_to('cp/search.html')
@@ -55,18 +52,18 @@ def search(request):
     else:
         form = SearchForm(maker_choices=maker_choices)
 
-    return {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
+    return {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg}
 
 
 def get_status_options():
     statuses_dict = ORDER_ITEM_STATUSES
-    status_options_str = '{';
+    status_options_str = '{'
     status_options = []
     k = 0
     for i in statuses_dict:
         k += 1
         status_options_str += '"%s":"%s"' % (i[0], i[1])
-        status_options.append({'value':i[0],'option':i[1]})
+        status_options.append({'value': i[0], 'option': i[1]})
         if k < len(ORDER_ITEM_STATUSES):
             status_options_str += ','
     status_options_str += '}'
@@ -95,35 +92,33 @@ def index(request):
     context['filter'] = _filter
 
     LIST_HEADERS = (
-                    (u'PO', 'ponumber'),
-                    (u'Направление', 'brandgroup__title'),
-                    (u'Поставщик', 'area__title'),
-                    (u'BRAND', 'brand__title'),
-                    (u'PART #', 'part_number'),
-                    (u'COMMENT 1', None),
-                    (u'COMMENT 2', None),
-                    (u'Создано', 'created'),
-                    (u'Заказано', 'obtained_at'),
-                    (u'Получено', 'received_office_at'),
-                    (u'Q', None),
-                    (u'PRICE IN', None),
-                    (u'TOTAL', None),
-                    (u'ЗАМЕНА', None),
-                    (u'ID', 'manager'),
-                    (u'CL', 'client'),
-                    (u'RUS', None),
-                    (u'ENG', None),
-                    (u'LIST', None),
-                    (u'WEIGHT', None),
-                    (u'SHIPPING', None),
-                    (u'PRICE', None),
-                    (u'NEW PRICE', None),
-                    (u'COST', None),
-                    (u'TOTAL COST', None),
-                    (u'Инвойс', 'invoice_code'),
-                    (u'Статус', 'status'),
-
-                    )
+        (u'PO', 'ponumber'),
+        (u'Направление', 'brandgroup__title'),
+        (u'Поставщик', 'area__title'),
+        (u'BRAND', 'brand__title'),
+        (u'PART #', 'part_number'),
+        (u'COMMENT 1', None),
+        (u'COMMENT 2', None),
+        (u'Создано', 'created'),
+        (u'Получено', 'received_office_at'),
+        (u'Q', None),
+        (u'PRICE IN', None),
+        (u'TOTAL', None),
+        (u'ЗАМЕНА', None),
+        (u'ID', 'manager'),
+        (u'CL', 'client'),
+        (u'RUS', None),
+        (u'ENG', None),
+        (u'LIST', None),
+        (u'WEIGHT', None),
+        (u'SHIPPING', None),
+        (u'PRICE', None),
+        (u'NEW PRICE', None),
+        (u'COST', None),
+        (u'TOTAL COST', None),
+        (u'Инвойс', 'invoice_code'),
+        (u'Статус', 'status'),
+    )
     sort_headers = SortHeaders(request, LIST_HEADERS)
     order_field = request.GET.get('o', None)
     order_direction = request.GET.get('ot', None)
@@ -138,7 +133,7 @@ def index(request):
 
     context['headers'] = list(sort_headers.headers())
 
-    qs = OrderedItem.objects.select_related().filter(**_filter.get_filters()).exclude(status='shipped')
+    qs = OrderedItem.objects.select_related().filter(**_filter.get_filters())
 
     # calculate totals by filter
     total_row = None
@@ -156,7 +151,7 @@ def index(request):
             SUM(%(p)s.delivery) as TOTAL_DELIVERY,
             SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)) AS TOTAL_PRICE,
             SUM(%(p)s.price_invoice*%(p)s.quantity) as TOTAL_PRICE_IN
-            FROM %(from)s AND status != 'failure'
+            FROM %(from)s AND status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')
         """ % {'p': td, 'from': from_clause}
         cursor = connection.cursor()
         cursor.execute(sql, params)
@@ -168,10 +163,24 @@ def index(request):
 
     if order_by:
         qs = qs.order_by(order_by)
-    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+
+    # grouping parents orders
+    has_parent_orders = list(qs.filter(parent__isnull=False).order_by('id'))
+    orders = list(qs.exclude(parent__isnull=False))
+    while True:
+        try:
+            order = has_parent_orders.pop()
+        except IndexError:
+            break
+        else:
+            if order.parent in orders:
+                index = orders.index(order.parent)
+                orders.insert(index, order)
+
+    paginator = SimplePaginator(request, orders, items_per_page, 'page')
     #paginator.set_page(current_page)
     context['status_options_str'], context['status_options'] = get_status_options()
-    context['items'] = paginator.get_page_items();
+    context['items'] = paginator.get_page_items()
     context['paginator'] = paginator
     context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
     context['total_row'] = total_row
@@ -201,7 +210,11 @@ def order(request):
 
             return HttpResponseRedirect('/cp/order/success/')
     else:
-        item_data = [OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template'),OrderItemForm().render_js('from_template')]
+        item_data = [
+            OrderItemForm().render_js('from_template'),
+            OrderItemForm().render_js('from_template'),
+            OrderItemForm().render_js('from_template')
+        ]
 
     response['page_template'] = OrderItemForm().render_js('from_template')
     response['page_data'] = item_data
@@ -216,7 +229,7 @@ def order_success(request):
 
 @render_to('cp/groups.html')
 def groups(request):
-    qs = OrderedItem.objects.filter(status='order')
+    qs = OrderedItem.objects.filter(status__in=('order', 'moderation'))
     orders_by_direction = {}
     for order in qs:
         if order.brandgroup.direction not in orders_by_direction:
@@ -225,19 +238,18 @@ def groups(request):
             orders_by_direction[order.brandgroup.direction][order.brandgroup] = []
         orders_by_direction[order.brandgroup.direction][order.brandgroup].append(order)
 
-    return {
-            'orders_by_direction':orders_by_direction
-            }
+    return {'orders_by_direction': orders_by_direction}
 
 
 class OrderedItemSaver(object):
     error = None
+
     def save_part_number(self, obj, value):
         try:
             obj.part_number = value
             obj.save()
         except Exception, e:
-            logger.exception("save_part_number: %r"%e)
+            logger.exception("save_part_number: %r" % e)
             pass
         return obj.part_number
 
@@ -246,7 +258,7 @@ class OrderedItemSaver(object):
             obj.comment_customer = value
             obj.save()
         except Exception, e:
-            logger.exception("save_comment_customer: %r"%e)
+            logger.exception("save_comment_customer: %r" % e)
             pass
         return obj.comment_customer
 
@@ -255,7 +267,7 @@ class OrderedItemSaver(object):
             obj.comment_supplier = value
             obj.save()
         except Exception, e:
-            logger.exception("save_comment_supplier: %r"%e)
+            logger.exception("save_comment_supplier: %r" % e)
             pass
         return obj.comment_supplier
 
@@ -274,7 +286,7 @@ class OrderedItemSaver(object):
             obj.save()
 
         except Exception, e:
-            logger.exception("save_price_invoice: %r"%e)
+            logger.exception("save_price_invoice: %r" % e)
         return obj.price_invoice
 
     def save_part_number_superseded(self, obj, value):
@@ -282,7 +294,7 @@ class OrderedItemSaver(object):
             obj.part_number_superseded = value
             obj.save()
         except Exception, e:
-            logger.exception("save_part_number_superseded: %r"%e)
+            logger.exception("save_part_number_superseded: %r" % e)
             pass
         return obj.part_number_superseded
 
@@ -291,7 +303,7 @@ class OrderedItemSaver(object):
             obj.description_ru = value
             obj.save()
         except Exception, e:
-            logger.exception("save_description_ru: %r"%e)
+            logger.exception("save_description_ru: %r" % e)
             pass
         return obj.description_ru
 
@@ -300,7 +312,7 @@ class OrderedItemSaver(object):
             obj.description_en = value
             obj.save()
         except Exception, e:
-            logger.exception("save_description_en: %r"%e)
+            logger.exception("save_description_en: %r" % e)
             pass
         return obj.description_en
 
@@ -309,7 +321,7 @@ class OrderedItemSaver(object):
             obj.price_base = value
             obj.save()
         except Exception, e:
-            logger.exception("save_price_base: %r"%e)
+            logger.exception("save_price_base: %r" % e)
             pass
         return obj.price_base
 
@@ -321,7 +333,7 @@ class OrderedItemSaver(object):
             obj.weight = value
             obj.save()
         except Exception, e:
-            logger.exception("save_weight: %r"%e)
+            logger.exception("save_weight: %r" % e)
             pass
         return obj.weight
 
@@ -330,7 +342,7 @@ class OrderedItemSaver(object):
             obj.price_discount = value
             obj.save()
         except Exception, e:
-            logger.exception("save_price_discount: %r"%e)
+            logger.exception("save_price_discount: %r" % e)
             pass
         return obj.price_discount
 
@@ -342,7 +354,7 @@ class OrderedItemSaver(object):
             obj.quantity_ship = value
             obj.save()
         except Exception, e:
-            logger.exception("save_quantity_ship: %r"%e)
+            logger.exception("save_quantity_ship: %r" % e)
             self.error = e
         return obj.quantity_ship
 
@@ -356,13 +368,11 @@ class OrderedItemSaver(object):
             else:
                 obj.status = value
             obj.status_modified = datetime.now()
-            if value == 'obtained':
-                obj.obtained_at = datetime.now()
             if value == 'received_office':
                 obj.received_office_at = datetime.now()
             obj.save()
         except Exception, e:
-            logger.exception("save_status: %r"%e)
+            logger.exception("save_status: %r" % e)
             pass
         return obj.status
 
@@ -371,22 +381,17 @@ class OrderedItemSaver(object):
             obj.invoice_code = value
             obj.save()
         except Exception, e:
-            logger.exception("save_invoice_code: %r"%e)
+            logger.exception("save_invoice_code: %r" % e)
             pass
         return obj.invoice_code
+
 
 @ajax_request
 def position_edit(request, content_type, item_id):
     logger.debug("position_edit called with args: %s, %s" % (content_type, item_id))
-    models = {
-              'ordered_item':OrderedItem,
-              }
-    forms = {
-              'ordered_item':OrderedItemForm,
-              }
-    savers = {
-              'ordered_item':OrderedItemSaver,
-              }
+    models = {'ordered_item': OrderedItem}
+    forms = {'ordered_item': OrderedItemForm}
+    savers = {'ordered_item': OrderedItemSaver}
     item = get_object_or_404(models[content_type], pk=item_id)
     logger.debug("Item found: %r" % item)
     response = {}
@@ -396,14 +401,14 @@ def position_edit(request, content_type, item_id):
         logger.exception('Attribute %s does not exist' % request.POST['type'])
         response['error'] = 'Attribute does not exist'
         return response
-    form = forms[content_type]({request.POST['type']:request.POST['value']})
+    form = forms[content_type]({request.POST['type']: request.POST['value']})
     if form.is_valid():
         logger.debug("Form is valid")
         try:
             value = form.cleaned_data[request.POST['type']]
             logger.debug("Got value: %r" % value)
         except Exception, e:
-            logger.error("Value error: %r"%e)
+            logger.error("Value error: %r" % e)
             response['error'] = e
             return response
 
@@ -417,6 +422,7 @@ def position_edit(request, content_type, item_id):
         response['error'] = u'Wrong value!'
     return response
 
+
 @ajax_request
 def get_ordered_item(request, item_id):
     item = get_object_or_404(OrderedItem, pk=item_id)
@@ -426,7 +432,7 @@ def get_ordered_item(request, item_id):
     response = {}
     for f in fields:
         try:
-            if f in ('created', 'modified', 'obtained_at', 'received_office_at'):
+            if f in ('created', 'modified', 'received_office_at'):
                 try:
                     attr = getattr(item, f)
                     response[f] = attr.strftime("%Y-%m-%d %H:%M:%S")
@@ -451,7 +457,7 @@ def insert_in_basket(items, ponumber, send_order=False):
             'DescriptionEng': x.description_en,
             'Qty': x.quantity,
             'OemCode': x.part_number,
-            'CustomerId': x.client.username or '',
+            'CustomerId': int(x.id),
             'Weight': x.weight if x.weight else '',
         }
 
@@ -488,7 +494,7 @@ def insert_in_basket(items, ponumber, send_order=False):
         if getattr(settings, 'SOAP_ENABLE', False):
             script_path = os.path.join(settings.PROJECT_ROOT, 'soapclient.php')
             arg1 = cjson.encode(details)
-            arg2 = cjson.encode({'login':settings.SOAP_LOGIN, 'passwd':settings.SOAP_PASSWORD})
+            arg2 = cjson.encode({'login': settings.SOAP_LOGIN, 'passwd': settings.SOAP_PASSWORD})
             cmd = "php -f %s %s '%s' '%s'" % (script_path, 'insertBasket', arg1, arg2)
             f = os.popen(cmd)
             data = f.read()
@@ -497,7 +503,7 @@ def insert_in_basket(items, ponumber, send_order=False):
             if data:
                 data = cjson.decode(data)
                 if data and data['ok'] and data['response']:
-                    arg3 = cjson.encode({'ClientOrderNum':ponumber, 'DostavkaType': getattr(settings, 'DELIVERY_TYPE', 1)})
+                    arg3 = cjson.encode({'ClientOrderNum': ponumber, 'DostavkaType': getattr(settings, 'DELIVERY_TYPE', 1)})
                     cmd = "php -f %s %s '%s' '%s'" % (script_path, 'setOrderParam', arg3, arg2)
                     f = os.popen(cmd)
                     data = f.read()
@@ -541,6 +547,7 @@ def insert_in_basket(items, ponumber, send_order=False):
 
             return {'ok': ok, 'response': response}
 
+
 def change_status(request):
     if request.method == 'POST':
         ids = request.POST.getlist('items')
@@ -551,7 +558,7 @@ def change_status(request):
 
         if orders:
             ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
-            full_po = '%s%s' % (orders[0].brandgroup.direction.po,ponumber)
+            full_po = '%s%s' % (orders[0].brandgroup.direction.po, ponumber)
             data = insert_in_basket(orders, full_po)
             if data:
                 if data['ok']:
@@ -570,6 +577,7 @@ def change_status(request):
     else:
         raise Http404
 
+
 def export_selected(request):
 
     ids = request.POST.getlist('items')
@@ -587,7 +595,7 @@ def export_selected(request):
             x.status_modified = datetime.now()
             x.save()
 
-        filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
+        filename = os.path.join(settings.MEDIA_ROOT, 'temp.xls')
 
         # Open new workbook
         book = xl.Workbook()
@@ -623,9 +631,9 @@ def export_selected(request):
         # Save book
         book.save(filename)
         os.chmod(filename, 0777)
-        content = open(filename,'rb').read()
+        content = open(filename, 'rb').read()
         response = HttpResponse(content, mimetype='application/vnd.ms-excel')
-        name = '%s-%s.xls' % ('export',datetime.now().strftime('%m-%d-%Y-%H-%M'))
+        name = '%s-%s.xls' % ('export', datetime.now().strftime('%m-%d-%Y-%H-%M'))
         response['Content-Disposition'] = 'inline; filename=%s' % name
         os.remove(filename)
 
@@ -636,7 +644,7 @@ def export_selected(request):
 
 def export(request, group_id):
     brandgroup = BrandGroup.objects.get(id=group_id)
-    items = OrderedItem.objects.filter(brandgroup__id = group_id, status='order').order_by("brandgroup__direction__po")
+    items = OrderedItem.objects.filter(brandgroup__id=group_id, status='order').order_by("brandgroup__direction__po")
     ponumber = OrderedItem.objects.get_next_ponumber(brandgroup.direction.id)
 
     for x in items:
@@ -646,7 +654,7 @@ def export(request, group_id):
         x.status_modified = datetime.now()
         x.save()
 
-    filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
+    filename = os.path.join(settings.MEDIA_ROOT, 'temp.xls')
 
     # Open new workbook
     book = xl.Workbook()
@@ -682,9 +690,9 @@ def export(request, group_id):
     # Save book
     book.save(filename)
     os.chmod(filename, 0777)
-    content = open(filename,'rb').read()
+    content = open(filename, 'rb').read()
     response = HttpResponse(content, mimetype='application/vnd.ms-excel')
-    name = '%s-%s.xls' % (brandgroup.title,datetime.now().strftime('%m-%d-%Y-%H-%M'))
+    name = '%s-%s.xls' % (brandgroup.title, datetime.now().strftime('%m-%d-%Y-%H-%M'))
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
 
@@ -695,18 +703,18 @@ def export(request, group_id):
 @login_required
 def import_order(request):
     CELLS = (
-       (0,'supplier','DIR'),
-       (1,'brand','BRAND'),
-       (2,'area', 'AREA'),
-       (3,'part_number','PART#'),
-       (4,'comment_customer','COMENT 1'),
-       (5,'comment_supplier','COMENT 2'),
-       (6,'quantity','Q'),
-       (7,'client','CL'),
-       (8,'description_ru','RUS'),
-       (9,'description_en','ENG'),
-       (10,'price_base','LIST'),
-       (11,'price_sale','PRICE'),
+       (0, 'supplier', 'DIR'),
+       (1, 'brand', 'BRAND'),
+       (2, 'area', 'AREA'),
+       (3, 'part_number', 'PART#'),
+       (4, 'comment_customer', 'COMENT 1'),
+       (5, 'comment_supplier', 'COMENT 2'),
+       (6, 'quantity', 'Q'),
+       (7, 'client', 'CL'),
+       (8, 'description_ru', 'RUS'),
+       (9, 'description_en', 'ENG'),
+       (10, 'price_base', 'LIST'),
+       (11, 'price_sale', 'PRICE'),
     )
 
     def get_field_name(cell_title):
@@ -716,22 +724,22 @@ def import_order(request):
 
     def swap_keys(kwargs, num):
         _data = {}
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             if k.upper() == 'DIR':
                 try:
-                    _data[get_field_name(k)+'.%d' % num] = [BrandGroup.objects.get(title__iexact=v[0]).id]
+                    _data[get_field_name(k) + '.%d' % num] = [BrandGroup.objects.get(title__iexact=v[0]).id]
                 except BrandGroup.DoesNotExist:
-                    _data[get_field_name(k)+'.%d' % num] = ''
+                    _data[get_field_name(k) + '.%d' % num] = ''
             elif k.upper() == 'BRAND' or k.upper() == 'AREA':
-                _data[get_field_name(k)+'.%d' % num] = [v[0].capitalize()]
+                _data[get_field_name(k) + '.%d' % num] = [v[0].capitalize()]
             elif k.upper() == 'CL':
                 try:
-                    _data[get_field_name(k)+'.%d' % num] = [User.objects.get(username__iexact=v[0].lower()).id]
+                    _data[get_field_name(k) + '.%d' % num] = [User.objects.get(username__iexact=v[0].lower()).id]
                 except User.DoesNotExist:
-                    _data[get_field_name(k)+'.%d' % num] = ''
+                    _data[get_field_name(k) + '.%d' % num] = ''
             else:
-                _data[get_field_name(k)+'.%d' % num] = v
-            _data['id'+'.%d' % num] = ''
+                _data[get_field_name(k) + '.%d' % num] = v
+            _data['id' + '.%d' % num] = ''
         return _data
 
     response = {}
@@ -744,9 +752,9 @@ def import_order(request):
             try:
                 xls = xlsreader.readexcel(file_contents=f.read())
                 for row in xls.iter_dict(xls.book.sheet_names()[0]):
-                    row = dict([(x,[y]) for x,y in list(row.iteritems())])
-                    data.update(swap_keys(row,i))
-                    i = i+1
+                    row = dict([(x, [y]) for x, y in list(row.iteritems())])
+                    data.update(swap_keys(row, i))
+                    i = i + 1
             except Exception, mess:
                 logger.error("%r" % mess)
                 messages.add_message(request, messages.ERROR, u"При импорте произошла критическая ошибка %s-ой(-ей) строке." % i)
@@ -791,6 +799,7 @@ LIST_HEADERS = (
     (u'Статус', 'status'),
 )
 
+
 def field_value(order_obj, field_name):
     price_fields = [
         'price_invoice', 'total', 'total_w_ship', 'price_base', 'price_sale', 'delivery',
@@ -800,6 +809,7 @@ def field_value(order_obj, field_name):
         return ''
     return getattr(order_obj, field_name) or ''
 
+
 @login_required
 def export_order(request):
     _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
@@ -807,7 +817,7 @@ def export_order(request):
     orders = OrderedItem.objects.select_related() \
                         .filter(**_filter.get_filters()) \
                         .order_by('brandgroup__direction__po', 'ponumber')
-    filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
+    filename = os.path.join(settings.MEDIA_ROOT, 'temp.xls')
 
     book = xl.Workbook()
     sheet = book.add_sheet('ORDERS')
@@ -815,7 +825,7 @@ def export_order(request):
     i = 0
     curr_line = 0
     for key, value in LIST_HEADERS:
-        sheet.write(curr_line,i,key)
+        sheet.write(curr_line, i, key)
         i += 1
     for order in orders:
         i = 0
@@ -839,12 +849,13 @@ def export_order(request):
 
     book.save(filename)
     os.chmod(filename, 0777)
-    content = open(filename,'rb').read()
+    content = open(filename, 'rb').read()
     response = HttpResponse(content, mimetype='application/vnd.ms-excel')
-    name = '%s-%s.xls' % ('orders',datetime.now().strftime('%m-%d-%Y-%H-%M'))
+    name = '%s-%s.xls' % ('orders', datetime.now().strftime('%m-%d-%Y-%H-%M'))
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
     return response
+
 
 @ajax_request
 @login_required
@@ -857,6 +868,7 @@ def get_brandgroup_settings(request, ordered_item_id):
         response = ordered_item.area.get_brandgroup_settings(ordered_item.brandgroup)
         return map(float, list(response))
     return []
+
 
 @login_required
 def ordered_item_row(request, item_id):
@@ -871,4 +883,3 @@ def ordered_item_row(request, item_id):
     context = RequestContext(request, c)
     html = render_to_string("cp/tags/table/row.html", context_instance=context)
     return HttpResponse(content=html)
-

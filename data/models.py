@@ -147,20 +147,20 @@ class Brand(models.Model):
 
 ORDER_ITEM_STATUSES = (
     ('order',u'новый заказ'),
-    ('obtained',u'получено в заказ'),
-    ('in_processing',u'в работе'),
-    ('failure',u'отказ'),
-    ('wrong_number',u'некорректный номер'),
-    ('out_of_stock',u'отсутствует на складе'),
-    ('superseded',u'замена номера'),
-    ('back_order',u'back order'),
-    ('received_supplier',u'получено поставщиком'),
-    ('in_delivery',u'в доставке'),
-    ('received_warehouse',u'получено со склада'),
-    ('sent_representative',u'отправлено представителю'),
-    ('received_office',u'получено офисом'),
-    ('issued',u'выдано'),
-    ('moderation',u'на модерации')
+    ('moderation', u'на модерации'),
+    ('in_processing', u'в работе'),
+    ('wrong_number', u'отказ: некорректный номер'),
+    ('out_of_stock', u'отказ: отсутствует на складе'),
+    ('cancelled_customer', u'отказ: снято заказчиком'),
+    ('export_part', u'отказ: экспортная запчасть'),
+    ('back_order', u'back order'),
+    ('superseded', u'замена номера'),
+    ('received_supplier', u'получено поставщиком'),
+    ('in_delivery', u'в доставке'),
+    ('sent_representative', u'отправлено представителю'),
+    ('not_obtained_from_supplier', u'не получено от поставщика'),
+    ('received_office', u'получено офисом'),
+    ('issued', u'выдано'),
 )
 
 class OrderedItem(models.Model):
@@ -202,10 +202,10 @@ class OrderedItem(models.Model):
 
     previous_status = models.CharField(max_length=50, verbose_name=u"Прежний статус", null=True, blank=True,)
     created = models.DateTimeField(auto_now_add=True, verbose_name=u"Дата создания")
-    obtained_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Дата заказа")
     received_office_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Получено офисом")
     modified = models.DateTimeField(auto_now=True, verbose_name=u"Дата изменения", editable=False)
     invoice_code = models.CharField(max_length=255, verbose_name=u'Инвойс', default='')
+    parent = models.ForeignKey('self', null=True, blank=True)
 
     objects = OrderedItemManager()
     def __unicode__(self):
@@ -540,6 +540,7 @@ class Part(models.Model):
                 'core_price': part.core_price,
                 'description': part.description,
                 'sub_chain': sub_chain,
+                'cost': part.cost,
             }
         except cls.DoesNotExist:
             return {}

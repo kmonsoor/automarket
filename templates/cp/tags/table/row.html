@@ -15,11 +15,6 @@
   {{ i.created|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
   </div>
   </td>
-  <td id="obtained_at_row_{{ i.id }}" align="center">
-  <div id="obtained_at_display_{{ i.id }}">
-  {{ i.obtained_at|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
-  </div>
-  </td>
   <td id="received_office_at_row_{{ i.id }}" align="center">
   <div id="received_office_at_display_{{ i.id }}">
   {{ i.received_office_at|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
@@ -44,19 +39,33 @@
     <td class="editable">
         <select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
         {% for opt in status_options %}
-            {% ifequal i.status 'order' %}
-                {% ifequal opt.value 'order' %}
-                <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected{% endifequal %}>
-                {{ opt.option|lower }}
-                </option>
-                {% endifequal %}
+          {% ifequal i.status 'order' %}
+              {% ifequal opt.value 'order' %}
+                <option value="order" selected>{{ opt.option|lower }}</option>
+              {% endifequal %}
+              {% ifequal opt.value 'moderation' %}
+                <option value="moderation">{{ opt.option|lower }}</option>
+              {% endifequal %}
+          {% else %}
+            {% ifequal i.status 'moderation' %}
+              {% ifequal opt.value 'order' %}
+                <option value="order">{{ opt.option|lower }}</option>
+              {% endifequal %}
+              {% ifequal opt.value 'moderation' %}
+                <option value="moderation" selected>{{ opt.option|lower }}</option>
+              {% endifequal %}
             {% else %}
-            {% ifnotequal opt.value 'order' %}
-            <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected="selected"{% endifequal %}>
-            {{ opt.option|lower }}
-            </option>
-        {% endifnotequal %}
-        {% endifequal %}
+              {% ifequal opt.value 'order' %}
+              {% else %}
+                {% ifequal opt.value 'moderation' %}
+                {% else %}
+                  <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected="selected"{% endifequal %}>
+                    {{ opt.option|lower }}
+                  </option>
+                {% endifequal %}
+              {% endifequal %}
+            {% endifequal %}
+          {% endifequal %}
         {% endfor %}
         </select>
     </td>

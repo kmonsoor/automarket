@@ -134,6 +134,10 @@ AUTH_PROFILE_MODULE = 'data.UserProfile'
 
 PRICE_UPLOAD_DIR = 'uploads/prices/' #override in production
 
+COST_DEFAULT_MARGIN = 40 # percent
+
+AUTO_UPDATE_STATUSES_START_PONUMBER = 944 # SP944
+
 try:
     from settings_local import *
 except:

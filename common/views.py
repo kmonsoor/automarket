@@ -8,7 +8,6 @@ import re
 import urllib
 import mechanize
 import urllib2
-from decimal import Decimal
 from common.forms import UserAuthForm
 from data.models import *
 from BeautifulSoup import BeautifulSoup, NavigableString

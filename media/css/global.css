@@ -110,7 +110,7 @@ ul.errorlist { margin:0 !important; padding:0 !important; width:130px;}
 td ul.errorlist { margin:0 !important; padding:0 !important; }
 td ul.errorlist li { margin:0 !important; }
 .error { background:#ffc; border: 2px solid white;}
-.failure { background:#FFD7C7; border: 2px solid white;}
+.failure, .wrong_number, .out_of_stock, .cancelled_customer, .export_part { background:#FFD7C7; border: 2px solid white;}
 .error input, .error select { border:1px solid red; }
 div.system-message { background: #ffc; margin: 10px; padding: 6px 8px; font-size: .8em; }
 div.system-message p.system-message-title { padding:4px 5px 4px 25px; margin:0; color:red; background:#ffc url(../img/admin/icon_error.gif) 5px .3em no-repeat; }
@@ -147,7 +147,9 @@ tr.failure {
     background:#FFD7C7; border: 2px solid white;
 }
 
-tr.moderation {
+tr.moderation, .admin_table tr.moderation, .admin_table tr.moderation td {
     background:#FAD6AC;
+    /*color: #666;*/
+    /*opacity: 0.7;*/
 }
 
