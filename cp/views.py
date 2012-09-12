@@ -143,6 +143,16 @@ def index(request):
         td = "U0"
         q, params = qs._as_sql(connection)
         from_clause = q.split("FROM")[1]
+
+        where = from_clause.split("WHERE")
+        if len(where) > 1:
+            from_clause = where[0]
+            where = [where[1]]
+        else:
+            where = []
+        where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
+        where = "WHERE %s" % "AND ".join(where)
+
         sql = \
         """
         SELECT
@@ -151,8 +161,8 @@ def index(request):
             SUM(%(p)s.delivery) as TOTAL_DELIVERY,
             SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)) AS TOTAL_PRICE,
             SUM(%(p)s.price_invoice*%(p)s.quantity) as TOTAL_PRICE_IN
-            FROM %(from)s AND status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')
-        """ % {'p': td, 'from': from_clause}
+            FROM %(from)s %(where)s
+        """ % {'p': td, 'from': from_clause, 'where': where}
         cursor = connection.cursor()
         cursor.execute(sql, params)
         res = cursor.fetchall()
