@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 import os
+import mechanize
 import cjson
 import pyExcelerator as xl
 from datetime import datetime
@@ -248,7 +249,32 @@ def groups(request):
             orders_by_direction[order.brandgroup.direction][order.brandgroup] = []
         orders_by_direction[order.brandgroup.direction][order.brandgroup].append(order)
 
+    basket_filled, msg = automototrade_basket_filled()
+    if basket_filled:
+        messages.add_message(request, messages.ERROR, msg)
+    else:
+        messages.add_message(request, messages.SUCCESS, msg)
+
     return {'orders_by_direction': orders_by_direction}
+
+
+def automototrade_basket_filled():
+    try:
+        br = mechanize.Browser()
+        br.open("http://automototrade.com/", timeout=5.0)
+        br.select_form(nr=0)
+        br["login"] = settings.SOAP_LOGIN
+        br["password"] = settings.SOAP_PASSWORD
+        br.submit()
+        link = list(br.links(url="./?key=personal&basket2"))[0]
+        count = int(link.text.decode('cp1251').lower().split(" ")[2].strip())
+    except:
+        return True, u'Произошла ошибка при проверке <a href="http://automototrade.com/?key=personal&basket2" target="_blank">корзины</a> на automototrade.com. Проверьте, пожалуйста, вручную.'
+    else:
+        res = False
+        if count > 0:
+            res = True
+        return res, u'В <a href="http://automototrade.com/?key=personal&basket2" target="_blank">корзине</a> на automototrade.com <b>%s</b> позиций.' % count
 
 
 class OrderedItemSaver(object):
@@ -559,33 +585,38 @@ def insert_in_basket(items, ponumber, send_order=False):
 
 
 def change_status(request):
-    if request.method == 'POST':
-        ids = request.POST.getlist('items')
-        try:
-            orders = OrderedItem.objects.filter(id__in=ids, status='order')
-        except:
-            orders = []
-
-        if orders:
-            ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
-            full_po = '%s%s' % (orders[0].brandgroup.direction.po, ponumber)
-            data = insert_in_basket(orders, full_po)
-            if data:
-                if data['ok']:
-                    if 'response' in data and data['response']:
-                        messages.add_message(request, messages.SUCCESS, data['response'])
-                    for x in orders:
-                        if not x.ponumber:
-                            x.ponumber = ponumber
-                        x.status = 'in_processing'
-                        x.status_modified = datetime.now()
-                        x.save()
-                else:
-                    if 'response' in data and data['response']:
-                        messages.add_message(request, messages.ERROR, data['response'])
-        return HttpResponseRedirect('/cp/groups/')
-    else:
+    if not request.method == 'POST':
         raise Http404
+
+    ids = request.POST.getlist('items')
+    try:
+        orders = OrderedItem.objects.filter(id__in=ids, status='order')
+    except:
+        orders = []
+
+    if not orders:
+        return HttpResponseRedirect('/cp/groups/')
+
+    ponumber = OrderedItem.objects\
+        .get_next_ponumber(orders[0].brandgroup.direction.id)
+    poprefix = orders[0].brandgroup.direction.po
+    full_po = '%s%s' % (poprefix, ponumber)
+
+    data = insert_in_basket(orders, full_po)
+    if data:
+        if data['ok']:
+            if 'response' in data and data['response']:
+                messages.add_message(request, messages.SUCCESS, data['response'])
+            for x in orders:
+                if not x.ponumber:
+                    x.ponumber = ponumber
+                x.status = 'in_processing'
+                x.status_modified = datetime.now()
+                x.save()
+        else:
+            if 'response' in data and data['response']:
+                messages.add_message(request, messages.ERROR, data['response'])
+    return HttpResponseRedirect('/cp/groups/')
 
 
 def export_selected(request):

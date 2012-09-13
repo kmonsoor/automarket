@@ -117,8 +117,8 @@ SESSION_COOKIE_AGE = 3600
 PROJECT_ROOT = os.path.abspath('.')
 # SOAP settings
 SOAP_ENABLE = True
-SOAP_LOGIN = 'SP'
-SOAP_PASSWORD = 'newmotors'
+SOAP_LOGIN = ''
+SOAP_PASSWORD = ''
 WSDL_URL = 'http://automototrade.com/wsdl/server.php?wsdl'
 
 DELIVERY_TYPE = 1 # Avia
