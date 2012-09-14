@@ -269,12 +269,12 @@ def automototrade_basket_filled():
         link = list(br.links(url="./?key=personal&basket2"))[0]
         count = int(link.text.decode('cp1251').lower().split(" ")[2].strip())
     except:
-        return True, u'Произошла ошибка при проверке <a href="http://automototrade.com/?key=personal&basket2" target="_blank">корзины</a> на automototrade.com. Проверьте, пожалуйста, вручную.'
+        return True, u'Произошла ошибка при проверке корзины. Проверьте, пожалуйста, вручную.'
     else:
         res = False
         if count > 0:
             res = True
-        return res, u'В <a href="http://automototrade.com/?key=personal&basket2" target="_blank">корзине</a> на automototrade.com <b>%s</b> позиций.' % count
+        return res, u'В корзине <b>%s</b> позиций.' % count
 
 
 class OrderedItemSaver(object):
@@ -519,12 +519,12 @@ def insert_in_basket(items, ponumber, send_order=False):
         response = ''
         err = 0
         fails = (
-                u'Произошла ошибка. Детали не были добавлены в корзину на automototrade.com. Проверьте, пожалуйста, правильность введенных данных и попробуйте еще раз.',
-                u'Произошла ошибка. Детали были добавлены в корзину на automototrade.com, но способ доставки и PO не были заданы.',
-                u'Произошла ошибка. Детали были добавлены в корзину, способ доставки и PO были заданы на automototrade.com, но детали не были отправлены в заказ.'
+                u'Произошла ошибка. Детали не были добавлены в корзину. Проверьте, пожалуйста, правильность введенных данных и попробуйте еще раз.',
+                u'Произошла ошибка. Детали были добавлены в корзину, но способ доставки и PO не были заданы.',
+                u'Произошла ошибка. Детали были добавлены в корзину, способ доставки и PO были заданы, но детали не были отправлены в заказ.'
         )
         succ = (
-                u'Детали были успешно добавлены в корзину, способ доставки(авиа) и PO были успешно заданы на automototrade.com.',
+                u'Детали были успешно добавлены в корзину, способ доставки(авиа) и PO были успешно заданы.',
         )
 
         if getattr(settings, 'SOAP_ENABLE', False):
