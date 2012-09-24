@@ -421,7 +421,7 @@ class ClientGroupAdmin(admin.ModelAdmin):
 
 class PartAdmin(admin.ModelAdmin):
     list_display = ('partnumber', 'area_link', 'MSRP', 'cost', 'description',
-                    'core_price', 'substitution_link',)
+                    'core_price',)
     search_fields = ('partnumber', 'substitution',)
     list_filter = ('area',)
 
