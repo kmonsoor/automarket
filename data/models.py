@@ -73,8 +73,6 @@ class BrandGroup(models.Model):
 class Area(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     brands = models.ManyToManyField('Brand', null=True, blank=True, verbose_name=u'Бренды')
-    pricefile = models.FileField(u"Файл с ценами", null=True, blank=True,
-                                 upload_to=settings.PRICE_UPLOAD_DIR)
 
     class Meta:
         verbose_name = u"Поставщик"
@@ -487,11 +485,13 @@ class Basket(models.Model):
     description = models.TextField(null=True, blank=True)
     msrp = models.FloatField(null=True, blank=True)
     user_price = models.FloatField(null=True, blank=True)
+    area = models.CharField(max_length=255, null=True, blank=True)
+    brandgroup = models.CharField(max_length=255, null=True, blank=True)
     brand_name = models.CharField(max_length=255, default='')
-    
+
     description_ru = models.TextField(null=True, blank=True, default=None)
     comment1 = models.TextField(null=True, blank=True, default=None)
-    
+
     quantity = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     order_item_id = models.IntegerField(null=True, blank=True, default=None)
@@ -504,22 +504,42 @@ class Basket(models.Model):
         return self.user_price + (self.core_price or 0)
 
 
+class PriceArea(models.Model):
+    area = models.ForeignKey(Area)
+    brandgroup = models.ForeignKey(BrandGroup,
+        verbose_name=BrandGroup._meta.verbose_name)
+    price = models.FileField(u"Файл с ценами",
+        upload_to=settings.PRICE_UPLOAD_DIR)
+
+    class Meta:
+        unique_together = ('area', 'brandgroup',)
+        verbose_name = u"Цена"
+        verbose_name = u"Цены"
+
+
 class Part(models.Model):
     area = models.ForeignKey(Area, verbose_name=Area._meta.verbose_name)
+    brandgroup = models.ForeignKey(BrandGroup, null=True, blank=True)
+    brand = models.ForeignKey(Brand, null=True, blank=True)
     partnumber = models.CharField(u"номер детали", max_length=255, db_index=True)
     MSRP = models.FloatField(u"цена", null=True, blank=True)
     cost = models.FloatField(u"cost", null=True, blank=True)
-    core_price = models.FloatField(u"стоимость детали для восстановления", 
+    core_price = models.FloatField(u"стоимость детали для восстановления",
                                    null=True, blank=True)
-    substitution = models.CharField(u"номер замены", max_length=255, 
+    substitution = models.CharField(u"номер замены", max_length=255,
                                     null=True, blank=True, db_index=True)
-    description = models.TextField(u"описание детали на английском языке", 
-                                   null=True, blank=True)
-
+    description = models.TextField(u"описание детали на английском языке",
+                                    null=True, blank=True)
+    party = models.IntegerField(u"Партия", null=True, blank=True)
+    available = models.IntegerField(u"Наличие", null=True, blank=True)
+    delivery_period = models.IntegerField(u"Срок доставки",
+                                        null=True, blank=True)
+    date_update = models.CharField(u"Дата обновления", max_length=255,
+                                null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('area', 'partnumber',)
+        unique_together = ('area', 'partnumber', 'brandgroup',)
         verbose_name = u"деталь"
         verbose_name_plural = u"детали"
 
@@ -534,6 +554,19 @@ class Part(models.Model):
                     return cls.get_data(area, part.substitution, sub_chain)
                 except cls.DoesNotExist:
                     pass
+
+            area_title = None
+            if part.area:
+                area_title = part.area.title
+
+            brandgroup_title = "OEM"
+            if part.brandgroup:
+                brandgroup_title = part.brandgroup.title
+
+            brand_title = None
+            if part.brand:
+                brand_title = part.brand.title
+
             return {
                 'partnumber': part.partnumber,
                 'MSRP': part.MSRP,
@@ -541,6 +574,9 @@ class Part(models.Model):
                 'description': part.description,
                 'sub_chain': sub_chain,
                 'cost': part.cost,
+                'brandname': area_title,
+                'brandgroup': brandgroup_title,
+                'brand': brand_title,
             }
         except cls.DoesNotExist:
             return {}

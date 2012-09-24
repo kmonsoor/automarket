@@ -27,13 +27,15 @@ from django.db import connection
 
 re_RUS = re.compile(u'^([-_+.,:;!?><*&%$#@а-яА-Я0-9\u0451\u0401]|\s)+$')
 
+
 def normalize_sum(value):
     value = str(value)
-    value = value.replace(',','.')
+    value = value.replace(',', '.')
     parts = value.split(".")
     m, d = parts[0:-1], parts[-1]
     value = "".join(m) + "." + d
     return value
+
 
 @login_required
 @render_to('client/search.html')
@@ -46,8 +48,8 @@ def search(request):
     maker_choices = search_class.maker_choices()
 
     if request.method == 'POST':
-	_post = request.POST.copy()
-	_post['part_number'] = re.sub('[^\w]', '', _post['part_number']).strip()
+        _post = request.POST.copy()
+        _post['part_number'] = re.sub('[^\w]', '', _post['part_number']).strip()
         form = SearchForm(_post, maker_choices=maker_choices)
         if form.is_valid():
             maker = form.cleaned_data['maker']
@@ -56,15 +58,15 @@ def search(request):
             if not found or not found.get("partnumber"):
                 found = None
                 msg = u"Ничего не найдено"
-    	    elif found and not found.get("MSRP"):
-        		found = None
-        		msg = u"Деталь не поставляется"
+            elif found and not found.get("MSRP"):
+                found = None
+                msg = u"Деталь не поставляется"
             else:
                 # try to find area and get multiplier
                 try:
                     # find an area by title
                     area = Area.objects.get(title__iexact=found['brandname'])
-                    brand_group = BrandGroup.objects.get(title="OEM")
+                    brand_group = BrandGroup.objects.get(title=found['brandgroup'])
                     # we need to find a valid multiplier for this area
                     # TODO - hardcoded 'OEM', we need do more sofisticated algo
                 except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
@@ -74,8 +76,8 @@ def search(request):
                     m, d = area.get_brandgroup_settings(brand_group)
                 # TODO - add brand_group to get_discount
                 try:
-                    discount = request.user.get_profile() \
-                                      .get_discount(brand_group=brand_group, area=area)
+                    discount = request.user.get_profile()\
+                        .get_discount(brand_group=brand_group, area=area)
                 except Exception:
                     discount = AREA_DISCOUNT_DEFAULT
                 discount = float(discount)
@@ -105,25 +107,34 @@ def search(request):
                 found['your_economy'] = "%.2f" % found['your_economy']
                 maker_name = form.cleaned_data['maker']
 
-		#local search
-		if 'sub_chain' in found and len(found['sub_chain']) > 1:
-		    last = found['sub_chain'].pop(-1)
-		    found['sub_chain'] = mark_safe(u"Номер заменён: " + \
-		        " -> ".join(found['sub_chain']) + \
-		        " -> <b>%s</b>" % last)
-		else:
-		    if 'sub_chain' in found:
-			 del found['sub_chain']
+        #local search
+        if found:
+            if 'sub_chain' in found and len(found['sub_chain']) > 1:
+                last = found['sub_chain'].pop(-1)
+                found['sub_chain'] = mark_safe(u"Номер заменён: " + \
+                    " -> ".join(found['sub_chain']) + \
+                    " -> <b>%s</b>" % last)
+            else:
+                if 'sub_chain' in found:
+                    del found['sub_chain']
     else:
         form = SearchForm(maker_choices=maker_choices)
         maker = None
-    context = {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg,}
+
+    context = {
+        'form': form,
+        'found': found,
+        'maker_name': maker_name,
+        'msg': msg,
+    }
+
     context['basket_items'] = Basket.objects\
         .filter(user=request.user, order_item_id__isnull=True)
-    context['basket_price_sum'] = reduce(lambda x,y: x+y, 
-                                         [x.get_price_total() 
-                                          for x in context['basket_items']], 0)
+
+    context['basket_price_sum'] = reduce(lambda x, y: x + y,
+        [x.get_price_total() for x in context['basket_items']], 0)
     return context
+
 
 class ClientOrderItemDisplay(object):
     def __init__(self, obj, field, format):
@@ -376,10 +387,11 @@ def export_order(request):
     os.remove(filename)
     return response
 
+
 @login_required
 def basket_add(request):
     user = request.user
-    form = BasketForm(request.POST or None, user=request.user)
+    form = BasketForm(request.POST or None, user=user)
 
     if not form.is_valid():
         messages.add_message(request, messages.ERROR, u"Ошибка корзины")
@@ -388,26 +400,29 @@ def basket_add(request):
         form.save()
         return HttpResponseRedirect("/client/search/")
 
+
 @login_required
 def basket_delete(request, item_id):
     b = get_object_or_404(Basket, user=request.user, pk=item_id)
     b.delete()
     return HttpResponseRedirect('/client/search/')
 
+
 @login_required
 def basket_clear(request):
     Basket.objects.filter(user=request.user, order_item_id__isnull=True).delete()
     return HttpResponseRedirect("/client/search/")
 
-   
+
 def description_ru_validate(value=None):
     if value and re_RUS.match(value):
         return True
     return False
 
+
 @login_required
 def basket_update(request, redirect=True):
-    bitems = [(x,y) for x,y in request.POST.copy().items() if x.startswith("quantity_")]
+    bitems = [(x, y) for x, y in request.POST.copy().items() if x.startswith("quantity_")]
     errors = {'quantity': False, 'description_ru': False, 'comment1': False}
     # quantity
     for index, q in bitems:
@@ -416,29 +431,29 @@ def basket_update(request, redirect=True):
             assert q >= 0
             item_id = int(index.split("_")[1])
             b = Basket.objects.get(user=request.user, pk=item_id)
-        except (AssertionError, TypeError, ValueError, IndexEoNrror, Basket.DoesNotExist):
+        except (AssertionError, TypeError, ValueError, IndexError, Basket.DoesNotExist):
             errors['quantity'] = True
         else:
             b.quantity = q
             b.save()
-    
+
     # find description RUS
-    descriptions = [(x,y) for x,y in request.POST.copy().items() if x.startswith("descriptionru_")]
+    descriptions = [(x, y) for x, y in request.POST.copy().items() if x.startswith("descriptionru_")]
     for index, value in descriptions:
         try:
             item_id = int(index.split("_")[1])
             assert description_ru_validate(value) == True
-            
+
             b = Basket.objects.get(user=request.user, pk=item_id)
             b.description_ru = value
             b.save()
         except (AssertionError, TypeError, ValueError, Basket.DoesNotExist):
             errors['description_ru'] = True
-    
-    # find comments
-    comments = [(x,y) for x,y in request.POST.copy().items() if x.startswith("comment1_")]
 
-    for index, value in [(x,y) for x,y in comments if y]:
+    # find comments
+    comments = [(x, y) for x, y in request.POST.copy().items() if x.startswith("comment1_")]
+
+    for index, value in [(x, y) for x, y in comments if y]:
         item_id = index.split("_")[1]
         try:
             b = Basket.objects.get(user=request.user, pk=item_id)
@@ -446,12 +461,12 @@ def basket_update(request, redirect=True):
             b.save()
         except Basket.DoesNotExist:
             pass
-    
+
     if errors['quantity']:
         messages.add_message(request, messages.ERROR, u"Количество должно быть больше 0. Проверьте позиции")
     if errors['description_ru']:
         messages.add_message(request, messages.ERROR, u"Поле `Описание RUS` должно быть заполнено русскими буквами для каждой позиции. Пожалуйста, проверьте!")
-    
+
     if redirect:
         return HttpResponseRedirect("/client/search/")
     else:
@@ -460,43 +475,45 @@ def basket_update(request, redirect=True):
 
 @login_required
 def basket_order(request):
-    # recalculate by quantity field    
+    # recalculate by quantity field
     ok = basket_update(request, redirect=False)
     if not ok:
         return HttpResponseRedirect('/client/search/')
-    
+
     bi = Basket.objects.filter(user=request.user, order_item_id__isnull=True)
     if not bi:
         messages.add_message(request, messages.ERROR, u"Ваша корзина пуста")
         return HttpResponseRedirect('/client/search/')
     # common objects
     adminuser = User.objects.get(pk=1)
-    brandgroup = BrandGroup.objects.get(title="OEM")
-    
+    brandgroup_default = BrandGroup.objects.get(title="OEM")
+
     def get_orderitem_data(item):
-
-        sql = """
-        select a.area_id, a.brand_id from data_area_brands a
-        left join data_brand b on (b.id=a.brand_id)
-        left join data_area c on (c.id=a.area_id)
-        where c.id in (select area_id from data_brandgroup_area where brandgroup_id=%s)
-        and b.title=%s;
-        """
-        cursor = connection.cursor()
-        cursor.execute(sql, [brandgroup.id, item.brand_name])
-
-        rows = cursor.fetchall()
-        cursor.close()
-
-        if not rows:
-            return (None, item)
-        row = dict(zip(('area_id', 'brand_id'), rows[0]))
-        # data
         data = {}
-        data['brandgroup'] = brandgroup
 
-        data['area'] = Area.objects.get(pk=row['area_id'])
-        data['brand'] = Brand.objects.get(pk=row['brand_id'])
+        if all([item.brandgroup, item.area, item.brand_name]):
+            data['brandgroup'] = BrandGroup.objects.get(title=item.brandgroup)
+            data['area'] = Area.objects.get(title=item.area)
+            data['brand'] = Brand.objects.get(title=item.brand_name)
+        else:  # remove it
+            sql = """
+            select a.area_id, a.brand_id from data_area_brands a
+            left join data_brand b on (b.id=a.brand_id)
+            left join data_area c on (c.id=a.area_id)
+            where c.id in (select area_id from data_brandgroup_area where brandgroup_id=%s)
+            and b.title=%s;
+            """
+            cursor = connection.cursor()
+            cursor.execute(sql, [brandgroup_default.id, item.brand_name])
+            rows = cursor.fetchall()
+            cursor.close()
+
+            if not rows:
+                return (None, item)
+            row = dict(zip(('area_id', 'brand_id'), rows[0]))
+            data['brandgroup'] = brandgroup_default
+            data['area'] = Area.objects.get(pk=row['area_id'])
+            data['brand'] = Brand.objects.get(pk=row['brand_id'])
 
         data['description_en'] = item.description
         data['description_ru'] = item.description_ru or u""
@@ -504,14 +521,9 @@ def basket_order(request):
         data['client'] = request.user
         data['quantity'] = item.quantity
         data['part_number'] = item.part_number
-
         data['manager'] = adminuser
-
         data['price_base'] = item.msrp
         data['price_sale'] = item.get_price()
-        
-
-
         return (data, item)
 
     to_save = [x for x in map(get_orderitem_data, list(bi)) if x[0]]
@@ -524,4 +536,3 @@ def basket_order(request):
 
     messages.add_message(request, messages.SUCCESS, u"Заказ оформлен")
     return HttpResponseRedirect("/client/")
-

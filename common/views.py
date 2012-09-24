@@ -1,27 +1,31 @@
 # -*- coding=UTF-8 -*-
+import logging
+log = logging.getLogger("common.views")
+
 import datetime
-from lib.decorators import render_to
-from django.http import HttpResponseRedirect
-from django.contrib.auth import login, logout, authenticate
-from django.conf import settings
+import SOAPpy
 import re
 import urllib
 import mechanize
 import urllib2
+from SOAPpy import WSDL
+
+from django.http import HttpResponseRedirect
+from django.contrib.auth import login, logout, authenticate
+from django.conf import settings
+
+from lib.decorators import render_to
 from common.forms import UserAuthForm
 from data.models import *
 from BeautifulSoup import BeautifulSoup, NavigableString
-from SOAPpy import WSDL
 
-import logging
-log = logging.getLogger("common.views")
 
 @render_to('common/start.html')
 def start(request):
     message = ''
-    if request.method == 'POST' :
+    if request.method == 'POST':
         form = UserAuthForm(request.POST.copy())
-        if form.is_valid() :
+        if form.is_valid():
             user = authenticate(username=form.cleaned_data['username'], password=form.cleaned_data['password'])
             if user is not None:
                 if user.is_active:
@@ -29,19 +33,20 @@ def start(request):
                     # Staff goes to /cp/
                     if user.is_staff:
                         return HttpResponseRedirect('/cp/')
-                    else :
+                    else:
                         return HttpResponseRedirect('/client/search/')
                 else:
                     message = 'Ваша учетная запись временно отключена'
         else:
             message = 'Проверьте правильность ввода логина/пароля'
-    form =  UserAuthForm()
-    return {'form':form, 'message':message}
+    form = UserAuthForm()
+    return {'form': form, 'message': message}
 
 
 def exit(request):
     logout(request)
     return HttpResponseRedirect('/accounts/login/')
+
 
 def show_balance(request, user=None):
     from common.forms import Selectperiod
@@ -58,17 +63,16 @@ def show_balance(request, user=None):
         start = form.fields['from_date'].initial
         finish = form.fields['to_date'].initial
     finish += datetime.timedelta(hours=24)
-    pitems = Invoice.objects.get_for_period(user,start,finish)
-    bills = Bill.objects.get_for_period(user,start, finish)
+    pitems = Invoice.objects.get_for_period(user, start, finish)
+    bills = Bill.objects.get_for_period(user, start, finish)
 
     from lib.lists import sort_by_attr
-    debet = sort_by_attr(pitems+bills, 'date')
+    debet = sort_by_attr(pitems + bills, 'date')
 
-    credit = Payment.objects.get_for_period(user,start,finish)
-
+    credit = Payment.objects.get_for_period(user, start, finish)
 
     #period_custom_bills
-    return {'select_period_form':form,'user':user, 'debet':debet, 'credit':credit}
+    return {'select_period_form': form, 'user': user, 'debet': debet, 'credit': credit}
 
 
 class PartSearchBase(object):
@@ -96,12 +100,10 @@ class PartSearchBase(object):
         except IndexError:
             return None
 
-
-
     def _sanitize_content(self, content=None):
         if not content:
             return ''
-        content = content.replace('\r','').replace('\n','')
+        content = content.replace('\r', '').replace('\n', '')
         content = re.sub(r'>[ \t]*', r'>', content)
         content = re.sub(r'[ \t]*<', r'<', content)
         return content
@@ -112,7 +114,6 @@ class PartSearchBase(object):
     def parse_response(self):
         raise NotImplementedError
 
-
     def search(self, maker_id, partnumber):
         if maker_id not in [x[0] for x in self.get_make_options()]:
             raise Exception('Invalid maker')
@@ -121,7 +122,11 @@ class PartSearchBase(object):
         data = self.parse_response(response)
         if not data:
             return None
-        data.update({'brandname':self.get_maker_name(maker_id)})
+
+        data.update({
+            'brandname': self.get_maker_name(maker_id),
+            'brandgroup': "OEM",
+        })
         return data
 
 
@@ -135,47 +140,49 @@ class PartSearchPartsCom(PartSearchBase):
         Returns makers in form [(id, name), ]
         """
         # TODO - grab from site and store in memcache
-        return [("1","Acura"),
-                ("2","Audi"),
-                ("3","BMW"),
-                ("4","Buick"),
-                ("5","Cadillac"),
-                ("6","Chevrolet"),
-                ("6","Geo"), # = Chevrolet
-                ("7","Chrysler"),
-                ("8","Dodge"),
-                ("9","Eagle"),
-                ("10","Ford"),
-                ("11","GMC"),
-                ("12","Honda"),
-                ("1000","Hummer"),
-                ("13","Hyundai"),
-                ("14","Infiniti"),
-                ("15","Isuzu"),
-                ("16","Jaguar"),
-                ("17","Jeep"),
-                ("18","Kia"),
-                ("19","Land Rover"),
-                ("20","Lexus"),
-                ("21","Lincoln"),
-                ("22","Mazda"),
-                ("67","Mercedes-Benz"),
-                ("23","Mercury"),
-                ("1001","MINI"),
-                ("24","Mitsubishi"),
-                ("25","Nissan"),
-                ("26","Oldsmobile"),
-                ("27","Plymouth"),
-                ("28","Pontiac"),
-                ("29","Porsche"),
-                ("30","Saab"),
-                ("31","Saturn"),
-                ("37","Scion"),
-                ("32","Subaru"),
-                ("33","Suzuki"),
-                ("34","Toyota"),
-                ("35","Volkswagen"),
-                ("36","Volvo"),]
+        return [
+            ("1", "Acura"),
+            ("2", "Audi"),
+            ("3", "BMW"),
+            ("4", "Buick"),
+            ("5", "Cadillac"),
+            ("6", "Chevrolet"),
+            ("6", "Geo"),  # = Chevrolet
+            ("7", "Chrysler"),
+            ("8", "Dodge"),
+            ("9", "Eagle"),
+            ("10", "Ford"),
+            ("11", "GMC"),
+            ("12", "Honda"),
+            ("1000", "Hummer"),
+            ("13", "Hyundai"),
+            ("14", "Infiniti"),
+            ("15", "Isuzu"),
+            ("16", "Jaguar"),
+            ("17", "Jeep"),
+            ("18", "Kia"),
+            ("19", "Land Rover"),
+            ("20", "Lexus"),
+            ("21", "Lincoln"),
+            ("22", "Mazda"),
+            ("67", "Mercedes-Benz"),
+            ("23", "Mercury"),
+            ("1001", "MINI"),
+            ("24", "Mitsubishi"),
+            ("25", "Nissan"),
+            ("26", "Oldsmobile"),
+            ("27", "Plymouth"),
+            ("28", "Pontiac"),
+            ("29", "Porsche"),
+            ("30", "Saab"),
+            ("31", "Saturn"),
+            ("37", "Scion"),
+            ("32", "Subaru"),
+            ("33", "Suzuki"),
+            ("34", "Toyota"),
+            ("35", "Volkswagen"),
+            ("36", "Volvo"),
+        ]
 
     def get_response_urllib(self, maker_id, partnumber):
         """
@@ -184,7 +191,6 @@ class PartSearchPartsCom(PartSearchBase):
         @maker string Car maker name, i.e. `mazda` etc.
         @partnumber string Part number of a detail
         """
-
         params = urllib.urlencode({'Makeid': maker_id, \
                                    'partnumber': partnumber, \
                                    'searchAll': '1', \
@@ -222,7 +228,7 @@ class PartSearchPartsCom(PartSearchBase):
         if len(parts):
             try:
                 p = parts[0].split("</table>")[0]
-            except Exception, mess:
+            except Exception:
                 pass
         if p:
             p = "<table>%s</table>" % p
@@ -231,18 +237,18 @@ class PartSearchPartsCom(PartSearchBase):
             try:
                 # data, description
                 trs = t.findParent().findParent().findAllNext('tr')[1:3]
-            except Exception, mess:
+            except Exception:
                 trs = None
             if trs:
                 _data = []
                 for td in trs[0].findAll('td'):
-
                     _data.append(td.renderContents())
-                fields = ['partnumber','MSRP','core_price', 'price']
+
+                fields = ['partnumber', 'MSRP', 'core_price', 'price']
                 data = dict(zip(fields, _data))
-                td_descr = trs[1].find('td', {'colspan':3})
+                td_descr = trs[1].find('td', {'colspan': 3})
                 description = " ".join([t for t in td_descr.contents \
-                          if type(t) is NavigableString])
+                    if type(t) is NavigableString])
                 data['description'] = description
                 for k, v in data.items():
                     if v.startswith('$'):
@@ -268,9 +274,9 @@ class PartSearchAutopartspeople(PartSearchBase):
          ('116', 'Chevrolet'),
          ('117', 'Chrysler'),
          ('120', 'Dodge'),
-         ('117', "Eagle"), # = Chrysler
+         ('117', "Eagle"),  # = Chrysler
          ('123', 'Ford'),
-         ('116', 'Geo'), # = Chevrolet
+         ('116', 'Geo'),  # = Chevrolet
          ('125', 'GMC'),
          ('126', 'Honda'),
          ('160', 'Hummer'),
@@ -285,7 +291,7 @@ class PartSearchAutopartspeople(PartSearchBase):
          ('142', 'Nissan'),
          ('143', 'Oldsmobile'),
          ('146', 'Pontiac'),
-         ('117', "Plymouth"), # = Chrysler
+         ('117', "Plymouth"),  # = Chrysler
          ('149', 'Saab'),
          ('150', 'Saturn'),
          ('151', 'Scion'),
@@ -319,21 +325,23 @@ class PartSearchAutopartspeople(PartSearchBase):
         if "No Items Found Please Try Again or Search by Categories." in response:
             return None
         bs = BeautifulSoup(response)
+
         def find_price_by_label(label):
             s1 = bs.find("span", {'class': "vb10b"}, text=re.compile(label))
             if s1:
                 s2 = str(s1.findNext('span', text=re.compile("\$?")))
                 try:
                     return float(s2.lstrip("$"))
-                except (ValueError, AttributeError), e:
+                except (ValueError, AttributeError):
                     return None
+
         def find_description():
-            d,p = "",""
+            d, p = "", ""
             s1 = bs.find("span", {'class': "vb10b"}, text=re.compile("Part#"))
             if s1:
                 dr = re.compile(r'^(.*)\[(?:New\s)?Part\#\s?([\w\d]+)\]$')
                 try:
-                    d,p = [str(x) for x in dr.findall(s1)[0]]
+                    d, p = [str(x) for x in dr.findall(s1)[0]]
                 except (AttributeError, IndexError, ValueError):
                     pass
             return d, p
@@ -344,8 +352,6 @@ class PartSearchAutopartspeople(PartSearchBase):
             'description': description,
             'partnumber': partnumber
         }
-
-        # Find core price
 
 
 class PartSearchTradeMotionCom(PartSearchBase):
@@ -359,7 +365,7 @@ class PartSearchTradeMotionCom(PartSearchBase):
         Returns makers in form [(id, name), ]
         """
         # TODO - grab from site and store in memcache
-        return [("Lexus","Lexus"),]
+        return [("Lexus", "Lexus")]
 
     def get_response_urllib(self, maker_id, partnumber):
         """
@@ -368,7 +374,6 @@ class PartSearchTradeMotionCom(PartSearchBase):
         @maker string Car maker name, i.e. `mazda` etc.
         @partnumber string Part number of a detail
         """
-
         params = urllib.urlencode({'make': maker_id, \
                                    'searchText': partnumber, \
                                    'siteid': self.SITE_ID, \
@@ -407,11 +412,12 @@ class PartSearchTradeMotionCom(PartSearchBase):
             try:
                 p = parts[0].split("</table>")[0]
                 p = p.split('<form name="basepart"')[0]
-            except Exception, mess:
+            except Exception:
                 pass
         if p:
             p = "<table>%s</table>" % p
             bs = BeautifulSoup(p)
+
             def get_price_by_label(label):
                 s1 = bs.find("tr", text=re.compile(label))
                 if s1:
@@ -419,13 +425,15 @@ class PartSearchTradeMotionCom(PartSearchBase):
                         .find('b').renderContents()
                     try:
                         return float(s2.lstrip("$"))
-                    except (ValueError, AttributeError), e:
+                    except (ValueError, AttributeError):
                         return None
+
             def get_content_by_label(label):
                 s1 = bs.find("tr", text=re.compile(label))
                 if s1:
                     s2 = s1.findParent().findNext('td').renderContents()
                     return s2
+
             return {
                 'MSRP': get_price_by_label("Online Price"),
                 'core_price': get_price_by_label("Core"),
@@ -443,7 +451,7 @@ class PartSearchInfinitiPartsOnlineCom(PartSearchTradeMotionCom):
     SITE_ID = 214952
 
     def get_make_options(self):
-        return [("Infiniti","Infiniti"),]
+        return [("Infiniti", "Infiniti")]
 
 
 class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
@@ -453,7 +461,7 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
     SITE_ID = 215405
 
     def get_make_options(self):
-        return [("Porsche","Porsche"),]
+        return [("Porsche", "Porsche")]
 
     def parse_response(self, response):
         """
@@ -470,11 +478,12 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
             try:
                 p = parts[0].split("</table>")[0]
                 p = p.split('<form name="basepart"')[0]
-            except Exception, mess:
+            except Exception:
                 pass
         if p:
             p = "<table>%s</table>" % p
             bs = BeautifulSoup(p)
+
             def get_price_by_label(label):
                 s1 = bs.find("tr", text=re.compile(label))
                 if s1:
@@ -482,13 +491,15 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
                         .find('b').renderContents()
                     try:
                         return float(s2.lstrip("$"))
-                    except (ValueError, AttributeError), e:
+                    except (ValueError, AttributeError):
                         return None
+
             def get_content_by_label(label):
                 s1 = bs.find("tr", text=re.compile(label))
                 if s1:
                     s2 = s1.findParent().findNext('td').renderContents()
                     return s2
+
             return {
                 'MSRP': get_price_by_label("MSRP"),
                 'core_price': get_price_by_label("Core"),
@@ -561,10 +572,8 @@ class PartSearchLocal(PartSearchBase):
         for area in areas:
             data = Part.get_data(area, partnumber, [])
             if data:
-                data.update({'brandname': area.title})
                 return data
         return None
-        
 
 
 class PartSearch(object):
@@ -575,7 +584,7 @@ class PartSearch(object):
         PartSearchTradeMotionCom,
         PartSearchInfinitiPartsOnlineCom,
         PartSearchPorscheOEMPartsCom,
-    ]# PartSearchPartsCom - temporary disabled
+    ]  # PartSearchPartsCom - temporary disabled
 
     makers = [
         "Acura",
@@ -622,8 +631,7 @@ class PartSearch(object):
         ]
 
     def maker_choices(self):
-        return [('', '----')] + [(x,x) for x in self.makers]
-
+        return [('', '----')] + [(x, x) for x in self.makers]
 
     def search(self, maker_name, part_number):
 
@@ -654,23 +662,19 @@ class PartSearch(object):
                     return data
             return _make_search()
 
-
         found = _make_search()
         return found
 
 
-
-import SOAPpy
 class SoapClient(object):
     login = settings.SOAP_LOGIN
     pwd = settings.SOAP_PASSWORD
     wsdl = settings.WSDL_URL
-    user_param = {'login':login,'passwd':pwd}
-
+    user_param = {'login': login, 'passwd': pwd}
 
     def __init__(self, *args, **kwargs):
         if 'login' in kwargs and kwargs['login']\
-           and 'pwd' in  kwargs and kwargs['pwd']:
+           and 'pwd' in kwargs and kwargs['pwd']:
             self.login = kwargs['login']
             self.pwd = kwargs['pwd']
 
@@ -681,7 +685,6 @@ class SoapClient(object):
     # test function
     def get_invoice_list(self):
         print self.server.getInvoiceList(self.user_param)
-
 
     def insert_in_basket(self, orders):
         data = []
@@ -705,12 +708,11 @@ class SoapClient(object):
             data.append(detail)
 
         try:
-            code,res = 0, self.server.insertBasket(PartsArray = data, UserParam = self.user_param)
+            code, res = 0, self.server.insertBasket(PartsArray=data, UserParam=self.user_param)
         except:
             code, res = 500, None
 
         return [code, res]
-
 
     def get_client_id(self):
         try:
@@ -720,12 +722,10 @@ class SoapClient(object):
 
         return [code, res]
 
-
     def send_order(self):
         try:
-            code, res =  0, self.server.sendOrder(self.user_param)
+            code, res = 0, self.server.sendOrder(self.user_param)
         except:
             code, res = 500, None
 
         return [code, res]
-

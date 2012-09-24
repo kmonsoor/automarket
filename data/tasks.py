@@ -8,66 +8,38 @@ from django.conf import settings
 
 from celery.task import Task
 from celery.registry import tasks
-from data.models import Part, Area
+
+from lib import xlsreader
+from data.models import Part, Brand
 
 
-class SavePriceFileTask(Task):
+class SavePriceFileBase(Task):
     accept_magic_kwargs = False
 
     @transaction.commit_manually
-    def run(self, area):
-        Part.objects.filter(area=area).delete()
-        errors = []
-        try:
-            f = area.pricefile
-            if not f:
-                transaction.commit()
-                return 'ok!'
-            sep = '\t'
-            mapping = (
-                ('Part#', 'partnumber', unicode),
-                ('ListPrice', 'MSRP', float),
-                ('Cost', 'cost', float),
-                ('Description', 'description', unicode),
-                ('Core', 'core_price', float),
-                ('Substitution', 'substitution', unicode),
-            )
-            fields_map = dict([x[0:2] for x in mapping])
-            fields_types_map = dict([x[1:3] for x in mapping])
-            fields = [fields_map[x.strip()] for x in f.readline().split(sep)]
+    def run(self, price):
+        self.presave_parts(price)
 
-            success_counter = 0
-            for line in f.xreadlines():
-                data = {}
-                for field, value in zip(fields, [x.strip() \
-                                                 for x in line.split(sep)]):
-                    try:
-                        value = fields_types_map[field](value) or None
-                        data[field] = value
-                    except:
-                        continue
-                data.update({'area': area})
-                try:
-                    Part(**data).save()
-                except:
-                    continue
-                else:
-                    success_counter += 1
+        f = price.price
+        if not f:
+            transaction.commit()
+            return 'ok!'
+
+        try:
+            success = self.save_parts(price)
         except Exception, e:
             transaction.rollback()
-            area.pricefile = None
-            area.save()
             logger.exception("%r" % e)
-            send_mail(u"Загрузка деталей для `%s` прошла с ошибкой." % area.title, 
-                      u"Детали загружены не были.", 
-                      settings.EMAIL_FROM, settings.MANAGERS_EMAILS, 
+            send_mail(u"Загрузка деталей для `%s` прошла с ошибкой." % price.area.title,
+                      u"Детали загружены не были.",
+                      settings.EMAIL_FROM, settings.MANAGERS_EMAILS,
                       fail_silently=True)
             response = 'error!'
         else:
             transaction.commit()
-            send_mail(u"Загрузка деталей для `%s` прошла успешно." % area.title, 
-                      u"Всего загружено %s деталей." % success_counter, 
-                      settings.EMAIL_FROM, settings.MANAGERS_EMAILS, 
+            send_mail(u"Загрузка деталей для `%s` прошла успешно." % price.area.title,
+                      u"Всего загружено %s деталей." % success,
+                      settings.EMAIL_FROM, settings.MANAGERS_EMAILS,
                       fail_silently=True)
             response = 'ok!'
         finally:
@@ -75,5 +47,86 @@ class SavePriceFileTask(Task):
 
         return response
 
+    def presave_parts(self, price):
+        Part.objects\
+            .filter(area=price.area, brandgroup=price.brandgroup)\
+            .delete()
 
-tasks.register(SavePriceFileTask)
+    def get_parts(self, price):
+        raise NotImplementedError
+
+    def save_parts(self, price):
+        success = 0
+        for cleaned_data in self.get_parts(price):
+            Part(**cleaned_data).save()
+            success += 1
+        return success
+
+
+class SavePriceFileXlsTask(SavePriceFileBase):
+
+    def get_parts(self, price):
+        mapping = (
+           (u'БРЭНД', 'brand', lambda x: Brand.objects.get(title__iexact=x)),
+           (u'АРТИКУЛ', 'partnumber', unicode),
+           (u'НАИМЕНОВАНИЕ', 'description', unicode),
+           (u'LIST', 'MSRP', float),
+           (u'ВХОД', 'cost', float),
+           (u'ПАРТИЯ', 'party', int),
+           (u'НАЛИЧИЕ', 'available', int),
+           (u'СРОК ДОСТАВКИ', 'delivery_period', int),
+           (u'ДАТА ОБНОВЛЕНИЯ', 'date_update', unicode),
+        )
+
+        def clean_fieldname(cell_title):
+            return dict([(x[0], x[1]) for x in mapping])[cell_title.upper()]
+
+        def clean_fieldvalue(cell_title, cell_value):
+            cell_type = dict([(x[0], x[2]) for x in mapping])[cell_title.upper()]
+            return cell_type(cell_value)
+
+        xls = xlsreader.readexcel(file_contents=price.price.read())
+        for sheet in xls.book.sheet_names():
+            for row in xls.iter_dict(sheet):
+                cleaned_data = {
+                    'area': price.area,
+                    'brandgroup': price.brandgroup,
+                }
+                for cell_title, cell_value in row.iteritems():
+                    cleaned_fieldname = clean_fieldname(cell_title)
+                    cleaned_fieldvalue = clean_fieldvalue(cell_title, cell_value)
+                    cleaned_data[cleaned_fieldname] = cleaned_fieldvalue
+                yield cleaned_data
+
+
+class SavePriceFileCsvTask(SavePriceFileBase):
+
+    def get_parts(self, price):
+        sep = '\t'
+        mapping = (
+            ('Part#', 'partnumber', unicode),
+            ('ListPrice', 'MSRP', float),
+            ('Cost', 'cost', float),
+            ('Description', 'description', unicode),
+            ('Core', 'core_price', float),
+            ('Substitution', 'substitution', unicode),
+        )
+        fields_map = dict([x[0:2] for x in mapping])
+        fields_types_map = dict([x[1:3] for x in mapping])
+        fields = [fields_map[x.strip()] for x in price.price.readline().split(sep)]
+
+        for line in price.price.xreadlines():
+            cleaned_data = {
+                'area': price.area,
+                'brandgroup': price.brandgroup
+            }
+            for field, value in zip(fields, [x.strip() for x in line.split(sep)]):
+                try:
+                    value = fields_types_map[field](value) or None
+                    cleaned_data[field] = value
+                except:
+                    continue
+            yield cleaned_data
+
+tasks.register(SavePriceFileCsvTask)
+tasks.register(SavePriceFileXlsTask)

@@ -21,6 +21,8 @@ class SearchForm(forms.Form):
 
 
 class BasketForm(forms.Form):
+    brandgroup = forms.CharField(required=False)
+    area = forms.CharField(required=False)
     part_number = forms.CharField(required=False)
     description = forms.CharField(required=False)
     msrp = forms.FloatField(required=False)

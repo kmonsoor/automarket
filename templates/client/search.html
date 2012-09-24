@@ -57,6 +57,8 @@ function onsubmit_basket_form() {
             </tr>
             <tr>
               {% if found.MSRP %}
+                <input type="hidden" name="area" value="{{ found.brandname }}" />
+                <input type="hidden" name="brandgroup" value="{{ found.brandgroup }}" />
                 <input type="hidden" name="brand_name" value="{{ maker_name }}" />
                 <td>{{ found.partnumber }}</td>
                 <input type="hidden" name="part_number" value="{{ found.partnumber }}" />

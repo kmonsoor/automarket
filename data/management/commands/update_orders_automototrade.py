@@ -221,4 +221,4 @@ class Command(BaseCommand):
             except IndexError:
                 continue
             else:
-                return invoice
+                return "#%s" % invoice
