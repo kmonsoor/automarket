@@ -175,20 +175,20 @@ def index(request):
     if order_by:
         qs = qs.order_by(order_by)
 
-    # grouping parents orders
-    has_parent_orders = list(qs.filter(parent__isnull=False).order_by('id'))
-    orders = list(qs.exclude(parent__isnull=False))
-    while True:
-        try:
-            order = has_parent_orders.pop()
-        except IndexError:
-            break
-        else:
-            if order.parent in orders:
-                index = orders.index(order.parent)
-                orders.insert(index, order)
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
 
-    paginator = SimplePaginator(request, orders, items_per_page, 'page')
+    # grouping parents orders
+    items_list = list(paginator.get_page_items())
+    items_ids = list(paginator.get_page_items().values_list('id', flat=True))
+    for order in items_list:
+        if order.parent:
+            del items_list[items_list.index(order)]
+    has_parent_list = list(OrderedItem.objects.filter(parent__id__in=items_ids))
+    for order in has_parent_list:
+        index = items_list.index(order.parent)
+        items_list.insert(index, order)
+    paginator.page.object_list = items_list
+
     #paginator.set_page(current_page)
     context['status_options_str'], context['status_options'] = get_status_options()
     context['items'] = paginator.get_page_items()
