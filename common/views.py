@@ -127,7 +127,7 @@ class PartSearchBase(object):
             'brandname': self.get_maker_name(maker_id),
             'brandgroup': "OEM",
         })
-        return data
+        return [data]
 
 
 class PartSearchPartsCom(PartSearchBase):
@@ -568,12 +568,13 @@ class PartSearchLocal(PartSearchBase):
         except Brand.DoesNotExist:
             raise Exception('Invalid maker')
 
-        data = {}
+        data = []
         for area in areas:
-            data = Part.get_data(area, partnumber, [])
-            if data:
-                return data
-        return None
+            for brandgroup in area.brandgroup_set.all():
+                part = Part.get_data(area, brandgroup, partnumber, [])
+                if part:
+                    data.append(part)
+        return data or None
 
 
 class PartSearch(object):
@@ -658,7 +659,7 @@ class PartSearch(object):
                     (handler.__class__.__name__, e))
                 data = None
             else:
-                if data and data.get("partnumber"):
+                if data:
                     return data
             return _make_search()
 

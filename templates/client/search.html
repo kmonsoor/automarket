@@ -9,6 +9,7 @@
 
 
 <script type="text/javascript">
+var $ = django.jQuery;
 function onsubmit_basket_form() {
   if(document.pressed == 'update') {
    document.basket_form.action ="{% url client_basket_update %}";
@@ -42,51 +43,58 @@ function onsubmit_basket_form() {
     </form>
   </div>
     <h2>{{ msg|default:"" }}</h2>
-    {% if found %}
-    <div style="margin: 40px 0 15px 0;">{{ found.sub_chain }}&nbsp;</div>
-    <form id="formFound" action="{% url client_basket_add %}" method="post">
-        <table id="dataTable" width="750px">
-            <tr>
-                <td><b>Номер</b></td>
-                <td><b>Описание</b></td>
-                <td><b>Цена</b></td>
-                <td><b>Ваша Цена</b></td>
-                <td><b>Вы экономите</b></td>
-                {% if found.core_price %}<td><b>Цена невозвратной детали*</b></td>{% endif %}
-                <td></td>
-            </tr>
-            <tr>
-              {% if found.MSRP %}
-                <input type="hidden" name="area" value="{{ found.brandname }}" />
-                <input type="hidden" name="brandgroup" value="{{ found.brandgroup }}" />
-                <input type="hidden" name="brand_name" value="{{ maker_name }}" />
-                <td>{{ found.partnumber }}</td>
-                <input type="hidden" name="part_number" value="{{ found.partnumber }}" />
-                <td>{{ found.description }}</td>
-                <input type="hidden" name="description" value="{{ found.description }}" />
-                <td>{{ found.MSRP }}$</td>
-                <input type="hidden" name="msrp" value="{{ found.MSRP }}" />
-                <td>{{ found.your_price }}$</td>
-                <input type="hidden" name="user_price" value="{{ found.your_price }}" />
-                <input type="hidden" name="quantity" value="1" />
-                <td>{{ found.your_economy}}$ или {{ found.your_economy_perc}}%</td>
-                {% if found.core_price %}
-                <td>{{ found.core_price }}$</td>
-                <input type="hidden" name="core_price" value="{{ found.core_price }}" />
-                {% endif %}
-                <td><input type="submit" name="_add_to_basket" value="В корзину" />
-              {% else %}
-                <td colspan=7>Не поставляется</td>
-              {% endif %}
-            </tr>
-            {% if found.core_price %}
-            <tr><td colspan=7 style="border: none;"><b>*</b>будет добавлена к стоимости заказанной позиции</td></tr>
-            {% endif %}
-        </table>
-    </form>
+    {% if data %}
+      {% for found in data %}
+        <div style="margin: 30px 0 15px 0;">{{ found.sub_chain }}&nbsp;</div>
+        <form action="{% url client_basket_add %}" method="post">
+            <table id="dataTable" width="750px">
+                <thead>
+                  <tr>
+                      <td><b>Номер</b></td>
+                      <td><b>Описание</b></td>
+                      <td><b>Цена</b></td>
+                      <td><b>Ваша Цена</b></td>
+                      <td><b>Вы экономите</b></td>
+                      {% if found.core_price %}<td><b>Цена невозвратной детали*</b></td>{% endif %}
+                      <td></td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    {% if found.MSRP %}
+                      <input type="hidden" name="area" value="{{ found.brandname }}" />
+                      <input type="hidden" name="brandgroup" value="{{ found.brandgroup }}" />
+                      <input type="hidden" name="brand_name" value="{{ maker_name }}" />
+                      <td>{{ found.partnumber }}</td>
+                      <input type="hidden" name="part_number" value="{{ found.partnumber }}" />
+                      <td>{{ found.description }}</td>
+                      <input type="hidden" name="description" value="{{ found.description }}" />
+                      <td>{{ found.MSRP }}$</td>
+                      <input type="hidden" name="msrp" value="{{ found.MSRP }}" />
+                      <td>{{ found.your_price }}$</td>
+                      <input type="hidden" name="user_price" value="{{ found.your_price }}" />
+                      <input type="hidden" name="quantity" value="1" />
+                      <td>{{ found.your_economy}}$ или {{ found.your_economy_perc}}%</td>
+                      {% if found.core_price %}
+                      <td>{{ found.core_price }}$</td>
+                      <input type="hidden" name="core_price" value="{{ found.core_price }}" />
+                      {% endif %}
+                      <td><input type="submit" name="_add_to_basket" value="В корзину" />
+                    {% else %}
+                      <td colspan=7>Не поставляется</td>
+                    {% endif %}
+                  </tr>
+                  {% if found.core_price %}
+                  <tr><td colspan=7 style="border: none;"><b>*</b>будет добавлена к стоимости заказанной позиции</td></tr>
+                  {% endif %}
+                </tbody>
+            </table>
+        </form>
+      {% endfor %}
     {% endif %}
 <div class=aligned" style="width: 850px">
 {% if basket_items %}
+<br/><br/><br/>
 <h3>Корзина</h3>
 <form method="post" onsubmit="return onsubmit_basket_form();" id="id_basket_form" name="basket_form">
 <table width="850px">

@@ -544,14 +544,15 @@ class Part(models.Model):
         verbose_name_plural = u"детали"
 
     @classmethod
-    def get_data(cls, area, partnumber, sub_chain=[]):
+    def get_data(cls, area, brandgroup, partnumber, sub_chain=[]):
         try:
-            part = cls.objects.get(area=area, partnumber__iexact=partnumber)
+            part = cls.objects\
+                .get(area=area, brandgroup=brandgroup, partnumber__iexact=partnumber)
             sub_chain.append(part.partnumber)
             if part.substitution:
                 try:
-                    cls.objects.get(area=area, partnumber__iexact=part.substitution)
-                    return cls.get_data(area, part.substitution, sub_chain)
+                    cls.objects.get(area=area, brandgroup=brandgroup, partnumber__iexact=part.substitution)
+                    return cls.get_data(area, brandgroup, part.substitution, sub_chain)
                 except cls.DoesNotExist:
                     pass
 
@@ -563,10 +564,6 @@ class Part(models.Model):
             if part.brandgroup:
                 brandgroup_title = part.brandgroup.title
 
-            brand_title = None
-            if part.brand:
-                brand_title = part.brand.title
-
             return {
                 'partnumber': part.partnumber,
                 'MSRP': part.MSRP,
@@ -576,7 +573,6 @@ class Part(models.Model):
                 'cost': part.cost,
                 'brandname': area_title,
                 'brandgroup': brandgroup_title,
-                'brand': brand_title,
             }
         except cls.DoesNotExist:
             return {}

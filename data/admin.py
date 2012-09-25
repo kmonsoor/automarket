@@ -89,6 +89,12 @@ class PriceAreaAdminInline(admin.TabularInline):
     model = PriceArea
     extra = 0
 
+    def get_formset(self, request, obj=None, **kwargs):
+        formset_factory = super(PriceAreaAdminInline, self).get_formset(request, obj, **kwargs)
+        if obj:
+            formset_factory.form.base_fields['brandgroup'].queryset = obj.brandgroup_set.all()
+        return formset_factory
+
 
 class AreaAdmin(admin.ModelAdmin):
     inlines = [PriceAreaAdminInline]
