@@ -662,11 +662,11 @@ def export_selected(request):
         for i in items:
             sheet.write(row, 0, i.brand.title, sub_header_style)
             sheet.write(row, 1, i.part_number, sub_header_style)
-            sheet.write(row, 2, i.description_ru, sub_header_style)
+            sheet.write(row, 2, i.description_ru or '', sub_header_style)
             sheet.write(row, 3, i.quantity, sub_header_style)
             sheet.write(row, 4, u'%s %s' % (i.client, i.client_order_id), sub_header_style)
-            sheet.write(row, 5, i.comment_supplier, sub_header_style)
-            sheet.write(row, 6, i.description_en, sub_header_style)
+            sheet.write(row, 5, i.comment_supplier or '', sub_header_style)
+            sheet.write(row, 6, i.description_en or '', sub_header_style)
             row += 1
 
         # Save book
@@ -721,11 +721,11 @@ def export(request, group_id):
     for i in items:
         sheet.write(row, 0, i.brand.title, sub_header_style)
         sheet.write(row, 1, i.part_number, sub_header_style)
-        sheet.write(row, 2, i.description_ru, sub_header_style)
+        sheet.write(row, 2, i.description_ru or '', sub_header_style)
         sheet.write(row, 3, i.quantity, sub_header_style)
         sheet.write(row, 4, u'%s %s' % (i.client, i.client_order_id), sub_header_style)
-        sheet.write(row, 5, i.comment_supplier, sub_header_style)
-        sheet.write(row, 6, i.description_en, sub_header_style)
+        sheet.write(row, 5, i.comment_supplier or '', sub_header_style)
+        sheet.write(row, 6, i.description_en or '', sub_header_style)
         row += 1
 
     # Save book
