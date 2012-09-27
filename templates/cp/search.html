@@ -1,8 +1,8 @@
 {% load i18n %}
 <script type="text/javascript" src="{{ MEDIA_URL }}js/jquery_1.4.4.js"></script>
 <script type="text/javascript">
-    function selectPart(){
-        data = jQuery('#formFound').serialize() +'&maker_name={{ maker_name }}';
+    function selectPart(el){
+        var data = jQuery(el).parents('.formFound').serialize() +'&maker_name={{ maker_name }}';
         window.opener.setPart(data);
     }
 
@@ -20,9 +20,10 @@
     </form>
     <br/>
     <h2>{{ msg|default:"" }}</h2>
-    {% if found %}
-        <form id="formFound">
-            <table id="dataTable" width="750px">
+    {% if data %}
+        {% for found in data %}
+        <form class="formFound">
+            <table class="dataTable" width="750px">
                 <tr>
                     <td><b>Item Number</b></td>
                     <td><b>MSRP</b></td>
@@ -48,12 +49,13 @@
                         <input type="hidden" name="description" value="{{ found.description }}">
                     </td>
                     <td>
-                        <button style="font-size:11px;" onclick="selectPart();return false;" >Select</button>
+                        <button style="font-size:11px;" onclick="selectPart(this);return false;" >Select</button>
                         <button style="font-size:11px; width: 150px;" onclick="selectPartAndClose();return false;" >Select and Close</button>
                     </td>
                 </tr>
             </table>
         </form>
+        {% endfor %}
     {% endif %}
 </div>
 

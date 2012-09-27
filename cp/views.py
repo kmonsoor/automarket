@@ -35,7 +35,7 @@ logger = logging.getLogger("cp.views")
 @login_required
 @render_to('cp/search.html')
 def search(request):
-    found = None
+    founds = []
     maker_name = None
     msg = ''
     search_class = PartSearch()
@@ -46,14 +46,14 @@ def search(request):
         if form.is_valid():
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
-            found = search_class.search(maker, part_number)
-            if not found or not found.get("MSRP") or not found.get("partnumber"):
+            founds = search_class.search(maker, part_number)
+            if not founds:
                 msg = u"Not Found"
             maker_name = form.cleaned_data['maker']
     else:
         form = SearchForm(maker_choices=maker_choices)
 
-    return {'form': form, 'found': found, 'maker_name': maker_name, 'msg': msg}
+    return {'form': form, 'data': founds, 'maker_name': maker_name, 'msg': msg}
 
 
 def get_status_options():
