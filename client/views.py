@@ -61,65 +61,69 @@ def search(request):
                 msg = u"Ничего не найдено"
             else:
                 for found in founds:
-                    # try to find area and get multiplier
-                    try:
-                        # find an area by title
-                        area = Area.objects.get(title__iexact=found['brandname'])
-                        brand_group = BrandGroup.objects.get(title=found['brandgroup'])
-                        # we need to find a valid multiplier for this area
-                        # TODO - hardcoded 'OEM', we need do more sofisticated algo
-                    except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
-                        # not price_setings for OEM and this area
-                        m = AREA_MULTIPLIER_DEFAULT
-                    else:
-                        m, d = area.get_brandgroup_settings(brand_group)
-                    # TODO - add brand_group to get_discount
-                    try:
-                        discount = request.user.get_profile()\
-                            .get_discount(brand_group=brand_group, area=area)
-                    except Exception:
-                        discount = AREA_DISCOUNT_DEFAULT
-                    discount = float(discount)
+                    if found['MSRP']:
+                        # try to find area and get multiplier
+                        try:
+                            # find an area by title
+                            area = Area.objects.get(title__iexact=found['brandname'])
+                            brand_group = BrandGroup.objects.get(title=found['brandgroup'])
+                            # we need to find a valid multiplier for this area
+                            # TODO - hardcoded 'OEM', we need do more sofisticated algo
+                        except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
+                            # not price_setings for OEM and this area
+                            m = AREA_MULTIPLIER_DEFAULT
+                        else:
+                            m, d = area.get_brandgroup_settings(brand_group)
+                        # TODO - add brand_group to get_discount
+                        try:
+                            discount = request.user.get_profile()\
+                                .get_discount(brand_group=brand_group, area=area)
+                        except Exception:
+                            discount = AREA_DISCOUNT_DEFAULT
+                        discount = float(discount)
 
-                    value = normalize_sum(str(found['MSRP']))
+                        value = normalize_sum(str(found['MSRP']))
 
-                    # we need to remove all "," as separators
-                    # only last dot should be saved
+                        # we need to remove all "," as separators
+                        # only last dot should be saved
 
-                    try:
-                        found['core_price'] = "%.2f" % float(normalize_sum(str(found['core_price'])))
-                    except Exception:
-                        found['core_price'] = 0.00
+                        try:
+                            found['core_price'] = "%.2f" % float(normalize_sum(str(found['core_price'])))
+                        except Exception:
+                            found['core_price'] = 0.00
 
-                    found['MSRP'] = float(value) * float(m)
-                    if 'cost' in found and found['cost']:
-                        _msrp = found['cost'] * (float(100) + settings.COST_DEFAULT_MARGIN) / float(100)
-                        if _msrp > found['MSRP']:
-                            found['MSRP'] = _msrp
+                        found['MSRP'] = float(value) * float(m)
+                        if 'cost' in found and found['cost']:
+                            _msrp = found['cost'] * (float(100) + settings.COST_DEFAULT_MARGIN) / float(100)
+                            if _msrp > found['MSRP']:
+                                found['MSRP'] = _msrp
 
-                    found['your_price'] = found['MSRP'] * (100 - discount) / 100
-                    found['your_economy'] = found['MSRP'] - found['your_price']
-                    found['your_economy_perc'] = "%.2f" % (100 - (found['your_price'] / found['MSRP']) * 100)
-                    # output
-                    found['MSRP'] = "%.2f" % found['MSRP']
-                    found['your_price'] = "%.2f" % found['your_price']
-                    found['your_economy'] = "%.2f" % found['your_economy']
-                    maker_name = form.cleaned_data['maker']
+                        found['your_price'] = found['MSRP'] * (100 - discount) / 100
+                        found['your_economy'] = found['MSRP'] - found['your_price']
+                        found['your_economy_perc'] = "%.2f" % (100 - (found['your_price'] / found['MSRP']) * 100)
+                        # output
+                        found['MSRP'] = "%.2f" % found['MSRP']
+                        found['your_price'] = "%.2f" % found['your_price']
+                        found['your_economy'] = "%.2f" % found['your_economy']
+                        maker_name = form.cleaned_data['maker']
 
-                    #local search
-                    if 'sub_chain' in found and len(found['sub_chain']) > 1:
-                        last = found['sub_chain'].pop(-1)
-                        found['sub_chain'] = mark_safe(u"Номер заменён: " + \
-                            " -> ".join(found['sub_chain']) + \
-                            " -> <b>%s</b>" % last)
-                    else:
-                        if 'sub_chain' in found:
-                            del found['sub_chain']
+                        #local search
+                        if 'sub_chain' in found and len(found['sub_chain']) > 1:
+                            last = found['sub_chain'].pop(-1)
+                            found['sub_chain'] = mark_safe(u"Номер заменён: " + \
+                                " -> ".join(found['sub_chain']) + \
+                                " -> <b>%s</b>" % last)
+                        else:
+                            if 'sub_chain' in found:
+                                del found['sub_chain']
 
-                    data.append(found)
+                        data.append(found)
     else:
         form = SearchForm(maker_choices=maker_choices)
         maker = None
+
+    if len(data) < 1:
+        msg = u"Ничего не найдено"
 
     context = {
         'form': form,
