@@ -202,7 +202,7 @@ class OrderedItem(models.Model):
     created = models.DateTimeField(auto_now_add=True, verbose_name=u"Дата создания")
     received_office_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Получено офисом")
     modified = models.DateTimeField(auto_now=True, verbose_name=u"Дата изменения", editable=False)
-    invoice_code = models.CharField(max_length=255, verbose_name=u'Инвойс', default='')
+    invoice_code = models.CharField(max_length=255, verbose_name=u'Инвойс', null=True, blank=True)
     parent = models.ForeignKey('self', null=True, blank=True)
 
     objects = OrderedItemManager()
