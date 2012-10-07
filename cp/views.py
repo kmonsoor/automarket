@@ -493,7 +493,7 @@ def insert_in_basket(items, ponumber, send_order=False):
             'DescriptionEng': x.description_en,
             'Qty': x.quantity,
             'OemCode': x.part_number,
-            'CustomerId': int(x.id),
+            'CustomerId': "%s/%s" % (int(x.id), x.client.username),
             'Weight': x.weight if x.weight else '',
         }
 

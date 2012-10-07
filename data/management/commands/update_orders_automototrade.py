@@ -55,101 +55,108 @@ class Command(BaseCommand):
         logger.info("Found %s po's for update. %r." % (len(ponumbers), ponumbers))
 
         for po in ponumbers:
-            for _order in self.get_orders(po):
-                try:
-                    order_id = int(_order['customer_id'])
-                except (ValueError, TypeError):
-                    logger.error("Invalid `customer_id` for po `%s` from automototrade.com: %s" % \
-                        (po, _order['customer_id']))
-                    continue
-
-                part_number = _order['oem']
-                received_count = int(_order['polucheno'] or 0)
-                sended_count = int(_order['otpravleno'] or 0)
-                ordered_count = int(_order['tovar_num'] or 0)
-                invoice_list = _order['invoice_list']
-                part_number_superseded = _order['substitution']
-                refused = _order['refused']
-                client_price = float(_order['client_price'] or 0)
-
-                try:
-                    order = OrderedItem.objects\
-                        .get(id=order_id, part_number=part_number)
-
-                    if order.status not in CHECK_STATUSES:
-                        order = self.get_child(order)
-
-                except (OrderedItem.DoesNotExist, IndexError):
-                    continue
-
-                if order.parent:
-                    sent_earlier_count = self.sent_earlier_count(order)
-                    received_count = received_count - sent_earlier_count
-                    sended_count = sended_count - sent_earlier_count
-                    received_count = received_count - sent_earlier_count
-
-                if refused == NO_REFUSED:
-
-                    if received_count > 0 and received_count == ordered_count:
-                        order.status = 'received_supplier'
-
-                    if sended_count > 0:
-                        order.status = 'in_delivery'
-
-                        if sended_count != order.quantity \
-                            and sended_count != ordered_count:
-
-                            o = OrderedItem()
-                            o.parent = order
-                            o.brandgroup = order.brandgroup
-                            o.area = order.area
-                            o.brand = order.brand
-                            o.ponumber = order.ponumber
-                            o.part_number = order.part_number
-                            o.comment_customer = order.comment_customer
-                            o.comment_supplier = order.comment_supplier
-                            o.client = order.client
-                            o.client_order_id = order.client_order_id
-                            o.manager = order.manager
-                            o.description_ru = order.description_ru
-                            o.description_en = order.description_en
-                            o.price_base = order.price_base
-                            o.price_sale = order.price_sale
-                            o.price_discount = order.price_discount
-                            o.delivery_coef = order.delivery_coef
-                            o.delivery = order.delivery
-                            o.cost = order.cost
-
-                            o.quantity = ordered_count - sended_count
-
-                            o.status = 'in_processing'
-                            if received_count > 0 \
-                                and received_count == ordered_count:
-                                o.status = 'received_supplier'
-                            o.save()
-
-                            order.quantity = sended_count
-
-                    if order.status in ('in_delivery',) and client_price:
-                        if client_price:
-                            order.price_invoice = client_price
-                        if invoice_list:
-                            invoice = self.get_invoice(order, invoice_list)
-                            order.invoice_code = invoice
-
-                    if part_number_superseded:
-                        order.part_number_superseded = part_number_superseded
-
-                    order.save()
-
-                else:
+            orders = self.get_orders(po)
+            if isinstance(orders, list) and len(orders) > 0:
+                for _order in self.get_orders(po):
                     try:
-                        status = STATUS_MAP[refused]
-                    except KeyError:
-                        pass
-                    else:
-                        order.status = status
+                        order_id = int(_order['customer_id'].split('/')[0])
+                    except (ValueError, TypeError, IndexError):
+                        logger.error("Invalid `customer_id` for po `%r` from automototrade.com: %r" % \
+                            (po, _order['customer_id']))
+                        continue
+
+                    part_number = _order['oem']
+                    received_count = int(_order['polucheno'] or 0)
+                    sended_count = int(_order['otpravleno'] or 0)
+                    ordered_count = int(_order['tovar_num'] or 0)
+                    invoice_list = _order['invoice_list']
+                    part_number_superseded = _order['substitution']
+                    refused = _order['refused']
+                    client_price = float(_order['client_price'] or 0)
+
+                    try:
+                        order = OrderedItem.objects\
+                            .get(id=order_id, part_number=part_number)
+
+                        if order.status not in CHECK_STATUSES:
+                            order = self.get_child(order)
+
+                    except (OrderedItem.DoesNotExist, IndexError):
+                        logger.error("OrderedItem with id DoesNotExist`%r`" % \
+                            order_id)
+                        continue
+
+                    if order.parent:
+                        sent_earlier_count = self.sent_earlier_count(order)
+                        received_count = received_count - sent_earlier_count
+                        sended_count = sended_count - sent_earlier_count
+                        received_count = received_count - sent_earlier_count
+
+                    if refused == NO_REFUSED:
+
+                        if received_count > 0 and received_count == ordered_count:
+                            order.status = 'received_supplier'
+
+                        if sended_count > 0:
+                            order.status = 'in_delivery'
+
+                            if sended_count != order.quantity \
+                                and sended_count != ordered_count:
+
+                                o = OrderedItem()
+                                o.parent = order
+                                o.brandgroup = order.brandgroup
+                                o.area = order.area
+                                o.brand = order.brand
+                                o.ponumber = order.ponumber
+                                o.part_number = order.part_number
+                                o.comment_customer = order.comment_customer
+                                o.comment_supplier = order.comment_supplier
+                                o.client = order.client
+                                o.client_order_id = order.client_order_id
+                                o.manager = order.manager
+                                o.description_ru = order.description_ru
+                                o.description_en = order.description_en
+                                o.price_base = order.price_base
+                                o.price_sale = order.price_sale
+                                o.price_discount = order.price_discount
+                                o.delivery_coef = order.delivery_coef
+                                o.delivery = order.delivery
+                                o.cost = order.cost
+
+                                o.quantity = ordered_count - sended_count
+
+                                o.status = 'in_processing'
+                                if received_count > 0 \
+                                    and received_count == ordered_count:
+                                    o.status = 'received_supplier'
+                                o.save()
+
+                                order.quantity = sended_count
+
+                        if order.status in ('in_delivery',) and client_price:
+                            if client_price:
+                                order.price_invoice = client_price
+                            if invoice_list:
+                                invoice = self.get_invoice(order, invoice_list)
+                                order.invoice_code = invoice
+
+                        if part_number_superseded:
+                            order.part_number_superseded = part_number_superseded
+
                         order.save()
+
+                    else:
+                        try:
+                            status = STATUS_MAP[refused]
+                        except KeyError:
+                            pass
+                        else:
+                            order.status = status
+                            order.save()
+            else:
+                logger.error("Error while update orders statuses from automototrade.com: %r" % \
+                    orders)
 
         logger.info('Finish update orders from automototrade.com')
         sys.exit()
@@ -173,11 +180,7 @@ class Command(BaseCommand):
         data = f.read()
         f.close()
 
-        data = data\
-            .replace('null', 'None')\
-            .replace('true', 'True')\
-            .replace('false', 'False')
-        data = ast.literal_eval(data)
+        data = cjson.decode(data)
 
         return data['response']
 
