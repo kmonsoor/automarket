@@ -178,16 +178,18 @@ def index(request):
     paginator = SimplePaginator(request, qs, items_per_page, 'page')
 
     # grouping parents orders
-    items_list = list(paginator.get_page_items())
-    items_ids = list(paginator.get_page_items().values_list('id', flat=True))
-    for order in items_list:
-        if order.parent:
-            del items_list[items_list.index(order)]
-    has_parent_list = list(OrderedItem.objects.filter(parent__id__in=items_ids))
-    for order in has_parent_list:
-        index = items_list.index(order.parent)
-        items_list.insert(index, order)
-    paginator.page.object_list = items_list
+    if _filter.is_set and 'invoice_code__contains' in _filter.data.keys() and \
+        not _filter.data['invoice_code__contains']:
+        items_list = list(paginator.get_page_items())
+        items_ids = list(paginator.get_page_items().values_list('id', flat=True))
+        for order in items_list:
+            if order.parent:
+                del items_list[items_list.index(order)]
+        has_parent_list = list(OrderedItem.objects.filter(parent__id__in=items_ids))
+        for order in has_parent_list:
+            index = items_list.index(order.parent)
+            items_list.insert(index, order)
+        paginator.page.object_list = items_list
 
     #paginator.set_page(current_page)
     context['status_options_str'], context['status_options'] = get_status_options()
