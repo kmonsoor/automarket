@@ -49,7 +49,7 @@ class SavePriceFileBase(Task):
 
     def presave_parts(self, price):
         Part.objects\
-            .filter(area=price.area, brandgroup=price.brandgroup)\
+            .filter(area=price.area, brandgroup=price.brand_group)\
             .delete()
 
     def get_parts(self, price):
@@ -69,13 +69,12 @@ class SavePriceFileXlsTask(SavePriceFileBase):
         mapping = (
            (u'БРЭНД', 'brand', lambda x: Brand.objects.get(title__iexact=x)),
            (u'АРТИКУЛ', 'partnumber', unicode),
-           (u'НАИМЕНОВАНИЕ', 'description', unicode),
+           (u'НАИМЕНОВАНИЕ', 'description_ru', unicode),
+           (u'АББРЕВИАТУРА', 'description', unicode),
            (u'LIST', 'MSRP', float),
            (u'ВХОД', 'cost', float),
            (u'ПАРТИЯ', 'party', int),
            (u'НАЛИЧИЕ', 'available', int),
-           (u'СРОК ДОСТАВКИ', 'delivery_period', int),
-           (u'ДАТА ОБНОВЛЕНИЯ', 'date_update', unicode),
         )
 
         def clean_fieldname(cell_title):
@@ -90,7 +89,7 @@ class SavePriceFileXlsTask(SavePriceFileBase):
             for row in xls.iter_dict(sheet):
                 cleaned_data = {
                     'area': price.area,
-                    'brandgroup': price.brandgroup,
+                    'brandgroup': price.brand_group,
                 }
                 for cell_title, cell_value in row.iteritems():
                     cleaned_fieldname = clean_fieldname(cell_title)

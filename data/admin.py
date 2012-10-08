@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 # $Id$
 import mimetypes
+import datetime
 
 from django import forms
 from django.db.models import Q
@@ -26,6 +27,7 @@ class DirectionAdmin(admin.ModelAdmin):
 class BrandGroupAreaSettingsInline(admin.TabularInline):
     model = BrandGroupAreaSettings
     extra = 0
+    fields = ('area', 'delivery', 'multiplier', 'delivery_period', 'price')
 
     def get_formset(self, request, obj=None, **kwargs):
         return super(BrandGroupAreaSettingsInline, self)\
@@ -84,20 +86,32 @@ class BrandGroupAdmin(admin.ModelAdmin):
                 brand_group.area.all(), fields=('id', 'title'))
         return HttpResponse(response, mimetype="text/json")
 
+    def save_formset(self, request, form, formset, change):
+        super(BrandGroupAdmin, self).save_formset(request, form, formset, change)
 
-class PriceAreaAdminInline(admin.TabularInline):
-    model = PriceArea
-    extra = 0
-
-    def get_formset(self, request, obj=None, **kwargs):
-        formset_factory = super(PriceAreaAdminInline, self).get_formset(request, obj, **kwargs)
-        if obj:
-            formset_factory.form.base_fields['brandgroup'].queryset = obj.brandgroup_set.all()
-        return formset_factory
+        for inline_form in formset.forms:
+            if isinstance(inline_form.instance, BrandGroupAreaSettings):
+                if inline_form.changed_data and 'price' in inline_form.changed_data:
+                    from data.tasks import SavePriceFileCsvTask, SavePriceFileXlsTask
+                    obj = inline_form.instance
+                    obj.price_updated_at = datetime.datetime.now()
+                    obj.save()
+                    XLS_MIMETYPE = 'application/vnd.ms-excel'
+                    if mimetypes.guess_type(obj.price.path)[0] == XLS_MIMETYPE:
+                        SavePriceFileXlsTask.apply_async([obj])
+                    else:
+                        SavePriceFileCsvTask.apply_async([obj])
+                    if 'price' in inline_form.cleaned_data and \
+                        inline_form.cleaned_data['price']:
+                        self.message_user(request,
+                            u"Файл `%s` отправлен на обработку. Цены для поставщика `%s` будут изменены в ближайшее время. Уведомление о завершении будет выслано на %s." % \
+                                (unicode(inline_form.cleaned_data['price']), unicode(obj.area.title), ",".join(settings.MANAGERS_EMAILS)))
+                    else:
+                        self.message_user(request,
+                            u"Цены для поставщика `%s` удалены." % unicode(obj.area.title))
 
 
 class AreaAdmin(admin.ModelAdmin):
-    inlines = [PriceAreaAdminInline]
     list_display = ('title', 'in_groups')
     search_fields = ['title', 'brands__title']
     filter_horizontal = ['brands']
@@ -113,28 +127,6 @@ class AreaAdmin(admin.ModelAdmin):
         return '---'
     in_groups.short_description = u"Входит в группы"
     in_groups.allow_tags = True
-
-    def save_formset(self, request, form, formset, change):
-        super(AreaAdmin, self).save_formset(request, form, formset, change)
-
-        obj = form.instance
-        for inline_form in formset.forms:
-            if inline_form.changed_data:
-                from data.tasks import SavePriceFileCsvTask, SavePriceFileXlsTask
-                price = inline_form.instance
-                XLS_MIMETYPE = 'application/vnd.ms-excel'
-                if mimetypes.guess_type(price.price.path)[0] == XLS_MIMETYPE:
-                    SavePriceFileXlsTask.apply_async([price])
-                else:
-                    SavePriceFileCsvTask.apply_async([price])
-                if 'price' in inline_form.cleaned_data and \
-                    inline_form.cleaned_data['price']:
-                    self.message_user(request,
-                        u"Файл `%s` отправлен на обработку. Цены для поставщика `%s` будут изменены в ближайшее время. Уведомление о завершении будет выслано на %s." % \
-                            (unicode(inline_form.cleaned_data['price']), unicode(obj.title), ",".join(settings.MANAGERS_EMAILS)))
-                else:
-                    self.message_user(request,
-                        u"Цены для поставщика `%s` удалены." % unicode(obj.title))
 
 
 class BrandAdmin(admin.ModelAdmin):

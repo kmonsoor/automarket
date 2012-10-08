@@ -126,7 +126,12 @@ class PartSearchBase(object):
         data.update({
             'brandname': self.get_maker_name(maker_id),
             'brandgroup': "OEM",
+            'description_ru': None,
+            'cost': None,
+            'party': None,
+            'sub_chain': None,
         })
+
         return [data]
 
 

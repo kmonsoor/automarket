@@ -71,9 +71,14 @@ def search(request):
                             # TODO - hardcoded 'OEM', we need do more sofisticated algo
                         except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
                             # not price_setings for OEM and this area
-                            m = AREA_MULTIPLIER_DEFAULT
+                            m, d, dp, pu = AREA_MULTIPLIER_DEFAULT, None, None, None
                         else:
-                            m, d = area.get_brandgroup_settings(brand_group)
+                            m, d, dp, pu = area.get_brandgroup_settings(brand_group)
+
+                        found['delivery_coef'] = d
+                        found['delivery_period'] = dp
+                        found['updated_at'] = pu
+
                         # TODO - add brand_group to get_discount
                         try:
                             discount = request.user.get_profile()\
@@ -108,7 +113,7 @@ def search(request):
                         maker_name = form.cleaned_data['maker']
 
                         #local search
-                        if 'sub_chain' in found and len(found['sub_chain']) > 1:
+                        if 'sub_chain' in found and found['sub_chain'] and len(found['sub_chain']) > 1:
                             last = found['sub_chain'].pop(-1)
                             found['sub_chain'] = mark_safe(u"Номер заменён: " + \
                                 " -> ".join(found['sub_chain']) + \
@@ -118,12 +123,12 @@ def search(request):
                                 del found['sub_chain']
 
                         data.append(found)
+
+                if len(data) < 1:
+                    msg = u"Ничего не найдено"
     else:
         form = SearchForm(maker_choices=maker_choices)
         maker = None
-
-    if len(data) < 1:
-        msg = u"Ничего не найдено"
 
     context = {
         'form': form,
@@ -401,6 +406,7 @@ def basket_add(request):
         messages.add_message(request, messages.ERROR, u"Ошибка корзины")
         return HttpResponseRedirect("/client/search/?be=1")
     else:
+        print form.cleaned_data
         form.save()
         return HttpResponseRedirect("/client/search/")
 

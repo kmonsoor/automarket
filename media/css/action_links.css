@@ -7,11 +7,11 @@
 
 a.add_link:link, a.add_link:visited, a.add_link:hover, a.add_link:active {
     background: url("../img/icons/icon_addlink.gif") no-repeat left;
-    padding-left: 21px;
+    padding-left: 15px;
 }
 a.change_link:link, a.change_link:visited, a.change_link:hover, a.change_link:active {
     background: url("../img/icons/icon_changelink.gif") no-repeat left;
-    padding-left: 21px;
+    padding-left: 15px;
 }
 a.add_link:hover {
     color: #000
@@ -21,7 +21,7 @@ a.change_link:hover {
         }
 a.delete_link:link, a.delete_link:visited, a.delete_link:hover, a.delete_link:active {
         background: url("../img/icons/icon_deletelink.gif") no-repeat left;
-        padding-left:21px;
+        padding-left:15px;
         color:#adadad;
     }
 a.delete_link:hover {

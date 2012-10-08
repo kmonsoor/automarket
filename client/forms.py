@@ -25,10 +25,12 @@ class BasketForm(forms.Form):
     area = forms.CharField(required=False)
     part_number = forms.CharField()
     description = forms.CharField(required=False)
+    description_ru = forms.CharField(required=False)
     msrp = forms.FloatField(required=False)
     user_price = forms.FloatField(required=False)
     brand_name = forms.CharField(required=False)
     core_price = forms.FloatField(required=False)
+    quantity = forms.IntegerField(required=False)
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
