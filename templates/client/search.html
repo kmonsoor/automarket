@@ -123,7 +123,7 @@ function onsubmit_basket_form() {
                     </td>
 
                     <td>
-                      {{ found.available }}
+                      {{ found.available|default:"" }}
                     </td>
 
                     {% if found.delivery_period %}<td>
@@ -150,6 +150,7 @@ function onsubmit_basket_form() {
               </tbody>
           </table>
       </form>
+      <br/>
     {% endfor %}
   {% endif %}
 <div class=aligned">
