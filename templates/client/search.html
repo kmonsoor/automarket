@@ -53,17 +53,17 @@ function onsubmit_basket_form() {
                 <tr class="row1">
                     <td><b>Брэнд</b></td>
                     <td><b>Артикул</b></td>
-                    {% if found.description_ru %}<td><b>Наименование</b></td>{% endif %}
-                    {% if found.description %}<td><b>Аббревиатура</b></td>{% endif %}
-                    {% if found.delivery_coef %}<td><b>Стоимость доставки*</b></td>{% endif %}
+                    <td><b>Наименование</b></td>
+                    <td><b>Аббревиатура</b></td>
+                    <td><b>Стоимость доставки*</b></td>
                     <td><b>Цена</b></td>
                     <td><b>Ваша Цена</b></td>
                     {% if found.core_price %}<td><b>Цена невозвратной детали**</b></td>{% endif %}
                     <td><b>Вы экономите</b></td>
                     <td><b>Партия</b></td>
                     <td><b>Наличие</b></td>
-                    {% if found.delivery_period %}<td><b>Срок доставки</b></td>{% endif %}
-                    {% if found.updated_at %}<td><b>Дата обновления</b></td>{% endif %}
+                    <td><b>Срок доставки</b></td>
+                    <td><b>Дата обновления</b></td>
                     <td class="order-button-wrapper"></td>
                 </tr>
               </thead>
@@ -83,19 +83,19 @@ function onsubmit_basket_form() {
                       <input type="hidden" name="part_number" value="{{ found.partnumber }}" />
                     </td>
 
-                    {% if found.description_ru %}<td>
-                        {{ found.description_ru }}
+                    <td>
+                        {{ found.description_ru|default:"" }}
                         <input type="hidden" name="description_ru" value="{{ found.description_ru }}" />
-                    </td>{% endif %}
+                    </td>
 
-                    {% if found.description %}<td>
-                        {{ found.description }}
+                    <td>
+                        {{ found.description|default:"" }}
                         <input type="hidden" name="description" value="{{ found.description }}" />
-                    </td>{% endif %}
+                    </td>
 
-                    {% if found.delivery_coef %}<td>
+                    <td>
                         {{ found.delivery_coef }}$
-                    </td>{% endif %}
+                    </td>
 
                     <td>
                       {{ found.MSRP }}$
@@ -117,35 +117,35 @@ function onsubmit_basket_form() {
                     </td>
 
                     <td>
-                      {{ found.party }}
+                      {{ found.party }} шт.
                       <!-- <input type="hidden" name="party" value="{{ found.party }}" /> -->
                       <input type="hidden" name="quantity" value="{{ found.party|default:1 }}" />
                     </td>
 
                     <td>
-                      {{ found.available|default:"" }}
+                      {{ found.available|default:"" }} шт.
                     </td>
 
-                    {% if found.delivery_period %}<td>
+                    <td>
                       {{ found.delivery_period }} дн.
-                    </td>{% endif %}
+                    </td>
 
-                    {% if found.updated_at %}<td>
+                    <td>
                       {{ found.updated_at|date:"d N Y" }}
-                    </td>{% endif %}
+                    </td>
 
-                    <td class="order-button-wrapper">
+                    <td class="order-button-wrapper" style="width: 80px;">
                       <a class="add_link" href="javascript: void(0);" onclick="$('#foundsForm').submit();">
                         В корзину
                       </a>
                     </td>
 
                   {% else %}
-                    <td colspan=7>Не поставляется</td>
+                    <td colspan=20>Не поставляется</td>
                   {% endif %}
                 </tr>
                 {% if found.core_price %}
-                <tr><td colspan=7 style="border: none;"><b>**</b>будет добавлена к стоимости заказанной позиции</td></tr>
+                <tr><td colspan=20 style="border: none; text-align: left;"><b>**</b>будет добавлена к стоимости заказанной позиции</td></tr>
                 {% endif %}
               </tbody>
           </table>
@@ -180,12 +180,12 @@ function onsubmit_basket_form() {
 <td>{{ item.get_price }}$</td>
 <td><input size="5" type="text" name="quantity_{{item.id}}" value="{{ item.quantity }}" /></td>
 <td>{{ item.get_price_total }}$</td>
-<td><a class="delete_link" href="{% url client_basket_delete item.id %}">Удалить</a></td>
+<td style="width: 80px; text-align: left;"><a class="delete_link" href="{% url client_basket_delete item.id %}">Удалить</a></td>
 </tr>
 {% endfor %}
-<tr class="alt"><th colspan="7"><b>Общая стоимость:</b></th>
+<tr class="alt"><th colspan="7" style="text-align: right;"><b>Общая стоимость:</b></th>
 <th colspan="1"><b>{{ basket_price_sum }}</b></th>
-<td><a class="delete_link" href="{% url client_basket_clear %}">Очистить корзину</a></td>
+<td style="width: 125px; text-align: left;"><a class="delete_link" href="{% url client_basket_clear %}">Очистить корзину</a></td>
 </tr>
 </table>
 <div class="submit-row">

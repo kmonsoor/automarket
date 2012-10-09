@@ -64,4 +64,4 @@ form.fieldset { border: none }
 .editable select {width: 191px;}
 
 .dataTable { width: 100%; }
-.dataTable td { border: 1px solid #EEE; padding: 3px 6px; }
+.dataTable td, .dataTable th { border: 1px solid #EEE; padding: 3px 6px; text-align: center; }

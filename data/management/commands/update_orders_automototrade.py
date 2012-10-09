@@ -82,7 +82,7 @@ class Command(BaseCommand):
                             order = self.get_child(order)
 
                     except (OrderedItem.DoesNotExist, IndexError):
-                        logger.error("OrderedItem with id DoesNotExist`%r`" % \
+                        logger.error("OrderedItem with id `%r` DoesNotExist" % \
                             order_id)
                         continue
 

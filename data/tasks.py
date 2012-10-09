@@ -89,7 +89,7 @@ class SavePriceFileXlsTask(SavePriceFileBase):
             for row in xls.iter_dict(sheet):
                 cleaned_data = {
                     'area': price.area,
-                    'brandgroup': price.brand_group,
+                    'brandgroup': price.brand_bgroup,
                 }
                 for cell_title, cell_value in row.iteritems():
                     cleaned_fieldname = clean_fieldname(cell_title)
@@ -117,7 +117,7 @@ class SavePriceFileCsvTask(SavePriceFileBase):
         for line in price.price.xreadlines():
             cleaned_data = {
                 'area': price.area,
-                'brandgroup': price.brandgroup
+                'brandgroup': price.brand_group,
             }
             for field, value in zip(fields, [x.strip() for x in line.split(sep)]):
                 try:
