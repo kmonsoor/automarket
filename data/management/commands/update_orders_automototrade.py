@@ -92,6 +92,9 @@ class Command(BaseCommand):
 
                     if refused == NO_REFUSED:
 
+                        if received_count > 0 and received_count == ordered_count:
+                            order.status = 'received_supplier'
+
                         if order.status in ('in_delivery',) and client_price:
                             if client_price:
                                 order.price_invoice = client_price
@@ -99,8 +102,8 @@ class Command(BaseCommand):
                                 invoice = self.get_invoice(order, invoice_list)
                                 order.invoice_code = invoice
 
-                        if received_count > 0 and received_count == ordered_count:
-                            order.status = 'received_supplier'
+                        if part_number_superseded:
+                            order.part_number_superseded = part_number_superseded
 
                         if sended_count > 0:
                             order.status = 'in_delivery'
@@ -129,6 +132,7 @@ class Command(BaseCommand):
                                     o.client_order_id = OrderedItem.objects.get_next_client_order_id(client)
                                     order.quantity = sended_count - ordered_count
                                     o.status = order.status
+                                    o.price_invoice = order.price_invoice
                                     o.invoice_code = order.invoice_code
 
                                 o.parent = order
@@ -149,12 +153,7 @@ class Command(BaseCommand):
                                 o.delivery = order.delivery
                                 o.cost = order.cost
                                 o.save()
-
-                        if part_number_superseded:
-                            order.part_number_superseded = part_number_superseded
-
                         order.save()
-
                     else:
                         try:
                             status = STATUS_MAP[refused]
