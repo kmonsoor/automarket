@@ -59,7 +59,7 @@ class Command(BaseCommand):
             if isinstance(orders, list) and len(orders) > 0:
                 for _order in self.get_orders(po):
                     try:
-                        order_id = int(_order['customer_id'].split('/')[0])
+                        order_id = int(_order['customer_id'].split('\\/')[0])
                     except (ValueError, TypeError, IndexError):
                         logger.error("Invalid `customer_id` for po `%r` from automototrade.com: %r" % \
                             (po, _order['customer_id']))
@@ -107,6 +107,11 @@ class Command(BaseCommand):
                                     o.quantity = ordered_count - sended_count
                                     o.client = order.client
                                     o.client_order_id = order.client_order_id
+                                    order.quantity = sended_count
+                                    o.status = 'in_processing'
+                                    if received_count > 0 \
+                                        and received_count == ordered_count:
+                                        o.status = 'received_supplier'
                                 else:
                                     o.quantity = sended_count - ordered_count
                                     try:
@@ -115,6 +120,8 @@ class Command(BaseCommand):
                                         client = User.objects.get(id=1)
                                     o.client = client
                                     o.client_order_id = OrderedItem.objects.get_next_client_order_id(client)
+                                    order.quantity = sended_count - ordered_count
+                                    o.status = order.status
 
                                 o.parent = order
                                 o.brandgroup = order.brandgroup
@@ -133,14 +140,7 @@ class Command(BaseCommand):
                                 o.delivery_coef = order.delivery_coef
                                 o.delivery = order.delivery
                                 o.cost = order.cost
-
-                                o.status = 'in_processing'
-                                if received_count > 0 \
-                                    and received_count == ordered_count:
-                                    o.status = 'received_supplier'
                                 o.save()
-
-                                order.quantity = sended_count
 
                         if order.status in ('in_delivery',) and client_price:
                             if client_price:
