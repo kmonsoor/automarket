@@ -95,6 +95,9 @@ class Command(BaseCommand):
                         if received_count > 0 and received_count == ordered_count:
                             order.status = 'received_supplier'
 
+                        if sended_count > 0:
+                            order.status = 'in_delivery'
+
                         if order.status in ('in_delivery',) and client_price:
                             if client_price:
                                 order.price_invoice = client_price
@@ -106,8 +109,6 @@ class Command(BaseCommand):
                             order.part_number_superseded = part_number_superseded
 
                         if sended_count > 0:
-                            order.status = 'in_delivery'
-
                             if sended_count != order.quantity \
                                 and sended_count != ordered_count:
 
