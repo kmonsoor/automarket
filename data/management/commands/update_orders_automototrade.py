@@ -3,12 +3,12 @@ logger = logging.getLogger('update_orders__automototrade')
 
 import os
 import cjson
-import ast
 import sys
+import optparse
 
-from optparse import make_option
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.contrib.auth.models import User
 
 from data.models import OrderedItem
 
@@ -29,7 +29,7 @@ class Command(BaseCommand):
     Update orders from automototrade.com
     """
     option_list = BaseCommand.option_list + (
-        make_option('--po', dest='po', help="Po's. Separator `,`"),
+        optparse.make_option('--po', dest='po', help="Po's. Separator `,`"),
     )
 
     def handle(self, *args, **options):
@@ -82,8 +82,6 @@ class Command(BaseCommand):
                             order = self.get_child(order)
 
                     except (OrderedItem.DoesNotExist, IndexError):
-                        logger.error("OrderedItem with id `%r` DoesNotExist" % \
-                            order_id)
                         continue
 
                     if order.parent:
@@ -104,6 +102,20 @@ class Command(BaseCommand):
                                 and sended_count != ordered_count:
 
                                 o = OrderedItem()
+
+                                if ordered_count > sended_count:
+                                    o.quantity = ordered_count - sended_count
+                                    o.client = order.client
+                                    o.client_order_id = order.client_order_id
+                                else:
+                                    o.quantity = sended_count - ordered_count
+                                    try:
+                                        client = User.objects.get(username="retail")
+                                    except User.DoesNotExist:
+                                        client = User.objects.get(id=1)
+                                    o.client = client
+                                    o.client_order_id = OrderedItem.objects.get_next_client_order_id(client)
+
                                 o.parent = order
                                 o.brandgroup = order.brandgroup
                                 o.area = order.area
@@ -112,8 +124,6 @@ class Command(BaseCommand):
                                 o.part_number = order.part_number
                                 o.comment_customer = order.comment_customer
                                 o.comment_supplier = order.comment_supplier
-                                o.client = order.client
-                                o.client_order_id = order.client_order_id
                                 o.manager = order.manager
                                 o.description_ru = order.description_ru
                                 o.description_en = order.description_en
@@ -123,8 +133,6 @@ class Command(BaseCommand):
                                 o.delivery_coef = order.delivery_coef
                                 o.delivery = order.delivery
                                 o.cost = order.cost
-
-                                o.quantity = ordered_count - sended_count
 
                                 o.status = 'in_processing'
                                 if received_count > 0 \
