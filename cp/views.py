@@ -178,8 +178,7 @@ def index(request):
     paginator = SimplePaginator(request, qs, items_per_page, 'page')
 
     # grouping parents orders
-    if _filter.is_set and 'invoice_code__contains' in _filter.data.keys() and \
-        not _filter.data['invoice_code__contains']:
+    if not _filter.is_set:
         items_list = list(paginator.get_page_items())
         items_ids = list(paginator.get_page_items().values_list('id', flat=True))
         for order in items_list:
