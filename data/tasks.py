@@ -89,7 +89,7 @@ class SavePriceFileXlsTask(SavePriceFileBase):
             for row in xls.iter_dict(sheet):
                 cleaned_data = {
                     'area': price.area,
-                    'brandgroup': price.brand_bgroup,
+                    'brandgroup': price.brand_group,
                 }
                 for cell_title, cell_value in row.iteritems():
                     cleaned_fieldname = clean_fieldname(cell_title)
