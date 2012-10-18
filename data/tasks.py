@@ -73,7 +73,7 @@ class SavePriceFileXlsTask(SavePriceFileBase):
            (u'АББРЕВИАТУРА', 'description', unicode),
            (u'LIST', 'MSRP', float),
            (u'ВХОД', 'cost', float),
-           (u'ПАРТИЯ', 'party', int),
+           (u'ПАРТИЯ', 'party', str),
            (u'НАЛИЧИЕ', 'available', int),
         )
 
