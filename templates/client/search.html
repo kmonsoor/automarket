@@ -45,113 +45,118 @@ function onsubmit_basket_form() {
   {% if msg or data %}<h3>Результаты поиска</h3>{% endif %}
   {% if msg %}<h4>{{ msg|default:"" }}</h4>{% endif %}
   {% if data %}
-    {% for found in data %}
-      {% if found.sub_chain %}<div style="margin: 30px 0 15px 0;">{{ found.sub_chain }}&nbsp;</div>{% endif %}
-      <form action="{% url client_basket_add %}" method="post" id="foundsForm">
-          <table id="dataTable" class="dataTable">
-              <thead>
-                <tr class="row1">
-                    <td><b>Брэнд</b></td>
-                    <td><b>Артикул</b></td>
-                    <td><b>Наименование</b></td>
-                    <td><b>Аббревиатура</b></td>
-                    <td><b>Стоимость доставки*</b></td>
-                    <td><b>Цена</b></td>
-                    <td><b>Ваша Цена</b></td>
-                    {% if found.core_price %}<td><b>Цена невозвратной детали**</b></td>{% endif %}
-                    <td><b>Вы экономите</b></td>
-                    <td><b>Партия</b></td>
-                    <td><b>Наличие</b></td>
-                    <td><b>Срок доставки</b></td>
-                    <td><b>Дата обновления</b></td>
-                    <td class="order-button-wrapper"></td>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  {% if found.MSRP %}
-                    <input type="hidden" name="area" value="{{ found.brandname }}" />
-                    <input type="hidden" name="brandgroup" value="{{ found.brandgroup }}" />
+    <table id="dataTable" class="dataTable">
+      <thead>
+        <tr class="row1">
+            <th><b>Брэнд</b></th>
+            <th><b>Артикул</b></th>
+            <th><b>Наименование</b></th>
+            <th><b>Аббревиатура</b></th>
+            <th><b>Стоимость доставки*</b></th>
+            <th><b>Цена</b></th>
+            <th><b>Ваша Цена</b></th>
+            <th><b>Цена невозвратной детали**</b></th>
+            <th><b>Вы экономите</b></th>
+            <th><b>Партия</b></th>
+            <th><b>Наличие</b></th>
+            <th><b>Срок доставки</b></th>
+            <th><b>Дата обновления</b></th>
+            <th class="order-button-wrapper"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for found in data %}
+          <form action="{% url client_basket_add %}" method="post" id="foundsForm{{ forloop.counter }}">
+            {% if found.sub_chain %}
+            <tr class="{% cycle 'row1' 'row2' %}">
+              <td colspan=15 style="text-align: left;">{{ found.sub_chain }}</td>
+            </tr>
+            {% endif %}
+            <tr class="{% cycle 'row1' 'row2' %}">
+              {% if found.MSRP %}
+                <input type="hidden" name="area" value="{{ found.brandname }}" />
+                <input type="hidden" name="brandgroup" value="{{ found.brandgroup }}" />
 
-                    <td>
-                      {{ maker_name }}
-                      <input type="hidden" name="brand_name" value="{{ maker_name }}" />
-                    </td>
+                <td>
+                  {{ maker_name }}
+                  <input type="hidden" name="brand_name" value="{{ maker_name }}" />
+                </td>
 
-                    <td>
-                      {{ found.partnumber }}
-                      <input type="hidden" name="part_number" value="{{ found.partnumber }}" />
-                    </td>
+                <td>
+                  {{ found.partnumber }}
+                  <input type="hidden" name="part_number" value="{{ found.partnumber }}" />
+                </td>
 
-                    <td>
-                        {{ found.description_ru|default:"" }}
-                        <input type="hidden" name="description_ru" value="{{ found.description_ru }}" />
-                    </td>
+                <td>
+                    {{ found.description_ru|default:"" }}
+                    <input type="hidden" name="description_ru" value="{{ found.description_ru }}" />
+                </td>
 
-                    <td>
-                        {{ found.description|default:"" }}
-                        <input type="hidden" name="description" value="{{ found.description }}" />
-                    </td>
+                <td>
+                    {{ found.description|default:"" }}
+                    <input type="hidden" name="description" value="{{ found.description }}" />
+                </td>
 
-                    <td>
-                        {{ found.delivery_coef }}$
-                    </td>
+                <td>
+                    {% if found.delivery_coef %}{{ found.delivery_coef }}${% endif %}
+                </td>
 
-                    <td>
-                      {{ found.MSRP }}$
-                      <input type="hidden" name="msrp" value="{{ found.MSRP }}" />
-                    </td>
+                <td>
+                  {{ found.MSRP }}$
+                  <input type="hidden" name="msrp" value="{{ found.MSRP }}" />
+                </td>
 
-                    <td>
-                      {{ found.your_price }}$
-                      <input type="hidden" name="user_price" value="{{ found.your_price }}" />
-                    </td>
+                <td>
+                  <b>{{ found.your_price }}$</b>
+                  <input type="hidden" name="user_price" value="{{ found.your_price }}" />
+                </td>
 
-                    {% if found.core_price %}<td>
-                      {{ found.core_price }}$
-                      <input type="hidden" name="core_price" value="{{ found.core_price }}" />
-                    </td>{% endif %}
+                <td>
+                  {{ found.core_price }}$
+                  <input type="hidden" name="core_price" value="{{ found.core_price }}" />
+                </td>
 
-                    <td>
-                      {{ found.your_economy}}$ или {{ found.your_economy_perc}}%
-                    </td>
+                <td>
+                  {{ found.your_economy}}$ или {{ found.your_economy_perc}}%
+                </td>
 
-                    <td>
-                      {{ found.party }} шт.
-                      <!-- <input type="hidden" name="party" value="{{ found.party }}" /> -->
-                      <input type="hidden" name="quantity" value="{{ found.party|default:1 }}" />
-                    </td>
+                <td>
+                  {% if found.party and found.party > 1 %}{{ found.party }} шт.{% endif %}
+                  <!-- <input type="hidden" name="party" value="{{ found.party }}" /> -->
+                  <input type="hidden" name="quantity" value="{{ found.party|default:1 }}" />
+                </td>
 
-                    <td>
-                      {{ found.available|default:"" }} шт.
-                    </td>
+                <td>
+                  {% if found.available %}{{ found.available }} шт.{% endif %}
+                </td>
 
-                    <td>
-                      {{ found.delivery_period }} дн.
-                    </td>
+                <td>
+                  {% if found.delivery_period %}{{ found.delivery_period }} дн.{% endif %}
+                </td>
 
-                    <td>
-                      {{ found.updated_at|date:"d N Y" }}
-                    </td>
+                <td>
+                  {{ found.updated_at|date:"d N Y" }}
+                </td>
 
-                    <td class="order-button-wrapper" style="width: 80px;">
-                      <a class="add_link" href="javascript: void(0);" onclick="$('#foundsForm').submit();">
-                        В корзину
-                      </a>
-                    </td>
+                <td class="order-button-wrapper" style="width: 80px;">
+                  <a class="add_link" href="javascript: void(0);" onclick="$('#foundsForm{{ forloop.counter }}').submit();">
+                    В корзину
+                  </a>
+                </td>
 
-                  {% else %}
-                    <td colspan=20>Не поставляется</td>
-                  {% endif %}
-                </tr>
-                {% if found.core_price %}
-                <tr><td colspan=20 style="border: none; text-align: left;"><b>**</b>будет добавлена к стоимости заказанной позиции</td></tr>
-                {% endif %}
-              </tbody>
-          </table>
-      </form>
-      <br/><br/>
-    {% endfor %}
+              {% else %}
+                <td colspan=20>Не поставляется</td>
+              {% endif %}
+            </tr>
+          </form>
+        {% endfor %}
+        <tr>
+          <td colspan=20 style="border: none; text-align: left;">
+            <b>**</b>будет добавлена к стоимости заказанной позиции
+          </td>
+        </tr>
+      </tbody>
+    </table>
   {% endif %}
 <div class=aligned">
 {% if basket_items %}
@@ -159,19 +164,22 @@ function onsubmit_basket_form() {
 <h3>Корзина</h3>
 <form method="post" onsubmit="return onsubmit_basket_form();" id="id_basket_form" name="basket_form">
 <table class="dataTable" width="100%;">
+<thead>
 <tr class="row1">
-<td><b>Марка</b></td>
-<td><b>Номер</b></td>
-<td><b>Описание ENG</b></td>
-<td><b>Описание RUS</b></td>
-<td><b>Комментарий</b></td>
-<td><b>Цена за ед.</b></td>
-<td><b>Количество</b></td>
-<td><b>Стоимость</b></td>
-<td></td>
+<th><b>Марка</b></th>
+<th><b>Номер</b></th>
+<th><b>Описание ENG</b></th>
+<th><b>Описание RUS</b></th>
+<th><b>Комментарий</b></th>
+<th><b>Цена за ед.</b></th>
+<th><b>Количество</b></th>
+<th><b>Стоимость</b></th>
+<th></td>
 </tr>
+</thead>
+<tbody>
 {% for item in basket_items %}
-<tr>
+<tr class="{% cycle 'row1' 'row2' %}">
 <td>{{ item.brand_name }}</td>
 <td>{{ item.part_number }}</td>
 <td>{{ item.description }}</td>
@@ -187,6 +195,7 @@ function onsubmit_basket_form() {
 <th colspan="1"><b>{{ basket_price_sum }}</b></th>
 <td style="width: 125px; text-align: left;"><a class="delete_link" href="{% url client_basket_clear %}">Очистить корзину</a></td>
 </tr>
+</tbody>
 </table>
 <div class="submit-row">
 

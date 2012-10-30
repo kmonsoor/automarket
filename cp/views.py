@@ -116,7 +116,7 @@ def index(request):
         (u'PRICE', None),
         (u'NEW PRICE', None),
         (u'COST', None),
-        (u'TOTAL COST', None),
+        (u'TOTAL', None),
         (u'Инвойс', 'invoice_code'),
         (u'Статус', 'status'),
     )
@@ -591,7 +591,8 @@ def change_status(request):
 
     ids = request.POST.getlist('items')
     try:
-        orders = OrderedItem.objects.filter(id__in=ids, status='order')
+        orders = OrderedItem.objects\
+            .filter(id__in=ids, status='order').order_by('id')
     except:
         orders = []
 
@@ -836,7 +837,7 @@ LIST_HEADERS = (
     (u'PRICE', 'price_sale'),
     (u'NEW PRICE', 'price_discount'),
     (u'COST', 'cost'),
-    (u'TOTAL COST', 'total_cost'),
+    (u'TOTAL', 'total_cost'),
     (u'Инвойс', 'invoice_code'),
     (u'Статус', 'status'),
 )

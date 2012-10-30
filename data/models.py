@@ -335,6 +335,15 @@ class OrderedItem(models.Model):
     def failed(self):
         return self.status == 'failure'
 
+    @property
+    def exist_in_stk(self):
+        parts = Part.objects.filter(brand=self.brand,
+                                    brandgroup__direction__title='STK',
+                                    partnumber=self.part_number)
+        if len(parts) > 0:
+            return True
+        return False
+
 
 # ----------------------------------------------------------
 

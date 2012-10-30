@@ -138,7 +138,8 @@ def search(request):
     }
 
     context['basket_items'] = Basket.objects\
-        .filter(user=request.user, order_item_id__isnull=True)
+        .filter(user=request.user, order_item_id__isnull=True)\
+        .order_by('-id')
 
     context['basket_price_sum'] = reduce(lambda x, y: x + y,
         [x.get_price_total() for x in context['basket_items']], 0)
@@ -406,7 +407,6 @@ def basket_add(request):
         messages.add_message(request, messages.ERROR, u"Ошибка корзины")
         return HttpResponseRedirect("/client/search/?be=1")
     else:
-        print form.cleaned_data
         form.save()
         return HttpResponseRedirect("/client/search/")
 
