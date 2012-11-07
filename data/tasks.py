@@ -19,10 +19,10 @@ class SavePriceFileBase(Task):
     @transaction.commit_manually
     def run(self, price):
         self.presave_parts(price)
+        transaction.commit()
 
         f = price.price
         if not f:
-            transaction.commit()
             return 'ok!'
 
         try:
@@ -58,7 +58,18 @@ class SavePriceFileBase(Task):
     def save_parts(self, price):
         success = 0
         for cleaned_data in self.get_parts(price):
-            Part(**cleaned_data).save()
+            kwargs = {
+                'partnumber': cleaned_data.pop('partnumber'),
+                'area': cleaned_data.pop('area'),
+                'brandgroup': cleaned_data.pop('brandgroup'),
+                'defaults': cleaned_data,
+            }
+            obj, created = Part.objects.get_or_create(**kwargs)
+            if not created:
+                for field, value in cleaned_data.iteritems():
+                    setattr(obj, field, value)
+                obj.save()
+                continue
             success += 1
         return success
 
