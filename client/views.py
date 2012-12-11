@@ -342,7 +342,7 @@ def export_order(request):
         (u'PRICE', 'price_sale'),
         (u'NEW PRICE', 'price_discount'),
         (u'COST', 'cost'),
-        (u'TOTAL COST', 'total_cost'),
+        (u'TOTAL', 'total_cost'),
         (u'Инвойс', 'invoice_code'),
         (u'Статус', 'status'),
     )

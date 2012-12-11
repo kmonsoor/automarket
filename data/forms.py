@@ -40,7 +40,7 @@ CLIENT_FIELD_LIST = [
     (u'PRICE', None, 'price_sale', u"%s", None),
     (u'NEW PRICE', None, 'price_discount', u"%s", None),
     (u'COST', None, 'cost', u"%s", None),
-    (u'TOTAL COST', None, 'total_cost', u"%s", None),
+    (u'TOTAL', None, 'total_cost', u"%s", None),
     (u'Инвойс', 'invoice_code', 'invoice_code', u"%s", "invoice_code__contains"),
     (u'Статус', 'status', 'status_display', u"%s", "status"),
 ]
