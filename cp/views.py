@@ -25,7 +25,7 @@ from lib import xlsreader
 from cp.forms import OrderItemForm, ImportXlsForm
 from client.forms import SearchForm
 from data.models import BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES
-from data.forms import OrderedItemsFilterForm, OrderedItemForm
+from data.forms import OrderedItemsFilterForm, OrderedItemForm, STAFF_FIELD_LIST
 from common.views import PartSearch
 
 import logging
@@ -92,37 +92,30 @@ def index(request):
         current_page = 1
     context['filter'] = _filter
 
-    LIST_HEADERS = (
-        (u'PO', 'ponumber'),
-        (u'Направление', 'brandgroup__title'),
-        (u'Поставщик', 'area__title'),
-        (u'BRAND', 'brand__title'),
-        (u'PART #', 'part_number'),
-        (u'COMMENT 1', None),
-        (u'COMMENT 2', None),
-        (u'Создано', 'created'),
-        (u'Получено', 'received_office_at'),
-        (u'Q', None),
-        (u'PRICE IN', None),
-        (u'TOTAL', None),
-        (u'ЗАМЕНА', None),
-        (u'ID', 'manager'),
-        (u'CL', 'client'),
-        (u'RUS', None),
-        (u'ENG', None),
-        (u'LIST', None),
-        (u'WEIGHT', None),
-        (u'SHIPPING', None),
-        (u'PRICE', None),
-        (u'NEW PRICE', None),
-        (u'COST', None),
-        (u'TOTAL', None),
-        (u'Инвойс', 'invoice_code'),
-        (u'Статус', 'status'),
-    )
+    try:
+        user_fields = request.user.get_profile().get_order_fields()
+    except Exception:
+        user_fields = None
+    if user_fields:
+        print user_fields
+        STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+    else:
+        STAFF_FIELDS = STAFF_FIELD_LIST
+    context['staff_fields'] = [x[2] for x in STAFF_FIELDS]
+    LIST_HEADERS = [(x[0], x[1]) for x in STAFF_FIELDS]
+
     sort_headers = SortHeaders(request, LIST_HEADERS)
     order_field = request.GET.get('o', None)
     order_direction = request.GET.get('ot', None)
+
+    list_filters = []
+    for x in STAFF_FIELDS:
+        try:
+            form_field = _filter.form.__getitem__(x[3])
+            list_filters.append(form_field)
+        except Exception:
+            list_filters.append("")
+    context['list_filters'] = list_filters
 
     order_by = '-created'
     if order_field:

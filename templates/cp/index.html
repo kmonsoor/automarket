@@ -77,32 +77,10 @@ tr.alt td {
 <thead>
 <tr>{% table_header_sort headers %}</tr>
 <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
-<td>{{ filter.form.brandgroup__direction__po__icontains }}{{ filter.form.ponumber }}</td>
-<td>{{ filter.form.brandgroup__title__contains }}</td>
-<td>{{ filter.form.area__title__contains }}</td>
-<td>{{ filter.form.brand__title__contains }}</td>
-<td>{{ filter.form.part_number__contains }}</td>
-<td>{{ filter.form.comment_customer__contains }}</td>
-<td>{{ filter.form.comment_supplier__contains }}</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>{{ filter.form.part_number_superseded__contains }}</td>
-<td>{{ filter.form.manager__username__contains }}</td>
-<td>{{ filter.form.client__username__contains }}</td>
-<td>{{ filter.form.description_ru__contains }}</td>
-<td>{{ filter.form.description_en__contains }}</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>{{ filter.form.invoice_code__contains }}</td>
-<td>{{ filter.form.status }}</td>
+{% for f in list_filters %}
+<td>{% ifequal f.name 'ponumber' %}<input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" size="2">{% endifequal %}
+{{ f }}</td>
+{% endfor %}
 </tr>
 </thead>
 <tbody>

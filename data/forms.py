@@ -3,6 +3,35 @@
 from django import forms
 from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES, Area
 
+STAFF_FIELD_LIST = (
+    (u'PO', 'ponumber', 'ponumber', 'ponumber'),
+    (u'Направление', 'brandgroup__title', 'brandgroup', 'brandgroup__title__contains'),
+    (u'Поставщик', 'area__title', 'area', 'area__title__contains'),
+    (u'BRAND',  'brand__title', 'brand', 'brand__title__contains'),
+    (u'PART #', 'part_number', 'part_number', 'part_number__contains'),
+    (u'COMMENT 1', 'comment_customer', 'comment_customer', 'comment_customer__contains'),
+    (u'COMMENT 2', 'comment_supplier', 'comment_supplier', 'comment_supplier__contains'),
+    (u'Создано', 'created', 'created', None),
+    (u'Получено', 'received_office_at', 'received_office_at', None),
+    (u'Q', 'quantity', 'quantity', None),
+    (u'PRICE IN', 'price_invoice', 'price_invoice', None),
+    (u'TOTAL', 'total_w_ship', 'total_w_ship', None),
+    (u'ЗАМЕНА', 'part_number_superseded', 'part_number_superseded', 'part_number_superseded__contains'),
+    (u'ID', 'manager__username', 'manager', 'manager__username__contains'),
+    (u'CL', 'client__username', 'client', 'client__username__contains'),
+    (u'RUS', 'description_ru', 'description_ru', 'description_ru__contains'),
+    (u'ENG', 'description_en', 'description_en', 'description_en__contains'),
+    (u'LIST', 'price_base', 'price_base', None),
+    (u'WEIGHT', 'weight', 'weight', None),
+    (u'SHIPPING', 'delivery', 'delivery', None),
+    (u'PRICE', 'price_sale', 'price_sale', None),
+    (u'NEW PRICE', 'price_discount', 'price_discount', None),
+    (u'COST', 'cost', 'cost', None),
+    (u'TOTAL', 'total_cost', 'total_cost', None),
+    (u'Инвойс', 'invoice_code', 'invoice_code', 'invoice_code__contains'),
+    (u'Статус', 'status', 'status', 'status'),
+)
+
 class OrderedItemsFilterForm(forms.Form):
     brandgroup__direction__po__icontains = forms.CharField(required=False, widget=forms.TextInput(attrs={'size':2, 'class':'qs_filter'}))
     ponumber = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'size':2, 'class':'qs_filter'}))

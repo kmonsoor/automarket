@@ -17,7 +17,7 @@ from django.core import serializers
 from django.conf import settings
 
 from data.models import *
-from data.forms import CLIENT_FIELD_LIST
+from data.forms import CLIENT_FIELD_LIST, STAFF_FIELD_LIST
 
 
 class DirectionAdmin(admin.ModelAdmin):
@@ -205,8 +205,17 @@ class CustomUserAdmin(UserAdmin):
     filter_horizontal = ['groups']
 
 
+class StaffProfileInline(admin.StackedInline):
+    model = UserProfile
+    exclude = ['client_group']
+    template = 'admin/data/user/userprofile_inline.html'
+    extra = 0
+
+
 class StaffAdmin(CustomUserAdmin):
     readonly_fields = ['is_staff']
+    inlines = [StaffProfileInline]
+    change_form_template = 'admin/data/user/change_form.html'
 
     def queryset(self, request):
         qs = super(UserAdmin, self).queryset(request)
@@ -217,6 +226,42 @@ class StaffAdmin(CustomUserAdmin):
         if not change:
             obj.is_staff = True  # For new records only
         obj.save()
+
+    def change_view(self, request, object_id, extra_context=None):
+        extra_context = {}
+        obj = get_object_or_404(User, pk=object_id)
+        try:
+            profile = obj.get_profile()
+        except Exception:
+            profile = None
+        if not profile:
+            profile = \
+            UserProfile.objects.create(user=obj)
+
+        extra_context['client_order_item_fields'] = []
+
+        fff = profile.order_item_fields
+
+        if not fff:
+            fff = profile.client_group.order_item_fields
+
+        if fff:
+            extra_context['original_order_item_fields'] = \
+                fff.split(',')
+        else:
+            extra_context['original_order_item_fields'] = ""
+        if request.POST:
+            extra_context['original_order_item_fields'] = \
+            request.POST.get("order_item_fields", "").split(",")
+        for a in [(x[2], x[0]) for x in STAFF_FIELD_LIST]:
+            a = list(a)
+            if a[0] in extra_context['original_order_item_fields']:
+                a.append(True)
+            else:
+                a.append(False)
+            extra_context['client_order_item_fields'].append(a)
+        return super(StaffAdmin, self)\
+            .change_view(request, object_id, extra_context)
 
 
 class CUserCreationForm(UserCreationForm):
