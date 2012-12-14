@@ -242,9 +242,6 @@ class StaffAdmin(CustomUserAdmin):
 
         fff = profile.order_item_fields
 
-        if not fff:
-            fff = profile.client_group.order_item_fields
-
         if fff:
             extra_context['original_order_item_fields'] = \
                 fff.split(',')

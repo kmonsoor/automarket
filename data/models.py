@@ -452,7 +452,7 @@ models.signals.post_save.connect(on_client_group_create, sender=ClientGroup)
 
 class UserProfile(models.Model):
 
-    client_group = models.ForeignKey(ClientGroup, verbose_name=u"группа")
+    client_group = models.ForeignKey(ClientGroup, verbose_name=u"группа", blank=True, null=True)
     order_item_fields = models.TextField(blank=True, default="")
     user = models.ForeignKey(User, unique=True)
 
