@@ -97,7 +97,6 @@ def index(request):
     except Exception:
         user_fields = None
     if user_fields:
-        print user_fields
         STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
     else:
         STAFF_FIELDS = STAFF_FIELD_LIST
