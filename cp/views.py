@@ -129,7 +129,7 @@ def index(request):
     qs = OrderedItem.objects.select_related().filter(**_filter.get_filters())
 
     # calculate totals by filter
-    total_row = None
+    total_row = []
     if _filter.is_set:
         from django.db import connection
 
@@ -149,20 +149,27 @@ def index(request):
         sql = \
         """
         SELECT
-            SUM(%(p)s.total_cost) as TOTAL_COST,
-            SUM(%(p)s.weight*%(p)s.quantity) as TOTAL_WEIGHT,
-            SUM(%(p)s.delivery) as TOTAL_DELIVERY,
-            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)) AS TOTAL_PRICE,
-            SUM(%(p)s.price_invoice*%(p)s.quantity) as TOTAL_PRICE_IN
+            SUM(%(p)s.total_cost),
+            SUM(%(p)s.weight*%(p)s.quantity),
+            SUM(%(p)s.delivery),
+            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
+            SUM(%(p)s.price_invoice*%(p)s.quantity)
             FROM %(from)s %(where)s
         """ % {'p': td, 'from': from_clause, 'where': where}
         cursor = connection.cursor()
         cursor.execute(sql, params)
         res = cursor.fetchall()
         if len(res) > 0:
-            total_row = dict(zip( \
-                ('COST', 'WEIGHT', 'DELIVERY', 'PRICE', 'PRICE_IN'), \
+            total = dict(zip( \
+                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), \
                 res[0]))
+
+            for f in STAFF_FIELDS:
+                field_name = f[2].split("__")[0]
+                if field_name[:2] == "po":
+                    total_row.append(u"Итого:")
+                else:
+                    total_row.append(total.get(field_name, u""))
 
     if order_by:
         qs = qs.order_by(order_by)
