@@ -227,6 +227,8 @@ class OrderedItem(models.Model):
     invoice_code = models.CharField(max_length=255, verbose_name=u'Инвойс', null=True, blank=True)
     parent = models.ForeignKey('self', null=True, blank=True)
 
+    big_price_invoice_order_mail_sent = models.BooleanField(verbose_name=u'Цена в инвойсе больше цены продажи. Отправлено письмо.', default=False)
+
     objects = OrderedItemManager()
 
     def __unicode__(self):

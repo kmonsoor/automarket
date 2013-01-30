@@ -1,0 +1,16 @@
+Здравствуйте, в некоторых заказах цена в инвойсе больше, чем цена продажи.
+
+Заказы:
+
+{% for x in orders %}
+   PO: {{ x.po_verbose }}
+   PRICE IN: {{ x.price_invoice }}
+   PRICE: {{ x.price_sale }}
+   PART #: {{ x.part_number }}
+   Q: {{ x.quantity }}
+   RUS: {{ x.description_ru }}
+   ENG: {{ x.description_en }}
+   CL: {{ x.client }}
+
+
+{% endfor %}

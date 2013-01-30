@@ -1,3 +1,5 @@
+# -*- coding=utf-8 -*-
+
 import logging
 logger = logging.getLogger('update_orders__automototrade')
 
@@ -6,9 +8,11 @@ import cjson
 import sys
 import optparse
 
+from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.template.loader import render_to_string
 
 from data.models import OrderedItem
 
@@ -54,6 +58,8 @@ class Command(BaseCommand):
 
         logger.info("Found %s po's for update. %r." % (len(ponumbers), ponumbers))
 
+        big_price_invoice_orders = []
+
         for po in ponumbers:
             orders = self.get_orders(po)
             if isinstance(orders, list) and len(orders) > 0:
@@ -95,12 +101,15 @@ class Command(BaseCommand):
                         if received_count > 0 and received_count == ordered_count:
                             order.status = 'received_supplier'
 
+                        if client_price:
+                            order.price_invoice = client_price
+                            if order.price_invoice > order.price_sale:
+                                big_price_invoice_orders.append(order)
+
                         if sended_count > 0:
                             order.status = 'in_delivery'
 
                         if order.status in ('in_delivery',) and client_price:
-                            if client_price:
-                                order.price_invoice = client_price
                             if invoice_list:
                                 invoice = self.get_invoice(order, invoice_list)
                                 order.invoice_code = invoice
@@ -166,6 +175,17 @@ class Command(BaseCommand):
             else:
                 logger.error("Error while update orders statuses from automototrade.com: %r" % \
                     orders)
+
+        if len(big_price_invoice_orders) > 0:
+            orders = []
+            for x in big_price_invoice_orders:
+                if not x.big_price_invoice_order_mail_sent:
+                    orders.append(x)
+            text = render_to_string('cp/mails/big_price_invoice_orders.txt', {'orders': orders})
+            send_mail(u'Цена в инвойсе больше, чем цена продажи', text, settings.EMAIL_FROM, settings.EMAILS, fail_silently=False)
+            for x in orders:
+                x.big_price_invoice_order_mail_sent = True
+                x.save()
 
         logger.info('Finish update orders from automototrade.com')
         sys.exit()
