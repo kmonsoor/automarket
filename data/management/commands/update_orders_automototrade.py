@@ -182,7 +182,7 @@ class Command(BaseCommand):
                 if not x.big_price_invoice_order_mail_sent:
                     orders.append(x)
             text = render_to_string('cp/mails/big_price_invoice_orders.txt', {'orders': orders})
-            send_mail(u'Цена в инвойсе больше, чем цена продажи', text, settings.EMAIL_FROM, settings.EMAILS, fail_silently=False)
+            send_mail(u'Цена в инвойсе больше, чем цена продажи', text, settings.EMAIL_FROM, settings.MANAGERS_EMAILS, fail_silently=False)
             for x in orders:
                 x.big_price_invoice_order_mail_sent = True
                 x.save()
