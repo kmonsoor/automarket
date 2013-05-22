@@ -202,7 +202,7 @@ class CustomUserAdmin(UserAdmin):
         return (',').join(groups) if groups else u'Нет группы'
     groups_list.allow_tags = True
     groups_list.short_description = u'Группа'
-    filter_horizontal = ['groups']
+    filter_horizontal = ['user_permissions', 'groups']
 
 
 class StaffProfileInline(admin.StackedInline):
@@ -216,6 +216,7 @@ class StaffAdmin(CustomUserAdmin):
     readonly_fields = ['is_staff']
     inlines = [StaffProfileInline]
     change_form_template = 'admin/data/user/change_form.html'
+    filter_horizontal = ['user_permissions', 'groups']
 
     def queryset(self, request):
         qs = super(UserAdmin, self).queryset(request)
