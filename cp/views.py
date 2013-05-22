@@ -13,6 +13,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.utils.datastructures import MultiValueDict
@@ -39,7 +40,7 @@ import logging
 logger = logging.getLogger("cp.views")
 
 
-@login_required
+@staff_member_required
 @render_to('cp/search.html')
 def search(request):
     founds = []
@@ -82,7 +83,7 @@ def get_status_options_package():
     return [{'value': i[0], 'option': i[1]} for i in INVOICE_STATUSES]
 
 
-@login_required
+@staff_member_required
 @render_to('cp/invoices.html')
 def invoices(request):
     context = {}
@@ -168,7 +169,7 @@ def invoices(request):
     return context
 
 
-@login_required
+@staff_member_required
 @ajax_request
 def remove_package(request):
     try:
@@ -186,7 +187,7 @@ def _random():
     yield "".join([random.choice(string.letters) for x in xrange(1, 5)])
 
 
-@login_required
+@staff_member_required
 @render_to('cp/invoice.html')
 def invoice(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id)
@@ -372,7 +373,7 @@ def invoice(request, invoice_id):
     return context
 
 
-@login_required
+@staff_member_required
 @render_to('cp/issues.html')
 def issues(request):
     def _redirect():
@@ -529,7 +530,7 @@ def issues(request):
     return context
 
 
-@login_required
+@staff_member_required
 @render_to('cp/issues_client.html')
 def issues_client(request, client_id):
     client = get_object_or_404(User, id=client_id)
@@ -691,7 +692,7 @@ def issues_client(request, client_id):
     return context
 
 
-@login_required
+@staff_member_required
 @render_to('cp/index.html')
 def index(request):
     context = {}
@@ -819,7 +820,7 @@ def index(request):
     return context
 
 
-@login_required
+@staff_member_required
 @render_to('cp/order.html')
 def order(request):
     response = {}
@@ -854,11 +855,13 @@ def order(request):
     return response
 
 
+@staff_member_required
 @render_to('cp/order_success.html')
 def order_success(request):
     return {}
 
 
+@staff_member_required
 @render_to('cp/groups.html')
 def groups(request):
     qs = OrderedItem.objects.filter(status__in=('order', 'moderation'))
@@ -1077,6 +1080,7 @@ class PackageSaver(object):
 
 
 @ajax_request
+@staff_member_required
 def position_edit(request, content_type, item_id):
     logger.debug("position_edit called with args: %s, %s" % (content_type, item_id))
     models = {'ordered_item': OrderedItem, 'package': Package}
@@ -1114,6 +1118,7 @@ def position_edit(request, content_type, item_id):
 
 
 @ajax_request
+@staff_member_required
 def get_ordered_item(request, item_id):
     item = get_object_or_404(OrderedItem, pk=item_id)
     fields = request.GET.get('fields').split(",")
@@ -1238,6 +1243,7 @@ def insert_in_basket(items, ponumber, send_order=False):
             return {'ok': ok, 'response': response}
 
 
+@staff_member_required
 def change_status(request):
     if not request.method == 'POST':
         raise Http404
@@ -1274,6 +1280,7 @@ def change_status(request):
     return HttpResponseRedirect('/cp/groups/')
 
 
+@staff_member_required
 def export_selected(request):
 
     ids = request.POST.getlist('items')
@@ -1353,6 +1360,7 @@ def export_selected(request):
         return HttpResponseRedirect('/cp/groups/')
 
 
+@staff_member_required
 def export(request, group_id):
     brandgroup = BrandGroup.objects.get(id=group_id)
     items = OrderedItem.objects.filter(brandgroup__id=group_id, status='order').order_by("brandgroup__direction__po")
@@ -1425,8 +1433,8 @@ def export(request, group_id):
     return response
 
 
+@staff_member_required
 @render_to('cp/import_order.html')
-@login_required
 def import_order(request):
     CELLS = (
        (0, 'supplier', 'DIR'),
@@ -1536,7 +1544,7 @@ def field_value(order_obj, field_name):
     return getattr(order_obj, field_name) or ''
 
 
-@login_required
+@staff_member_required
 def export_order(request):
     _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
 
@@ -1595,7 +1603,7 @@ def export_order(request):
 
 
 @ajax_request
-@login_required
+@staff_member_required
 def get_brandgroup_settings(request, ordered_item_id):
     try:
         ordered_item = OrderedItem.objects.get(pk=ordered_item_id)
@@ -1607,7 +1615,7 @@ def get_brandgroup_settings(request, ordered_item_id):
     return []
 
 
-@login_required
+@staff_member_required
 def ordered_item_row(request, item_id):
     try:
         item = OrderedItem.objects.get(pk=item_id)
