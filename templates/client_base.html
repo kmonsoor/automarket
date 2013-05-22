@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load cp_messages %}
+{% load cp_tags %}
 {% block extrahead %}
 
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}js/jquery-autocomplete/jquery.autocomplete.css" />
@@ -17,8 +18,8 @@ jQuery.noConflict();
 {% block global_title %}Клиентская часть{% endblock %}
 {% block global_menu %}
     <ul>
-        <li><a href="/client/search/">Поиск</a></li>
-        <li><a href="/client/">Мои заказы</a></li>
+        <li><a class="{% navactive request 'client_search' %}" href="{% url client_search %}">Поиск</a></li>
+        <li><a class="{% navactive request 'client_index' %}" href="{% url client_index %}">Мои заказы</a></li>
     </ul>
 {% endblock %}
 

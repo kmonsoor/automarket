@@ -1,0 +1,42 @@
+<style>
+#tablePackageForm tr td {padding: 5px; font-weight: bold;}
+.package_description_field input {width: 98%;}
+.package_client_field select {width: 98%;}
+</style>
+<table id="tablePackageForm">
+<tr>
+
+<td {% if form.description.errors %}class="error"{% endif %} class="package_description_field">
+{{ form.description.label }}*<br />
+{% if form.description.errors %}
+{{ form.description.errors }}
+{% endif %}
+{{ form.description }}
+</td>
+
+<td style="width: 25px;"{% if form.quantity.errors %}class="error"{% endif %}>
+{{ form.quantity.label }}*<br />
+{% if form.quantity.errors %}
+{{ form.quantity.errors }}
+{% endif %}
+{{ form.quantity }}
+</td>
+
+<td style="width: 25px;"{% if form.weight.errors %}class="error"{% endif %}>
+{{ form.weight.label }}*<br />
+{% if form.weight.errors %}
+{{ form.weight.errors }}
+{% endif %}
+{{ form.weight }}
+</td>
+
+<td {% if form.client.errors %}class="error"{% endif %} class="package_client_field">
+{{ form.client.label }}<br />
+{% if form.client.errors %}
+{{ form.client.errors }}
+{% endif %}
+{{ form.client }}
+</td>
+
+</tr>
+</table>

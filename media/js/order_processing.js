@@ -2,11 +2,12 @@ var current = null;
 var backend_url = null;
 
 function render_row(item_id) {
-    jQuery.get('/cp/ordered_item_row/'+ item_id +'/', function(response) {
-        if (response) {
-            $("#table_row_"+item_id).html(response);
-        }
-    });
+    // jQuery.get('/cp/ordered_item_row/'+ item_id +'/', function(response) {
+    //     if (response) {
+    //         $("#table_row_"+item_id).html(response);
+    //     }
+    // });
+    return false;
 }
 
 function setDefaultCurrent() {
@@ -55,6 +56,30 @@ function save() {
 	postSave();
 }
 
+function package_save() {
+    var value = jQuery('#' + current.type + '_input_' + current.id).val();
+    jQuery('#' + current.type + '_display_' + current.id).html('<img src="' + ajax_loader_img_path + '">');
+    current.in_process = true;
+    jQuery.ajax(
+        {
+            type: 'POST',
+            url: '/cp/position/edit/package/' + current.id + '/',
+            data: {
+                    'type': current.type.replace('package_', ''),
+                    'value':value
+                   },
+            async: false,
+            success: function(response) {
+                current.previous_value = current.value;
+                current.value = response.value;
+                setDisplayValue();
+                if (response.error) {alert(response.error);}
+            }
+        });
+    render_row(current.id);
+    postSave();
+}
+
 function setDisplayValue() {
 	if (current.dict) {
 		for (i in current.dict) {
@@ -76,48 +101,48 @@ function close() {
 }
 
 function postSave() {
-    if (current.type == 'part_number_superseded') {
-        if (current.value.toString().length > 0) {
-            editStatus(current.id, 'superseded');
-        }
-    }
-    if (current.type == 'brand') {
-        editStatus(current.id, 'superseded');
-    }
-    if (current.type == 'price') {
-        if (current.value) {
-            editStatus(current.id, 'on_stock');
-        }
-        else {
-            if (current.previous_value) {
-                editStatus(current.id, '_return_');
-            }
-            current.display_value = 'Price';
-        }
-    }
+    // if (current.type == 'part_number_superseded') {
+    //     if (current.value.toString().length > 0) {
+    //         editStatus(current.id, 'superseded');
+    //     }
+    // }
+    // if (current.type == 'brand') {
+    //     editStatus(current.id, 'superseded');
+    // }
+    // if (current.type == 'price') {
+    //     if (current.value) {
+    //         editStatus(current.id, 'on_stock');
+    //     }
+    //     else {
+    //         if (current.previous_value) {
+    //             editStatus(current.id, '_return_');
+    //         }
+    //         current.display_value = 'Price';
+    //     }
+    // }
 
-    // get calculated values from the server
+    // // get calculated values from the server
 
-    FIELDS = ['price_base', 'price_sale', 'price_discount',
-              'delivery', 'cost', 'total_cost', 'received_office_at']
-    jQuery.ajax({
-        url: '/cp/ordered_item/' + current.id + '/',
-        data: {'fields': FIELDS.join(',')},
-        dataType: 'json',
-        success: function(data) {
-            for (i in FIELDS) {
-                field_name = FIELDS[i];
-                if (data[field_name] == null || data[field_name] == 0 || data[field_name] == 'None') {
-                    value = '';
-                } else {
-                    value = data[field_name];
-                }
-                jQuery("#" + field_name + "_display_" + current.id).html(value);
-            }
-            if (current.id) close();
-        },
-    });
-
+    // FIELDS = ['price_base', 'price_sale', 'price_discount',
+    //           'delivery', 'cost', 'total_cost', 'received_office_at']
+    // jQuery.ajax({
+    //     url: '/cp/ordered_item/' + current.id + '/',
+    //     data: {'fields': FIELDS.join(',')},
+    //     dataType: 'json',
+    //     success: function(data) {
+    //         for (i in FIELDS) {
+    //             field_name = FIELDS[i];
+    //             if (data[field_name] == null || data[field_name] == 0 || data[field_name] == 'None') {
+    //                 value = '';
+    //             } else {
+    //                 value = data[field_name];
+    //             }
+    //             jQuery("#" + field_name + "_display_" + current.id).html(value);
+    //         }
+            
+    //     },
+    // });
+    if (current.id) close();
 }
 
 function restore() {
@@ -332,6 +357,45 @@ function editQuantityShip(id) {
 
 }
 
+function editQuantityPackage(id) {
+    if (return_check(id, 'package_quantity')) return;
+    if (current.id) close();
+    current.type = 'package_quantity';
+    current.value = jQuery('#package_quantity_'+id).html();
+    current.display_value = jQuery('#package_quantity_display_'+id).html();
+    current.id = id;
+
+    jQuery('#package_quantity_display_'+id).html('<input id="package_quantity_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#package_quantity_buttons_'+id).css("display","inline");
+
+}
+
+function editWeightPackage(id) {
+    if (return_check(id, 'package_weight')) return;
+    if (current.id) close();
+    current.type = 'package_weight';
+    current.value = jQuery('#package_weight_'+id).html();
+    current.display_value = jQuery('#package_weight_display_'+id).html();
+    current.id = id;
+
+    jQuery('#package_weight_display_'+id).html('<input id="package_weight_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#package_weight_buttons_'+id).css("display","inline");
+
+}
+
+function editDescriptionPackage(id) {
+    if (return_check(id, 'package_description')) return;
+    if (current.id) close();
+    current.type = 'package_description';
+    current.value = jQuery('#package_description_'+id).html();
+    current.display_value = jQuery('#package_description_display_'+id).html();
+    current.id = id;
+
+    jQuery('#package_description_display_'+id).html('<input id="package_description_input_' + id + '" type="text" value="' + current.value + '">');
+    jQuery('#package_description_buttons_'+id).css("display","inline");
+
+}
+
 function editStatus(id, value) {
 	if (caller == 'index') {
 	    if (value == 'superseded') {
@@ -358,8 +422,8 @@ function editStatus(id, value) {
                 if (response.error) alert(response.value);
             }
         });
-    row_class = $("#table_row_"+id).attr('class');
-    $("#table_row_"+id).attr('class', row_class.replace(/(row1|2)\s+(.*)?/g, "$1 "+value));
+    row_class = jQuery("#table_row_"+id).attr('class');
+    jQuery("#table_row_"+id).attr('class', row_class.replace(/(row1|2)\s+(.*)?/g, "$1 "+value));
     if (!current.type) {
         postSave();
     }

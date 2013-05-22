@@ -84,6 +84,30 @@ class OrderItemForm(Form):
 
             return client
 
+
+class PackageItemForm(Form):
+    TEMPLATE = 'cp/packageitem_form.html'
+    CORE = ('description',)
+
+    description = forms.CharField(widget=forms.TextInput(attrs={'size': 20}), label=u'Описание', required=True)
+    quantity = forms.IntegerField(min_value=1, widget=forms.TextInput(attrs={'size': 5, 'class': 'quantity'}), label=u'Q', required=True)
+    weight = forms.FloatField(widget=forms.TextInput(attrs={'size': 7, 'class': 'weight'}), label=u'Weight', required=True)
+    client = forms.CharField(widget=forms.Select(choices=users()), label=u'CL', required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(PackageItemForm, self).__init__(*args, **kwargs)
+        self.fields['client'].widget.choices = users()
+
+    def clean_client(self):
+        if 'client' in self.cleaned_data and self.cleaned_data['client']:
+            client = self.cleaned_data['client']
+            try:
+                client = User.objects.get(id=client)
+            except User.DoesNotExist:
+                raise forms.ValidationError(u"Такого пользователя не существует")
+            return client
+
+
 class SearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         maker_choices = kwargs.pop("maker_choices")

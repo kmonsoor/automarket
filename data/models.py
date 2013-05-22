@@ -188,7 +188,7 @@ class OrderedItem(models.Model):
     area = models.ForeignKey(Area, verbose_name=u"Поставщик")
     brand = models.ForeignKey(Brand, verbose_name=u"Бренд")
     ponumber = models.IntegerField(verbose_name=u"Номер заказа", blank=True, null=True)
-    part_number = models.CharField(verbose_name=u"Номер детали", max_length=255)
+    part_number = models.CharField(verbose_name=u"Номер детали", max_length=255, db_index=True)
     part_number_superseded = models.CharField(max_length=255, null=True, blank=True, verbose_name=u"Новый номер(замена)")
     comment_customer = models.TextField(verbose_name=u"Комментарий заказчика", blank=True, null=True)
     comment_supplier = models.TextField(verbose_name=u"Комментарий поставщика", blank=True, null=True)
@@ -223,8 +223,9 @@ class OrderedItem(models.Model):
     previous_status = models.CharField(max_length=50, verbose_name=u"Прежний статус", null=True, blank=True,)
     created = models.DateTimeField(auto_now_add=True, verbose_name=u"Дата создания")
     received_office_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Получено офисом")
+    issued_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Отгружено")
     modified = models.DateTimeField(auto_now=True, verbose_name=u"Дата изменения", editable=False)
-    invoice_code = models.CharField(max_length=255, verbose_name=u'Инвойс', null=True, blank=True)
+    invoice_code = models.CharField(max_length=255, verbose_name=u'Инвойс', null=True, blank=True, db_index=True)
     parent = models.ForeignKey('self', null=True, blank=True)
 
     big_price_invoice_order_mail_sent = models.BooleanField(verbose_name=u'Цена в инвойсе больше цены продажи. Отправлено письмо.', default=False)
@@ -347,7 +348,91 @@ class OrderedItem(models.Model):
         return False
 
 
+INVOICE_STATUS_NONE = 0
+INVOICE_STATUS_IN_DELIVERY = 1
+INVOICE_STATUS_RECEIVED = 2
+INVOICE_STATUS_CLOSED = 3
+INVOICE_STATUSES = (
+    (INVOICE_STATUS_NONE, u'---'),
+    (INVOICE_STATUS_IN_DELIVERY, u'в доставке'),
+    (INVOICE_STATUS_RECEIVED, u'получено офисом'),
+    (INVOICE_STATUS_CLOSED, u'закрыт'),
+)
+
+
+class Invoice(models.Model):
+    code = models.CharField(verbose_name=u"Код", max_length=255, db_index=True)
+    brandgroup = models.ForeignKey(BrandGroup, verbose_name=u"Группа поставщиков", null=True, blank=True)
+    status = models.IntegerField(verbose_name=u"Состояние", choices=INVOICE_STATUSES, default=INVOICE_STATUS_IN_DELIVERY)
+    received_at = models.DateTimeField(verbose_name=u"Дата получения", null=True, blank=True)
+    closed_at = models.DateTimeField(verbose_name=u"Дата закрытия", null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return self.code
+
+    class Meta:
+        verbose_name = u"Инвойс"
+        verbose_name_plural = u"Инвойсы"
+        unique_together = ('code',)
+
+    def calculate_status(self):
+        if self.status not in (INVOICE_STATUS_CLOSED,):
+            order_statuses = list(
+                OrderedItem.objects
+                .filter(invoice_code=self.code)
+                .values_list('status', flat=True)
+            )
+            if any(map(lambda x: x == 'in_delivery', order_statuses)):
+                self.status = INVOICE_STATUS_IN_DELIVERY
+            elif any(map(lambda x: x == 'received_office', order_statuses)):
+                self.status = INVOICE_STATUS_RECEIVED
+            self.save()
+
+
+class Package(models.Model):
+    description = models.CharField(verbose_name=u"Описание", max_length=255)
+    invoice = models.ForeignKey(Invoice)
+    weight = models.FloatField(verbose_name=u"Вес")
+    quantity = models.PositiveIntegerField(verbose_name=u'Количество')
+    manager = models.ForeignKey(User, verbose_name=u"Менеджер", related_name=u"manager_package")
+
+    delivery_coef = models.FloatField(verbose_name=u"Стоимость доставки за кг", blank=True, null=True)
+    delivery = models.FloatField(verbose_name=u"Стоимость доставки", null=True, blank=True)
+    total_cost = models.FloatField(verbose_name=u"Окончательная цена за все", null=True, blank=True)
+    client = models.ForeignKey(User, verbose_name=u"Клиент", related_name=u"client_package", null=True, blank=True)
+    received_at = models.DateTimeField(verbose_name=u"Дата получения", null=True, blank=True)
+    status = models.IntegerField(verbose_name=u"Состояние", choices=INVOICE_STATUSES, default=INVOICE_STATUS_NONE)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = u"Упаковка"
+        verbose_name_plural = u"Упаковка"
+
+    def save(self, *args, **kwargs):
+
+        if not self.received_at:
+            self.received_at = self.invoice.received_at
+
+        if not self.status:
+            self.status = INVOICE_STATUS_RECEIVED
+
+        if not self.delivery_coef:
+            self.delivery_coef = self.invoice.brandgroup.get_settings()[1]
+
+        self.delivery = None
+        if self.delivery_coef and self.weight and self.client:
+            self.delivery = self.delivery_coef * self.weight
+
+        if self.delivery and self.quantity:
+            self.total_cost = self.delivery * self.quantity
+
+        super(Package, self).save(*args, **kwargs)
+
 # ----------------------------------------------------------
+
 
 class ClientGroupManager(models.Manager):
     def get_default(self):

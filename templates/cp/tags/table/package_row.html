@@ -1,0 +1,55 @@
+{% load cp_tags %}
+  {% if 'ponumber' in staff_fields %}{% table_td p 'description' edit_mode 'editDescriptionPackage' 1 'package_' %}{% endif %}
+  {% if 'brandgroup' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'area' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'brand' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'part_number' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'comment_customer' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'comment_supplier' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'created' in staff_fields %}<td id="created_at_package_row_{{ p.id }}" align="center">
+  <div id="created_at_package_display_{{ p.id }}">
+  {{ p.created_at|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
+  </div>
+  </td>{% endif %}
+  {% if 'received_office_at' in staff_fields %}<td id="received_at_row_{{ p.id }}" align="center">
+  <div id="received_at_display_{{ p.id }}">
+  {{ p.received_at|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
+  </div>
+  </td>{% endif %}
+  {% if 'quantity' in staff_fields %}{% table_td p 'quantity' edit_mode 'editQuantityPackage' 1 'package_' %}{% endif %}
+  {% if 'price_invoice' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'total_w_ship' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'part_number_superseded' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'manager' in staff_fields %}{% table_td p 'manager' 0 '' %}{% endif %}
+  {% if 'client' in staff_fields %}<td>{{ p.client|default:"" }}</td>{% endif %}
+  {% if 'description_ru' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'description_en' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'price_base' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'weight' in staff_fields %}{% table_td p 'weight' edit_mode 'editWeightPackage' 1 'package_' %}{% endif %}
+  {% if 'delivery' in staff_fields %}{% table_td p 'delivery' 0 '' 0 %}{% endif %}
+  {% if 'price_sale' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'price_discount' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'cost' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'total_cost' in staff_fields %}{% table_td p 'total_cost' 0 '' %}{% endif %}
+  {% if 'invoice_code' in staff_fields %}{% table_td p 'invoice' 0 '' %}{% endif %}
+  {% if 'status' in staff_fields %}
+  <td>
+      {% for opt in status_options_package %}
+        {% ifequal opt.value p.status %}{{ opt.option|lower }}{% endifequal %}
+      {% endfor %}
+      {% if edit_mode %}
+        <div style="float: right;">
+          <a class="delete_link" title="Удалить упаковку" style="margin-right: 3px" href="javascript:void(0);" onclick="removePackage({{ p.id }});"></a>
+        </div>
+      {% endif %}
+  </td>
+  {% endif %}
+  {% if 'issued_at' in staff_fields %}
+    <td id="issued_at_row_{{ i.id }}" align="center">
+      <div id="issued_at_display_{{ i.id }}">
+      {{ i.issued_at|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
+      </div>
+    </td>
+  {% endif %}
+</tr>
+

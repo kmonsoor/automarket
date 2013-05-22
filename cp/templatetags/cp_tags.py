@@ -2,6 +2,7 @@
 
 from django import template
 from data.models import OrderedItem, Brand
+from django.core.urlresolvers import reverse
 register = template.Library()
 
 @register.inclusion_tag('cp/items_by_brandgroup.html')
@@ -25,7 +26,7 @@ def table_header_sort(context, headers):
 
 
 @register.inclusion_tag("cp/tags/table/td.html", takes_context=True)
-def table_td(context, item, field_name, editable, jscallback, show_if_failed=1):
+def table_td(context, item, field_name, editable, jscallback, show_if_failed=1, prefix=""):
 
     value = getattr(item, field_name)
 
@@ -41,6 +42,13 @@ def table_td(context, item, field_name, editable, jscallback, show_if_failed=1):
         'jscallback': jscallback,
         'value': value,
         #'class_line': class_line,
-        'show_if_failed': show_if_failed
+        'show_if_failed': show_if_failed,
+        'prefix': prefix,
     }
 
+
+@register.simple_tag
+def navactive(request, urls):
+    if request.path in (reverse(url) for url in urls.split()):
+        return "menu-active"
+    return ""

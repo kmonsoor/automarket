@@ -1,0 +1,194 @@
+{% extends 'cp/index.html' %}
+{% load cp_tags %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ MEDIA_URL }}js/mootools.js"></script>
+<script type="text/javascript" src="{{ MEDIA_URL }}js/mootools/dynamicforms.js"></script>
+<script type="text/javascript" src="{{ MEDIA_URL }}js/jquery-ui-1.8.7/ui/jquery-ui.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}js/jquery-ui-1.8.7/themes/base/jquery-ui.css" />
+<script type="text/javascript">
+    var PageForm = Form.extend({
+        initialize: function(value) {
+        this.parent({{ package_template|safe }}, value);
+        this.fieldset = new Element('fieldset');
+        this.fieldset.setProperty('class', 'module aligned');
+        this.fieldset.innerHTML = this.html;
+        $('package-forms').adopt(this.fieldset);
+        }
+    });
+
+    Window.onDomReady(function() {
+        {% for package_form in package_data %}
+        new PageForm({{ package_form|safe }});
+        {% endfor %}
+    });
+
+    function removePackage(id) {
+        jQuery.ajax({
+            type: 'POST',
+            url: '{% url remove_package %}',
+            async: false,
+            data: {
+                'ids': id,
+            },
+            success: function(response) {
+                if (response.success) {
+                    var $packageRow = jQuery('.row_package_' + id);
+                    $packageRow.hide(300, function(){
+                        $packageRow.remove();
+                        if (!jQuery('.row_package').length)
+                            jQuery('.row_packages_header').remove();
+                    });
+
+                }
+            }
+        });
+    }
+
+    jQuery(function() {
+        var $password = jQuery("#password");
+ 
+        jQuery("#dialog-form").dialog({
+            autoOpen: false,
+            position: 'center',
+            modal: true,
+            title: 'Введите пароль',
+            height: 130,
+            buttons: {
+                "Ok": function() {
+                    if ($password.val()) {
+                        jQuery('#invoice-process-form').append('<input type="hidden" name="password" value="'+ $password.val() +'" />').submit();
+                        jQuery(this).dialog("close");
+                    }
+                    $password.addClass("ui-state-error");
+                },
+                Cancel: function() {
+                    jQuery(this).dialog("close");
+                }
+            },
+            open: function() {
+                jQuery("#password").val('');
+                jQuery("#dialog-form").keypress(function(e) {
+                    if (e.keyCode == jQuery.ui.keyCode.ENTER) {
+                        jQuery(this).parent().find("button:eq(0)").trigger("click");
+                        return false;
+                    }
+                });
+            },
+            close: function(event, ui) {
+                jQuery("#password").val('');
+            }
+        });
+    });
+
+    function openInvoice() {
+        jQuery("#dialog-form").dialog("open");
+    }
+
+    function closeInvoice() {
+        jQuery("#dialog-form").dialog("open");
+    }
+</script>
+<style>
+    .ui-widget-header {
+        background: #417690;
+    }
+    .ui-button-text-only .ui-button-text {
+        padding: 3px 10px;
+    }
+    .ui-dialog-title {
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="dialog-form">
+  <form>
+        <input type="password" name="password" id="password" value="" class="text ui-widget-content ui-corner-all" style="width: 267px;" />
+  </form>
+</div>
+<h3>{{ invoice.code }} {{ invoice.received_at|date:"d.m.Y"|default:"---" }} {{ invoice.get_status_display }}</h3><br/>
+<div class="" id="changelist">
+    <form method="{{ filter.method }}" action="{% url invoice invoice.id %}{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
+        <input type="hidden" name="qs_filter" value="1">
+        <input type="submit" value="Фильтр">
+        <input type="submit" name="qs_filter_clear" value="Очистить">
+        &nbsp;
+        Количество записей на странице:
+        <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
+            <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+            <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+            <option value="all"{% ifequal items_per_page 10000 %} selected {% endifequal %}>Все</option>
+        </select><br/><br/>
+        <div class="module" id="changelist">
+            <table>
+                <thead>
+                    <tr>{% table_header_sort headers %}</tr>
+                    <tr {% if filter.is_set %}style="border: solid 2px green;"{% endif %}>
+                        {% for f in list_filters %}
+                            <td>{% ifequal f.name 'ponumber' %}<input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" size="2">{% endifequal %}
+                            {{ f }}</td>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <style>table td {padding:1px 5px; vertical-align: middle;}</style>
+                    {% for i in items %}
+                      <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}">
+                        {% include "cp/tags/table/row.html" %}
+                      </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan={{ headers|length }}>{% include "paginator.html" %}</td>
+                    </tr>
+                    {% if packages %}
+                        <tr class="row_packages_header">
+                            <td colspan={{ headers|length }} style="font-weight: bold; padding: 5px; color:#666; font-size:11px; background:#e1e1e1 url(/media/img/admin/nav-bg.gif) top left repeat-x; border-left:1px solid #ddd; border-bottom:1px solid #ddd;">Упаковки</td>
+                        </tr>
+                        {% for p in packages %}
+                            <tr class="{% cycle row1,row2 %} row_package_{{ p.id }} row_package">
+                                {% include "cp/tags/table/package_row.html" %}
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                    <tr class="alt">
+                      {% for val in total_row %}
+                          <td>
+                          {% if forloop.first %}
+                            {% ifequal val 'Итого:' %}<b>{{ val }}</b>{% else %}{{ val|floatformat:2 }}{% endifequal %}
+                          {% else %}
+                            {% if val %}{{ val|floatformat:2 }}{% else %}{% endif %}
+                          {% endif %}
+                          </td>
+                      {% endfor %}
+                  </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+    <form action="" method="post" id="invoice-process-form">
+        {% if edit_mode %}
+            <br/>
+            <p align="right">
+                <a class="add_link" href="javascript:void(0)" onclick="new PageForm(); jQuery('.save_packages_block').show();">Добавить упаковку</a>
+            </p>
+            <div id="package-forms"></div>
+            <div class="save_packages_block" style="text-align: right; {% if form_packages_is_valid %}display: none;{% endif %}">
+                <input type="submit" name="save_package" value="Сохранить" />
+            </div>
+            <br/>
+            <div class="submit-row">
+                <input type="submit" onclick="closeInvoice(); return false;" name="close_invoice_button" value="Закрыть инвойс" />
+                <input type="hidden" name="close_invoice" value="Закрыть инвойс" />
+            </div>
+        {% else %}
+            <div class="submit-row">
+                <input type="submit" onclick="openInvoice(); return false;" name="open_invoice_button" value="Открыть инвойс" />
+                <input type="hidden" name="open_invoice" value="Открыть инвойс" />
+            </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

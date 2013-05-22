@@ -19,7 +19,6 @@ class SavePriceFileBase(Task):
     @transaction.commit_manually
     def run(self, price):
         self.presave_parts(price)
-        transaction.commit()
 
         f = price.price
         if not f:

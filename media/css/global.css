@@ -5,6 +5,9 @@ a:link, a:visited { color: #5b80b2; text-decoration:none; }
 a:hover { color: #036; }
 a img { border:none; }
 
+/* MENU */
+.menu-active { font-weight: bold; }
+
 /* GLOBAL DEFAULTS */
 p, ol, ul, dl { margin:.2em 0 .8em 0; }
 p { padding:0; line-height:140%; }

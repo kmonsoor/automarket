@@ -7,6 +7,7 @@ import os
 import cjson
 import sys
 import optparse
+import datetime
 
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
@@ -14,7 +15,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 
-from data.models import OrderedItem
+from data.models import OrderedItem, Invoice
 
 
 NO_REFUSED = 'no'
@@ -58,12 +59,13 @@ class Command(BaseCommand):
 
         logger.info("Found %s po's for update. %r." % (len(ponumbers), ponumbers))
 
+        new_invoices = []
         big_price_invoice_orders = []
 
         for po in ponumbers:
             orders = self.get_orders(po)
             if isinstance(orders, list) and len(orders) > 0:
-                for _order in self.get_orders(po):
+                for _order in orders:
                     try:
                         order_id = int(_order['customer_id'].split('\\/')[0])
                     except (ValueError, TypeError, IndexError):
@@ -113,6 +115,7 @@ class Command(BaseCommand):
                             if invoice_list:
                                 invoice = self.get_invoice(order, invoice_list)
                                 order.invoice_code = invoice
+                                new_invoices.append((invoice, order.brandgroup))
 
                         if part_number_superseded:
                             order.part_number_superseded = part_number_superseded
@@ -187,6 +190,16 @@ class Command(BaseCommand):
                 for x in orders:
                     x.big_price_invoice_order_mail_sent = True
                     x.save()
+
+        for invoice_code, brandgroup in new_invoices:
+            i, _ = Invoice.objects.get_or_create(
+                invoice_code=invoice_code,
+                brandgroup=brandgroup
+            )
+            if not i.received_at:
+                i.received_at = datetime.datetime.now()
+                i.save()
+            i.calculate_status()
 
         logger.info('Finish update orders from automototrade.com')
         sys.exit()

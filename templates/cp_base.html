@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load cp_tags %}
 {% block global_title %}Менеджемент{% endblock %}
 
 {% block extrahead %}
@@ -11,9 +12,11 @@
 
 {% block global_menu %}
     <ul>
-        <li><a href="/cp/order/">Новый заказ</a></li>
-        <li><a href="/cp/">В виде таблицы</a></li>
-        <li><a href="/cp/groups/">По группам</a></li>
+        <li><a class="{% navactive request 'order' %}" href="{% url order %}">Новый заказ</a></li>
+        <li><a class="{% navactive request 'cp_index' %}" href="{% url cp_index %}">В виде таблицы</a></li>
+        <li><a class="{% navactive request 'groups' %}" href="{% url groups %}">По группам</a></li>
+        <li><a class="{% navactive request 'invoices' %}" href="{% url invoices %}">Инвойсы</a></li>
+        <li><a class="{% navactive request 'issues' %}" href="{% url issues %}">Отгрузки</a></li>
         <li>|</li>
         <li><a href="/admin/">Администрирование</a></li>
     </ul>

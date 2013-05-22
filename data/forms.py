@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from django import forms
-from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES, Area
+from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES, Area, INVOICE_STATUSES
 
 STAFF_FIELD_LIST = (
     (u'PO', 'ponumber', 'ponumber', 'ponumber'),
@@ -30,6 +30,7 @@ STAFF_FIELD_LIST = (
     (u'TOTAL', 'total_cost', 'total_cost', None),
     (u'Инвойс', 'invoice_code', 'invoice_code', 'invoice_code__contains'),
     (u'Статус', 'status', 'status', 'status'),
+    (u'Отгрузка', 'issued_at', 'issued_at', None),
 )
 
 class OrderedItemsFilterForm(forms.Form):
@@ -53,6 +54,26 @@ class OrderedItemsFilterForm(forms.Form):
             widget=forms.Select(attrs={'class':'qs_filter'}))
 
 
+INVOICES_FIELD_LIST = (
+    (u'Код инвойса', 'code', 'code', 'code__contains'),
+    (u'Дата получения', 'received_at', 'received_at', None),
+    (u'Состояние', 'status', 'status', 'status'),
+)
+
+
+class InvoicesFilterForm(forms.Form):
+    code__contains = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'qs_filter'})
+    )
+
+    status = forms.ChoiceField(
+        required=False,
+        choices=(('', u'Отображать все'),) + INVOICE_STATUSES,
+        widget=forms.Select(attrs={'class': 'qs_filter'})
+    )
+
+
 CLIENT_FIELD_LIST = [
     (u'PO', 'ponumber', 'po_verbose', u"%s", "ponumber"),
     (u'Направление', 'brandgroup__title', 'brandgroup', u"%s", "brandgroup__title__contains"),
@@ -72,6 +93,7 @@ CLIENT_FIELD_LIST = [
     (u'TOTAL', None, 'total_cost', u"%s", None),
     (u'Инвойс', 'invoice_code', 'invoice_code', u"%s", "invoice_code__contains"),
     (u'Статус', 'status', 'status_display', u"%s", "status"),
+    (u'Отгрузка', 'issued_at', 'issued_at', None),
 ]
 
 class OrderedItemForm(forms.Form):
@@ -96,6 +118,12 @@ class OrderedItemForm(forms.Form):
             return value
         else:
             return self.cleaned_data['price']
+
+
+class PackageForm(forms.Form):
+    description = forms.CharField(required=False)
+    weight = forms.FloatField(required=False)
+    quantity = forms.IntegerField(required=False)
 
 
 class OrderedItemInlineForm(forms.ModelForm):

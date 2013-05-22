@@ -8,6 +8,28 @@ var caller = 'index';
 var brands = [
     {{ brands|safe }}
     ];
+function toggleSelectAllRows(selectAllRowsInput) {
+  var selectRows = jQuery('.select_row');
+  if(jQuery(selectAllRowsInput).attr('checked')) {
+    selectRows.attr('checked', true);
+  }
+  else {
+    selectRows.attr('checked', false);
+  }
+}
+function selectRowClick() {
+  var selectAllRowsInput = jQuery('input[name=select_all_rows]');
+  if (jQuery('.select_row').length == jQuery('.select_row:checked').length) {
+    selectAllRowsInput.attr('checked', true);
+  }
+  else {
+    selectAllRowsInput.attr('checked', false);
+  }
+
+}
+jQuery(function(){
+  jQuery('.select_row').click(function(){ selectRowClick(); })
+});
 </script>
 
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
@@ -59,24 +81,26 @@ tr.alt td {
 
 {% block content %}
 <div class="" id="changelist">
-<form method="{{ filter.method }}" action="/cp/{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
-<a href="/cp/export_order/">Экспорт</a><br/><br/>
+<form method="{{ filter.method }}" action="{{ request.path }}">
+{% block export_link %}<a href="/cp/export_order/">Экспорт</a><br/>{% endblock %}<br/>
 <input type="hidden" name="qs_filter" value="1">
 <input type="submit" value="Фильтр">
 <input type="submit" name="qs_filter_clear" value="Очистить">
+&nbsp;
 Количество записей на странице:
 <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
-<option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
 <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
 <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+<option value="200"{% ifequal items_per_page 200 %} selected {% endifequal %}>200</option>
 </select>
-
+<br/><br/>
 <div class="module" id="changelist">
 
 <table>
 <thead>
-<tr>{% table_header_sort headers %}</tr>
+<tr>{% if issues_mode %}<td>&nbsp;</td>{% endif %}{% table_header_sort headers %}</tr>
 <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+{% if issues_mode %}<td><input type="checkbox" onclick="toggleSelectAllRows(this);" name="select_all_rows" /></td>{% endif %}
 {% for f in list_filters %}
 <td>{% ifequal f.name 'ponumber' %}<input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" size="2">{% endifequal %}
 {{ f }}</td>
@@ -88,23 +112,27 @@ tr.alt td {
     table td {padding:1px 5px; vertical-align: middle;}
 </style>
 {% for i in items %}
-  <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}">
+  <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}" class="order_row">
   {% include "cp/tags/table/row.html" %}
   </tr>
 {% endfor %}
 {% if total_row %}
   <tr class="alt">
+      {% if issues_mode %}<td>&nbsp;</td>{% endif %}
       {% for val in total_row %}
           <td>
           {% if forloop.first %}
-            {% ifequal val 'Итого:' %}<b>{{ val }}</b>{% else %}{{ val|floatformat:3 }}{% endifequal %}
+            {% ifequal val 'Итого:' %}<b>{{ val }}</b>{% else %}{{ val|floatformat:2 }}{% endifequal %}
           {% else %}
-            {% if val %}{{ val|floatformat:3 }}{% else %}{% endif %}
+            {% if val %}{{ val|floatformat:2 }}{% else %}{% endif %}
           {% endif %}
           </td>
       {% endfor %}
   </tr>
 {% endif %}
+<tr>
+    <td colspan={{ headers|length|add:"1" }}>{% include "paginator.html" %}</td>
+</tr>
 </tbody>
 </table>
 
@@ -112,7 +140,6 @@ tr.alt td {
 
 </form>
 
-{% include "paginator.html" %}
 </div>
 
 {% endblock %}

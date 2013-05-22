@@ -4,8 +4,12 @@ import mechanize
 import cjson
 import pyExcelerator as xl
 from datetime import datetime
+import string
+import random
+import copy
 
 from django.core.mail import send_mail
+from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -22,10 +26,13 @@ from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from lib import xlsreader
 
-from cp.forms import OrderItemForm, ImportXlsForm
+from cp.forms import OrderItemForm, ImportXlsForm, PackageItemForm
 from client.forms import SearchForm
-from data.models import BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES
-from data.forms import OrderedItemsFilterForm, OrderedItemForm, STAFF_FIELD_LIST
+from data.models import BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES, \
+    Invoice, Package, INVOICE_STATUSES, INVOICE_STATUS_IN_DELIVERY, \
+    INVOICE_STATUS_RECEIVED, INVOICE_STATUS_CLOSED
+from data.forms import OrderedItemsFilterForm, OrderedItemForm, \
+    STAFF_FIELD_LIST, InvoicesFilterForm, INVOICES_FIELD_LIST, PackageForm
 from common.views import PartSearch
 
 import logging
@@ -71,6 +78,619 @@ def get_status_options():
     return (status_options_str, status_options)
 
 
+def get_status_options_package():
+    return [{'value': i[0], 'option': i[1]} for i in INVOICE_STATUSES]
+
+
+@login_required
+@render_to('cp/invoices.html')
+def invoices(request):
+    context = {}
+
+    items_per_page = request.GET.get('items_per_page', None)
+    period = request.GET.get('period', None)
+
+    if not items_per_page:
+        items_per_page = request.session.get('cp_invoices_items_per_page', None)
+    else:
+        request.session['cp_invoices_items_per_page'] = items_per_page
+        request.session.modified = True
+
+    if not items_per_page:
+        items_per_page = 50
+    elif items_per_page == 'all':
+        items_per_page = 10000
+
+    if not period:
+        period = request.session.get('cp_invoices_period', None)
+    else:
+        request.session['cp_invoices_period'] = period
+        request.session.modified = True
+
+    if not period or period not in ('m', 'y', 'a'):
+        period = 'm'
+
+    items_per_page = int(items_per_page)
+    context['items_per_page'] = items_per_page
+
+    _filter = QSFilter(request, InvoicesFilterForm)
+    context['filter'] = _filter
+
+    LIST_HEADERS = [(x[0], x[1]) for x in INVOICES_FIELD_LIST]
+
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
+
+    list_filters = []
+    for x in INVOICES_FIELD_LIST:
+        try:
+            form_field = _filter.form.__getitem__(x[3])
+            list_filters.append(form_field)
+        except Exception:
+            list_filters.append("")
+    context['list_filters'] = list_filters
+
+    order_by = '-received_at'
+    if order_field:
+        if order_direction == 'desc':
+            order_direction = '-'
+        else:
+            order_direction = ''
+        order_by = order_direction + LIST_HEADERS[int(order_field)][1]
+
+    context['headers'] = list(sort_headers.headers())
+
+    qs = Invoice.objects.select_related().filter(**_filter.get_filters())
+
+    if period:
+        from dateutil.relativedelta import relativedelta
+        now = datetime.now()
+        rated_period = None
+        if period == 'm':
+            rated_period = now - relativedelta(months=+6)
+        elif period == 'y':
+            rated_period = now - relativedelta(year=+1)
+        elif period == 'a':
+            pass
+        if rated_period:
+            qs = qs.filter(received_at__gte=rated_period)
+    context['period'] = period
+
+    if order_by:
+        qs = qs.order_by(order_by)
+
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+
+    context['items'] = paginator.get_page_items()
+    context['paginator'] = paginator
+
+    return context
+
+
+@login_required
+@ajax_request
+def remove_package(request):
+    try:
+        ids = [int(x) for x in request.POST.get('ids').split(',')]
+        if not bool(len(ids)):
+            raise ValueError
+    except:
+        return {'success': False, 'error': 'invalid data'}
+    else:
+        Package.objects.filter(id__in=ids).delete()
+        return {'success': True}
+
+
+def _random():
+    yield "".join([random.choice(string.letters) for x in xrange(1, 5)])
+
+
+@login_required
+@render_to('cp/invoice.html')
+def invoice(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+
+    def _redirect():
+        return HttpResponseRedirect(
+            "%s?%s=%s" % (
+                reverse("invoice", args=[invoice.id]),
+                _random().next(), _random().next(),
+            )
+        )
+
+    context = {}
+    context['invoice'] = invoice
+
+    items_per_page = request.GET.get('items_per_page', None)
+    if not items_per_page:
+        items_per_page = request.session.get('cp_invoice_items_per_page', None)
+    else:
+        request.session['cp_invoice_items_per_page'] = items_per_page
+        request.session.modified = True
+
+    if not items_per_page:
+        items_per_page = 50
+    elif items_per_page == 'all':
+        items_per_page = 10000
+
+    items_per_page = int(items_per_page)
+    context['items_per_page'] = items_per_page
+
+    _filter = QSFilter(request, OrderedItemsFilterForm)
+    context['filter'] = _filter
+
+    try:
+        user_fields = request.user.get_profile().get_order_fields()
+    except Exception:
+        user_fields = None
+    if user_fields:
+        STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+    else:
+        STAFF_FIELDS = STAFF_FIELD_LIST
+    context['staff_fields'] = [x[2] for x in STAFF_FIELDS]
+    LIST_HEADERS = [(x[0], x[1]) for x in STAFF_FIELDS]
+
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
+
+    list_filters = []
+    for x in STAFF_FIELDS:
+        try:
+            form_field = _filter.form.__getitem__(x[3])
+            list_filters.append(form_field)
+        except Exception:
+            list_filters.append("")
+    context['list_filters'] = list_filters
+
+    order_by = '-created'
+    if order_field:
+        if order_direction == 'desc':
+            order_direction = '-'
+        else:
+            order_direction = ''
+        order_by = order_direction + LIST_HEADERS[int(order_field)][1]
+
+    context['headers'] = list(sort_headers.headers())
+
+    order_statuses = list(
+        OrderedItem.objects
+        .filter(invoice_code=invoice.code)
+        .values_list('status', flat=True)
+    )
+
+    invoice.calculate_status()
+    edit_mode = 1
+    if invoice.status in (INVOICE_STATUS_CLOSED,):
+        edit_mode = 0
+    context['edit_mode'] = edit_mode
+
+    context['packages'] = Package.objects.filter(invoice=invoice).order_by('-created_at')
+
+    qs = OrderedItem.objects.select_related()\
+        .filter(**_filter.get_filters())\
+        .filter(invoice_code=invoice.code)
+
+    empty = {'weight': 0, 'delivery': 0, 'total_cost': 0, 'price_sale': 0}
+    qs_total_items = qs.values('weight', 'delivery', 'price_sale', 'total_cost')
+    if len(qs_total_items) > 0:
+        qs_total_items = dict(
+            (key, sum(d[key] or 0 for d in qs_total_items))
+            for key in qs_total_items[0]
+        )
+    else:
+        qs_total_items = copy.deepcopy(empty)
+
+    qs_total_packages = Package.objects\
+        .filter(invoice=invoice)\
+        .values('weight', 'delivery', 'total_cost')
+
+    if len(qs_total_packages) > 0:
+        qs_total_packages = dict(
+            (key, sum(d[key] or 0 for d in qs_total_packages))
+            for key in qs_total_packages[0]
+        )
+        qs_total_packages['price_sale'] = 0
+    else:
+        qs_total_packages = copy.deepcopy(empty)
+
+    total = [qs_total_items, qs_total_packages]
+    total = dict((key, sum(d[key] or 0 for d in total)) for key in total[0])
+
+    total_row = []
+    for f in STAFF_FIELDS:
+        field_name = f[2].split("__")[0]
+        if field_name[:2] == "po":
+            total_row.append(u"Итого:")
+        else:
+            total_row.append(total.get(field_name, u""))
+    context['total_row'] = total_row
+
+    if order_by:
+        qs = qs.order_by(order_by)
+
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+
+    context['status_options_str'], context['status_options'] = get_status_options()
+    context['status_options_package'] = get_status_options_package()
+    context['items'] = paginator.get_page_items()
+    context['paginator'] = paginator
+    context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
+
+    package_data = []
+    form_packages_is_valid = True
+    if request.method == 'POST':
+
+        if 'save_package' in request.POST:
+            package_forms = PackageItemForm.get_forms(request)
+            package_data = [package_form.render_js('from_template') for package_form in package_forms]
+            if package_forms.are_valid():
+                for form in package_forms:
+                    data = form.cleaned_data
+                    data['manager'] = request.user
+                    data['invoice'] = invoice
+                    Package(**data).save()
+                messages.add_message(request, messages.SUCCESS, u"Упаковка добавлена.")
+                return _redirect()
+            form_packages_is_valid = False
+
+        elif 'close_invoice' in request.POST:
+            if not request.user.check_password(request.POST.get('password')):
+                msg = u"Неверный пароль."
+                messages.add_message(request, messages.ERROR, msg)
+                return _redirect()
+
+            statuses_to_close = ('received_office', 'not_obtained_from_supplier', 'issued')
+            if not all(map(lambda x: x in statuses_to_close, order_statuses)):
+                msg = u"Вы не можете закрыть инвойс. Не все позиции получены."
+                messages.add_message(request, messages.ERROR, msg)
+                return _redirect()
+
+            invoice.status = INVOICE_STATUS_CLOSED
+            invoice.closed_at = datetime.now()
+            invoice.save()
+            messages.add_message(request, messages.SUCCESS, u"Инвойс закрыт.")
+            return _redirect()
+
+        elif 'open_invoice' in request.POST:
+            if not request.user.check_password(request.POST.get('password')):
+                msg = u"Неверный пароль."
+                messages.add_message(request, messages.ERROR, msg)
+                return _redirect()
+
+            if invoice.status == INVOICE_STATUS_CLOSED:
+                invoice.status = INVOICE_STATUS_RECEIVED
+                invoice.save()
+                messages.add_message(request, messages.SUCCESS, u"Инвойс открыт.")
+                return _redirect()
+
+    context['package_template'] = PackageItemForm().render_js('from_template')
+    context['package_data'] = package_data
+    context['form_packages_is_valid'] = form_packages_is_valid
+
+    return context
+
+
+@login_required
+@render_to('cp/issues.html')
+def issues(request):
+    def _redirect():
+        return HttpResponseRedirect(
+            "%s?%s=%s" % (
+                reverse("issues"),
+                _random().next(), _random().next(),
+            )
+        )
+
+    if request.method == 'POST':
+        if request.POST.get('issued'):
+            try:
+                order_ids = [int(x) for x in request.POST.get('issued_orders').split(',')]
+            except:
+                msg = u"Невалидные данные"
+                messages.add_message(request, messages.ERROR, msg)
+                return _redirect()
+            else:
+                orders = list(OrderedItem.objects.filter(id__in=order_ids))
+                for order in orders:
+                    order.status = 'issued'
+                    order.issued_at = datetime.now()
+                    order.save()
+                msg = u"Успешно отгружены"
+                messages.add_message(request, messages.SUCCESS, msg)
+                return _redirect()
+    context = {}
+    current_page = request.GET.get('page', 1)
+    items_per_page = request.GET.get('items_per_page', None)
+
+    if not items_per_page:
+        items_per_page = request.session.get('cp_issues_items_per_page', None)
+    else:
+        request.session['cp_issues_items_per_page'] = items_per_page
+        request.session.modified = True
+    if not items_per_page:
+        items_per_page = 50
+    items_per_page = int(items_per_page)
+
+    context['items_per_page'] = items_per_page
+    _filter = QSFilter(request, OrderedItemsFilterForm)
+    if _filter.modified:
+        current_page = 1
+    context['filter'] = _filter
+
+    try:
+        user_fields = request.user.get_profile().get_order_fields()
+    except Exception:
+        user_fields = None
+    if user_fields:
+        STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+    else:
+        STAFF_FIELDS = STAFF_FIELD_LIST
+    context['staff_fields'] = [x[2] for x in STAFF_FIELDS]
+    LIST_HEADERS = [(x[0], x[1]) for x in STAFF_FIELDS]
+
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
+
+    list_filters = []
+    for x in STAFF_FIELDS:
+        try:
+            form_field = _filter.form.__getitem__(x[3])
+            list_filters.append(form_field)
+        except Exception:
+            list_filters.append("")
+    context['list_filters'] = list_filters
+
+    order_by = '-created'
+    if order_field:
+        if order_direction == 'desc':
+            order_direction = '-'
+        else:
+            order_direction = ''
+        order_by = order_direction + LIST_HEADERS[int(order_field)][1]
+
+    context['headers'] = list(sort_headers.headers())
+
+    qs = OrderedItem.objects.select_related()\
+        .filter(**_filter.get_filters())\
+        .filter(status__in=('received_office',))
+
+    # calculate totals by filter
+    total_row = []
+    if _filter.is_set:
+        from django.db import connection
+
+        td = "U0"
+        q, params = qs._as_sql(connection)
+        from_clause = q.split("FROM")[1]
+
+        where = from_clause.split("WHERE")
+        if len(where) > 1:
+            from_clause = where[0]
+            where = [where[1]]
+        else:
+            where = []
+        where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
+        where = "WHERE %s" % "AND ".join(where)
+
+        sql = \
+        """
+        SELECT
+            SUM(%(p)s.total_cost),
+            SUM(%(p)s.weight*%(p)s.quantity),
+            SUM(%(p)s.delivery),
+            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
+            SUM(%(p)s.price_invoice*%(p)s.quantity)
+            FROM %(from)s %(where)s
+        """ % {'p': td, 'from': from_clause, 'where': where}
+        cursor = connection.cursor()
+        cursor.execute(sql, params)
+        res = cursor.fetchall()
+        if len(res) > 0:
+            total = dict(zip( \
+                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), \
+                res[0]))
+
+            for f in STAFF_FIELDS:
+                field_name = f[2].split("__")[0]
+                if field_name[:2] == "po":
+                    total_row.append(u"Итого:")
+                else:
+                    total_row.append(total.get(field_name, u""))
+
+    if order_by:
+        qs = qs.order_by(order_by)
+
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+
+    # grouping parents orders
+    if not _filter.is_set:
+        items_list = list(paginator.get_page_items())
+        items_ids = list(paginator.get_page_items().values_list('id', flat=True))
+        for order in items_list:
+            if order.parent:
+                del items_list[items_list.index(order)]
+        has_parent_list = list(OrderedItem.objects.filter(parent__id__in=items_ids))
+        for order in has_parent_list:
+            index = items_list.index(order.parent)
+            items_list.insert(index, order)
+        paginator.page.object_list = items_list
+
+    #paginator.set_page(current_page)
+    context['status_options_str'], context['status_options'] = get_status_options()
+    context['items'] = paginator.get_page_items()
+    context['paginator'] = paginator
+    context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
+    context['total_row'] = total_row
+    context['edit_mode'] = 1
+    context['issues_mode'] = 1
+    return context
+
+
+@login_required
+@render_to('cp/issues_client.html')
+def issues_client(request, client_id):
+    client = get_object_or_404(User, id=client_id)
+
+    def _redirect():
+        return HttpResponseRedirect(
+            "%s?%s=%s" % (
+                reverse("issues_client", args=[client_id]),
+                _random().next(), _random().next(),
+            )
+        )
+
+    if request.method == 'POST':
+        if request.POST.get('issued'):
+            try:
+                order_ids = [int(x) for x in request.POST.get('issued_orders').split(',')]
+            except:
+                msg = u"Невалидные данные"
+                messages.add_message(request, messages.ERROR, msg)
+                return _redirect()
+            else:
+                orders = list(OrderedItem.objects.filter(id__in=order_ids))
+                for order in orders:
+                    order.status = 'issued'
+                    order.issued_at = datetime.now()
+                    order.save()
+                msg = u"Успешно отгружены"
+                messages.add_message(request, messages.SUCCESS, msg)
+                return _redirect()
+
+    context = {}
+    current_page = request.GET.get('page', 1)
+    items_per_page = request.GET.get('items_per_page', None)
+
+    if not items_per_page:
+        items_per_page = request.session.get('cp_issues_client_items_per_page', None)
+    else:
+        request.session['cp_issues_client_items_per_page'] = items_per_page
+        request.session.modified = True
+    if not items_per_page:
+        items_per_page = 50
+    items_per_page = int(items_per_page)
+
+    context['items_per_page'] = items_per_page
+    _filter = QSFilter(request, OrderedItemsFilterForm)
+    if _filter.modified:
+        current_page = 1
+    context['filter'] = _filter
+
+    try:
+        user_fields = request.user.get_profile().get_order_fields()
+    except Exception:
+        user_fields = None
+    if user_fields:
+        STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+    else:
+        STAFF_FIELDS = STAFF_FIELD_LIST
+    context['staff_fields'] = [x[2] for x in STAFF_FIELDS]
+    LIST_HEADERS = [(x[0], x[1]) for x in STAFF_FIELDS]
+
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
+
+    list_filters = []
+    for x in STAFF_FIELDS:
+        try:
+            form_field = _filter.form.__getitem__(x[3])
+            list_filters.append(form_field)
+        except Exception:
+            list_filters.append("")
+    context['list_filters'] = list_filters
+
+    order_by = '-created'
+    if order_field:
+        if order_direction == 'desc':
+            order_direction = '-'
+        else:
+            order_direction = ''
+        order_by = order_direction + LIST_HEADERS[int(order_field)][1]
+
+    context['headers'] = list(sort_headers.headers())
+
+    qs = OrderedItem.objects.select_related()\
+        .filter(**_filter.get_filters())\
+        .filter(status__in=('received_office',))\
+        .filter(client__id=client_id)
+
+    # calculate totals by filter
+    total_row = []
+    if _filter.is_set:
+        from django.db import connection
+
+        td = "U0"
+        q, params = qs._as_sql(connection)
+        from_clause = q.split("FROM")[1]
+
+        where = from_clause.split("WHERE")
+        if len(where) > 1:
+            from_clause = where[0]
+            where = [where[1]]
+        else:
+            where = []
+        where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
+        where = "WHERE %s" % "AND ".join(where)
+
+        sql = \
+        """
+        SELECT
+            SUM(%(p)s.total_cost),
+            SUM(%(p)s.weight*%(p)s.quantity),
+            SUM(%(p)s.delivery),
+            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
+            SUM(%(p)s.price_invoice*%(p)s.quantity)
+            FROM %(from)s %(where)s
+        """ % {'p': td, 'from': from_clause, 'where': where}
+        cursor = connection.cursor()
+        cursor.execute(sql, params)
+        res = cursor.fetchall()
+        if len(res) > 0:
+            total = dict(zip( \
+                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), \
+                res[0]))
+
+            for f in STAFF_FIELDS:
+                field_name = f[2].split("__")[0]
+                if field_name[:2] == "po":
+                    total_row.append(u"Итого:")
+                else:
+                    total_row.append(total.get(field_name, u""))
+
+    if order_by:
+        qs = qs.order_by(order_by)
+
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+
+    # grouping parents orders
+    if not _filter.is_set:
+        items_list = list(paginator.get_page_items())
+        items_ids = list(paginator.get_page_items().values_list('id', flat=True))
+        for order in items_list:
+            if order.parent:
+                del items_list[items_list.index(order)]
+        has_parent_list = list(OrderedItem.objects.filter(parent__id__in=items_ids))
+        for order in has_parent_list:
+            index = items_list.index(order.parent)
+            items_list.insert(index, order)
+        paginator.page.object_list = items_list
+
+    #paginator.set_page(current_page)
+    context['status_options_str'], context['status_options'] = get_status_options()
+    context['items'] = paginator.get_page_items()
+    context['paginator'] = paginator
+    context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
+    context['total_row'] = total_row
+    context['edit_mode'] = 1
+    context['issues_mode'] = 1
+    context['client'] = client
+    return context
+
+
 @login_required
 @render_to('cp/index.html')
 def index(request):
@@ -83,7 +703,7 @@ def index(request):
         request.session['cp_index_items_per_page'] = items_per_page
         request.session.modified = True
     if not items_per_page:
-        items_per_page = 20
+        items_per_page = 50
     items_per_page = int(items_per_page)
 
     context['items_per_page'] = items_per_page
@@ -195,6 +815,7 @@ def index(request):
     context['paginator'] = paginator
     context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
     context['total_row'] = total_row
+    context['edit_mode'] = 1
     return context
 
 
@@ -406,6 +1027,8 @@ class OrderedItemSaver(object):
             obj.status_modified = datetime.now()
             if value == 'received_office':
                 obj.received_office_at = datetime.now()
+            elif value == 'issued':
+                obj.issued_at = datetime.now()
             obj.save()
         except Exception, e:
             logger.exception("save_status: %r" % e)
@@ -422,12 +1045,43 @@ class OrderedItemSaver(object):
         return obj.invoice_code
 
 
+class PackageSaver(object):
+    error = None
+
+    def save_description(self, obj, value):
+        try:
+            obj.description = value
+            obj.save()
+        except Exception, e:
+            logger.exception("save_package_description: %r" % e)
+            pass
+        return obj.description
+
+    def save_weight(self, obj, value):
+        try:
+            obj.weight = value
+            obj.save()
+        except Exception, e:
+            logger.exception("save_package_weight: %r" % e)
+            pass
+        return obj.weight
+
+    def save_quantity(self, obj, value):
+        try:
+            obj.quantity = value
+            obj.save()
+        except Exception, e:
+            logger.exception("save_package_quantity: %r" % e)
+            pass
+        return obj.quantity
+
+
 @ajax_request
 def position_edit(request, content_type, item_id):
     logger.debug("position_edit called with args: %s, %s" % (content_type, item_id))
-    models = {'ordered_item': OrderedItem}
-    forms = {'ordered_item': OrderedItemForm}
-    savers = {'ordered_item': OrderedItemSaver}
+    models = {'ordered_item': OrderedItem, 'package': Package}
+    forms = {'ordered_item': OrderedItemForm, 'package': PackageForm}
+    savers = {'ordered_item': OrderedItemSaver, 'package': PackageSaver}
     item = get_object_or_404(models[content_type], pk=item_id)
     logger.debug("Item found: %r" % item)
     response = {}
@@ -650,25 +1304,40 @@ def export_selected(request):
 
         sheet = book.add_sheet('Export')
 
-        header = (u'Brand', u'Part Number', u'Описание (русское)', u'Q-ty', u'Customer_id', u'Comment', u'Описание (англ.)')
-        col = 0
-        row = 0
-        for x in header:
-            sheet.write(row, col, x, sub_header_style)
-            col += 1
+        try:
+            user_fields = request.user.get_profile().get_order_fields()
+        except Exception:
+            user_fields = None
+        if user_fields:
+            STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+        else:
+            STAFF_FIELDS = STAFF_FIELD_LIST
 
-        sub_header_style.bold = False
-        row += 1
+        FIELDS = tuple((x[0], x[2]) for x in STAFF_FIELDS)
 
-        for i in items:
-            sheet.write(row, 0, i.brand.title, sub_header_style)
-            sheet.write(row, 1, i.part_number, sub_header_style)
-            sheet.write(row, 2, i.description_ru or '', sub_header_style)
-            sheet.write(row, 3, i.quantity, sub_header_style)
-            sheet.write(row, 4, u'%s %s' % (i.client, i.client_order_id), sub_header_style)
-            sheet.write(row, 5, i.comment_supplier or '', sub_header_style)
-            sheet.write(row, 6, i.description_en or '', sub_header_style)
-            row += 1
+        i = 0
+        curr_line = 0
+        for key, value in FIELDS:
+            sheet.write(curr_line, i, key)
+            i += 1
+        for order in items:
+            i = 0
+            curr_line += 1
+            for key, field_name in FIELDS:
+
+                if field_name == 'ponumber':
+                    value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber or '--')
+                elif field_name == 'status':
+                    value = order.get_status_verbose()
+                else:
+                    value = field_value(order, field_name)
+                try:
+                    sheet.write(curr_line, i, value)
+                    i += 1
+                except AssertionError:
+                    value = unicode(value)
+                    sheet.write(curr_line, i, value)
+                    i += 1
 
         # Save book
         book.save(filename)
@@ -709,25 +1378,40 @@ def export(request, group_id):
 
     sheet = book.add_sheet(brandgroup.title)
 
-    header = (u'Brand', u'Part Number', u'Описание (русское)', u'Q-ty', u'Customer_id', u'Comment', u'Описание (англ.)')
-    col = 0
-    row = 0
-    for x in header:
-        sheet.write(row, col, x, sub_header_style)
-        col += 1
+    try:
+        user_fields = request.user.get_profile().get_order_fields()
+    except Exception:
+        user_fields = None
+    if user_fields:
+        STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+    else:
+        STAFF_FIELDS = STAFF_FIELD_LIST
 
-    sub_header_style.bold = False
-    row += 1
+    FIELDS = tuple((x[0], x[2]) for x in STAFF_FIELDS)
 
-    for i in items:
-        sheet.write(row, 0, i.brand.title, sub_header_style)
-        sheet.write(row, 1, i.part_number, sub_header_style)
-        sheet.write(row, 2, i.description_ru or '', sub_header_style)
-        sheet.write(row, 3, i.quantity, sub_header_style)
-        sheet.write(row, 4, u'%s %s' % (i.client, i.client_order_id), sub_header_style)
-        sheet.write(row, 5, i.comment_supplier or '', sub_header_style)
-        sheet.write(row, 6, i.description_en or '', sub_header_style)
-        row += 1
+    i = 0
+    curr_line = 0
+    for key, value in FIELDS:
+        sheet.write(curr_line, i, key)
+        i += 1
+    for order in items:
+        i = 0
+        curr_line += 1
+        for key, field_name in FIELDS:
+
+            if field_name == 'ponumber':
+                value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber or '--')
+            elif field_name == 'status':
+                value = order.get_status_verbose()
+            else:
+                value = field_value(order, field_name)
+            try:
+                sheet.write(curr_line, i, value)
+                i += 1
+            except AssertionError:
+                value = unicode(value)
+                sheet.write(curr_line, i, value)
+                i += 1
 
     # Save book
     book.save(filename)
@@ -864,15 +1548,26 @@ def export_order(request):
     book = xl.Workbook()
     sheet = book.add_sheet('ORDERS')
 
+    try:
+        user_fields = request.user.get_profile().get_order_fields()
+    except Exception:
+        user_fields = None
+    if user_fields:
+        STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+    else:
+        STAFF_FIELDS = STAFF_FIELD_LIST
+
+    FIELDS = tuple((x[0], x[2]) for x in STAFF_FIELDS)
+
     i = 0
     curr_line = 0
-    for key, value in LIST_HEADERS:
+    for key, value in FIELDS:
         sheet.write(curr_line, i, key)
         i += 1
     for order in orders:
         i = 0
         curr_line += 1
-        for key, field_name in LIST_HEADERS:
+        for key, field_name in FIELDS:
 
             if field_name == 'ponumber':
                 value = u'%s%s' % (order.brandgroup.direction.po, order.ponumber \

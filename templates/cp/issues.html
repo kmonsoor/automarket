@@ -1,0 +1,31 @@
+{% extends 'cp/index.html' %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript">
+    function issue() {
+        var orderIds = new Array();
+        jQuery('.select_row:checked').each(function() {
+            orderIds.push(jQuery(this).attr('name').replace('select_row_', ''));
+        });
+        if (orderIds.length > 0) {
+            jQuery('input[name=issued_orders]').val(orderIds.join(','));
+            jQuery('#issues-process-form').submit();   
+        }
+        return false;
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+<form action="" method="post" id="issues-process-form">
+    <div class="submit-row">
+        <input type="submit" onclick="issue(); return false;" name="open_invoice_button" value="Отгрузить" />
+        <input type="hidden" name="issued" value="1" />
+        <input type="hidden" name="issued_orders" value="" />
+    </div>
+</form>
+{% endblock %}
+
+{% block export_link %}{% endblock %}
