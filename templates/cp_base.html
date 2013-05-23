@@ -12,7 +12,7 @@
 
 {% block global_menu %}
     <ul>
-        <li><a class="{% navactive request 'order' %}" href="{% url order %}">Новый заказ</a></li>
+        <li><a class="{% navactive request 'order import_to_csv' %}" href="{% url order %}">Новый заказ</a></li>
         <li><a class="{% navactive request 'cp_index' %}" href="{% url cp_index %}">В виде таблицы</a></li>
         <li><a class="{% navactive request 'groups' %}" href="{% url groups %}">По группам</a></li>
         <li><a class="{% navactive request 'invoices' %}" href="{% url invoices %}">Инвойсы</a></li>
