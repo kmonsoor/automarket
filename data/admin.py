@@ -339,7 +339,6 @@ class CustomerAdmin(CustomUserAdmin):
     )
 
     def has_change_permission(self, request, obj=None):
-        print self.opts.app_label
         if request.user.has_perm('auth.can_change_clients'):
             return True
         return False
