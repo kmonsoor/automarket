@@ -338,6 +338,22 @@ class CustomerAdmin(CustomUserAdmin):
         ),
     )
 
+    def has_change_permission(self, request, obj=None):
+        print self.opts.app_label
+        if request.user.has_perm('auth.can_change_clients'):
+            return True
+        return False
+
+    def has_add_permission(self, request):
+        if request.user.has_perm('auth.can_add_clients'):
+            return True
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.has_perm('auth.can_delete_clients'):
+            return True
+        return False
+
     def queryset(self, request):
         qs = super(UserAdmin, self).queryset(request)
         qs = qs.exclude(Q(is_staff=True) | Q(is_superuser=True))
