@@ -30,6 +30,23 @@ function selectRowClick() {
 jQuery(function(){
   jQuery('.select_row').click(function(){ selectRowClick(); })
 });
+var qs = new Array();
+
+function getFilterItemsPerPage() {
+    var val = jQuery('#items-per-page-filter-select').val();
+    qs.push("items_per_page=" + val);
+}
+
+function getFilterPeriod() {
+    var val = jQuery('#period-filter-select').val();
+    qs.push("period=" + val);
+}
+
+function buildQueryFilter() {
+    getFilterPeriod();
+    getFilterItemsPerPage();
+    location.href='{{ request.path }}?' + qs.join("&");
+}
 </script>
 
 <script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
@@ -82,16 +99,22 @@ tr.alt td {
 {% block content %}
 <div class="" id="changelist">
 <form method="{{ filter.method }}" action="{{ request.path }}">
-{% block export_link %}<a href="/cp/export_order/">Экспорт</a><br/>{% endblock %}<br/>
+{% block export_link %}<a href="/cp/export_order/">Экспорт</a><br/><br/>{% endblock %}
 <input type="hidden" name="qs_filter" value="1">
 <input type="submit" value="Фильтр">
 <input type="submit" name="qs_filter_clear" value="Очистить">
 &nbsp;
 Количество записей на странице:
-<select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
-<option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
-<option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
-<option value="200"{% ifequal items_per_page 200 %} selected {% endifequal %}>200</option>
+<select onchange="buildQueryFilter();" id="items-per-page-filter-select">
+    <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+    <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+    <option value="all"{% ifequal items_per_page 10000 %} selected {% endifequal %}>все</option>
+</select>&nbsp;&nbsp;
+За период:
+<select onchange="buildQueryFilter();" id="period-filter-select">
+    <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
+    <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
+    <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>
 </select>
 <br/><br/>
 <div class="module" id="changelist">

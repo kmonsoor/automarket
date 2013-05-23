@@ -1,29 +1,6 @@
 {% extends 'cp/index.html' %}
 {% load cp_tags %}
 
-{% block extrahead %}
-{{ block.super }}
-<script type="text/javascript">
-    var qs = new Array();
-
-    function getFilterItemsPerPage() {
-        var val = jQuery('#items-per-page-filter-select').val();
-        qs.push("items_per_page=" + val);
-    }
-
-    function getFilterPeriod() {
-        var val = jQuery('#period-filter-select').val();
-        qs.push("period=" + val);
-    }
-
-    function buildQueryFilter() {
-        getFilterPeriod();
-        getFilterItemsPerPage();
-        location.href='{{ request.path }}?' + qs.join("&");
-    }
-</script>
-{% endblock %}
-
 {% block content %}
 <div id="changelist">
     <form method="{{ filter.method }}" action="{% url invoices %}">

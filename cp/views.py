@@ -404,6 +404,16 @@ def issues(request):
     context = {}
     current_page = request.GET.get('page', 1)
     items_per_page = request.GET.get('items_per_page', None)
+    period = request.GET.get('period', None)
+
+    if not period:
+        period = request.session.get('cp_issues_period', None)
+    else:
+        request.session['cp_issues_period'] = period
+        request.session.modified = True
+
+    if not period or period not in ('m', 'y', 'a'):
+        period = 'm'
 
     if not items_per_page:
         items_per_page = request.session.get('cp_issues_items_per_page', None)
@@ -457,6 +467,20 @@ def issues(request):
     qs = OrderedItem.objects.select_related()\
         .filter(**_filter.get_filters())\
         .filter(status__in=('received_office',))
+
+    if period:
+        from dateutil.relativedelta import relativedelta
+        now = datetime.now()
+        rated_period = None
+        if period == 'm':
+            rated_period = now - relativedelta(months=+6)
+        elif period == 'y':
+            rated_period = now - relativedelta(year=+1)
+        elif period == 'a':
+            pass
+        if rated_period:
+            qs = qs.filter(created__gte=rated_period)
+    context['period'] = period
 
     # calculate totals by filter
     total_row = []
@@ -698,6 +722,17 @@ def index(request):
     context = {}
     current_page = request.GET.get('page', 1)
     items_per_page = request.GET.get('items_per_page', None)
+    period = request.GET.get('period', None)
+
+    if not period:
+        period = request.session.get('cp_index_period', None)
+    else:
+        request.session['cp_index_period'] = period
+        request.session.modified = True
+
+    if not period or period not in ('m', 'y', 'a'):
+        period = 'm'
+
     if not items_per_page:
         items_per_page = request.session.get('cp_index_items_per_page', None)
     else:
@@ -748,6 +783,20 @@ def index(request):
     context['headers'] = list(sort_headers.headers())
 
     qs = OrderedItem.objects.select_related().filter(**_filter.get_filters())
+
+    if period:
+        from dateutil.relativedelta import relativedelta
+        now = datetime.now()
+        rated_period = None
+        if period == 'm':
+            rated_period = now - relativedelta(months=+6)
+        elif period == 'y':
+            rated_period = now - relativedelta(year=+1)
+        elif period == 'a':
+            pass
+        if rated_period:
+            qs = qs.filter(created__gte=rated_period)
+    context['period'] = period
 
     # calculate totals by filter
     total_row = []
