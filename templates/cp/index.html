@@ -102,8 +102,8 @@ tr.alt td {
 <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
 {% if issues_mode %}<td><input type="checkbox" onclick="toggleSelectAllRows(this);" name="select_all_rows" /></td>{% endif %}
 {% for f in list_filters %}
-<td>{% ifequal f.name 'ponumber' %}<input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" size="2">{% endifequal %}
-{{ f }}</td>
+<td>{% ifequal f.name 'ponumber' %}<div style="width: 60px;"><input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" style="width: 25%;">&nbsp;{{ f }}</div>{% else %}{{ f }}{% endifequal %}
+</td>
 {% endfor %}
 </tr>
 </thead>
@@ -130,7 +130,7 @@ tr.alt td {
       {% endfor %}
   </tr>
 {% endif %}
-<tr>
+<tr style="text-align: left;">
     <td colspan={{ headers|length|add:"1" }}>{% include "paginator.html" %}</td>
 </tr>
 </tbody>

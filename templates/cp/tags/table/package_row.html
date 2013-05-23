@@ -24,6 +24,7 @@
   {% if 'client' in staff_fields %}<td>{{ p.client|default:"" }}</td>{% endif %}
   {% if 'description_ru' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'description_en' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'id' in staff_fields %}<td>{{ i.id }}</td>{% endif %}
   {% if 'price_base' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'weight' in staff_fields %}{% table_td p 'weight' edit_mode 'editWeightPackage' 1 'package_' %}{% endif %}
   {% if 'delivery' in staff_fields %}{% table_td p 'delivery' 0 '' 0 %}{% endif %}

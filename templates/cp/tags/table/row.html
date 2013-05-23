@@ -31,6 +31,7 @@
   {% if 'client' in staff_fields %}<td>{% if issues_mode %}<a href="{% url issues_client i.client.id %}">{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</a>{% else %}{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}{% endif %}</td>{% endif %}
   {% if 'description_ru' in staff_fields %}{% table_td i 'description_ru' edit_mode 'editDescriptionRu' %}{% endif %}
   {% if 'description_en' in staff_fields %}{% table_td i 'description_en' edit_mode 'editDescriptionEn' %}{% endif %}
+  {% if 'id' in staff_fields %}<td>{{ i.id }}</td>{% endif %}
   {% if 'price_base' in staff_fields %}{% table_td i 'price_base' edit_mode 'editPriceBase' 0 %}{% endif %}
   {% if 'weight' in staff_fields %}{% table_td i 'weight' edit_mode 'editWeight' %}{% endif %}
   {% if 'delivery' in staff_fields %}{% table_td i 'delivery' 0 '' 0 %}{% endif %}

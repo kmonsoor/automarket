@@ -13,8 +13,8 @@
 .change-list .filtered .paginator { border-right:1px solid #ddd; }
 
 /*  CHANGELIST TABLES  */
-#changelist table thead th { white-space:nowrap; padding: 2px; }
-#changelist table tbody td { border-left: 1px solid #ddd; padding: 2px; }
+#changelist table thead th { white-space:nowrap; padding: 2px 5px; text-align: center;}
+#changelist table tbody td { border-left: 1px solid #ddd; padding: 2px 4px; text-align: center; }
 #changelist table tfoot { color: #666; }
 
 /*  TOOLBAR  */

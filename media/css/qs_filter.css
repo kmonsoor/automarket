@@ -1,9 +1,14 @@
 INPUT.qs_filter, SELECT.qs_filter {
 	border: solid 1px #ffca00;
+    width: 90%;
 
 }
 
 table td {
 	padding: 1px 5px;
 	vertical-align: middle;
+}
+
+table td select.qs_filter {
+    width: 150px;
 }
