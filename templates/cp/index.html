@@ -153,8 +153,8 @@ tr.alt td {
       {% endfor %}
   </tr>
 {% endif %}
-<tr style="text-align: left;">
-    <td colspan={{ headers|length|add:"1" }}>{% include "paginator.html" %}</td>
+<tr>
+    <td style="text-align: left;" colspan={{ headers|length|add:"1" }}>{% include "paginator.html" %}</td>
 </tr>
 </tbody>
 </table>
