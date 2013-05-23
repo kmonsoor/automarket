@@ -201,6 +201,10 @@ class Command(BaseCommand):
                 i.save()
             i.calculate_status()
 
+        if new_invoices:
+            text = u",".join(set([x[0] for x in new_invoices]))
+            send_mail(u'Новые инвойсы. Тест.', text, settings.EMAIL_FROM, settings.MANAGERS_EMAILS, fail_silently=False)
+
         logger.info('Finish update orders from automototrade.com')
         sys.exit()
 
