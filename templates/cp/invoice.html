@@ -128,8 +128,8 @@
                     <tr>{% table_header_sort headers %}</tr>
                     <tr {% if filter.is_set %}style="border: solid 2px green;"{% endif %}>
                         {% for f in list_filters %}
-                            <td>{% ifequal f.name 'ponumber' %}<input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" size="2">{% endifequal %}
-                            {{ f }}</td>
+                        <td>{% ifequal f.name 'ponumber' %}<div style="width: 60px;"><input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" style="width: 25%;">&nbsp;{{ f }}</div>{% else %}{{ f }}{% endifequal %}
+                        </td>
                         {% endfor %}
                     </tr>
                 </thead>
