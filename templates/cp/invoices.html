@@ -39,7 +39,7 @@
                     {% for i in items %}
                       <tr class="{% cycle row1,row2 %}">
                         <td><a href="{% url invoice i.id %}">{{ i.code }}</a></td>
-                        <td>{{ i.received_at|date:"d.m.Y H:i"|safe }}</td>
+                        <td>{{ i.received_at|date:"d.m.Y"|safe }}</td>
                         <td>{{ i.get_status_display }}</td>
                       </tr>
                     {% endfor %}
