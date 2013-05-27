@@ -193,7 +193,7 @@ class Command(BaseCommand):
 
         for invoice_code, brandgroup in new_invoices:
             i, _ = Invoice.objects.get_or_create(
-                invoice_code=invoice_code,
+                code=invoice_code,
                 brandgroup=brandgroup
             )
             if not i.received_at:
