@@ -68,11 +68,11 @@ function onsubmit_basket_form() {
         {% for found in data %}
           <form action="{% url client_basket_add %}" method="post" id="foundsForm{{ forloop.counter }}">
             {% if found.sub_chain %}
-            <tr class="{% cycle 'row1' 'row2' %}">
-              <td colspan=15 style="text-align: left;">{{ found.sub_chain }}</td>
+            <tr class="{% if forloop.counter|divisibleby:2 %}row2{% else %}row1{% endif %}">
+              <td colspan=20 style="text-align: left;">{{ found.sub_chain }}</td>
             </tr>
             {% endif %}
-            <tr class="{% cycle 'row1' 'row2' %}">
+            <tr class="{% if forloop.counter|divisibleby:2 %}row2{% else %}row1{% endif %}">
               {% if found.MSRP %}
                 <input type="hidden" name="area" value="{{ found.brandname }}" />
                 <input type="hidden" name="brandgroup" value="{{ found.brandgroup }}" />

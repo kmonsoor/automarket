@@ -651,45 +651,47 @@ class Part(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('area', 'partnumber', 'brandgroup',)
         verbose_name = u"деталь"
         verbose_name_plural = u"детали"
 
     @classmethod
-    def get_data(cls, area, brandgroup, partnumber, sub_chain=[]):
+    def get_data_parts(cls, area, brandgroup, partnumber):
+        data = []
+        parts = cls.objects.filter(area=area, brandgroup=brandgroup, partnumber__iexact=partnumber)
+        for part in parts:
+            data.append(part.get_data(sub_chain=[]))
+        return data
+
+    def get_data(self, sub_chain=[]):
         PARTY_DEFAULT_COUNT = 1
+        sub_chain.append(self.partnumber)
 
-        try:
-            part = cls.objects\
-                .get(area=area, brandgroup=brandgroup, partnumber__iexact=partnumber)
-            sub_chain.append(part.partnumber)
-            if part.substitution:
-                try:
-                    cls.objects.get(area=area, brandgroup=brandgroup, partnumber__iexact=part.substitution)
-                    return cls.get_data(area, brandgroup, part.substitution, sub_chain)
-                except cls.DoesNotExist:
-                    pass
+        if self.substitution:
+            try:
+                sub = Part.objects.get(area=self.area, brandgroup=self.brandgroup, partnumber__iexact=self.substitution)
+            except Part.DoesNotExist:
+                pass
+            else:
+                return sub.get_data(sub_chain)
 
-            area_title = None
-            if part.area:
-                area_title = part.area.title
+        area_title = None
+        if self.area:
+            area_title = self.area.title
 
-            brandgroup_title = "OEM"
-            if part.brandgroup:
-                brandgroup_title = part.brandgroup.title
+        brandgroup_title = "OEM"
+        if self.brandgroup:
+            brandgroup_title = self.brandgroup.title
 
-            return {
-                'partnumber': part.partnumber,
-                'MSRP': part.MSRP,
-                'core_price': part.core_price,
-                'description': part.description,
-                'description_ru': part.description_ru,
-                'sub_chain': sub_chain,
-                'cost': part.cost,
-                'brandname': area_title,
-                'brandgroup': brandgroup_title,
-                'party': part.party or PARTY_DEFAULT_COUNT,
-                'available': part.available,
-            }
-        except cls.DoesNotExist:
-            return {}
+        return {
+            'partnumber': self.partnumber,
+            'MSRP': self.MSRP,
+            'core_price': self.core_price,
+            'description': self.description,
+            'description_ru': self.description_ru,
+            'sub_chain': sub_chain,
+            'cost': self.cost,
+            'brandname': area_title,
+            'brandgroup': brandgroup_title,
+            'party': self.party or PARTY_DEFAULT_COUNT,
+            'available': self.available,
+        }

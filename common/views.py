@@ -576,8 +576,8 @@ class PartSearchLocal(PartSearchBase):
         data = []
         for area in areas:
             for brandgroup in area.brandgroup_set.all():
-                part = Part.get_data(area, brandgroup, partnumber, [])
-                if part:
+                parts = Part.get_data_parts(area, brandgroup, partnumber)
+                for part in parts:
                     data.append(part)
         return data or None
 

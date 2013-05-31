@@ -84,7 +84,7 @@ class SavePriceFileBase(Task):
             data.get('description_ru'),
         ]
         row = map(lambda x: x or NULL_COPY, row)
-        row = map(lambda x: str(x), row)
+        row = map(lambda x: str(("%s" % x).encode("UTF-8")), row)
         return "%s\n" % "\t".join(row)
 
     def _copy(self, f):
@@ -106,7 +106,7 @@ class SavePriceFileXlsTask(SavePriceFileBase):
 
     def save_parts(self, price):
         mapping = (
-            (u'БРЭНД', 'brand', lambda x: Brand.objects.get(title__iexact=x)),
+            (u'БРЭНД', 'brand', lambda x: Brand.objects.get(title__iexact=x).id),
             (u'АРТИКУЛ', 'partnumber', unicode),
             (u'НАИМЕНОВАНИЕ', 'description_ru', unicode),
             (u'АББРЕВИАТУРА', 'description', unicode),

@@ -95,7 +95,7 @@ CLIENT_FIELD_LIST = [
     (u'TOTAL', None, 'total_cost', u"%s", None),
     (u'Инвойс', 'invoice_code', 'invoice_code', u"%s", "invoice_code__contains"),
     (u'Статус', 'status', 'status_display', u"%s", "status"),
-    (u'Отгрузка', 'issued_at', 'issued_at', None),
+    (u'Отгрузка', 'issued_at', 'issued_at', u"date::%Y-%m-%d", None),
 ]
 
 class OrderedItemForm(forms.Form):

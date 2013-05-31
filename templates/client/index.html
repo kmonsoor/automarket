@@ -31,7 +31,6 @@ tr.alt td {
 
 {% load lib_tags %}
 
-{% block page_title %}Мои заказы{% endblock %}
 {% block page_content %}
 <div class="" id="changelist">
 <form method="{{ filter.method }}" action="/client/{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
@@ -44,8 +43,8 @@ tr.alt td {
 <option value="20"{% ifequal items_per_page 20 %} selected {% endifequal %}>20</option>
 <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
 <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
-</select>
-<div class="aligned" id="changelist">
+</select><br/><br/>
+<div class="module" id="changelist">
 <table>
 <thead>
 <tr>{% table_header_sort cl.headers %}</tr>
