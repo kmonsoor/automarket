@@ -1,6 +1,9 @@
 {% extends 'cp/index.html' %}
 {% load cp_tags %}
 
+{% block menu_invoices %}<a class="menu-active" href="{% url invoices %}">Инвойсы</a>{% endblock %}
+{% block menu_index %}<a href="{% url cp_index %}">В виде таблицы</a>{% endblock %}
+
 {% block content %}
 <div id="changelist">
     <form method="{{ filter.method }}" action="{% url invoices %}">
@@ -16,6 +19,7 @@
         </select>&nbsp;&nbsp;
         За период:
         <select onchange="buildQueryFilter();" id="period-filter-select">
+            <option value="w"{% ifequal period 'w' %} selected {% endifequal %}>неделя</option>
             <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
             <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
             <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>

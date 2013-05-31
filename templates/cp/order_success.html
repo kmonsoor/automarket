@@ -1,6 +1,8 @@
 {% extends 'cp_base.html' %}
 {% load i18n %}
 
+{% block menu_order %}<a class="menu-active" href="{% url order %}">Новый заказ</a>{% endblock %}
+
 {% block page_title %}Заказ успешно добавлен{% endblock %}
 
 {% block content %}

@@ -1,6 +1,8 @@
 {% extends 'cp_base.html' %}
 {% load cp_tags %}
 
+{% block menu_index %}<a class="menu-active" href="{% url cp_index %}">В виде таблицы</a>{% endblock %}
+
 {% block extrahead %}
 {{ block.super }}
 <script>
@@ -110,12 +112,15 @@ tr.alt td {
     <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
     <option value="200"{% ifequal items_per_page 200 %} selected {% endifequal %}>200</option>
 </select>&nbsp;&nbsp;
+{% block filter_period %}
 За период:
 <select onchange="buildQueryFilter();" id="period-filter-select">
+    <option value="w"{% ifequal period 'w' %} selected {% endifequal %}>неделя</option>
     <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
     <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
     <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>
 </select>
+{% endblock %}
 <br/><br/>
 <div class="module" id="changelist">
 

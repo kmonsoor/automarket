@@ -12,11 +12,11 @@
 
 {% block global_menu %}
     <ul>
-        <li><a class="{% navactive request 'order import_to_csv' %}" href="{% url order %}">Новый заказ</a></li>
-        <li><a class="{% navactive request 'cp_index' %}" href="{% url cp_index %}">В виде таблицы</a></li>
-        <li><a class="{% navactive request 'groups' %}" href="{% url groups %}">По группам</a></li>
-        <li><a class="{% navactive request 'invoices' %}" href="{% url invoices %}">Инвойсы</a></li>
-        <li><a class="{% navactive request 'issues' %}" href="{% url issues %}">Отгрузки</a></li>
+        <li>{% block menu_order %}<a href="{% url order %}">Новый заказ</a>{% endblock %}</li>
+        <li>{% block menu_index %}<a href="{% url cp_index %}">В виде таблицы</a>{% endblock %}</li>
+        <li>{% block menu_groups %}<a href="{% url groups %}">По группам</a>{% endblock %}</li>
+        <li>{% block menu_invoices %}<a href="{% url invoices %}">Инвойсы</a>{% endblock %}</li>
+        <li>{% block menu_issues %}<a href="{% url issues %}">Отгрузки</a>{% endblock %}</li>
         <li>|</li>
         <li><a href="/admin/">Администрирование</a></li>
     </ul>

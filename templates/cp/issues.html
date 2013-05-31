@@ -1,5 +1,8 @@
 {% extends 'cp/index.html' %}
 
+{% block menu_issues %}<a class="menu-active" href="{% url issues %}">Отгрузки</a>{% endblock %}
+{% block menu_index %}<a href="{% url cp_index %}">В виде таблицы</a>{% endblock %}
+
 {% block extrahead %}
 {{ block.super }}
 <script type="text/javascript">
@@ -29,3 +32,5 @@
 {% endblock %}
 
 {% block export_link %}{% endblock %}
+
+{% block filter_period %}{% endblock %}

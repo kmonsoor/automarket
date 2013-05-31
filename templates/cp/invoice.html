@@ -1,6 +1,9 @@
 {% extends 'cp/index.html' %}
 {% load cp_tags %}
 
+{% block menu_invoices %}<a class="menu-active" href="{% url invoices %}">Инвойсы</a>{% endblock %}
+{% block menu_index %}<a href="{% url cp_index %}">В виде таблицы</a>{% endblock %}
+
 {% block extrahead %}
 {{ block.super }}
 <script type="text/javascript" src="{{ MEDIA_URL }}js/mootools.js"></script>
@@ -109,6 +112,7 @@
         <input type="password" name="password" id="password" value="" class="text ui-widget-content ui-corner-all" style="width: 267px;" />
   </form>
 </div>
+{% block export_link %}<a href="/cp/export_order/?qs_filter=1&invoice_code__contains={{ invoice.code|urlencode }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/>{% endblock %}
 <h3>{{ invoice.code }} {{ invoice.received_at|date:"d.m.Y"|default:"---" }} {{ invoice.get_status_display }}</h3><br/>
 <div class="" id="changelist">
     <form method="{{ filter.method }}" action="{% url invoice invoice.id %}{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
@@ -145,7 +149,7 @@
                     </tr>
                     {% if packages %}
                         <tr class="row_packages_header">
-                            <td colspan={{ headers|length }} style="font-weight: bold; padding: 5px; color:#666; font-size:11px; background:#e1e1e1 url(/media/img/admin/nav-bg.gif) top left repeat-x; border-left:1px solid #ddd; border-bottom:1px solid #ddd;">Упаковки</td>
+                            <td colspan={{ headers|length }} style="text-align: left; font-weight: bold; padding: 5px; color:#666; font-size:11px; background:#e1e1e1 url(/media/img/admin/nav-bg.gif) top left repeat-x; border-left:1px solid #ddd; border-bottom:1px solid #ddd;">Упаковки</td>
                         </tr>
                         {% for p in packages %}
                             <tr class="{% cycle row1,row2 %} row_package_{{ p.id }} row_package">

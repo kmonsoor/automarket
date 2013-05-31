@@ -1,4 +1,5 @@
 {% extends 'cp_base.html' %}
+{% block menu_order %}<a class="menu-active" href="{% url order %}">Новый заказ</a>{% endblock %}
 {% block page_title %}Импорт заказа из XLS - файла{% endblock %}
 {% block extrahead %}
 {{ block.super }}

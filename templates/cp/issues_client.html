@@ -1,7 +1,11 @@
 {% extends 'cp/issues.html' %}
 
+{% block menu_issues %}<a class="menu-active" href="{% url issues %}">Отгрузки</a>{% endblock %}
+{% block menu_index %}<a href="{% url cp_index %}">В виде таблицы</a>{% endblock %}
 
 {% block content %}
-<h3>Отгрузки {{ client.username }}</h3>
+<h3>Отгрузки {{ client.username }}</h3><br/>
 {{ block.super }}
 {% endblock %}
+
+{% block filter_period %}{% endblock %}

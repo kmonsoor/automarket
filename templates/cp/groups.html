@@ -1,6 +1,8 @@
 {% extends 'cp_base.html' %}
 {% load cp_tags %}
 
+{% block menu_groups %}<a class="menu-active" href="{% url groups %}">По группам</a>{% endblock %}
+
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">

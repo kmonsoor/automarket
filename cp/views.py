@@ -7,12 +7,12 @@ from datetime import datetime
 import string
 import random
 import copy
+import dateutil
 
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import get_object_or_404
 from django.http import Http404, HttpResponseRedirect, HttpResponse
@@ -30,8 +30,8 @@ from lib import xlsreader
 from cp.forms import OrderItemForm, ImportXlsForm, PackageItemForm
 from client.forms import SearchForm
 from data.models import BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES, \
-    Invoice, Package, INVOICE_STATUSES, INVOICE_STATUS_IN_DELIVERY, \
-    INVOICE_STATUS_RECEIVED, INVOICE_STATUS_CLOSED
+    Invoice, Package, INVOICE_STATUSES, INVOICE_STATUS_RECEIVED, \
+    INVOICE_STATUS_CLOSED
 from data.forms import OrderedItemsFilterForm, OrderedItemForm, \
     STAFF_FIELD_LIST, InvoicesFilterForm, INVOICES_FIELD_LIST, PackageForm
 from common.views import PartSearch
@@ -83,45 +83,96 @@ def get_status_options_package():
     return [{'value': i[0], 'option': i[1]} for i in INVOICE_STATUSES]
 
 
+def get_period(request, prefix, field):
+    PERIOD_PARAM = 'period'
+    PERIOD_PARAM_WEEK = 'w'
+    PERIOD_PARAM_MONTH = 'm'
+    PERIOD_PARAM_YEAR = 'y'
+    PERIOD_PARAM_ALL = 'a'
+    PERIOD_PARAMS = (
+        PERIOD_PARAM_WEEK,
+        PERIOD_PARAM_MONTH,
+        PERIOD_PARAM_YEAR,
+        PERIOD_PARAM_ALL
+    )
+    PERIOD_PARAM_DEFAULT = PERIOD_PARAM_MONTH
+
+    period = request.GET.get(PERIOD_PARAM)
+
+    session_key = "%s_%s" % (prefix, PERIOD_PARAM)
+    if not period:
+        period = request.session.get(session_key, None)
+    else:
+        request.session[session_key] = period
+        request.session.modified = True
+
+    if not period or period not in PERIOD_PARAMS:
+        period = PERIOD_PARAM_DEFAULT
+
+    rated_period = None
+    if period:
+        now = datetime.now()
+        if period == 'w':
+            rated_period = now + dateutil.relativedelta.relativedelta(
+                weeks=-1, weekday=dateutil.relativedelta.calendar.SATURDAY,
+                hour=0, minute=0, second=0, microsecond=0
+            )
+        elif period == 'm':
+            rated_period = now + dateutil.relativedelta.relativedelta(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
+        elif period == 'y':
+            rated_period = now + dateutil.relativedelta.relativedelta(
+                month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+            )
+        elif period == 'a':
+            pass
+
+    if rated_period:
+        return period, {'%s__gte' % field: rated_period}
+    return period, {}
+
+
+def get_items_per_page(request, prefix):
+    ITEM_PER_PAGE_PARAM = 'items_per_page'
+    ITEM_PER_PAGE_PARAM_ALL = 'all'
+    ITEM_PER_PAGE_DEFAULT = 50
+
+    items_per_page = request.GET.get(ITEM_PER_PAGE_PARAM)
+
+    session_key = "%s_%s" % (prefix, ITEM_PER_PAGE_PARAM)
+    if not items_per_page:
+        items_per_page = request.session.get(session_key)
+    else:
+        request.session[session_key] = items_per_page
+        request.session.modified = True
+
+    if items_per_page == ITEM_PER_PAGE_PARAM_ALL:
+        items_per_page = 10000
+
+    if not items_per_page:
+        items_per_page = ITEM_PER_PAGE_DEFAULT
+
+    try:
+        items_per_page = int(items_per_page)
+    except (ValueError, TypeError):
+        items_per_page = ITEM_PER_PAGE_DEFAULT
+
+    return items_per_page
+
+
 @staff_member_required
 @render_to('cp/invoices.html')
 def invoices(request):
     context = {}
-
-    items_per_page = request.GET.get('items_per_page', None)
-    period = request.GET.get('period', None)
-
-    if not items_per_page:
-        items_per_page = request.session.get('cp_invoices_items_per_page', None)
-    else:
-        request.session['cp_invoices_items_per_page'] = items_per_page
-        request.session.modified = True
-
-    if not items_per_page:
-        items_per_page = 50
-    elif items_per_page == 'all':
-        items_per_page = 10000
-
-    if not period:
-        period = request.session.get('cp_invoices_period', None)
-    else:
-        request.session['cp_invoices_period'] = period
-        request.session.modified = True
-
-    if not period or period not in ('m', 'y', 'a'):
-        period = 'm'
-
-    items_per_page = int(items_per_page)
-    context['items_per_page'] = items_per_page
+    session_store_prefix = "cp_invoices"
 
     _filter = QSFilter(request, InvoicesFilterForm)
     context['filter'] = _filter
 
     LIST_HEADERS = [(x[0], x[1]) for x in INVOICES_FIELD_LIST]
-
     sort_headers = SortHeaders(request, LIST_HEADERS)
-    order_field = request.GET.get('o', None)
-    order_direction = request.GET.get('ot', None)
+    context['headers'] = list(sort_headers.headers())
 
     list_filters = []
     for x in INVOICES_FIELD_LIST:
@@ -132,6 +183,16 @@ def invoices(request):
             list_filters.append("")
     context['list_filters'] = list_filters
 
+    qs_filter = _filter.get_filters()
+
+    period, period_filter = get_period(request, session_store_prefix, "received_at")
+    qs_filter.update(period_filter)
+    context['period'] = period
+
+    qs = Invoice.objects.select_related().filter(**qs_filter)
+
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
     order_by = '-received_at'
     if order_field:
         if order_direction == 'desc':
@@ -139,30 +200,12 @@ def invoices(request):
         else:
             order_direction = ''
         order_by = order_direction + LIST_HEADERS[int(order_field)][1]
-
-    context['headers'] = list(sort_headers.headers())
-
-    qs = Invoice.objects.select_related().filter(**_filter.get_filters())
-
-    if period:
-        from dateutil.relativedelta import relativedelta
-        now = datetime.now()
-        rated_period = None
-        if period == 'm':
-            rated_period = now - relativedelta(months=+6)
-        elif period == 'y':
-            rated_period = now - relativedelta(year=+1)
-        elif period == 'a':
-            pass
-        if rated_period:
-            qs = qs.filter(received_at__gte=rated_period)
-    context['period'] = period
-
     if order_by:
         qs = qs.order_by(order_by)
 
+    items_per_page = get_items_per_page(request, session_store_prefix)
+    context['items_per_page'] = items_per_page
     paginator = SimplePaginator(request, qs, items_per_page, 'page')
-
     context['items'] = paginator.get_page_items()
     context['paginator'] = paginator
 
@@ -187,39 +230,22 @@ def _random():
     yield "".join([random.choice(string.letters) for x in xrange(1, 5)])
 
 
+def _redirect_after_post(url):
+    return HttpResponseRedirect(
+        "%s?%s=%s" % (url, _random().next(), _random().next())
+    )
+
+
 @staff_member_required
 @render_to('cp/invoice.html')
 def invoice(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id)
-
-    def _redirect():
-        return HttpResponseRedirect(
-            "%s?%s=%s" % (
-                reverse("invoice", args=[invoice.id]),
-                _random().next(), _random().next(),
-            )
-        )
-
-    context = {}
-    context['invoice'] = invoice
-
-    items_per_page = request.GET.get('items_per_page', None)
-    if not items_per_page:
-        items_per_page = request.session.get('cp_invoice_items_per_page', None)
-    else:
-        request.session['cp_invoice_items_per_page'] = items_per_page
-        request.session.modified = True
-
-    if not items_per_page:
-        items_per_page = 50
-    elif items_per_page == 'all':
-        items_per_page = 10000
-
-    items_per_page = int(items_per_page)
-    context['items_per_page'] = items_per_page
+    context = {'invoice': invoice}
+    session_store_prefix = "cp_invoice"
 
     _filter = QSFilter(request, OrderedItemsFilterForm)
     context['filter'] = _filter
+    context['qs_filter_param'] = _filter.get_filters()
 
     try:
         user_fields = request.user.get_profile().get_order_fields()
@@ -273,33 +299,71 @@ def invoice(request, invoice_id):
         .filter(**_filter.get_filters())\
         .filter(invoice_code=invoice.code)
 
-    empty = {'weight': 0, 'delivery': 0, 'total_cost': 0, 'price_sale': 0}
-    qs_total_items = qs.values('weight', 'delivery', 'price_sale', 'total_cost')
-    if len(qs_total_items) > 0:
-        qs_total_items = dict(
-            (key, sum(d[key] or 0 for d in qs_total_items))
-            for key in qs_total_items[0]
-        )
+    # calculate totals by filter
+    from django.db import connection
+    total = {}
+    td = "U0"
+    q, params = qs._as_sql(connection)
+    from_clause = q.split("FROM")[1]
+
+    where = from_clause.split("WHERE")
+    if len(where) > 1:
+        from_clause = where[0]
+        where = [where[1]]
     else:
-        qs_total_items = copy.deepcopy(empty)
+        where = []
+    where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
+    where = "WHERE %s" % "AND ".join(where)
 
-    qs_total_packages = Package.objects\
-        .filter(invoice=invoice)\
-        .values('weight', 'delivery', 'total_cost')
+    sql = """
+        SELECT
+            SUM(%(p)s.total_cost),
+            SUM(%(p)s.weight*%(p)s.quantity),
+            SUM(%(p)s.delivery),
+            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
+            SUM(%(p)s.price_invoice*%(p)s.quantity)
+            FROM %(from)s %(where)s
+    """ % {'p': td, 'from': from_clause, 'where': where}
+    cursor = connection.cursor()
+    cursor.execute(sql, params)
+    res = cursor.fetchall()
+    if len(res) > 0:
+        total.update(dict(zip(
+            ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0])
+        ))
 
-    if len(qs_total_packages) > 0:
-        qs_total_packages = dict(
-            (key, sum(d[key] or 0 for d in qs_total_packages))
-            for key in qs_total_packages[0]
+    total_packages = {}
+    sql = """
+        SELECT
+            SUM(total_cost),
+            SUM(weight * quantity),
+            SUM(delivery)
+        FROM
+            data_package
+        WHERE
+            invoice_id = %(invoice_id)i
+    """ % {'invoice_id': invoice.id}
+
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    res = cursor.fetchall()
+    if len(res) > 0:
+        total_packages = dict(zip(
+            ('total_cost', 'weight', 'delivery'), res[0])
         )
-        qs_total_packages['price_sale'] = 0
-    else:
-        qs_total_packages = copy.deepcopy(empty)
 
-    total = [qs_total_items, qs_total_packages]
-    total = dict((key, sum(d[key] or 0 for d in total)) for key in total[0])
+    def _sum(d1, d2):
+        d = {}
+        for k, v1 in d1.items():
+            v2 = d2.get(k)
+            if v1 is None and v2 is None:
+                d[k] = None
+            else:
+                d[k] = (v1 or 0) + (v2 or 0)
+        return d
 
     total_row = []
+    total = _sum(total, total_packages)
     for f in STAFF_FIELDS:
         field_name = f[2].split("__")[0]
         if field_name[:2] == "po":
@@ -311,6 +375,8 @@ def invoice(request, invoice_id):
     if order_by:
         qs = qs.order_by(order_by)
 
+    items_per_page = get_items_per_page(request, session_store_prefix)
+    context['items_per_page'] = items_per_page
     paginator = SimplePaginator(request, qs, items_per_page, 'page')
 
     context['status_options_str'], context['status_options'] = get_status_options()
@@ -322,6 +388,7 @@ def invoice(request, invoice_id):
     package_data = []
     form_packages_is_valid = True
     if request.method == 'POST':
+        redirect_url = reverse("invoice", args=[invoice.id])
 
         if 'save_package' in request.POST:
             package_forms = PackageItemForm.get_forms(request)
@@ -333,38 +400,38 @@ def invoice(request, invoice_id):
                     data['invoice'] = invoice
                     Package(**data).save()
                 messages.add_message(request, messages.SUCCESS, u"Упаковка добавлена.")
-                return _redirect()
+                return _redirect_after_post(redirect_url)
             form_packages_is_valid = False
 
         elif 'close_invoice' in request.POST:
             if not request.user.check_password(request.POST.get('password')):
                 msg = u"Неверный пароль."
                 messages.add_message(request, messages.ERROR, msg)
-                return _redirect()
+                return _redirect_after_post(redirect_url)
 
             statuses_to_close = ('received_office', 'not_obtained_from_supplier', 'issued')
             if not all(map(lambda x: x in statuses_to_close, order_statuses)):
                 msg = u"Вы не можете закрыть инвойс. Не все позиции получены."
                 messages.add_message(request, messages.ERROR, msg)
-                return _redirect()
+                return _redirect_after_post(redirect_url)
 
             invoice.status = INVOICE_STATUS_CLOSED
             invoice.closed_at = datetime.now()
             invoice.save()
             messages.add_message(request, messages.SUCCESS, u"Инвойс закрыт.")
-            return _redirect()
+            return _redirect_after_post(redirect_url)
 
         elif 'open_invoice' in request.POST:
             if not request.user.check_password(request.POST.get('password')):
                 msg = u"Неверный пароль."
                 messages.add_message(request, messages.ERROR, msg)
-                return _redirect()
+                return _redirect_after_post(redirect_url)
 
             if invoice.status == INVOICE_STATUS_CLOSED:
                 invoice.status = INVOICE_STATUS_RECEIVED
                 invoice.save()
                 messages.add_message(request, messages.SUCCESS, u"Инвойс открыт.")
-                return _redirect()
+                return _redirect_after_post(redirect_url)
 
     context['package_template'] = PackageItemForm().render_js('from_template')
     context['package_data'] = package_data
@@ -376,22 +443,19 @@ def invoice(request, invoice_id):
 @staff_member_required
 @render_to('cp/issues.html')
 def issues(request):
-    def _redirect():
-        return HttpResponseRedirect(
-            "%s?%s=%s" % (
-                reverse("issues"),
-                _random().next(), _random().next(),
-            )
-        )
+    context = {}
+    session_store_prefix = "cp_issues"
 
     if request.method == 'POST':
+        redirect_url = reverse("issues")
+
         if request.POST.get('issued'):
             try:
                 order_ids = [int(x) for x in request.POST.get('issued_orders').split(',')]
             except:
                 msg = u"Невалидные данные"
                 messages.add_message(request, messages.ERROR, msg)
-                return _redirect()
+                return _redirect_after_post(redirect_url)
             else:
                 orders = list(OrderedItem.objects.filter(id__in=order_ids))
                 for order in orders:
@@ -400,34 +464,9 @@ def issues(request):
                     order.save()
                 msg = u"Успешно отгружены"
                 messages.add_message(request, messages.SUCCESS, msg)
-                return _redirect()
-    context = {}
-    current_page = request.GET.get('page', 1)
-    items_per_page = request.GET.get('items_per_page', None)
-    period = request.GET.get('period', None)
+                return _redirect_after_post(redirect_url)
 
-    if not period:
-        period = request.session.get('cp_issues_period', None)
-    else:
-        request.session['cp_issues_period'] = period
-        request.session.modified = True
-
-    if not period or period not in ('m', 'y', 'a'):
-        period = 'm'
-
-    if not items_per_page:
-        items_per_page = request.session.get('cp_issues_items_per_page', None)
-    else:
-        request.session['cp_issues_items_per_page'] = items_per_page
-        request.session.modified = True
-    if not items_per_page:
-        items_per_page = 50
-    items_per_page = int(items_per_page)
-
-    context['items_per_page'] = items_per_page
     _filter = QSFilter(request, OrderedItemsFilterForm)
-    if _filter.modified:
-        current_page = 1
     context['filter'] = _filter
 
     try:
@@ -468,20 +507,6 @@ def issues(request):
         .filter(**_filter.get_filters())\
         .filter(status__in=('received_office',))
 
-    if period:
-        from dateutil.relativedelta import relativedelta
-        now = datetime.now()
-        rated_period = None
-        if period == 'm':
-            rated_period = now - relativedelta(months=+6)
-        elif period == 'y':
-            rated_period = now - relativedelta(year=+1)
-        elif period == 'a':
-            pass
-        if rated_period:
-            qs = qs.filter(created__gte=rated_period)
-    context['period'] = period
-
     # calculate totals by filter
     total_row = []
     if _filter.is_set:
@@ -500,23 +525,22 @@ def issues(request):
         where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
         where = "WHERE %s" % "AND ".join(where)
 
-        sql = \
-        """
-        SELECT
-            SUM(%(p)s.total_cost),
-            SUM(%(p)s.weight*%(p)s.quantity),
-            SUM(%(p)s.delivery),
-            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
-            SUM(%(p)s.price_invoice*%(p)s.quantity)
-            FROM %(from)s %(where)s
+        sql = """
+            SELECT
+                SUM(%(p)s.total_cost),
+                SUM(%(p)s.weight*%(p)s.quantity),
+                SUM(%(p)s.delivery),
+                SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
+                SUM(%(p)s.price_invoice*%(p)s.quantity)
+                FROM %(from)s %(where)s
         """ % {'p': td, 'from': from_clause, 'where': where}
         cursor = connection.cursor()
         cursor.execute(sql, params)
         res = cursor.fetchall()
         if len(res) > 0:
-            total = dict(zip( \
-                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), \
-                res[0]))
+            total = dict(zip(
+                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0])
+            )
 
             for f in STAFF_FIELDS:
                 field_name = f[2].split("__")[0]
@@ -528,6 +552,8 @@ def issues(request):
     if order_by:
         qs = qs.order_by(order_by)
 
+    items_per_page = get_items_per_page(request, session_store_prefix)
+    context['items_per_page'] = items_per_page
     paginator = SimplePaginator(request, qs, items_per_page, 'page')
 
     # grouping parents orders
@@ -558,23 +584,19 @@ def issues(request):
 @render_to('cp/issues_client.html')
 def issues_client(request, client_id):
     client = get_object_or_404(User, id=client_id)
-
-    def _redirect():
-        return HttpResponseRedirect(
-            "%s?%s=%s" % (
-                reverse("issues_client", args=[client_id]),
-                _random().next(), _random().next(),
-            )
-        )
+    context = {}
+    session_store_prefix = "cp_issues_client"
 
     if request.method == 'POST':
+        redirect_url = reverse("issues_client", args=[client_id])
+
         if request.POST.get('issued'):
             try:
                 order_ids = [int(x) for x in request.POST.get('issued_orders').split(',')]
             except:
                 msg = u"Невалидные данные"
                 messages.add_message(request, messages.ERROR, msg)
-                return _redirect()
+                return _redirect_after_post(redirect_url)
             else:
                 orders = list(OrderedItem.objects.filter(id__in=order_ids))
                 for order in orders:
@@ -583,25 +605,9 @@ def issues_client(request, client_id):
                     order.save()
                 msg = u"Успешно отгружены"
                 messages.add_message(request, messages.SUCCESS, msg)
-                return _redirect()
+                return _redirect_after_post(redirect_url)
 
-    context = {}
-    current_page = request.GET.get('page', 1)
-    items_per_page = request.GET.get('items_per_page', None)
-
-    if not items_per_page:
-        items_per_page = request.session.get('cp_issues_client_items_per_page', None)
-    else:
-        request.session['cp_issues_client_items_per_page'] = items_per_page
-        request.session.modified = True
-    if not items_per_page:
-        items_per_page = 50
-    items_per_page = int(items_per_page)
-
-    context['items_per_page'] = items_per_page
     _filter = QSFilter(request, OrderedItemsFilterForm)
-    if _filter.modified:
-        current_page = 1
     context['filter'] = _filter
 
     try:
@@ -638,10 +644,14 @@ def issues_client(request, client_id):
 
     context['headers'] = list(sort_headers.headers())
 
-    qs = OrderedItem.objects.select_related()\
-        .filter(**_filter.get_filters())\
-        .filter(status__in=('received_office',))\
-        .filter(client__id=client_id)
+    qs_filter = _filter.get_filters()
+
+    qs_filter.update({
+        'status__in': ('received_office',),
+        'client__id': client_id,
+    })
+
+    qs = OrderedItem.objects.select_related().filter(**qs_filter)
 
     # calculate totals by filter
     total_row = []
@@ -661,23 +671,22 @@ def issues_client(request, client_id):
         where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
         where = "WHERE %s" % "AND ".join(where)
 
-        sql = \
-        """
-        SELECT
-            SUM(%(p)s.total_cost),
-            SUM(%(p)s.weight*%(p)s.quantity),
-            SUM(%(p)s.delivery),
-            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
-            SUM(%(p)s.price_invoice*%(p)s.quantity)
-            FROM %(from)s %(where)s
+        sql = """
+            SELECT
+                SUM(%(p)s.total_cost),
+                SUM(%(p)s.weight*%(p)s.quantity),
+                SUM(%(p)s.delivery),
+                SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
+                SUM(%(p)s.price_invoice*%(p)s.quantity)
+                FROM %(from)s %(where)s
         """ % {'p': td, 'from': from_clause, 'where': where}
         cursor = connection.cursor()
         cursor.execute(sql, params)
         res = cursor.fetchall()
         if len(res) > 0:
-            total = dict(zip( \
-                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), \
-                res[0]))
+            total = dict(zip(
+                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0]
+            ))
 
             for f in STAFF_FIELDS:
                 field_name = f[2].split("__")[0]
@@ -689,6 +698,8 @@ def issues_client(request, client_id):
     if order_by:
         qs = qs.order_by(order_by)
 
+    items_per_page = get_items_per_page(request, session_store_prefix)
+    context['items_per_page'] = items_per_page
     paginator = SimplePaginator(request, qs, items_per_page, 'page')
 
     # grouping parents orders
@@ -720,32 +731,9 @@ def issues_client(request, client_id):
 @render_to('cp/index.html')
 def index(request):
     context = {}
-    current_page = request.GET.get('page', 1)
-    items_per_page = request.GET.get('items_per_page', None)
-    period = request.GET.get('period', None)
+    session_store_prefix = "cp_index"
 
-    if not period:
-        period = request.session.get('cp_index_period', None)
-    else:
-        request.session['cp_index_period'] = period
-        request.session.modified = True
-
-    if not period or period not in ('m', 'y', 'a'):
-        period = 'm'
-
-    if not items_per_page:
-        items_per_page = request.session.get('cp_index_items_per_page', None)
-    else:
-        request.session['cp_index_items_per_page'] = items_per_page
-        request.session.modified = True
-    if not items_per_page:
-        items_per_page = 50
-    items_per_page = int(items_per_page)
-
-    context['items_per_page'] = items_per_page
     _filter = QSFilter(request, OrderedItemsFilterForm)
-    if _filter.modified:
-        current_page = 1
     context['filter'] = _filter
 
     try:
@@ -758,10 +746,7 @@ def index(request):
         STAFF_FIELDS = STAFF_FIELD_LIST
     context['staff_fields'] = [x[2] for x in STAFF_FIELDS]
     LIST_HEADERS = [(x[0], x[1]) for x in STAFF_FIELDS]
-
     sort_headers = SortHeaders(request, LIST_HEADERS)
-    order_field = request.GET.get('o', None)
-    order_direction = request.GET.get('ot', None)
 
     list_filters = []
     for x in STAFF_FIELDS:
@@ -772,6 +757,8 @@ def index(request):
             list_filters.append("")
     context['list_filters'] = list_filters
 
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
     order_by = '-created'
     if order_field:
         if order_direction == 'desc':
@@ -782,21 +769,13 @@ def index(request):
 
     context['headers'] = list(sort_headers.headers())
 
-    qs = OrderedItem.objects.select_related().filter(**_filter.get_filters())
+    qs_filter = _filter.get_filters()
 
-    if period:
-        from dateutil.relativedelta import relativedelta
-        now = datetime.now()
-        rated_period = None
-        if period == 'm':
-            rated_period = now - relativedelta(months=+6)
-        elif period == 'y':
-            rated_period = now - relativedelta(year=+1)
-        elif period == 'a':
-            pass
-        if rated_period:
-            qs = qs.filter(created__gte=rated_period)
+    period, period_filter = get_period(request, session_store_prefix, "created")
+    qs_filter.update(period_filter)
     context['period'] = period
+
+    qs = OrderedItem.objects.select_related().filter(**qs_filter)
 
     # calculate totals by filter
     total_row = []
@@ -816,23 +795,22 @@ def index(request):
         where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
         where = "WHERE %s" % "AND ".join(where)
 
-        sql = \
-        """
-        SELECT
-            SUM(%(p)s.total_cost),
-            SUM(%(p)s.weight*%(p)s.quantity),
-            SUM(%(p)s.delivery),
-            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
-            SUM(%(p)s.price_invoice*%(p)s.quantity)
-            FROM %(from)s %(where)s
+        sql = """
+            SELECT
+                SUM(%(p)s.total_cost),
+                SUM(%(p)s.weight*%(p)s.quantity),
+                SUM(%(p)s.delivery),
+                SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
+                SUM(%(p)s.price_invoice*%(p)s.quantity)
+                FROM %(from)s %(where)s
         """ % {'p': td, 'from': from_clause, 'where': where}
         cursor = connection.cursor()
         cursor.execute(sql, params)
         res = cursor.fetchall()
         if len(res) > 0:
-            total = dict(zip( \
-                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), \
-                res[0]))
+            total = dict(zip(
+                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0]
+            ))
 
             for f in STAFF_FIELDS:
                 field_name = f[2].split("__")[0]
@@ -844,6 +822,8 @@ def index(request):
     if order_by:
         qs = qs.order_by(order_by)
 
+    items_per_page = get_items_per_page(request, session_store_prefix)
+    context['items_per_page'] = items_per_page
     paginator = SimplePaginator(request, qs, items_per_page, 'page')
 
     # grouping parents orders
@@ -1595,7 +1575,7 @@ def field_value(order_obj, field_name):
 
 @staff_member_required
 def export_order(request):
-    _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
+    _filter = QSFilter(request, OrderedItemsFilterForm, use_session=False, clear_old=False)
 
     orders = OrderedItem.objects.select_related() \
                         .filter(**_filter.get_filters()) \
