@@ -13,7 +13,7 @@
 {% block global_menu %}
     <ul>
         <li>{% block menu_order %}<a href="{% url order %}">Новый заказ</a>{% endblock %}</li>
-        <li>{% block menu_index %}<a href="{% url cp_index %}">В виде таблицы</a>{% endblock %}</li>
+        <li>{% block menu_index %}<a href="{% url cp_index %}">Заказы</a>{% endblock %}</li>
         <li>{% block menu_groups %}<a href="{% url groups %}">По группам</a>{% endblock %}</li>
         <li>{% block menu_invoices %}<a href="{% url invoices %}">Инвойсы</a>{% endblock %}</li>
         <li>{% block menu_issues %}<a href="{% url issues %}">Отгрузки</a>{% endblock %}</li>

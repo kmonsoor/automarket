@@ -95,7 +95,7 @@ def get_period(request, prefix, field):
         PERIOD_PARAM_YEAR,
         PERIOD_PARAM_ALL
     )
-    PERIOD_PARAM_DEFAULT = PERIOD_PARAM_MONTH
+    PERIOD_PARAM_DEFAULT = PERIOD_PARAM_YEAR
 
     period = request.GET.get(PERIOD_PARAM)
 
