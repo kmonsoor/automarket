@@ -3,6 +3,8 @@
 {% block menu_issues %}<a class="menu-active" href="{% url issues %}">Отгрузки</a>{% endblock %}
 {% block menu_index %}<a href="{% url cp_index %}">В виде таблицы</a>{% endblock %}
 
+{% block export_link %}<a href="/cp/export_order/?qs_filter=1&status=received_office{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/><br/>{% endblock %}
+
 {% block extrahead %}
 {{ block.super }}
 <script type="text/javascript">
@@ -30,7 +32,5 @@
     </div>
 </form>
 {% endblock %}
-
-{% block export_link %}{% endblock %}
 
 {% block filter_period %}{% endblock %}

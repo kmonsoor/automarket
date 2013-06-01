@@ -468,6 +468,7 @@ def issues(request):
 
     _filter = QSFilter(request, OrderedItemsFilterForm)
     context['filter'] = _filter
+    context['qs_filter_param'] = _filter.get_filters()
 
     try:
         user_fields = request.user.get_profile().get_order_fields()
@@ -609,6 +610,7 @@ def issues_client(request, client_id):
 
     _filter = QSFilter(request, OrderedItemsFilterForm)
     context['filter'] = _filter
+    context['qs_filter_param'] = _filter.get_filters()
 
     try:
         user_fields = request.user.get_profile().get_order_fields()
