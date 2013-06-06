@@ -1577,7 +1577,9 @@ def field_value(order_obj, field_name):
 
 @staff_member_required
 def export_order(request):
-    _filter = QSFilter(request, OrderedItemsFilterForm, use_session=False, clear_old=False)
+    _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
+
+    print _filter.get_filters()
 
     orders = OrderedItem.objects.select_related() \
                         .filter(**_filter.get_filters()) \
