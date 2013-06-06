@@ -48,6 +48,7 @@ def search(request):
 
     search_class = PartSearch()
     maker_choices = search_class.maker_choices()
+    show_maker_field = False
 
     if request.method == 'POST':
         _post = request.POST.copy()
@@ -59,7 +60,7 @@ def search(request):
             try:
                 founds = search_class.search(maker, part_number)
             except MakerRequired:
-                form.errors['maker'] = forms.util.ErrorList([u"Обязательное поле"])
+                show_maker_field = True
             else:
                 if not founds:
                     founds = None
@@ -140,6 +141,7 @@ def search(request):
         'data': data,
         'maker_name': maker_name,
         'msg': msg,
+        'show_maker_field': show_maker_field,
     }
 
     context['basket_items'] = Basket.objects\

@@ -29,13 +29,15 @@ function onsubmit_basket_form() {
   <div style="width:30%" class="aligned">
     <form method="post" id="formSearch" action="">
       <div class="form-row">
-        {{ form.maker.errors }}
-        <label for="id_maker">Выберите марку* :</label> {{ form.maker }}
-      </div>
-      <div class="form-row">
         {{ form.part_number.errors }}
         <label for="id_part_number">Введите номер* :</label> {{ form.part_number }}
       </div>
+      {% if show_maker_field %}
+        <div class="form-row">
+          {{ form.maker.errors }}
+          <label for="id_maker">Выберите марку* :</label> {{ form.maker }}
+        </div>
+      {% endif %}
       <div class="submit-row">
       <input type="submit" value="Искать" class="default" /></div>
 
