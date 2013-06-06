@@ -563,23 +563,11 @@ class PartSearchLocal(PartSearchBase):
         return makers
 
     def search(self, maker_id, partnumber):
-        if maker_id not in [x[0] for x in self.get_make_options()]:
-            raise Exception('Invalid maker')
+        return Part.get_data_parts(partnumber) or None
 
-        brand_title = self.get_maker_name(maker_id)
-        try:
-            brand = Brand.objects.get(title__iexact=brand_title)
-            areas = brand.area_set.all()
-        except Brand.DoesNotExist:
-            raise Exception('Invalid maker')
 
-        data = []
-        for area in areas:
-            for brandgroup in area.brandgroup_set.all():
-                parts = Part.get_data_parts(area, brandgroup, partnumber)
-                for part in parts:
-                    data.append(part)
-        return data or None
+class MakerRequired(Exception):
+    pass
 
 
 class PartSearch(object):
@@ -654,7 +642,9 @@ class PartSearch(object):
                 return None
             handler = s()
             maker_names = [x[1] for x in handler.get_make_options()]
-            if not maker_name in maker_names:
+            if not maker_name in maker_names and not s is PartSearchLocal:
+                if not maker_name:
+                    raise MakerRequired
                 return _make_search()
             maker_id = handler.get_maker_id(maker_name)
             try:

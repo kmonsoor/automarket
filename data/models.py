@@ -655,9 +655,9 @@ class Part(models.Model):
         verbose_name_plural = u"детали"
 
     @classmethod
-    def get_data_parts(cls, area, brandgroup, partnumber):
+    def get_data_parts(cls, partnumber):
         data = []
-        parts = cls.objects.filter(area=area, brandgroup=brandgroup, partnumber__iexact=partnumber)
+        parts = cls.objects.filter(partnumber__iexact=partnumber)
         for part in parts:
             data.append(part.get_data(sub_chain=[]))
         return data
@@ -694,4 +694,5 @@ class Part(models.Model):
             'brandgroup': brandgroup_title,
             'party': self.party or PARTY_DEFAULT_COUNT,
             'available': self.available,
+            'maker': self.brand or "",
         }
