@@ -1579,8 +1579,6 @@ def field_value(order_obj, field_name):
 def export_order(request):
     _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
 
-    print _filter.get_filters()
-
     orders = OrderedItem.objects.select_related() \
                         .filter(**_filter.get_filters()) \
                         .order_by('brandgroup__direction__po', 'ponumber')
