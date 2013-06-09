@@ -1,14 +1,85 @@
 {% extends 'cp/issues.html' %}
+{% load cp_tags %}
 
 {% block menu_issues %}<a class="menu-active" href="{% url issues %}">Отгрузки</a>{% endblock %}
 {% block menu_index %}<a href="{% url cp_index %}">Заказы</a>{% endblock %}
 
-{% block export_link %}{% endblock %}
-
 {% block content %}
 <a href="/cp/export_order/?qs_filter=1&status=received_office&client__username__contains={{ client.username }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/>
-<h3>Отгрузки {{ client.username }}</h3><br/>
-{{ block.super }}
+<h3>Отгрузки {{ client.username }}</h3>
+<br/>
+<div class="" id="changelist">
+    <form method="{{ filter.method }}" action="{{ request.path }}">
+        <input type="hidden" name="qs_filter" value="1">
+        <input type="submit" value="Фильтр">
+        <input type="submit" name="qs_filter_clear" value="Очистить">
+        &nbsp;
+        Количество записей на странице:
+        <select onchange="buildQueryFilter();" id="items-per-page-filter-select">
+            <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+            <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+            <option value="200"{% ifequal items_per_page 200 %} selected {% endifequal %}>200</option>
+        </select>&nbsp;&nbsp;
+        <br/><br/>
+        <div class="module" id="changelist">
+            <table>
+                <thead>
+                    <tr>{% if issues_mode %}<td>&nbsp;</td>{% endif %}{% table_header_sort headers %}{% if issues_mode %}<th>&nbsp;</th>{% endif %}</tr>
+                    <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+                        {% if issues_mode %}
+                            <td><input type="checkbox" onclick="toggleSelectAllRows(this);" name="select_all_rows" /></td>
+                        {% endif %}
+                        {% for f in list_filters %}
+                            <td>{% ifequal f.name 'ponumber' %}<div style="width: 60px;"><input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" style="width: 25%;">&nbsp;{{ f }}</div>{% else %}{{ f }}{% endifequal %}
+                            </td>
+                        {% endfor %}
+                        {% if issues_mode %}<td>&nbsp;</td>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <style>table td {padding:1px 5px; vertical-align: middle;}</style>
+                    {% for i in items %}
+                      <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}" class="order_row">
+                        {% include "cp/tags/table/row.html" %}
+                      </tr>
+                    {% endfor %}
+                    <tr style="text-align: left;">
+                        <td colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
+                    </tr>
+                    {% if packages %}
+                        <tr class="row_packages_header">
+                            <td colspan={{ headers|length|add:"2" }} style="text-align: left; font-weight: bold; padding: 5px; color:#666; font-size:11px; background:#e1e1e1 url(/media/img/admin/nav-bg.gif) top left repeat-x; border-left:1px solid #ddd; border-bottom:1px solid #ddd;">Упаковки</td>
+                        </tr>
+                        {% for p in packages %}
+                            <tr class="{% cycle row1,row2 %} row_package_{{ p.id }} row_package">
+                                {% include "cp/tags/table/package_row.html" %}
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                    <tr class="alt">
+                        {% if issues_mode %}<td>&nbsp;</td>{% endif %}
+                        {% for val in total_row %}
+                          <td>
+                          {% if forloop.first %}
+                            {% ifequal val 'Итого:' %}<b>{{ val }}</b>{% else %}{{ val|floatformat:2 }}{% endifequal %}
+                          {% else %}
+                            {% if val %}{{ val|floatformat:2 }}{% else %}{% endif %}
+                          {% endif %}
+                          </td>
+                        {% endfor %}
+                        <td><!-- delete column --></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+<form action="" method="post" id="issues-process-form">
+    <div class="submit-row">
+        <input type="submit" onclick="issue(); return false;" name="open_invoice_button" value="Отгрузить" />
+        <input type="hidden" name="issued" value="1" />
+        <input type="hidden" name="issued_orders" value="" />
+        <input type="hidden" name="issued_packages" value="" />
+    </div>
+</form>
 {% endblock %}
-
-{% block filter_period %}{% endblock %}

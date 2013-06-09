@@ -11,7 +11,7 @@ var brands = [
     {{ brands|safe }}
     ];
 function toggleSelectAllRows(selectAllRowsInput) {
-  var selectRows = jQuery('.select_row');
+  var selectRows = jQuery('.select_row, .select_package');
   if(jQuery(selectAllRowsInput).attr('checked')) {
     selectRows.attr('checked', true);
   }
@@ -21,7 +21,9 @@ function toggleSelectAllRows(selectAllRowsInput) {
 }
 function selectRowClick() {
   var selectAllRowsInput = jQuery('input[name=select_all_rows]');
-  if (jQuery('.select_row').length == jQuery('.select_row:checked').length) {
+  var allLength = jQuery('.select_row').length + jQuery('.select_package').length;
+  var selectedLength = jQuery('.select_row:checked').length + jQuery('.select_package:checked').length;
+  if (allLength == selectedLength) {
     selectAllRowsInput.attr('checked', true);
   }
   else {
@@ -30,7 +32,7 @@ function selectRowClick() {
 
 }
 jQuery(function(){
-  jQuery('.select_row').click(function(){ selectRowClick(); })
+  jQuery('.select_row, .select_package').click(function(){ selectRowClick(); })
 });
 var qs = new Array();
 
@@ -126,13 +128,14 @@ tr.alt td {
 
 <table>
 <thead>
-<tr>{% if issues_mode %}<td>&nbsp;</td>{% endif %}{% table_header_sort headers %}</tr>
+<tr>{% if issues_mode %}<th>&nbsp;</th>{% endif %}{% table_header_sort headers %}<th>&nbsp;</th></tr>
 <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
 {% if issues_mode %}<td><input type="checkbox" onclick="toggleSelectAllRows(this);" name="select_all_rows" /></td>{% endif %}
 {% for f in list_filters %}
 <td>{% ifequal f.name 'ponumber' %}<div style="width: 60px;"><input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" style="width: 25%;">&nbsp;{{ f }}</div>{% else %}{{ f }}{% endifequal %}
 </td>
 {% endfor %}
+{% if issues_mode %}<td>&nbsp;</td>{% endif %}
 </tr>
 </thead>
 <tbody>
@@ -159,7 +162,7 @@ tr.alt td {
   </tr>
 {% endif %}
 <tr>
-    <td style="text-align: left;" colspan={{ headers|length|add:"1" }}>{% include "paginator.html" %}</td>
+    <td style="text-align: left;" colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
 </tr>
 </tbody>
 </table>

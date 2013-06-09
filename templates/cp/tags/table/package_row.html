@@ -1,4 +1,5 @@
 {% load cp_tags %}
+  {% if issues_mode %}<td align="center"><input type="checkbox" class="select_package" name="select_package_{{ p.id }}" /></td>{% endif %}
   {% if 'ponumber' in staff_fields %}{% table_td p 'description' edit_mode 'editDescriptionPackage' 1 'package_' %}{% endif %}
   {% if 'brandgroup' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'area' in staff_fields %}<td>&nbsp;</td>{% endif %}
@@ -34,23 +35,37 @@
   {% if 'total_cost' in staff_fields %}{% table_td p 'total_cost' 0 '' %}{% endif %}
   {% if 'invoice_code' in staff_fields %}{% table_td p 'invoice' 0 '' %}{% endif %}
   {% if 'status' in staff_fields %}
-  <td>
+    {% if edit_mode %}
+      <td class="editable">
+        <select id="package_status_input_{{ i.id }}" onchange="editStatusPackage({{ p.id }}, this.value)">
+          {% for opt in status_options_package %}
+            <option value="{{ opt.value }}"{% ifequal opt.value p.status %} selected="selected"{% endifequal %}>
+              {{ opt.option|lower }}
+            </option>
+          {% endfor %}
+        </select>
+      </td>
+    {% else %}
+      <td>
       {% for opt in status_options_package %}
         {% ifequal opt.value p.status %}{{ opt.option|lower }}{% endifequal %}
       {% endfor %}
-      {% if edit_mode %}
-        <div style="float: right;">
-          <a class="delete_link" title="Удалить упаковку" style="margin-right: 3px" href="javascript:void(0);" onclick="removePackage({{ p.id }});"></a>
-        </div>
-      {% endif %}
-  </td>
+      </td>
+    {% endif %}
   {% endif %}
   {% if 'issued_at' in staff_fields %}
-    <td id="issued_at_row_{{ i.id }}" align="center">
-      <div id="issued_at_display_{{ i.id }}">
-      {{ i.issued_at|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
+    <td id="issued_at_row_{{ p.id }}" align="center">
+      <div id="issued_at_display_{{ p.id }}">
+      {{ p.issued_at|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
       </div>
     </td>
   {% endif %}
+  <td>
+      {% if is_invoice_page and edit_mode %}
+        <a class="delete_link" title="Удалить упаковку" href="javascript:void(0);" onclick="removePackage({{ p.id }});"></a>
+      {% else %}
+        &nbsp;
+      {% endif %}
+  </td>
 </tr>
 

@@ -129,7 +129,7 @@
         <div class="module" id="changelist">
             <table>
                 <thead>
-                    <tr>{% table_header_sort headers %}</tr>
+                    <tr>{% table_header_sort headers %}<th><!-- delete column --></th></tr>
                     <tr {% if filter.is_set %}style="border: solid 2px green;"{% endif %}>
                         {% for f in list_filters %}
                         <td>{% ifequal f.name 'ponumber' %}<div style="width: 60px;"><input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" style="width: 25%;">&nbsp;{{ f }}</div>{% else %}{{ f }}{% endifequal %}
@@ -145,11 +145,11 @@
                       </tr>
                     {% endfor %}
                     <tr style="text-align: left;">
-                        <td colspan={{ headers|length }}>{% include "paginator.html" %}</td>
+                        <td colspan={{ headers|length|add:"1" }}>{% include "paginator.html" %}</td>
                     </tr>
                     {% if packages %}
                         <tr class="row_packages_header">
-                            <td colspan={{ headers|length }} style="text-align: left; font-weight: bold; padding: 5px; color:#666; font-size:11px; background:#e1e1e1 url(/media/img/admin/nav-bg.gif) top left repeat-x; border-left:1px solid #ddd; border-bottom:1px solid #ddd;">Упаковки</td>
+                            <td colspan={{ headers|length|add:"1" }} style="text-align: left; font-weight: bold; padding: 5px; color:#666; font-size:11px; background:#e1e1e1 url(/media/img/admin/nav-bg.gif) top left repeat-x; border-left:1px solid #ddd; border-bottom:1px solid #ddd;">Упаковки</td>
                         </tr>
                         {% for p in packages %}
                             <tr class="{% cycle row1,row2 %} row_package_{{ p.id }} row_package">
@@ -167,6 +167,7 @@
                           {% endif %}
                           </td>
                       {% endfor %}
+                      <td><!-- delete column --></td>
                   </tr>
                 </tbody>
             </table>

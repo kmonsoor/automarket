@@ -396,6 +396,23 @@ function editDescriptionPackage(id) {
 
 }
 
+function editStatusPackage(id, value) {
+    current.id = id;
+    jQuery('#package_status_input_' + id).attr('disabled', true);
+    jQuery.ajax({
+        type: 'POST',
+        url: '/cp/position/edit/package/' + current.id + '/',
+        async: false,
+        data: {
+            'type':'status',
+            'value':value
+        },
+        success: function(response) {
+            postSave();
+        }
+    });
+}
+
 function editStatus(id, value) {
 	if (caller == 'index') {
 	    if (value == 'superseded') {

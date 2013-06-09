@@ -6,7 +6,6 @@ import pyExcelerator as xl
 from datetime import datetime
 import string
 import random
-import copy
 import dateutil
 
 from django.core.mail import send_mail
@@ -30,8 +29,8 @@ from lib import xlsreader
 from cp.forms import OrderItemForm, ImportXlsForm, PackageItemForm
 from client.forms import SearchForm
 from data.models import BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES, \
-    Invoice, Package, INVOICE_STATUSES, INVOICE_STATUS_RECEIVED, \
-    INVOICE_STATUS_CLOSED
+    Invoice, Package, INVOICE_STATUS_RECEIVED, INVOICE_STATUS_CLOSED, \
+    PACKAGE_STATUSES, PACKAGE_STATUS_RECEIVED, PACKAGE_STATUS_ISSUED
 from data.forms import OrderedItemsFilterForm, OrderedItemForm, \
     STAFF_FIELD_LIST, InvoicesFilterForm, INVOICES_FIELD_LIST, PackageForm
 from common.views import PartSearch
@@ -80,7 +79,7 @@ def get_status_options():
 
 
 def get_status_options_package():
-    return [{'value': i[0], 'option': i[1]} for i in INVOICE_STATUSES]
+    return [{'value': i[0], 'option': i[1]} for i in PACKAGE_STATUSES]
 
 
 def get_period(request, prefix, field):
@@ -436,6 +435,7 @@ def invoice(request, invoice_id):
     context['package_template'] = PackageItemForm().render_js('from_template')
     context['package_data'] = package_data
     context['form_packages_is_valid'] = form_packages_is_valid
+    context['is_invoice_page'] = True
 
     return context
 
@@ -592,18 +592,32 @@ def issues_client(request, client_id):
         redirect_url = reverse("issues_client", args=[client_id])
 
         if request.POST.get('issued'):
+            order_ids = request.POST.get('issued_orders')
+            package_ids = request.POST.get('issued_packages')
             try:
-                order_ids = [int(x) for x in request.POST.get('issued_orders').split(',')]
+                if order_ids:
+                    order_ids = [int(x) for x in order_ids.split(',')]
+
+                if package_ids:
+                    package_ids = [int(x) for x in package_ids.split(',')]
             except:
                 msg = u"Невалидные данные"
                 messages.add_message(request, messages.ERROR, msg)
                 return _redirect_after_post(redirect_url)
             else:
-                orders = list(OrderedItem.objects.filter(id__in=order_ids))
-                for order in orders:
-                    order.status = 'issued'
-                    order.issued_at = datetime.now()
-                    order.save()
+                if order_ids:
+                    orders = list(OrderedItem.objects.filter(id__in=order_ids))
+                    for order in orders:
+                        order.status = 'issued'
+                        order.issued_at = datetime.now()
+                        order.save()
+
+                if package_ids:
+                    packages = list(Package.objects.filter(id__in=package_ids))
+                    for package in packages:
+                        package.status = PACKAGE_STATUS_ISSUED
+                        package.issued_at = datetime.now()
+                        package.save()
                 msg = u"Успешно отгружены"
                 messages.add_message(request, messages.SUCCESS, msg)
                 return _redirect_after_post(redirect_url)
@@ -655,47 +669,86 @@ def issues_client(request, client_id):
 
     qs = OrderedItem.objects.select_related().filter(**qs_filter)
 
+    context['packages'] = Package.objects.filter(
+        client__id=client_id,
+        status__in=(PACKAGE_STATUS_RECEIVED,)
+    ).order_by('-created_at')
+
     # calculate totals by filter
+    from django.db import connection
+    total = {}
+    td = "U0"
+    q, params = qs._as_sql(connection)
+    from_clause = q.split("FROM")[1]
+
+    where = from_clause.split("WHERE")
+    if len(where) > 1:
+        from_clause = where[0]
+        where = [where[1]]
+    else:
+        where = []
+    where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
+    where = "WHERE %s" % "AND ".join(where)
+
+    sql = """
+        SELECT
+            SUM(%(p)s.total_cost),
+            SUM(%(p)s.weight*%(p)s.quantity),
+            SUM(%(p)s.delivery),
+            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
+            SUM(%(p)s.price_invoice*%(p)s.quantity)
+            FROM %(from)s %(where)s
+    """ % {'p': td, 'from': from_clause, 'where': where}
+    cursor = connection.cursor()
+    cursor.execute(sql, params)
+    res = cursor.fetchall()
+    if len(res) > 0:
+        total.update(dict(zip(
+            ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0])
+        ))
+
+    total_packages = {}
+    sql = """
+        SELECT
+            SUM(total_cost),
+            SUM(weight * quantity),
+            SUM(delivery)
+        FROM
+            data_package
+        WHERE
+            client_id = %(client_id)i AND status IN (%(statuses)s)
+    """ % {
+        'client_id': client.id,
+        'statuses': ",".join(str(x) for x in (PACKAGE_STATUS_RECEIVED,))
+    }
+
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    res = cursor.fetchall()
+    if len(res) > 0:
+        total_packages = dict(zip(
+            ('total_cost', 'weight', 'delivery'), res[0])
+        )
+
+    def _sum(d1, d2):
+        d = {}
+        for k, v1 in d1.items():
+            v2 = d2.get(k)
+            if v1 is None and v2 is None:
+                d[k] = None
+            else:
+                d[k] = (v1 or 0) + (v2 or 0)
+        return d
+
     total_row = []
-    if _filter.is_set:
-        from django.db import connection
-
-        td = "U0"
-        q, params = qs._as_sql(connection)
-        from_clause = q.split("FROM")[1]
-
-        where = from_clause.split("WHERE")
-        if len(where) > 1:
-            from_clause = where[0]
-            where = [where[1]]
+    total = _sum(total, total_packages)
+    for f in STAFF_FIELDS:
+        field_name = f[2].split("__")[0]
+        if field_name[:2] == "po":
+            total_row.append(u"Итого:")
         else:
-            where = []
-        where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
-        where = "WHERE %s" % "AND ".join(where)
-
-        sql = """
-            SELECT
-                SUM(%(p)s.total_cost),
-                SUM(%(p)s.weight*%(p)s.quantity),
-                SUM(%(p)s.delivery),
-                SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
-                SUM(%(p)s.price_invoice*%(p)s.quantity)
-                FROM %(from)s %(where)s
-        """ % {'p': td, 'from': from_clause, 'where': where}
-        cursor = connection.cursor()
-        cursor.execute(sql, params)
-        res = cursor.fetchall()
-        if len(res) > 0:
-            total = dict(zip(
-                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0]
-            ))
-
-            for f in STAFF_FIELDS:
-                field_name = f[2].split("__")[0]
-                if field_name[:2] == "po":
-                    total_row.append(u"Итого:")
-                else:
-                    total_row.append(total.get(field_name, u""))
+            total_row.append(total.get(field_name, u""))
+    context['total_row'] = total_row
 
     if order_by:
         qs = qs.order_by(order_by)
@@ -719,6 +772,7 @@ def issues_client(request, client_id):
 
     #paginator.set_page(current_page)
     context['status_options_str'], context['status_options'] = get_status_options()
+    context['status_options_package'] = get_status_options_package()
     context['items'] = paginator.get_page_items()
     context['paginator'] = paginator
     context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
@@ -1108,6 +1162,15 @@ class PackageSaver(object):
             logger.exception("save_package_quantity: %r" % e)
             pass
         return obj.quantity
+
+    def save_status(self, obj, value):
+        try:
+            obj.status = value
+            obj.save()
+        except Exception, e:
+            logger.exception("save_package_status: %r" % e)
+            pass
+        return obj.status
 
 
 @ajax_request

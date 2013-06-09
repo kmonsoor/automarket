@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 import inspect
+import datetime
 import logging
 logger = logging.getLogger('data.models')
 
@@ -9,7 +10,7 @@ from django.contrib.auth.models import User
 
 from data.managers import OrderedItemManager
 from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT, \
-     DELIVERY_DEFAULT, DELIVERY_PERIOD_DEFAULT
+    DELIVERY_DEFAULT, DELIVERY_PERIOD_DEFAULT
 
 
 class Direction(models.Model):
@@ -17,10 +18,12 @@ class Direction(models.Model):
     po = models.CharField(max_length=255, verbose_name=u"PO")
 
     delivery = models.FloatField(verbose_name=u"доставка", blank=True, null=True)
-    multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
-                                     blank=True, null=True)
-    delivery_period = models.IntegerField(u'Срок доставки (в днях)',
-        blank=True, null=True)
+    multiplier = models.DecimalField(
+        u'множитель', max_digits=7, decimal_places=3, blank=True, null=True
+    )
+    delivery_period = models.IntegerField(
+        u'Срок доставки (в днях)', blank=True, null=True
+    )
 
     class Meta:
         verbose_name = u'Направление'
@@ -304,6 +307,9 @@ class OrderedItem(models.Model):
             #self.cost = None
             #self.total_cost = None
 
+        if self.status == 'issued' and not self.issued_at:
+            self.issued_at = datetime.datetime.now()
+
         super(OrderedItem, self).save(*args, **kwargs)
 
     def switch_status(self, new_status=None, save=False):
@@ -391,6 +397,14 @@ class Invoice(models.Model):
             self.save()
 
 
+PACKAGE_STATUS_RECEIVED = 2
+PACKAGE_STATUS_ISSUED = 3
+PACKAGE_STATUSES = (
+    (PACKAGE_STATUS_RECEIVED, u'получено офисом'),
+    (PACKAGE_STATUS_ISSUED, u'выдано'),
+)
+
+
 class Package(models.Model):
     description = models.CharField(verbose_name=u"Описание", max_length=255)
     invoice = models.ForeignKey(Invoice)
@@ -403,7 +417,8 @@ class Package(models.Model):
     total_cost = models.FloatField(verbose_name=u"Окончательная цена за все", null=True, blank=True)
     client = models.ForeignKey(User, verbose_name=u"Клиент", related_name=u"client_package", null=True, blank=True)
     received_at = models.DateTimeField(verbose_name=u"Дата получения", null=True, blank=True)
-    status = models.IntegerField(verbose_name=u"Состояние", choices=INVOICE_STATUSES, default=INVOICE_STATUS_NONE)
+    status = models.IntegerField(verbose_name=u"Состояние", choices=PACKAGE_STATUSES, default=PACKAGE_STATUS_RECEIVED)
+    issued_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Отгружено")
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -417,10 +432,13 @@ class Package(models.Model):
             self.received_at = self.invoice.received_at
 
         if not self.status:
-            self.status = INVOICE_STATUS_RECEIVED
+            self.status = PACKAGE_STATUS_RECEIVED
 
         if not self.delivery_coef:
             self.delivery_coef = self.invoice.brandgroup.get_settings()[1]
+
+        if self.status == PACKAGE_STATUS_ISSUED and not self.issued_at:
+            self.issued_at = datetime.datetime.now()
 
         self.delivery = None
         if self.delivery_coef and self.weight and self.client:

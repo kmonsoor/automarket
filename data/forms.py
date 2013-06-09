@@ -126,6 +126,7 @@ class PackageForm(forms.Form):
     description = forms.CharField(required=False)
     weight = forms.FloatField(required=False)
     quantity = forms.IntegerField(required=False)
+    status = forms.IntegerField(required=False)
 
 
 class OrderedItemInlineForm(forms.ModelForm):
