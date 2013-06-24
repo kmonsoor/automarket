@@ -153,7 +153,7 @@
                         </tr>
                         {% for p in packages %}
                             <tr class="{% cycle row1,row2 %} row_package_{{ p.id }} row_package">
-                                {% include "cp/tags/table/package_row.html" %}
+                                {% include "cp/tags/table/row_package.html" %}
                             </tr>
                         {% endfor %}
                     {% endif %}
@@ -174,8 +174,9 @@
         </div>
     </form>
     <form action="" method="post" id="invoice-process-form">
-        {% if edit_mode %}
+        {% ifnotequal invoice.status 3 %}
             <br/>
+
             <p align="right">
                 <a class="add_link" href="javascript:void(0)" onclick="new PageForm(); jQuery('.save_packages_block').show();">Добавить упаковку</a>
             </p>
@@ -193,7 +194,7 @@
                 <input type="submit" onclick="openInvoice(); return false;" name="open_invoice_button" value="Открыть инвойс" />
                 <input type="hidden" name="open_invoice" value="Открыть инвойс" />
             </div>
-        {% endif %}
+        {% endifnotequal %}
     </form>
 </div>
 {% endblock %}

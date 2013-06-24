@@ -31,7 +31,7 @@ STAFF_FIELD_LIST = (
     (u'TOTAL', 'total_cost', 'total_cost', None),
     (u'Инвойс', 'invoice_code', 'invoice_code', 'invoice_code__contains'),
     (u'Статус', 'status', 'status', 'status'),
-    (u'Отгрузка', 'issued_at', 'issued_at', None),
+    (u'Отгружено', 'issued_at', 'issued_at', None),
 )
 
 class OrderedItemsFilterForm(forms.Form):

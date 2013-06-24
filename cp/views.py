@@ -287,10 +287,6 @@ def invoice(request, invoice_id):
     )
 
     invoice.calculate_status()
-    edit_mode = 1
-    if invoice.status in (INVOICE_STATUS_CLOSED,):
-        edit_mode = 0
-    context['edit_mode'] = edit_mode
 
     context['packages'] = Package.objects.filter(invoice=invoice).order_by('-created_at')
 
@@ -414,6 +410,8 @@ def invoice(request, invoice_id):
                 messages.add_message(request, messages.ERROR, msg)
                 return _redirect_after_post(redirect_url)
 
+            OrderedItem.objects.filter(invoice_code=invoice.code).update(editable=False)
+            Package.objects.filter(invoice=invoice).update(editable=False)
             invoice.status = INVOICE_STATUS_CLOSED
             invoice.closed_at = datetime.now()
             invoice.save()
@@ -427,6 +425,8 @@ def invoice(request, invoice_id):
                 return _redirect_after_post(redirect_url)
 
             if invoice.status == INVOICE_STATUS_CLOSED:
+                OrderedItem.objects.filter(invoice_code=invoice.code).update(editable=True)
+                Package.objects.filter(invoice=invoice).update(editable=True)
                 invoice.status = INVOICE_STATUS_RECEIVED
                 invoice.save()
                 messages.add_message(request, messages.SUCCESS, u"Инвойс открыт.")
@@ -757,20 +757,6 @@ def issues_client(request, client_id):
     context['items_per_page'] = items_per_page
     paginator = SimplePaginator(request, qs, items_per_page, 'page')
 
-    # grouping parents orders
-    if not _filter.is_set:
-        items_list = list(paginator.get_page_items())
-        items_ids = list(paginator.get_page_items().values_list('id', flat=True))
-        for order in items_list:
-            if order.parent:
-                del items_list[items_list.index(order)]
-        has_parent_list = list(OrderedItem.objects.filter(parent__id__in=items_ids))
-        for order in has_parent_list:
-            index = items_list.index(order.parent)
-            items_list.insert(index, order)
-        paginator.page.object_list = items_list
-
-    #paginator.set_page(current_page)
     context['status_options_str'], context['status_options'] = get_status_options()
     context['status_options_package'] = get_status_options_package()
     context['items'] = paginator.get_page_items()
@@ -980,10 +966,8 @@ def automototrade_basket_filled():
     except:
         return True, u'Произошла ошибка при проверке корзины. Проверьте, пожалуйста, вручную.'
     else:
-        res = False
-        if count > 0:
-            res = True
-        return res, u'В корзине <b>%s</b> позиций.' % count
+        filled = count > 0
+        return filled, u'В корзине <b>%s</b> позиций.' % count
 
 
 class OrderedItemSaver(object):
@@ -1350,6 +1334,12 @@ def change_status(request):
         orders = []
 
     if not orders:
+        return HttpResponseRedirect('/cp/groups/')
+
+    basket_filled, msg = automototrade_basket_filled()
+    if basket_filled:
+        msg = u'Заказ невозможен.'
+        messages.add_message(request, messages.ERROR, msg)
         return HttpResponseRedirect('/cp/groups/')
 
     ponumber = OrderedItem.objects\

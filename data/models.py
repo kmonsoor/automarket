@@ -232,6 +232,7 @@ class OrderedItem(models.Model):
     parent = models.ForeignKey('self', null=True, blank=True)
 
     big_price_invoice_order_mail_sent = models.BooleanField(verbose_name=u'Цена в инвойсе больше цены продажи. Отправлено письмо.', default=False)
+    editable = models.BooleanField(verbose_name=u"Редактируемая", default=True)
 
     objects = OrderedItemManager()
 
@@ -419,6 +420,7 @@ class Package(models.Model):
     received_at = models.DateTimeField(verbose_name=u"Дата получения", null=True, blank=True)
     status = models.IntegerField(verbose_name=u"Состояние", choices=PACKAGE_STATUSES, default=PACKAGE_STATUS_RECEIVED)
     issued_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Отгружено")
+    editable = models.BooleanField(verbose_name=u"Редактируемая", default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

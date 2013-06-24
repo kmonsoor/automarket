@@ -1,6 +1,6 @@
 {% load cp_tags %}
   {% if issues_mode %}<td align="center"><input type="checkbox" class="select_package" name="select_package_{{ p.id }}" /></td>{% endif %}
-  {% if 'ponumber' in staff_fields %}{% table_td p 'description' edit_mode 'editDescriptionPackage' 1 'package_' %}{% endif %}
+  {% if 'ponumber' in staff_fields %}{% table_td p 'description' p.editable 'editDescriptionPackage' 1 'package_' %}{% endif %}
   {% if 'brandgroup' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'area' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'brand' in staff_fields %}<td>&nbsp;</td>{% endif %}
@@ -17,7 +17,7 @@
   {{ p.received_at|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
   </div>
   </td>{% endif %}
-  {% if 'quantity' in staff_fields %}{% table_td p 'quantity' edit_mode 'editQuantityPackage' 1 'package_' %}{% endif %}
+  {% if 'quantity' in staff_fields %}{% table_td p 'quantity' p.editable 'editQuantityPackage' 1 'package_' %}{% endif %}
   {% if 'price_invoice' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'total_w_ship' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'part_number_superseded' in staff_fields %}<td>&nbsp;</td>{% endif %}
@@ -27,7 +27,7 @@
   {% if 'description_en' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'id' in staff_fields %}<td>{{ i.id }}</td>{% endif %}
   {% if 'price_base' in staff_fields %}<td>&nbsp;</td>{% endif %}
-  {% if 'weight' in staff_fields %}{% table_td p 'weight' edit_mode 'editWeightPackage' 1 'package_' %}{% endif %}
+  {% if 'weight' in staff_fields %}{% table_td p 'weight' p.editable 'editWeightPackage' 1 'package_' %}{% endif %}
   {% if 'delivery' in staff_fields %}{% table_td p 'delivery' 0 '' 0 %}{% endif %}
   {% if 'price_sale' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'price_discount' in staff_fields %}<td>&nbsp;</td>{% endif %}
@@ -61,7 +61,7 @@
     </td>
   {% endif %}
   <td>
-      {% if is_invoice_page and edit_mode %}
+      {% if is_invoice_page and p.editable %}
         <a class="delete_link" title="Удалить упаковку" href="javascript:void(0);" onclick="removePackage({{ p.id }});"></a>
       {% else %}
         &nbsp;

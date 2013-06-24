@@ -52,7 +52,7 @@
                         </tr>
                         {% for p in packages %}
                             <tr class="{% cycle row1,row2 %} row_package_{{ p.id }} row_package">
-                                {% include "cp/tags/table/package_row.html" %}
+                                {% include "cp/tags/table/row_package.html" %}
                             </tr>
                         {% endfor %}
                     {% endif %}

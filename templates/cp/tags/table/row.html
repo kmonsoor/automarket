@@ -12,7 +12,7 @@
   {% endifequal %}
   {% endif %}
   {% if 'comment_customer' in staff_fields %}{% table_td i 'comment_customer' 0 '' %}{% endif %}
-  {% if 'comment_supplier' in staff_fields %}{% table_td i 'comment_supplier' edit_mode 'editCommentSupplier' %}{% endif %}
+  {% if 'comment_supplier' in staff_fields %}{% table_td i 'comment_supplier' i.editable 'editCommentSupplier' %}{% endif %}
   {% if 'created' in staff_fields %}<td id="created_row_{{ i.id }}" align="center">
   <div id="created_display_{{ i.id }}">
   {{ i.created|date:"d.m.Y <\\b\\r\\\> H:i"|safe }}
@@ -24,60 +24,69 @@
   </div>
   </td>{% endif %}
   {% if 'quantity' in staff_fields %}{% table_td i 'quantity' 0 '' %}{% endif %}
-  {% if 'price_invoice' in staff_fields %}{% table_td i 'price_invoice' edit_mode 'editPriceInvoice' %}{% endif %}
+  {% if 'price_invoice' in staff_fields %}{% table_td i 'price_invoice' i.editable 'editPriceInvoice' %}{% endif %}
   {% if 'total_w_ship' in staff_fields %}{% table_td i 'total_w_ship' 0 '' %}{% endif %}
-  {% if 'part_number_superseded' in staff_fields %}{% table_td i 'part_number_superseded' edit_mode 'editSuperseded' %}{% endif %}
+  {% if 'part_number_superseded' in staff_fields %}{% table_td i 'part_number_superseded' i.editable 'editSuperseded' %}{% endif %}
   {% if 'manager' in staff_fields %}{% table_td i 'manager' 0 '' %}{% endif %}
   {% if 'client' in staff_fields %}<td>{% if issues_mode %}<a href="{% url issues_client i.client.id %}">{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</a>{% else %}{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}{% endif %}</td>{% endif %}
-  {% if 'description_ru' in staff_fields %}{% table_td i 'description_ru' edit_mode 'editDescriptionRu' %}{% endif %}
-  {% if 'description_en' in staff_fields %}{% table_td i 'description_en' edit_mode 'editDescriptionEn' %}{% endif %}
+  {% if 'description_ru' in staff_fields %}{% table_td i 'description_ru' i.editable 'editDescriptionRu' %}{% endif %}
+  {% if 'description_en' in staff_fields %}{% table_td i 'description_en' i.editable 'editDescriptionEn' %}{% endif %}
   {% if 'id' in staff_fields %}<td>{{ i.id }}</td>{% endif %}
-  {% if 'price_base' in staff_fields %}{% table_td i 'price_base' edit_mode 'editPriceBase' 0 %}{% endif %}
-  {% if 'weight' in staff_fields %}{% table_td i 'weight' edit_mode 'editWeight' %}{% endif %}
+  {% if 'price_base' in staff_fields %}{% table_td i 'price_base' i.editable 'editPriceBase' 0 %}{% endif %}
+  {% if 'weight' in staff_fields %}{% table_td i 'weight' i.editable 'editWeight' %}{% endif %}
   {% if 'delivery' in staff_fields %}{% table_td i 'delivery' 0 '' 0 %}{% endif %}
   {% if 'price_sale' in staff_fields %}{% table_td i 'price_sale' 0 '' 0 %}{% endif %}
-  {% if 'price_discount' in staff_fields %}{% table_td i 'price_discount' edit_mode 'editPriceDiscount' 0 %}{% endif %}
+  {% if 'price_discount' in staff_fields %}{% table_td i 'price_discount' i.editable 'editPriceDiscount' 0 %}{% endif %}
   {% if 'cost' in staff_fields %}{% table_td i 'cost' 0 '' 0 %}{% endif %}
   {% if 'total_cost' in staff_fields %}{% table_td i 'total_cost' 0 '' 0 %}{% endif %}
-  {% if 'invoice_code' in staff_fields %}{% table_td i 'invoice_code' edit_mode 'editInvoiceCode' %}{% endif %}
+  {% if 'invoice_code' in staff_fields %}{% table_td i 'invoice_code' i.editable 'editInvoiceCode' %}{% endif %}
   {% if 'status' in staff_fields %}
     <td class="editable">
-      {% if edit_mode %}
-        <select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
-        {% for opt in status_options %}
-          {% ifequal i.status 'order' %}
-              {% ifequal opt.value 'order' %}
-                <option value="order" selected>{{ opt.option|lower }}</option>
-              {% endifequal %}
-              {% ifequal opt.value 'moderation' %}
-                <option value="moderation">{{ opt.option|lower }}</option>
-              {% endifequal %}
-          {% else %}
-            {% ifequal i.status 'moderation' %}
-              {% ifequal opt.value 'order' %}
-                <option value="order">{{ opt.option|lower }}</option>
-              {% endifequal %}
-              {% ifequal opt.value 'moderation' %}
-                <option value="moderation" selected>{{ opt.option|lower }}</option>
-              {% endifequal %}
-            {% else %}
-              {% ifequal opt.value 'order' %}
-              {% else %}
+      {% if i.editable %}
+        {% ifequal i.status 'issued' %}
+          {% for opt in status_options %}
+            {% ifequal opt.value i.status %}{{ opt.option|lower }}{% endifequal %}
+          {% endfor %}
+        {% else %}
+          <select id="status_input_{{ i.id }}" onchange="editStatus({{ i.id }}, this.value)">
+          {% for opt in status_options %}
+            {% ifequal i.status 'order' %}
+                {% ifequal opt.value 'order' %}
+                  <option value="order" selected>{{ opt.option|lower }}</option>
+                {% endifequal %}
                 {% ifequal opt.value 'moderation' %}
+                  <option value="moderation">{{ opt.option|lower }}</option>
+                {% endifequal %}
+            {% else %}
+              {% ifequal i.status 'moderation' %}
+                {% ifequal opt.value 'order' %}
+                  <option value="order">{{ opt.option|lower }}</option>
+                {% endifequal %}
+                {% ifequal opt.value 'moderation' %}
+                  <option value="moderation" selected>{{ opt.option|lower }}</option>
+                {% endifequal %}
+              {% else %}
+                {% ifequal opt.value 'order' %}
                 {% else %}
-                  <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected="selected"{% endifequal %}>
-                    {{ opt.option|lower }}
-                  </option>
+                  {% ifequal opt.value 'moderation' %}
+                  {% else %}
+                    {% ifequal opt.value 'issued' %}
+                    {% else %}
+                      <option value="{{ opt.value }}"{% ifequal opt.value i.status %} selected="selected"{% endifequal %}>
+                        {{ opt.option|lower }}
+                      </option>
+                    {% endifequal %}
+                  {% endifequal %}
                 {% endifequal %}
               {% endifequal %}
             {% endifequal %}
-          {% endifequal %}
-        {% endfor %}
-        </select>
+          {% endfor %}
+          </select>
+        {% endifequal %}
       {% else %}
         {% for opt in status_options %}
-            {% ifequal opt.value i.status %}{{ opt.option|lower }}{% endifequal %}
-          {% endfor %}
+          {% ifequal opt.value i.status %}{{ opt.option|lower }}{% endifequal %}
+        {% endfor %}
       {% endif %}
     </td>
   {% endif %}

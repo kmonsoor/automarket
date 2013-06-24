@@ -544,9 +544,11 @@ def basket_order(request):
         return (data, item)
 
     to_save = [x for x in map(get_orderitem_data, list(bi)) if x[0]]
+    client_order_id = OrderedItem.objects.get_next_client_order_id(request.user)
 
     for t, item in to_save:
         oi = OrderedItem(**t)
+        oi.client_order_id = client_order_id
         oi.save()
         item.order_item_id = oi.id
         item.save()
