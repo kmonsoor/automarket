@@ -3,7 +3,7 @@ import os
 import re
 import pyExcelerator as xl
 from datetime import datetime
-from django import forms
+import dateutil
 from django.contrib.auth.decorators import login_required
 from lib.decorators import render_to
 from lib.paginator import SimplePaginator
@@ -27,6 +27,84 @@ from client.forms import BasketForm
 from django.db import connection
 
 re_RUS = re.compile(u'^([-_+.,:;!?><*&%$#@а-яА-Я0-9\u0451\u0401]|\s)+$')
+
+
+def get_period(request, prefix, field):
+    PERIOD_PARAM = 'period'
+    PERIOD_PARAM_WEEK = 'w'
+    PERIOD_PARAM_MONTH = 'm'
+    PERIOD_PARAM_YEAR = 'y'
+    PERIOD_PARAM_ALL = 'a'
+    PERIOD_PARAMS = (
+        PERIOD_PARAM_WEEK,
+        PERIOD_PARAM_MONTH,
+        PERIOD_PARAM_YEAR,
+        PERIOD_PARAM_ALL
+    )
+    PERIOD_PARAM_DEFAULT = PERIOD_PARAM_YEAR
+
+    period = request.GET.get(PERIOD_PARAM)
+
+    session_key = "%s_%s" % (prefix, PERIOD_PARAM)
+    if not period:
+        period = request.session.get(session_key, None)
+    else:
+        request.session[session_key] = period
+        request.session.modified = True
+
+    if not period or period not in PERIOD_PARAMS:
+        period = PERIOD_PARAM_DEFAULT
+
+    rated_period = None
+    if period:
+        now = datetime.now()
+        if period == 'w':
+            rated_period = now + dateutil.relativedelta.relativedelta(
+                weeks=-1, weekday=dateutil.relativedelta.calendar.SATURDAY,
+                hour=0, minute=0, second=0, microsecond=0
+            )
+        elif period == 'm':
+            rated_period = now + dateutil.relativedelta.relativedelta(
+                day=1, hour=0, minute=0, second=0, microsecond=0
+            )
+        elif period == 'y':
+            rated_period = now + dateutil.relativedelta.relativedelta(
+                month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+            )
+        elif period == 'a':
+            pass
+
+    if rated_period:
+        return period, {'%s__gte' % field: rated_period}
+    return period, {}
+
+
+def get_items_per_page(request, prefix):
+    ITEM_PER_PAGE_PARAM = 'items_per_page'
+    ITEM_PER_PAGE_PARAM_ALL = 'all'
+    ITEM_PER_PAGE_DEFAULT = 50
+
+    items_per_page = request.GET.get(ITEM_PER_PAGE_PARAM)
+
+    session_key = "%s_%s" % (prefix, ITEM_PER_PAGE_PARAM)
+    if not items_per_page:
+        items_per_page = request.session.get(session_key)
+    else:
+        request.session[session_key] = items_per_page
+        request.session.modified = True
+
+    if items_per_page == ITEM_PER_PAGE_PARAM_ALL:
+        items_per_page = 10000
+
+    if not items_per_page:
+        items_per_page = ITEM_PER_PAGE_DEFAULT
+
+    try:
+        items_per_page = int(items_per_page)
+    except (ValueError, TypeError):
+        items_per_page = ITEM_PER_PAGE_DEFAULT
+
+    return items_per_page
 
 
 def normalize_sum(value):
@@ -186,23 +264,11 @@ class ClientOrderItemList(object):
         self.user = request.user
         self.set_fields()
         self.request = request
+        self.filter = QSFilter(request, filter_form)
 
-        _filter = QSFilter(request, filter_form)
-        if _filter.modified:
-            current_page = 1
-        self.filter = _filter
-
-        current_page = request.GET.get('page', 1)
-        items_per_page = request.GET.get('items_per_page', None)
-        if not items_per_page:
-            items_per_page = request.session.get('items_per_page', None)
-        else:
-            request.session['items_per_page'] = items_per_page
-            request.session.modified = True
-        if not items_per_page:
-            items_per_page = 20
-
-        self.items_per_page = int(items_per_page)
+        session_store_prefix = "client_index"
+        self.items_per_page = get_items_per_page(request, session_store_prefix)
+        self.period, self.period_filter = get_period(request, session_store_prefix, "created")
         self.results = self.result_list()
         self.headers = self.list_headers()
         self.filters = self.list_filters()
@@ -255,6 +321,11 @@ class ClientOrderItemList(object):
                         .filter(client=self.request.user) \
                         .filter(**self.filter.get_filters())
 
+        print self.period_filter
+
+        if self.period_filter:
+            qs = qs.filter(**self.period_filter)
+
         # calculate totals by filter
         self.total_row = {}
         if self.filter.is_set:
@@ -268,7 +339,7 @@ class ClientOrderItemList(object):
 	        sql = \
 	        """
 	        SELECT
-	            SUM(%(p)s.total_cost),
+	            SUM(%(p)s.total_cost*%(p)s.quantity),
 	            SUM(%(p)s.weight*%(p)s.quantity),
 	            SUM(%(p)s.delivery),
 	            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0))
@@ -306,6 +377,7 @@ def index(request):
     response['cl'] = cl
     response['paginator'] = cl.paginator
     response['items_per_page'] = cl.items_per_page
+    response['period'] = cl.period
 
     return response
 
