@@ -181,9 +181,11 @@ def search(request):
                             except Exception:
                                 found['core_price'] = 0.00
 
+                            cost_margin = brand_group.direction.cost_margin or settings.COST_DEFAULT_MARGIN
+
                             found['MSRP'] = float(value) * float(m)
                             if 'cost' in found and found['cost']:
-                                _msrp = found['cost'] * (float(100) + settings.COST_DEFAULT_MARGIN) / float(100)
+                                _msrp = found['cost'] * (float(100) + cost_margin) / float(100)
                                 if _msrp > found['MSRP']:
                                     found['MSRP'] = _msrp
 

@@ -24,6 +24,9 @@ class Direction(models.Model):
     delivery_period = models.IntegerField(
         u'Срок доставки (в днях)', blank=True, null=True
     )
+    cost_margin = models.FloatField(
+        verbose_name=u"Минимальный профит (в процентах)", blank=True, null=True
+    )
 
     class Meta:
         verbose_name = u'Направление'
