@@ -54,6 +54,7 @@ class OrderedItemsFilterForm(forms.Form):
     invoice_code__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
     status = forms.ChoiceField(required=False, choices=(('', u'Отображать все'),) + ORDER_ITEM_STATUSES,\
             widget=forms.Select(attrs={'class':'qs_filter'}))
+    shipment__id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
 
 
 INVOICES_FIELD_LIST = (
@@ -73,6 +74,31 @@ class InvoicesFilterForm(forms.Form):
         required=False,
         choices=(('', u'Отображать все'),) + INVOICE_STATUSES,
         widget=forms.Select(attrs={'class': 'qs_filter'})
+    )
+
+
+SHIPMENTS_FIELD_LIST = (
+    (u'Дата', 'created_at', 'created_at', None),
+    (u'ID', 'manager', 'manager', 'manager__username__contains'),
+    (u'CL', 'client', 'client', 'client__username__contains'),
+    (u'Код отгрузки', 'code', 'code', 'code__contains'),
+    (u'Общий вес, кг', '', '', None),
+    (u'Итоговая сумма', '', '', None),
+)
+
+
+class ShipmentsFilterForm(forms.Form):
+    code__contains = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'qs_filter'})
+    )
+
+    manager__username__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
+    )
+
+    client__username__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
     )
 
 

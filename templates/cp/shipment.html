@@ -1,9 +1,9 @@
-{% extends 'cp/issues.html' %}
+{% extends 'cp/shipments.html' %}
 {% load cp_tags %}
 
 {% block content %}
-<a href="/cp/export_order/?qs_filter=1&status=received_office&client__username__contains={{ client.username }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/>
-<h3>К выдаче: клиент {{ client.username }}</h3>
+<a href="/cp/export_order/?qs_filter=1&shipment__id={{ shipment.id }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/>
+<h3>Отгрузка {{ shipment.full_code }}</h3>
 <br/>
 <div class="" id="changelist">
     <form method="{{ filter.method }}" action="{{ request.path }}">
@@ -21,11 +21,8 @@
         <div class="module" id="changelist">
             <table>
                 <thead>
-                    <tr>{% if issues_mode %}<td>&nbsp;</td>{% endif %}{% table_header_sort headers %}{% if issues_mode %}<th>&nbsp;</th>{% endif %}</tr>
+                    <tr>{% table_header_sort headers %}</tr>
                     <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
-                        {% if issues_mode %}
-                            <td><input type="checkbox" onclick="toggleSelectAllRows(this);" name="select_all_rows" /></td>
-                        {% endif %}
                         {% for f in list_filters %}
                             <td>{% ifequal f.name 'ponumber' %}<div style="width: 60px;"><input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" style="width: 25%;">&nbsp;{{ f }}</div>{% else %}{{ f }}{% endifequal %}
                             </td>
@@ -64,19 +61,15 @@
                           {% endif %}
                           </td>
                         {% endfor %}
-                        <td><!-- delete column --></td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </form>
 </div>
-<form action="" method="post" id="issues-process-form">
+<form action="{% url shipment_delete shipment.id %}" method="get">
     <div class="submit-row">
-        <input type="submit" onclick="issue(); return false;" name="open_invoice_button" value="Отгрузить" />
-        <input type="hidden" name="issued" value="1" />
-        <input type="hidden" name="issued_orders" value="" />
-        <input type="hidden" name="issued_packages" value="" />
+        <input type="submit" value="Отменить отгрузку" />
     </div>
 </form>
 {% endblock %}

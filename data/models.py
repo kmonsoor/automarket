@@ -170,6 +170,124 @@ class Brand(models.Model):
         return u"%s" % self.title
 
 
+class Shipment(models.Model):
+    code = models.CharField(verbose_name=u"Код", max_length=255)
+    number = models.IntegerField(verbose_name=u"Номер", default=1)
+    client = models.ForeignKey(User, verbose_name=u"Клиент", related_name=u"shipment_client")
+    manager = models.ForeignKey(User, verbose_name=u"Менеджер", related_name=u"shipment_manager")
+    user = models.ForeignKey(User, verbose_name=u"Отгрузивший пользователь", related_name=u"user")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('code', 'number', 'client',)
+        verbose_name = u"Отгрузка"
+        verbose_name_plural = u"Отгрузки"
+
+    def __unicode__(self):
+        return u"%s" % self.code
+
+    @property
+    def items(self):
+        return OrderedItem.objects.filter(shipment=self)
+
+    @property
+    def packages(self):
+        return Package.objects.filter(shipment=self)
+
+    def full_code(self):
+        return u"%s-%s" % (self.code, self.number)
+
+    @property
+    def cost(self):
+        total_costs = []
+        for item in self.items:
+            total_costs.append(item.total_cost or 0)
+        for package in self.packages:
+            total_costs.append(package.total_cost or 0)
+        return sum(total_costs)
+
+    @property
+    def weight(self):
+        weights = []
+        for item in self.items:
+            if item.weight and item.quantity:
+                weights.append(item.weight * item.quantity)
+        for package in self.packages:
+            if package.weight and package.quantity:
+                weights.append(package.weight * package.quantity)
+        return sum(weights)
+
+    @classmethod
+    def _create(cls, request, orders=[], packages=[]):
+        shipment_code = datetime.datetime.now().strftime("%d%m%y")
+        by_clients_and_managers = {}
+
+        orders_by_clients = {}
+        for order in orders:
+            orders_by_clients.setdefault(order.client, []).append(order)
+
+        packages_by_clients = {}
+        for package in packages:
+            packages_by_clients.setdefault(package.client, []).append(package)
+
+        for client, orders in orders_by_clients.iteritems():
+            by_clients_and_managers.setdefault(client, {})
+            for order in orders:
+                by_clients_and_managers[client]\
+                    .setdefault(order.manager, {'orders': [], 'packages': []})['orders']\
+                    .append(order)
+
+        for client, packages in packages_by_clients.iteritems():
+            by_clients_and_managers.setdefault(client, {})
+            for package in packages:
+                by_clients_and_managers[client]\
+                    .setdefault(package.manager, {'orders': [], 'packages': []})['packages']\
+                    .append(package)
+
+        shipments = []
+        for client, by_manager in by_clients_and_managers.iteritems():
+
+            shipment_number = Shipment.objects.filter(
+                client=client,
+                code=shipment_code
+            ).aggregate(models.Max('number'))['number__max'] or 0
+
+            for manager, items in by_manager.iteritems():
+                shipment_number += 1
+                shipment = Shipment(
+                    code=shipment_code,
+                    number=shipment_number,
+                    client=client,
+                    manager=manager,
+                    user=request.user
+                )
+                shipment.save()
+
+                if items['orders']:
+                    OrderedItem.objects\
+                        .filter(id__in=[x.id for x in items['orders']]).update(
+                            shipment=shipment,
+                            status='issued',
+                            issued_at=datetime.datetime.now()
+                        )
+
+                if items['packages']:
+                    Package.objects\
+                        .filter(id__in=[x.id for x in items['packages']]).update(
+                            shipment=shipment,
+                            status=PACKAGE_STATUS_ISSUED,
+                            issued_at=datetime.datetime.now()
+                        )
+
+                shipments.append(shipment)
+        return shipments
+
+    @classmethod
+    def _remove(cls, orders=[], packages=[]):
+        pass
+
+
 ORDER_ITEM_STATUSES = (
     ('order', u'новый заказ'),
     ('moderation', u'на модерации'),
@@ -236,6 +354,8 @@ class OrderedItem(models.Model):
 
     big_price_invoice_order_mail_sent = models.BooleanField(verbose_name=u'Цена в инвойсе больше цены продажи. Отправлено письмо.', default=False)
     editable = models.BooleanField(verbose_name=u"Редактируемая", default=True)
+
+    shipment = models.ForeignKey(Shipment, verbose_name=u"Отгрузка", null=True, blank=True)
 
     objects = OrderedItemManager()
 
@@ -424,6 +544,7 @@ class Package(models.Model):
     status = models.IntegerField(verbose_name=u"Состояние", choices=PACKAGE_STATUSES, default=PACKAGE_STATUS_RECEIVED)
     issued_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Отгружено")
     editable = models.BooleanField(verbose_name=u"Редактируемая", default=True)
+    shipment = models.ForeignKey(Shipment, verbose_name=u"Отгрузка", null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

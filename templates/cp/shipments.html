@@ -1,0 +1,66 @@
+{% extends 'cp/index.html' %}
+{% load cp_tags %}
+
+{% block menu_shipments %}<a class="menu-active" href="{% url shipments %}">Отгрузки</a>{% endblock %}
+{% block menu_index %}<a href="{% url cp_index %}">Заказы</a>{% endblock %}
+
+
+{% block content %}
+<div id="changelist">
+    <form method="{{ filter.method }}" action="{% url shipments %}">
+        <input type="hidden" name="qs_filter" value="1">
+        <input type="submit" value="Фильтр">
+        <input type="submit" name="qs_filter_clear" value="Очистить">
+        &nbsp;
+        Количество записей на странице:
+        <select onchange="buildQueryFilter();" id="items-per-page-filter-select">
+            <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+            <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+            <option value="all"{% ifequal items_per_page 10000 %} selected {% endifequal %}>все</option>
+        </select>&nbsp;&nbsp;
+        За период:
+        <select onchange="buildQueryFilter();" id="period-filter-select">
+            <option value="w"{% ifequal period 'w' %} selected {% endifequal %}>неделя</option>
+            <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
+            <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
+            <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>
+        </select><br/><br/>
+
+        <div class="module" id="changelist">
+            <table>
+                <thead>
+                    <tr>{% table_header_sort headers %}<th><!-- Delete shipment --></th></tr>
+                    <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+                    {% for f in list_filters %}
+                        <td>{{ f }}</td>
+                    {% endfor %}
+                    <td><!-- Delete shipment --></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <style>
+                        #changelist table tbody td {padding: 5px;}
+                        #changelist table thead input.qs_filter, #changelist table thead select.qs_filter {width: 96%;}
+                    </style>
+                    {% for s in items %}
+                      <tr class="{% cycle row1,row2 %}">
+                        <td><a href="{% url shipment s.id %}">{{ s.created_at|date:"d.m.Y H:i"|safe }}</a></td>
+                        <td>{{ s.manager }}</td>
+                        <td>{{ s.client }}</td>
+                        <td>{{ s.full_code }}</td>
+                        <td>{{ s.weight }}</td>
+                        <td>{{ s.cost }}</td>
+                        <td>
+                            <a class="delete_link" title="Отменить отгрузку" href="{% url shipment_delete s.id %}"></a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan={{ headers|length|add:1 }}>{% include "paginator.html" %}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>
+{% endblock %}

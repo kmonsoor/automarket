@@ -30,9 +30,11 @@ from cp.forms import OrderItemForm, ImportXlsForm, PackageItemForm
 from client.forms import SearchForm
 from data.models import BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES, \
     Invoice, Package, INVOICE_STATUS_RECEIVED, INVOICE_STATUS_CLOSED, \
-    PACKAGE_STATUSES, PACKAGE_STATUS_RECEIVED, PACKAGE_STATUS_ISSUED
+    PACKAGE_STATUSES, PACKAGE_STATUS_RECEIVED, PACKAGE_STATUS_ISSUED, \
+    Shipment
 from data.forms import OrderedItemsFilterForm, OrderedItemForm, \
-    STAFF_FIELD_LIST, InvoicesFilterForm, INVOICES_FIELD_LIST, PackageForm
+    STAFF_FIELD_LIST, InvoicesFilterForm, INVOICES_FIELD_LIST, PackageForm, \
+    ShipmentsFilterForm, SHIPMENTS_FIELD_LIST
 from common.views import PartSearch
 
 import logging
@@ -209,6 +211,222 @@ def invoices(request):
     context['paginator'] = paginator
 
     return context
+
+
+@staff_member_required
+@render_to('cp/shipments.html')
+def shipments(request):
+    context = {}
+    session_store_prefix = "cp_shipments"
+
+    _filter = QSFilter(request, ShipmentsFilterForm)
+    context['filter'] = _filter
+
+    LIST_HEADERS = [(x[0], x[1]) for x in SHIPMENTS_FIELD_LIST]
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    context['headers'] = list(sort_headers.headers())
+
+    try:
+        user_fields = request.user.get_profile().get_order_fields()
+    except Exception:
+        user_fields = None
+    if user_fields:
+        STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+    else:
+        STAFF_FIELDS = STAFF_FIELD_LIST
+    context['staff_fields'] = [x[2] for x in STAFF_FIELDS]
+
+    list_filters = []
+    for x in SHIPMENTS_FIELD_LIST:
+        try:
+            form_field = _filter.form.__getitem__(x[3])
+            list_filters.append(form_field)
+        except Exception:
+            list_filters.append("")
+    context['list_filters'] = list_filters
+
+    qs_filter = _filter.get_filters()
+
+    period, period_filter = get_period(request, session_store_prefix, "created_at")
+    qs_filter.update(period_filter)
+    context['period'] = period
+
+    qs = Shipment.objects.select_related().filter(**qs_filter)
+
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
+    order_by = '-created_at'
+    if order_field:
+        if order_direction == 'desc':
+            order_direction = '-'
+        else:
+            order_direction = ''
+        order_by = order_direction + LIST_HEADERS[int(order_field)][1]
+    if order_by:
+        qs = qs.order_by(order_by)
+
+    items_per_page = get_items_per_page(request, session_store_prefix)
+    context['items_per_page'] = items_per_page
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+    context['items'] = paginator.get_page_items()
+    context['paginator'] = paginator
+
+    return context
+
+
+@staff_member_required
+@render_to('cp/shipment.html')
+def shipment(request, shipment_id):
+    shipment = get_object_or_404(Shipment, id=shipment_id)
+    context = {}
+    session_store_prefix = "cp_shipment"
+
+    _filter = QSFilter(request, OrderedItemsFilterForm)
+    context['filter'] = _filter
+    context['qs_filter_param'] = _filter.get_filters()
+
+    try:
+        user_fields = request.user.get_profile().get_order_fields()
+    except Exception:
+        user_fields = None
+    if user_fields:
+        STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+    else:
+        STAFF_FIELDS = STAFF_FIELD_LIST
+    context['staff_fields'] = [x[2] for x in STAFF_FIELDS]
+    LIST_HEADERS = [(x[0], x[1]) for x in STAFF_FIELDS]
+
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
+
+    list_filters = []
+    for x in STAFF_FIELDS:
+        try:
+            form_field = _filter.form.__getitem__(x[3])
+            list_filters.append(form_field)
+        except Exception:
+            list_filters.append("")
+    context['list_filters'] = list_filters
+
+    order_by = '-created'
+    if order_field:
+        if order_direction == 'desc':
+            order_direction = '-'
+        else:
+            order_direction = ''
+        order_by = order_direction + LIST_HEADERS[int(order_field)][1]
+
+    context['headers'] = list(sort_headers.headers())
+
+    qs_filter = _filter.get_filters()
+
+    qs_filter.update({'shipment__id': shipment.id})
+
+    qs = OrderedItem.objects.select_related().filter(**qs_filter)
+
+    context['packages'] = Package.objects.filter(
+        shipment__id=shipment.id
+    ).order_by('-created_at')
+
+    # calculate totals by filter
+    from django.db import connection
+    total = {}
+    td = "U0"
+    q, params = qs._as_sql(connection)
+    from_clause = q.split("FROM")[1]
+
+    where = from_clause.split("WHERE")
+    if len(where) > 1:
+        from_clause = where[0]
+        where = [where[1]]
+    else:
+        where = []
+    where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
+    where = "WHERE %s" % "AND ".join(where)
+
+    sql = """
+        SELECT
+            SUM(%(p)s.total_cost*%(p)s.quantity),
+            SUM(%(p)s.weight*%(p)s.quantity),
+            SUM(%(p)s.delivery),
+            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
+            SUM(%(p)s.price_invoice*%(p)s.quantity)
+            FROM %(from)s %(where)s
+    """ % {'p': td, 'from': from_clause, 'where': where}
+    cursor = connection.cursor()
+    cursor.execute(sql, params)
+    res = cursor.fetchall()
+    if len(res) > 0:
+        total.update(dict(zip(
+            ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0])
+        ))
+
+    total_packages = {}
+    sql = """
+        SELECT
+            SUM(total_cost),
+            SUM(weight * quantity),
+            SUM(delivery)
+        FROM
+            data_package
+        WHERE
+            shipment_id = %(shipment_id)i
+    """ % {'shipment_id': shipment.id}
+
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    res = cursor.fetchall()
+    if len(res) > 0:
+        total_packages = dict(zip(
+            ('total_cost', 'weight', 'delivery'), res[0])
+        )
+
+    def _sum(d1, d2):
+        d = {}
+        for k, v1 in d1.items():
+            v2 = d2.get(k)
+            if v1 is None and v2 is None:
+                d[k] = None
+            else:
+                d[k] = (v1 or 0) + (v2 or 0)
+        return d
+
+    total_row = []
+    total = _sum(total, total_packages)
+    for f in STAFF_FIELDS:
+        field_name = f[2].split("__")[0]
+        if field_name[:2] == "po":
+            total_row.append(u"Итого:")
+        else:
+            total_row.append(total.get(field_name, u""))
+    context['total_row'] = total_row
+
+    if order_by:
+        qs = qs.order_by(order_by)
+
+    items_per_page = get_items_per_page(request, session_store_prefix)
+    context['items_per_page'] = items_per_page
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+
+    context['status_options_str'], context['status_options'] = get_status_options()
+    context['status_options_package'] = get_status_options_package()
+    context['items'] = paginator.get_page_items()
+    context['paginator'] = paginator
+    context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
+    context['total_row'] = total_row
+    context['shipment'] = shipment
+    return context
+
+
+@staff_member_required
+def shipment_delete(request, shipment_id):
+    shipment = get_object_or_404(Shipment, id=shipment_id)
+    OrderedItem.objects.filter(shipment=shipment).update(shipment=None, status='received_office')
+    Package.objects.filter(shipment=shipment).update(shipment=None, status=PACKAGE_STATUS_RECEIVED)
+    shipment.delete()
+    messages.add_message(request, messages.SUCCESS, u"Отгрузка отменена.")
+    return HttpResponseRedirect(reverse("shipments"))
 
 
 @staff_member_required
@@ -458,11 +676,8 @@ def issues(request):
                 return _redirect_after_post(redirect_url)
             else:
                 orders = list(OrderedItem.objects.filter(id__in=order_ids))
-                for order in orders:
-                    order.status = 'issued'
-                    order.issued_at = datetime.now()
-                    order.save()
-                msg = u"Успешно отгружены"
+                shipments = Shipment._create(request, orders)
+                msg = u"Успешно отгружены. Количество новых отгрузок: <b>%i</b>." % len(shipments)
                 messages.add_message(request, messages.SUCCESS, msg)
                 return _redirect_after_post(redirect_url)
 
@@ -605,20 +820,17 @@ def issues_client(request, client_id):
                 messages.add_message(request, messages.ERROR, msg)
                 return _redirect_after_post(redirect_url)
             else:
+                orders = []
                 if order_ids:
                     orders = list(OrderedItem.objects.filter(id__in=order_ids))
-                    for order in orders:
-                        order.status = 'issued'
-                        order.issued_at = datetime.now()
-                        order.save()
 
+                packages = []
                 if package_ids:
                     packages = list(Package.objects.filter(id__in=package_ids))
-                    for package in packages:
-                        package.status = PACKAGE_STATUS_ISSUED
-                        package.issued_at = datetime.now()
-                        package.save()
-                msg = u"Успешно отгружены"
+
+                shipments = Shipment._create(request, orders, packages)
+
+                msg = u"Успешно отгружены. Количество новых отгрузок: <b>%i</b>." % len(shipments)
                 messages.add_message(request, messages.SUCCESS, msg)
                 return _redirect_after_post(redirect_url)
 
@@ -766,6 +978,194 @@ def issues_client(request, client_id):
     context['edit_mode'] = 1
     context['issues_mode'] = 1
     context['client'] = client
+    return context
+
+
+@staff_member_required
+@render_to('cp/issues_manager.html')
+def issues_manager(request, manager_id):
+    manager = get_object_or_404(User, id=manager_id)
+    context = {}
+    session_store_prefix = "cp_issues_manager"
+
+    if request.method == 'POST':
+        redirect_url = reverse("issues_manager", args=[manager_id])
+
+        if request.POST.get('issued'):
+            order_ids = request.POST.get('issued_orders')
+            package_ids = request.POST.get('issued_packages')
+            try:
+                if order_ids:
+                    order_ids = [int(x) for x in order_ids.split(',')]
+
+                if package_ids:
+                    package_ids = [int(x) for x in package_ids.split(',')]
+            except:
+                msg = u"Невалидные данные"
+                messages.add_message(request, messages.ERROR, msg)
+                return _redirect_after_post(redirect_url)
+            else:
+                if order_ids:
+                    orders = list(OrderedItem.objects.filter(id__in=order_ids))
+                    for order in orders:
+                        order.status = 'issued'
+                        order.issued_at = datetime.now()
+                        order.save()
+
+                if package_ids:
+                    packages = list(Package.objects.filter(id__in=package_ids))
+                    for package in packages:
+                        package.status = PACKAGE_STATUS_ISSUED
+                        package.issued_at = datetime.now()
+                        package.save()
+                msg = u"Успешно отгружены"
+                messages.add_message(request, messages.SUCCESS, msg)
+                return _redirect_after_post(redirect_url)
+
+    _filter = QSFilter(request, OrderedItemsFilterForm)
+    context['filter'] = _filter
+    context['qs_filter_param'] = _filter.get_filters()
+
+    try:
+        user_fields = request.user.get_profile().get_order_fields()
+    except Exception:
+        user_fields = None
+    if user_fields:
+        STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+    else:
+        STAFF_FIELDS = STAFF_FIELD_LIST
+    context['staff_fields'] = [x[2] for x in STAFF_FIELDS]
+    LIST_HEADERS = [(x[0], x[1]) for x in STAFF_FIELDS]
+
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
+
+    list_filters = []
+    for x in STAFF_FIELDS:
+        try:
+            form_field = _filter.form.__getitem__(x[3])
+            list_filters.append(form_field)
+        except Exception:
+            list_filters.append("")
+    context['list_filters'] = list_filters
+
+    order_by = '-created'
+    if order_field:
+        if order_direction == 'desc':
+            order_direction = '-'
+        else:
+            order_direction = ''
+        order_by = order_direction + LIST_HEADERS[int(order_field)][1]
+
+    context['headers'] = list(sort_headers.headers())
+
+    qs_filter = _filter.get_filters()
+
+    qs_filter.update({
+        'status__in': ('received_office',),
+        'manager__id': manager.id,
+    })
+
+    qs = OrderedItem.objects.select_related().filter(**qs_filter)
+
+    context['packages'] = Package.objects.filter(
+        manager__id=manager.id,
+        status__in=(PACKAGE_STATUS_RECEIVED,)
+    ).order_by('-created_at')
+
+    # calculate totals by filter
+    from django.db import connection
+    total = {}
+    td = "U0"
+    q, params = qs._as_sql(connection)
+    from_clause = q.split("FROM")[1]
+
+    where = from_clause.split("WHERE")
+    if len(where) > 1:
+        from_clause = where[0]
+        where = [where[1]]
+    else:
+        where = []
+    where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
+    where = "WHERE %s" % "AND ".join(where)
+
+    sql = """
+        SELECT
+            SUM(%(p)s.total_cost*%(p)s.quantity),
+            SUM(%(p)s.weight*%(p)s.quantity),
+            SUM(%(p)s.delivery),
+            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
+            SUM(%(p)s.price_invoice*%(p)s.quantity)
+            FROM %(from)s %(where)s
+    """ % {'p': td, 'from': from_clause, 'where': where}
+    cursor = connection.cursor()
+    cursor.execute(sql, params)
+    res = cursor.fetchall()
+    if len(res) > 0:
+        total.update(dict(zip(
+            ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0])
+        ))
+
+    total_packages = {}
+    sql = """
+        SELECT
+            SUM(total_cost),
+            SUM(weight * quantity),
+            SUM(delivery)
+        FROM
+            data_package
+        WHERE
+            manager_id = %(manager_id)i AND status IN (%(statuses)s)
+    """ % {
+        'manager_id': manager.id,
+        'statuses': ",".join(str(x) for x in (PACKAGE_STATUS_RECEIVED,))
+    }
+
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    res = cursor.fetchall()
+    if len(res) > 0:
+        total_packages = dict(zip(
+            ('total_cost', 'weight', 'delivery'), res[0])
+        )
+
+    def _sum(d1, d2):
+        d = {}
+        for k, v1 in d1.items():
+            v2 = d2.get(k)
+            if v1 is None and v2 is None:
+                d[k] = None
+            else:
+                d[k] = (v1 or 0) + (v2 or 0)
+        return d
+
+    total_row = []
+    total = _sum(total, total_packages)
+    for f in STAFF_FIELDS:
+        field_name = f[2].split("__")[0]
+        if field_name[:2] == "po":
+            total_row.append(u"Итого:")
+        else:
+            total_row.append(total.get(field_name, u""))
+    context['total_row'] = total_row
+
+    if order_by:
+        qs = qs.order_by(order_by)
+
+    items_per_page = get_items_per_page(request, session_store_prefix)
+    context['items_per_page'] = items_per_page
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+
+    context['status_options_str'], context['status_options'] = get_status_options()
+    context['status_options_package'] = get_status_options_package()
+    context['items'] = paginator.get_page_items()
+    context['paginator'] = paginator
+    context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
+    context['total_row'] = total_row
+    context['edit_mode'] = 1
+    context['issues_mode'] = 1
+    context['manager'] = manager
     return context
 
 

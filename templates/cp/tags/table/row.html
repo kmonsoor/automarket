@@ -27,8 +27,8 @@
   {% if 'price_invoice' in staff_fields %}{% table_td i 'price_invoice' i.editable 'editPriceInvoice' %}{% endif %}
   {% if 'total_w_ship' in staff_fields %}{% table_td i 'total_w_ship' 0 '' %}{% endif %}
   {% if 'part_number_superseded' in staff_fields %}{% table_td i 'part_number_superseded' i.editable 'editSuperseded' %}{% endif %}
-  {% if 'manager' in staff_fields %}{% table_td i 'manager' 0 '' %}{% endif %}
-  {% if 'client' in staff_fields %}<td>{% if issues_mode %}<a href="{% url issues_client i.client.id %}">{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</a>{% else %}{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}{% endif %}</td>{% endif %}
+  {% if 'manager' in staff_fields %}{% if issues_mode %}<td><a href="{% url issues_manager i.manager.id %}">{{ i.manager }}</a></td>{% else %}{% table_td i 'manager' 0 '' %}{% endif %}{% endif %}
+  {% if 'client' in staff_fields %}<td>{% if issues_mode %}<a href="{% url issues_client i.client.id %}">{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}</a>{% endif %}{% else %}{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}{% endif %}</td>{% endif %}
   {% if 'description_ru' in staff_fields %}{% table_td i 'description_ru' i.editable 'editDescriptionRu' %}{% endif %}
   {% if 'description_en' in staff_fields %}{% table_td i 'description_en' i.editable 'editDescriptionEn' %}{% endif %}
   {% if 'id' in staff_fields %}<td>{{ i.id }}</td>{% endif %}
