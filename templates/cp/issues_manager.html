@@ -6,7 +6,7 @@
 
 {% block content %}
 <a href="/cp/export_order/?qs_filter=1&status=received_office&manager__username__contains={{ manager.username }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/>
-<h3>Отгрузки менеджера {{ manager.username }}</h3>
+<h3>К выдаче: менеджер {{ manager.username }}</h3>
 <br/>
 <div class="" id="changelist">
     <form method="{{ filter.method }}" action="{{ request.path }}">

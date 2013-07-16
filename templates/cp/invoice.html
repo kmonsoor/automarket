@@ -113,7 +113,7 @@
   </form>
 </div>
 {% block export_link %}<a href="/cp/export_order/?qs_filter=1&invoice_code__contains={{ invoice.code|urlencode }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/>{% endblock %}
-<h3>{{ invoice.code }} {{ invoice.received_at|date:"d.m.Y"|default:"---" }} {{ invoice.get_status_display }}</h3><br/>
+<h3>Инвойс: {{ invoice.code }} {{ invoice.received_at|date:"d.m.Y"|default:"---" }} {{ invoice.get_status_display }}</h3><br/>
 <div class="" id="changelist">
     <form method="{{ filter.method }}" action="{% url invoice invoice.id %}{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
         <input type="hidden" name="qs_filter" value="1">
