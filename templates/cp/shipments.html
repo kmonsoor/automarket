@@ -29,12 +29,11 @@
         <div class="module" id="changelist">
             <table>
                 <thead>
-                    <tr>{% table_header_sort headers %}<th><!-- Delete shipment --></th></tr>
+                    <tr>{% table_header_sort headers %}</tr>
                     <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
                     {% for f in list_filters %}
                         <td>{{ f }}</td>
                     {% endfor %}
-                    <td><!-- Delete shipment --></td>
                     </tr>
                 </thead>
                 <tbody>
@@ -50,13 +49,10 @@
                         <td>{{ s.full_code }}</td>
                         <td>{{ s.weight }}</td>
                         <td>{{ s.cost }}</td>
-                        <td>
-                            <a class="delete_link" title="Отменить отгрузку" href="{% url shipment_delete s.id %}"></a>
-                        </td>
                       </tr>
                     {% endfor %}
                     <tr>
-                        <td colspan={{ headers|length|add:1 }}>{% include "paginator.html" %}</td>
+                        <td colspan={{ headers|length }}>{% include "paginator.html" %}</td>
                     </tr>
                 </tbody>
             </table>
