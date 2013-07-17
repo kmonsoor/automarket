@@ -283,9 +283,11 @@ class Shipment(models.Model):
                 shipments.append(shipment)
         return shipments
 
-    @classmethod
-    def _remove(cls, orders=[], packages=[]):
-        pass
+    def _delete(self):
+        OrderedItem.objects.filter(shipment=self).update(shipment=None, status='received_office')
+        Package.objects.filter(shipment=self).update(shipment=None, status=PACKAGE_STATUS_RECEIVED)
+        self.delete()
+        return True
 
 
 ORDER_ITEM_STATUSES = (

@@ -281,6 +281,17 @@ def shipment(request, shipment_id):
     context = {}
     session_store_prefix = "cp_shipment"
 
+    if request.method == 'POST':
+        if 'delete_shipment' in request.POST:
+            if not request.user.check_password(request.POST.get('password')):
+                msg = u"Неверный пароль."
+                messages.add_message(request, messages.ERROR, msg)
+                return _redirect_after_post(reverse("shipment", args=[shipment.id]))
+
+            shipment._delete()
+            messages.add_message(request, messages.SUCCESS, u"Отгрузка отменена.")
+            return HttpResponseRedirect(reverse("shipments"))
+
     _filter = QSFilter(request, OrderedItemsFilterForm)
     context['filter'] = _filter
     context['qs_filter_param'] = _filter.get_filters()
@@ -417,16 +428,6 @@ def shipment(request, shipment_id):
     context['total_row'] = total_row
     context['shipment'] = shipment
     return context
-
-
-@staff_member_required
-def shipment_delete(request, shipment_id):
-    shipment = get_object_or_404(Shipment, id=shipment_id)
-    OrderedItem.objects.filter(shipment=shipment).update(shipment=None, status='received_office')
-    Package.objects.filter(shipment=shipment).update(shipment=None, status=PACKAGE_STATUS_RECEIVED)
-    shipment.delete()
-    messages.add_message(request, messages.SUCCESS, u"Отгрузка отменена.")
-    return HttpResponseRedirect(reverse("shipments"))
 
 
 @staff_member_required

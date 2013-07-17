@@ -6,10 +6,6 @@
 
 {% block extrahead %}
 {{ block.super }}
-<script type="text/javascript" src="{{ MEDIA_URL }}js/mootools.js"></script>
-<script type="text/javascript" src="{{ MEDIA_URL }}js/mootools/dynamicforms.js"></script>
-<script type="text/javascript" src="{{ MEDIA_URL }}js/jquery-ui-1.8.7/ui/jquery-ui.js"></script>
-<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}js/jquery-ui-1.8.7/themes/base/jquery-ui.css" />
 <script type="text/javascript">
     var PageForm = Form.extend({
         initialize: function(value) {
@@ -49,42 +45,6 @@
         });
     }
 
-    jQuery(function() {
-        var $password = jQuery("#password");
- 
-        jQuery("#dialog-form").dialog({
-            autoOpen: false,
-            position: 'center',
-            modal: true,
-            title: 'Введите пароль',
-            height: 130,
-            buttons: {
-                "Ok": function() {
-                    if ($password.val()) {
-                        jQuery('#invoice-process-form').append('<input type="hidden" name="password" value="'+ $password.val() +'" />').submit();
-                        jQuery(this).dialog("close");
-                    }
-                    $password.addClass("ui-state-error");
-                },
-                Cancel: function() {
-                    jQuery(this).dialog("close");
-                }
-            },
-            open: function() {
-                jQuery("#password").val('');
-                jQuery("#dialog-form").keypress(function(e) {
-                    if (e.keyCode == jQuery.ui.keyCode.ENTER) {
-                        jQuery(this).parent().find("button:eq(0)").trigger("click");
-                        return false;
-                    }
-                });
-            },
-            close: function(event, ui) {
-                jQuery("#password").val('');
-            }
-        });
-    });
-
     function openInvoice() {
         jQuery("#dialog-form").dialog("open");
     }
@@ -93,25 +53,10 @@
         jQuery("#dialog-form").dialog("open");
     }
 </script>
-<style>
-    .ui-widget-header {
-        background: #417690;
-    }
-    .ui-button-text-only .ui-button-text {
-        padding: 3px 10px;
-    }
-    .ui-dialog-title {
-        color: white;
-    }
-</style>
 {% endblock %}
 
 {% block content %}
-<div id="dialog-form">
-  <form>
-        <input type="password" name="password" id="password" value="" class="text ui-widget-content ui-corner-all" style="width: 267px;" />
-  </form>
-</div>
+{% include "cp/password.html" %}
 {% block export_link %}<a href="/cp/export_order/?qs_filter=1&invoice_code__contains={{ invoice.code|urlencode }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/>{% endblock %}
 <h3>Инвойс: {{ invoice.code }} {{ invoice.received_at|date:"d.m.Y"|default:"---" }} {{ invoice.get_status_display }}</h3><br/>
 <div class="" id="changelist">
@@ -173,7 +118,7 @@
             </table>
         </div>
     </form>
-    <form action="" method="post" id="invoice-process-form">
+    <form action="" method="post" id="process-form">
         {% ifnotequal invoice.status 3 %}
             <br/>
 

@@ -1,7 +1,17 @@
 {% extends 'cp/shipments.html' %}
 {% load cp_tags %}
 
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript">
+function deleteShipment() {
+    jQuery("#dialog-form").dialog("open");
+}
+</script>
+{% endblock %}
+
 {% block content %}
+{% include "cp/password.html" %}
 <a href="/cp/export_order/?qs_filter=1&shipment__id={{ shipment.id }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/>
 <h3>Отгрузка {{ shipment.full_code }}</h3>
 <br/>
@@ -67,9 +77,10 @@
         </div>
     </form>
 </div>
-<form action="{% url shipment_delete shipment.id %}" method="get">
+<form action="" method="post" id="process-form">
     <div class="submit-row">
-        <input type="submit" value="Отменить отгрузку" />
+        <input type="submit" onclick="deleteShipment(); return false;" value="Отменить отгрузку" />
+        <input type="hidden" name="delete_shipment" value="1" />
     </div>
 </form>
 {% endblock %}
