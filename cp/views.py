@@ -358,7 +358,7 @@ def shipment(request, shipment_id):
 
     sql = """
         SELECT
-            SUM(%(p)s.total_cost*%(p)s.quantity),
+            SUM(%(p)s.total_cost),
             SUM(%(p)s.weight*%(p)s.quantity),
             SUM(%(p)s.delivery),
             SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
@@ -531,7 +531,7 @@ def invoice(request, invoice_id):
 
     sql = """
         SELECT
-            SUM(%(p)s.total_cost*%(p)s.quantity),
+            SUM(%(p)s.total_cost),
             SUM(%(p)s.weight*%(p)s.quantity),
             SUM(%(p)s.delivery),
             SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
@@ -744,7 +744,7 @@ def issues(request):
 
         sql = """
             SELECT
-                SUM(%(p)s.total_cost*%(p)s.quantity),
+                SUM(%(p)s.total_cost),
                 SUM(%(p)s.weight*%(p)s.quantity),
                 SUM(%(p)s.delivery),
                 SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
@@ -905,7 +905,7 @@ def issues_client(request, client_id):
 
     sql = """
         SELECT
-            SUM(%(p)s.total_cost*%(p)s.quantity),
+            SUM(%(p)s.total_cost),
             SUM(%(p)s.weight*%(p)s.quantity),
             SUM(%(p)s.delivery),
             SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
@@ -1093,7 +1093,7 @@ def issues_manager(request, manager_id):
 
     sql = """
         SELECT
-            SUM(%(p)s.total_cost*%(p)s.quantity),
+            SUM(%(p)s.total_cost),
             SUM(%(p)s.weight*%(p)s.quantity),
             SUM(%(p)s.delivery),
             SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
@@ -1240,7 +1240,7 @@ def index(request):
 
         sql = """
             SELECT
-                SUM(%(p)s.total_cost*%(p)s.quantity),
+                SUM(%(p)s.total_cost),
                 SUM(%(p)s.weight*%(p)s.quantity),
                 SUM(%(p)s.delivery),
                 SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
