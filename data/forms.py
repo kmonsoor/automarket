@@ -86,6 +86,10 @@ SHIPMENTS_FIELD_LIST = (
     (u'Итоговая сумма', '', '', None),
 )
 
+CLIENT_SHIPMENTS_FIELD_LIST = list(SHIPMENTS_FIELD_LIST)
+CLIENT_SHIPMENTS_FIELD_LIST.pop(2)
+CLIENT_SHIPMENTS_FIELD_LIST = tuple(CLIENT_SHIPMENTS_FIELD_LIST)
+
 
 class ShipmentsFilterForm(forms.Form):
     code__contains = forms.CharField(

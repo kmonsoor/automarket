@@ -9,8 +9,8 @@ from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from data.models import OrderedItem, Brand, BrandGroup, Area, Basket
-from data.forms import OrderedItemsFilterForm
+from data.models import OrderedItem, Brand, BrandGroup, Area, Basket, Shipment, Package
+from data.forms import OrderedItemsFilterForm, ShipmentsFilterForm
 from client.forms import SearchForm
 from common.views import PartSearch, MakerRequired
 from django.shortcuts import get_object_or_404
@@ -19,7 +19,7 @@ from django.contrib.auth.models import User
 from django.utils.html import escape, mark_safe
 
 from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
-from data.forms import CLIENT_FIELD_LIST
+from data.forms import CLIENT_FIELD_LIST, CLIENT_SHIPMENTS_FIELD_LIST
 from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 from client.forms import BasketForm
@@ -228,15 +228,18 @@ def search(request):
         .filter(user=request.user, order_item_id__isnull=True)\
         .order_by('-id')
 
-    context['basket_price_sum'] = reduce(lambda x, y: x + y,
-        [x.get_price_total() for x in context['basket_items']], 0)
+    context['basket_price_sum'] = reduce(
+        lambda x, y: x + y,
+        [x.get_price_total() for x in context['basket_items']],
+        0
+    )
     return context
 
 
 class ClientOrderItemDisplay(object):
     def __init__(self, obj, field, format):
         val = getattr(obj, field, u"")
-        if val == None:
+        if val is None:
             val = u""
         self.value = val
         self.format = format
@@ -262,13 +265,13 @@ class ClientOrderItemRow(object):
 
 
 class ClientOrderItemList(object):
-    def __init__(self, request, filter_form):
+    def __init__(self, request, filter_form, session_store_prefix="client_index"):
         self.user = request.user
         self.set_fields()
         self.request = request
         self.filter = QSFilter(request, filter_form)
 
-        session_store_prefix = "client_index"
+        session_store_prefix = session_store_prefix
         self.items_per_page = get_items_per_page(request, session_store_prefix)
         self.period, self.period_filter = get_period(request, session_store_prefix, "created")
         self.results = self.result_list()
@@ -284,13 +287,13 @@ class ClientOrderItemList(object):
             self.CLIENT_FIELDS = [x for x in CLIENT_FIELD_LIST if x[2] in user_fields]
         else:
             self.CLIENT_FIELDS = CLIENT_FIELD_LIST
-        self.LIST_HEADERS = [(x[0],x[1]) for x in self.CLIENT_FIELDS]
+        self.LIST_HEADERS = [(x[0], x[1]) for x in self.CLIENT_FIELDS]
 
     def result_list(self):
-        return [ClientOrderItemRow([(x[2],x[3]) \
-                 for x in self.CLIENT_FIELDS], obj) \
-                 for obj in self.get_query_set()]
-
+        return [
+            ClientOrderItemRow([(x[2], x[3]) for x in self.CLIENT_FIELDS], obj)
+            for obj in self.get_query_set()
+        ]
 
     def list_headers(self):
         sort_headers = SortHeaders(self.request, self.LIST_HEADERS)
@@ -302,7 +305,7 @@ class ClientOrderItemList(object):
                 try:
                     form_field = self.filter.form.__getitem__(x[4])
                     yield form_field
-                except Exception, e:
+                except Exception:
                     yield ""
 
         return list(_inner())
@@ -323,37 +326,33 @@ class ClientOrderItemList(object):
                         .filter(client=self.request.user) \
                         .filter(**self.filter.get_filters())
 
-        print self.period_filter
-
         if self.period_filter:
             qs = qs.filter(**self.period_filter)
 
         # calculate totals by filter
         self.total_row = {}
-        if self.filter.is_set:
-	        from django.db import connection
-	        td = "U0"
-		EXCLUDED_FILTER = {
-		    'status__in': ('failure',)
-		}
-	        q, params = qs.exclude(**EXCLUDED_FILTER)._as_sql(connection)
-	        from_clause = q.split("FROM")[1]
-	        sql = \
-	        """
-	        SELECT
-	            SUM(%(p)s.total_cost*%(p)s.quantity),
-	            SUM(%(p)s.weight*%(p)s.quantity),
-	            SUM(%(p)s.delivery),
-	            SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0))
-	            FROM %(from)s
-	        """ % {'p': td, 'from': from_clause}
-	        cursor = connection.cursor()
-	        cursor.execute(sql, params)
-	        res = cursor.fetchall()
-	        if len(res) > 0:
-	            self.total_row = dict(zip( \
-		        ('total_cost', 'weight', 'delivery', 'price_sale'), \
-		        res[0]))
+        td = "U0"
+        EXCLUDED_FILTER = {
+            'status__in': ('failure',)
+        }
+        q, params = qs.exclude(**EXCLUDED_FILTER)._as_sql(connection)
+        from_clause = q.split("FROM")[1]
+        sql = """
+            SELECT
+                SUM(%(p)s.total_cost),
+                SUM(%(p)s.weight*%(p)s.quantity),
+                SUM(%(p)s.delivery),
+                SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0))
+            FROM %(from)s
+        """ % {'p': td, 'from': from_clause}
+        cursor = connection.cursor()
+        cursor.execute(sql, params)
+        res = cursor.fetchall()
+        if len(res) > 0:
+            self.total_row = dict(zip(
+                ('total_cost', 'weight', 'delivery', 'price_sale'),
+                res[0]
+            ))
 
         if order_by:
             qs = qs.order_by(order_by)
@@ -370,7 +369,6 @@ class ClientOrderItemList(object):
                 yield self.total_row.get(field_name, u"")
 
 
-
 @login_required
 @render_to('client/index.html')
 def index(request):
@@ -380,29 +378,253 @@ def index(request):
     response['paginator'] = cl.paginator
     response['items_per_page'] = cl.items_per_page
     response['period'] = cl.period
+    return response
 
+
+class ClientShipmentList(object):
+    def __init__(self, request, filter_form):
+        self.request = request
+        self.filter = QSFilter(request, filter_form)
+
+        session_store_prefix = "client_shipments"
+        self.items_per_page = get_items_per_page(request, session_store_prefix)
+        self.period, self.period_filter = get_period(request, session_store_prefix, "created_at")
+        self.results = self.result_list()
+        self.headers = self.list_headers()
+        self.filters = self.list_filters()
+
+    def result_list(self):
+        return self.get_query_set()
+
+    def list_headers(self):
+        sort_headers = SortHeaders(self.request, [(x[0], x[1]) for x in CLIENT_SHIPMENTS_FIELD_LIST])
+        return list(sort_headers.headers())
+
+    def list_filters(self):
+        def _inner():
+            for x in CLIENT_SHIPMENTS_FIELD_LIST:
+                try:
+                    form_field = self.filter.form.__getitem__(x[3])
+                    yield form_field
+                except Exception:
+                    yield ""
+
+        return list(_inner())
+
+    def get_query_set(self):
+        order_field = self.request.GET.get('o', None)
+        order_direction = self.request.GET.get('ot', None)
+
+        order_by = '-created_at'
+        if order_field:
+            if order_direction == 'desc':
+                order_direction = '-'
+            else:
+                order_direction = ''
+            order_by = order_direction + CLIENT_SHIPMENTS_FIELD_LIST[int(order_field)][1]
+
+        qs = (
+            Shipment.objects.select_related()
+            .filter(client=self.request.user)
+            .filter(**self.filter.get_filters())
+        )
+
+        if self.period_filter:
+            qs = qs.filter(**self.period_filter)
+
+        if order_by:
+            qs = qs.order_by(order_by)
+
+        self.paginator = SimplePaginator(self.request, qs, self.items_per_page, 'page')
+        return self.paginator.get_page_items()
+
+
+@login_required
+@render_to('client/shipments.html')
+def shipments(request):
+    response = {}
+    cl = ClientShipmentList(request, ShipmentsFilterForm)
+    response['cl'] = cl
+    response['paginator'] = cl.paginator
+    response['items_per_page'] = cl.items_per_page
+    response['period'] = cl.period
+    response['shipments'] = shipments
+    response['qs_filter_param'] = cl.filter.get_filters()
+    return response
+
+
+class ClientPackageOrderItemDisplay(object):
+    def __init__(self, obj, field, format):
+        val = getattr(obj, field, u"")
+        if val is None:
+            val = u""
+        self.value = val
+        if field == 'part_number':
+            self.value = obj.description
+        self.format = format
+
+    def __unicode__(self):
+        if 'date' in self.format:
+            dateformat = self.format.split("::")[1]
+            try:
+                return self.value.strftime(dateformat)
+            except AttributeError:
+                return u"%s" % self.value
+        return self.format % self.value
+
+
+class ClientShipmentOrderItemRow(object):
+    def __init__(self, fields, obj):
+        self.fields = fields
+        self.obj = obj
+
+    def __iter__(self):
+        for field_name, field_format in self.fields:
+            yield ClientPackageOrderItemDisplay(self.obj, field_name, field_format)
+
+
+class ClientShipmentOrderItemList(ClientOrderItemList):
+    def __init__(self, request, filter_form, shipment):
+        self.shipment = shipment
+        super(ClientShipmentOrderItemList, self).__init__(
+            request,
+            filter_form,
+            session_store_prefix="client_shipment"
+        )
+
+    def get_query_set(self):
+        order_field = self.request.GET.get('o', None)
+        order_direction = self.request.GET.get('ot', None)
+
+        order_by = '-created'
+        if order_field:
+            if order_direction == 'desc':
+                order_direction = '-'
+            else:
+                order_direction = ''
+            order_by = order_direction + self.LIST_HEADERS[int(order_field)][1]
+
+        qs = OrderedItem.objects.select_related() \
+                        .filter(client=self.request.user, shipment=self.shipment) \
+                        .filter(**self.filter.get_filters())
+
+        if self.period_filter:
+            qs = qs.filter(**self.period_filter)
+
+        self.packages = Package.objects.filter(shipment=self.shipment).order_by('-created_at')
+        self.packages_list = [
+            ClientShipmentOrderItemRow([(x[2], x[3]) for x in self.CLIENT_FIELDS], obj)
+            for obj in self.packages
+        ]
+
+        # calculate totals by filter
+        total = {}
+        td = "U0"
+        EXCLUDED_FILTER = {
+            'status__in': ('failure',)
+        }
+        q, params = qs.exclude(**EXCLUDED_FILTER)._as_sql(connection)
+        from_clause = q.split("FROM")[1]
+        sql = """
+            SELECT
+                SUM(%(p)s.total_cost),
+                SUM(%(p)s.weight*%(p)s.quantity),
+                SUM(%(p)s.delivery),
+                SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0))
+            FROM %(from)s
+        """ % {'p': td, 'from': from_clause}
+        cursor = connection.cursor()
+        cursor.execute(sql, params)
+        res = cursor.fetchall()
+        if len(res) > 0:
+            total = dict(zip(
+                ('total_cost', 'weight', 'delivery', 'price_sale'),
+                res[0]
+            ))
+
+        total_packages = {}
+        sql = """
+            SELECT
+                SUM(total_cost),
+                SUM(weight * quantity),
+                SUM(delivery)
+            FROM
+                data_package
+            WHERE
+                shipment_id = %(shipment_id)i
+        """ % {'shipment_id': self.shipment.id}
+
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        res = cursor.fetchall()
+        if len(res) > 0:
+            total_packages = dict(zip(
+                ('total_cost', 'weight', 'delivery'), res[0])
+            )
+
+        def _sum(d1, d2):
+            d = {}
+            for k, v1 in d1.items():
+                v2 = d2.get(k)
+                if v1 is None and v2 is None:
+                    d[k] = None
+                else:
+                    d[k] = (v1 or 0) + (v2 or 0)
+            return d
+
+        self.total_row = []
+        total = _sum(total, total_packages)
+        for f in self.CLIENT_FIELDS:
+            field_name = f[2].split("__")[0]
+            if field_name[:2] == "po":
+                self.total_row.append(u"Итого:")
+            else:
+                self.total_row.append(total.get(field_name, u""))
+
+        if order_by:
+            qs = qs.order_by(order_by)
+
+        self.paginator = SimplePaginator(self.request, qs, self.items_per_page, 'page')
+        return self.paginator.get_page_items()
+
+    def get_total_row(self):
+        for f in self.total_row:
+            yield f
+
+
+@login_required
+@render_to('client/shipment.html')
+def shipment(request, shipment_id):
+    shipment = get_object_or_404(Shipment, id=shipment_id)
+    response = {}
+    cl = ClientShipmentOrderItemList(request, OrderedItemsFilterForm, shipment)
+    response['cl'] = cl
+    response['paginator'] = cl.paginator
+    response['items_per_page'] = cl.items_per_page
+    response['period'] = cl.period
+    response['shipment'] = shipment
+    response['qs_filter_param'] = cl.filter.get_filters()
     return response
 
 
 @render_to('client/help/list.html')
 def help_area_list(request, brandgroup_id):
     try:
-        area = BrandGroup.objects.get(id = brandgroup_id).area.all()
+        area = BrandGroup.objects.get(id=brandgroup_id).area.all()
     except BrandGroup.DoesNotExist:
         area = []
 
-    return {'list': area,}
+    return {'list': area}
 
 
 @render_to('client/help/list.html')
 def help_brands_list(request, area_id):
     try:
-        brands = Area.objects.get(id = area_id).brands.all().order_by('title')
+        brands = Area.objects.get(id=area_id).brands.all().order_by('title')
     except Area.DoesNotExist:
         brands = []
 
-    return {'list': brands,}
-
+    return {'list': brands}
 
 
 @login_required
@@ -428,16 +650,14 @@ def export_order(request):
         (u'Статус', 'status'),
     )
 
-
     def get_list_headers():
         try:
             fields = request.user.get_profile().get_order_fields()
-        except Exception, e:
+        except Exception:
             fields = None
         if fields:
             return [(x[0], x[1]) for x in LIST_HEADERS if x[1] in fields]
         return LIST_HEADERS
-
 
     _filter = QSFilter(request, OrderedItemsFilterForm, clear_old=False)
 
@@ -446,14 +666,14 @@ def export_order(request):
                         .filter(**_filter.get_filters()) \
                         .order_by('brandgroup__direction__po', 'ponumber')
 
-    filename = os.path.join(settings.MEDIA_ROOT,'temp.xls')
+    filename = os.path.join(settings.MEDIA_ROOT, 'temp.xls')
     book = xl.Workbook()
     sheet = book.add_sheet('ORDERS')
 
     i = 0
     curr_line = 0
     for key, value in get_list_headers():
-        sheet.write(curr_line,i,key)
+        sheet.write(curr_line, i, key)
         i += 1
 
     for order in orders:
@@ -462,18 +682,18 @@ def export_order(request):
         for key, value in get_list_headers():
             value = getattr(order, value) or ''
             try:
-                sheet.write(curr_line,i,value)
+                sheet.write(curr_line, i, value)
                 i += 1
             except AssertionError:
                 value = unicode(value)
-                sheet.write(curr_line,i,value)
+                sheet.write(curr_line, i, value)
                 i += 1
 
     book.save(filename)
     os.chmod(filename, 0777)
-    content = open(filename,'rb').read()
+    content = open(filename, 'rb').read()
     response = HttpResponse(content, mimetype='application/vnd.ms-excel')
-    name = '%s-%s.xls' % ('orders',datetime.now().strftime('%m-%d-%Y-%H-%M'))
+    name = '%s-%s.xls' % ('orders', datetime.now().strftime('%m-%d-%Y-%H-%M'))
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
     return response
@@ -533,7 +753,7 @@ def basket_update(request, redirect=True):
     for index, value in descriptions:
         try:
             item_id = int(index.split("_")[1])
-            assert description_ru_validate(value) == True
+            assert description_ru_validate(value) is True
 
             b = Basket.objects.get(user=request.user, pk=item_id)
             b.description_ru = value

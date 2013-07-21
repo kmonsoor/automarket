@@ -62,5 +62,7 @@ urlpatterns += patterns('client.views',
     url(r'^client/help/(?P<brandgroup_id>[\d]+)/area/$', 'help_area_list', name='area_list'),
     url(r'^client/help/(?P<area_id>[\d]+)/brands/$', 'help_brands_list', name='brands_list'),
     url(r'^client/export_order/$', 'export_order', name="client_export_order"),
+    url(r'^client/shipments/$', 'shipments', name="client_shipments"),
+    url(r'^client/shipments/(?P<shipment_id>\d+)/$', 'shipment', name="client_shipment"),
     url(r'^client/', 'index', name='client_index'),
 )
