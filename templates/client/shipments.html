@@ -1,0 +1,97 @@
+{% extends 'client_base.html' %}
+
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/changelists.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/qs_filter.css" />
+<style type="text/css">
+td {
+    padding: 1px;
+    font-size: 80%;
+}
+input, select {
+  font-size: 90%;
+}
+td.center {
+text-align: center;
+
+}
+
+td.right {
+text-align: right;
+}
+
+tr.alt td {
+  font-weight: bold;
+}
+
+</style>
+<script type="text/javascript">
+var qs = new Array();
+function getFilterItemsPerPage() {
+    var val = jQuery('#items-per-page-filter-select').val();
+    qs.push("items_per_page=" + val);
+}
+
+function getFilterPeriod() {
+    var val = jQuery('#period-filter-select').val();
+    qs.push("period=" + val);
+}
+
+function buildQueryFilter() {
+    getFilterPeriod();
+    getFilterItemsPerPage();
+    location.href='{{ request.path }}?' + qs.join("&");
+}
+</script>
+{% endblock %}
+
+{% load lib_tags %}
+
+{% block page_content %}
+<div class="" id="changelist">
+<form method="{{ filter.method }}" action="/client/shipments/{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
+<input type="hidden" name="qs_filter" value="1">
+<input type="submit" value="Фильтр">
+<input type="submit" name="qs_filter_clear" value="Очистить">
+Количество записей на странице:
+<select onchange="buildQueryFilter();" id="items-per-page-filter-select">
+    <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+    <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+    <option value="all"{% ifequal items_per_page 10000 %} selected {% endifequal %}>все</option>
+</select>&nbsp;&nbsp;
+За период:
+<select onchange="buildQueryFilter();" id="period-filter-select">
+    <option value="w"{% ifequal period 'w' %} selected {% endifequal %}>неделя</option>
+    <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
+    <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
+    <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>
+</select>
+<br/><br/>
+<div class="module" id="changelist">
+<table>
+<thead>
+<tr>{% table_header_sort cl.headers %}</tr>
+<tr{% if cl.filter.is_set %} style="border: solid 2px green;"{% endif %}>
+{% for f in cl.filters %}
+<td>{{ f }}</td>
+{% endfor %}
+</tr>
+</thead>
+<tbody>
+	{% for s in cl.results %}
+	<tr class="{% cycle row1,row2 %}">
+    <td><a href="{% url client_shipment s.id %}">{{ s.created_at|date:"d.m.Y H:i"|safe }}</a></td>
+    <td>{{ s.manager }}</td>
+    <td>{{ s.full_code }}</td>
+    <td>{{ s.weight }}</td>
+    <td>{{ s.cost }}</td>
+  </tr>
+  {% endfor %}
+	</tbody>
+	</table>
+</div>
+{% include 'paginator.html' %}
+{% endblock %}
+
