@@ -840,5 +840,5 @@ class Part(models.Model):
             'brandgroup': brandgroup_title,
             'party': self.party or PARTY_DEFAULT_COUNT,
             'available': self.available,
-            'maker': self.brand or "",
+            'maker': self.brand or self.area.title,
         }
