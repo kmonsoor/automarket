@@ -773,19 +773,6 @@ def issues(request):
     context['items_per_page'] = items_per_page
     paginator = SimplePaginator(request, qs, items_per_page, 'page')
 
-    # grouping parents orders
-    if not _filter.is_set:
-        items_list = list(paginator.get_page_items())
-        items_ids = list(paginator.get_page_items().values_list('id', flat=True))
-        for order in items_list:
-            if order.parent:
-                del items_list[items_list.index(order)]
-        has_parent_list = list(OrderedItem.objects.filter(parent__id__in=items_ids))
-        for order in has_parent_list:
-            index = items_list.index(order.parent)
-            items_list.insert(index, order)
-        paginator.page.object_list = items_list
-
     #paginator.set_page(current_page)
     context['status_options_str'], context['status_options'] = get_status_options()
     context['items'] = paginator.get_page_items()
@@ -1271,18 +1258,11 @@ def index(request):
 
     # grouping parents orders
     if not _filter.is_set:
-        items_list = list(paginator.get_page_items())
-        items_ids = list(paginator.get_page_items().values_list('id', flat=True))
-        for order in items_list:
-            if order.parent:
-                del items_list[items_list.index(order)]
-        has_parent_list = list(OrderedItem.objects.filter(parent__id__in=items_ids))
-        for order in has_parent_list:
-            index = items_list.index(order.parent)
-            items_list.insert(index, order)
+        items_list = list(x for x in paginator.get_page_items() if not x.parent)
+        for order in OrderedItem.objects.filter(parent__id__in=set(x.id for x in items_list)):
+            items_list.insert(items_list.index(order.parent), order)
         paginator.page.object_list = items_list
 
-    #paginator.set_page(current_page)
     context['status_options_str'], context['status_options'] = get_status_options()
     context['items'] = paginator.get_page_items()
     context['paginator'] = paginator
@@ -1290,6 +1270,18 @@ def index(request):
     context['total_row'] = total_row
     context['edit_mode'] = 1
     return context
+
+
+@staff_member_required
+@render_to('cp/balance.html')
+def balance(request):
+    return {}
+
+
+@staff_member_required
+@render_to('cp/balance_client.html')
+def balance_client(request):
+    return {}
 
 
 @staff_member_required
