@@ -1,0 +1,126 @@
+{% extends 'cp/index.html' %}
+{% load cp_tags %}
+
+{% block menu_balance %}<a class="menu-active" href="{% url balance %}">Баланс</a>{% endblock %}
+{% block menu_index %}<a href="{% url cp_index %}">Заказы</a>{% endblock %}
+
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript">
+    function createFieldSet(formId){
+        return Form.extend({
+            initialize: function(value) {
+                this.parent({{ balance_add_form_template|safe }}, value);
+                this.fieldset = new Element('fieldset');
+                this.fieldset.setProperty('class', 'module aligned');
+                this.fieldset.innerHTML = this.html;
+                $(formId).adopt(this.fieldset);
+            }
+        });
+    };
+    var balancePaymentFieldSet = createFieldSet('balance-payment-form');
+    var balanceInvoiceFieldSet = createFieldSet('balance-invoice-form');
+
+    Window.onDomReady(function() {
+        {% for data in balance_payment_form_data %}
+        new balancePaymentFieldSet({{ data|safe }});
+        jQuery('.save_balance_payment_block').show();
+        {% endfor %}
+        {% for data in balance_invoice_form_data %}
+        new balanceInvoiceFieldSet({{ data|safe }});
+        jQuery('.save_balance_invoice_block').show();
+        {% endfor %}
+    });
+
+</script>
+{% endblock %}
+
+
+{% block content %}
+<h3>Баланс: {{ user.username }}</h3>
+<br/>
+<div id="changelist">
+    <form method="{{ filter.method }}" action="{% url balance_client user.id %}">
+        <input type="hidden" name="qs_filter" value="1">
+        <input type="submit" value="Фильтр">
+        <input type="submit" name="qs_filter_clear" value="Очистить">
+        &nbsp;
+        Количество записей на странице:
+        <select onchange="buildQueryFilter();" id="items-per-page-filter-select">
+            <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+            <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+            <option value="all"{% ifequal items_per_page 10000 %} selected {% endifequal %}>все</option>
+        </select>&nbsp;&nbsp;
+        За период:
+        <select onchange="buildQueryFilter();" id="period-filter-select">
+            <option value="w"{% ifequal period 'w' %} selected {% endifequal %}>неделя</option>
+            <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
+            <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
+            <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>
+        </select><br/><br/>
+
+        <div class="module" id="changelist">
+            <table>
+                <thead>
+                    <tr>{% table_header_sort headers %}</tr>
+                    <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+                    {% for f in list_filters %}
+                        <td>{{ f }}</td>
+                    {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <style>
+                        #changelist table tbody td {padding: 5px;}
+                        #changelist table thead input.qs_filter, #changelist table thead select.qs_filter {width: 96%;}
+                    </style>
+                    {% for s in items %}
+                      <tr class="{% cycle row1,row2 %}">
+                        <td>{{ s.created_at|date:"d.m.Y H:i"|safe }}</td>
+                        <td>{{ s.get_item_type_display }}</td>
+                        <td>
+                            {% if s.shipment %}<a href="{% url shipment s.shipment.id %}">{{ s.comment|default:"" }}</a>
+                            {% else %}{{ s.comment|default:"" }}{% endif %}
+                        </td>
+                        <td style="color: {% if s.amount < 0 %}red{% else %}green{% endif %};">{{ s.amount|floatformat:2 }}</td>
+                        <td style="width: 1%;"><a class="delete_link" title="Удалить" href="{% url balanceitem_delete s.id %}"></a></td>
+                      </tr>
+                    {% endfor %}
+                    <tr class="alt">
+                        <td>Итого:</td>
+                        <td></td>
+                        <td></td>
+                        <td style="color: {% if total_amount < 0 %}red{% else %}green{% endif %};">{{ total_amount|floatformat:2 }}</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td colspan={{ headers|length }}>{% include "paginator.html" %}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </form>
+    <form action="" method="post" id="process-balance-payment-form">
+        <br/>
+        <p align="right">
+            <a class="add_link" href="javascript:void(0)" onclick="new balancePaymentFieldSet(); jQuery('.save_balance_payment_block').show();">Добавить оплату</a>
+        </p>
+        <div id="balance-payment-form"></div>
+        <div class="save_balance_payment_block" style="text-align: right; display: none;">
+            <input type="submit" name="save_balance_payment" value="Сохранить" />
+            <br/>
+            <br/>
+        </div>
+    </form>
+    <form action="" method="post" id="process-balance-invoice-form">
+        <p align="right">
+            <a class="add_link" href="javascript:void(0)" onclick="new balanceInvoiceFieldSet(); jQuery('.save_balance_invoice_block').show();">Выставить счёт</a>
+        </p>
+        <div id="balance-invoice-form"></div>
+        <div class="save_balance_invoice_block" style="text-align: right; display: none;">
+            <input type="submit" name="save_balance_invoice" value="Сохранить" />
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -25,6 +25,7 @@ class MyDashboard(Dashboard):
              'data.models.Discount',
              'data.models.ClientGroup',
              'data.models.Part',
+             'data.models.BalanceItem',
              ]
         ))
 

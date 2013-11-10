@@ -106,6 +106,46 @@ class ShipmentsFilterForm(forms.Form):
     )
 
 
+BALANCE_FIELD_LIST = (
+    (u'CL', 'user', 'user', 'user__username__contains'),
+    (u'Группа', '', '', None),
+    (u'Имя', 'user', 'user', 'user__first_name__contains'),
+    (u'Email', 'user', 'user', 'user__email__contains'),
+    (u'Последнее изменение', 'created_at', 'created_at', None),
+    (u'Баланс $', '', '', None),
+)
+
+
+class BalanceFilterForm(forms.Form):
+    user__username__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
+    )
+    user__email__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
+    )
+    user__first_name__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
+    )
+
+
+BALANCE_CLIENT_FIELD_LIST = (
+    (u'Дата', 'created_at', 'created_at', None),
+    (u'Тип', 'item_type', 'item_type', None),
+    (u'Комментарий', 'comment', 'comment', 'comment'),
+    (u'Сумма', 'amount', 'amount', 'amount'),
+    (u'Удалить', '', '', None),
+)
+
+
+class BalanceClientFilterForm(forms.Form):
+    amount = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
+    )
+    comment = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
+    )
+
+
 CLIENT_FIELD_LIST = [
     (u'PO', 'ponumber', 'po_verbose', u"%s", "ponumber"),
     (u'Направление', 'brandgroup__title', 'brandgroup', u"%s", "brandgroup__title__contains"),

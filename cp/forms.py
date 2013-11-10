@@ -108,6 +108,13 @@ class PackageItemForm(Form):
             return client
 
 
+class BalanceAddForm(Form):
+    TEMPLATE = 'cp/balance_add_form.html'
+    CORE = ('amount',)
+    comment = forms.CharField(widget=forms.TextInput(attrs={'class': 'balance_add_form_comment'}), label=u'Комментарий', required=True)
+    amount = forms.FloatField(widget=forms.TextInput(attrs={'class': 'balance_add_form_amount'}), label=u'Сумма', required=True)
+
+
 class SearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         maker_choices = kwargs.pop("maker_choices")

@@ -7,6 +7,7 @@ from datetime import datetime
 import string
 import random
 import dateutil
+from itertools import groupby
 
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
@@ -26,15 +27,24 @@ from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from lib import xlsreader
 
-from cp.forms import OrderItemForm, ImportXlsForm, PackageItemForm
+from cp.forms import (
+    OrderItemForm, ImportXlsForm, PackageItemForm,
+    BalanceAddForm
+)
 from client.forms import SearchForm
-from data.models import BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES, \
-    Invoice, Package, INVOICE_STATUS_RECEIVED, INVOICE_STATUS_CLOSED, \
-    PACKAGE_STATUSES, PACKAGE_STATUS_RECEIVED, PACKAGE_STATUS_ISSUED, \
-    Shipment
-from data.forms import OrderedItemsFilterForm, OrderedItemForm, \
-    STAFF_FIELD_LIST, InvoicesFilterForm, INVOICES_FIELD_LIST, PackageForm, \
-    ShipmentsFilterForm, SHIPMENTS_FIELD_LIST
+from data.models import (
+    BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES,
+    Invoice, Package, INVOICE_STATUS_RECEIVED, INVOICE_STATUS_CLOSED,
+    PACKAGE_STATUSES, PACKAGE_STATUS_RECEIVED, PACKAGE_STATUS_ISSUED,
+    Shipment, BalanceItem, UserProfile, BALANCEITEM_TYPE_PAYMENT,
+    BALANCEITEM_TYPE_INVOICE
+)
+from data.forms import (
+    OrderedItemsFilterForm, OrderedItemForm, STAFF_FIELD_LIST,
+    InvoicesFilterForm, INVOICES_FIELD_LIST, PackageForm,
+    ShipmentsFilterForm, SHIPMENTS_FIELD_LIST, BalanceFilterForm,
+    BALANCE_FIELD_LIST, BalanceClientFilterForm, BALANCE_CLIENT_FIELD_LIST,
+)
 from common.views import PartSearch
 
 import logging
@@ -160,6 +170,35 @@ def get_items_per_page(request, prefix):
         items_per_page = ITEM_PER_PAGE_DEFAULT
 
     return items_per_page
+
+
+def ordering(qs, request, list_headers):
+    order_field = request.GET.get('o', None)
+    order_direction = request.GET.get('ot', None)
+    order_by = '-created_at'
+
+    if order_field:
+        if order_direction == 'desc':
+            order_direction = '-'
+        else:
+            order_direction = ''
+        order_by = order_direction + list_headers[int(order_field)][1]
+
+    if order_by:
+        qs = qs.order_by(order_by)
+
+    return qs
+
+
+def get_list_filters(_filter, _list_filters):
+    list_filters = []
+    for x in _list_filters:
+        try:
+            form_field = _filter.form.__getitem__(x[3])
+            list_filters.append(form_field)
+        except Exception:
+            list_filters.append("")
+    return list_filters
 
 
 @staff_member_required
@@ -822,6 +861,31 @@ def issues_client(request, client_id):
                 messages.add_message(request, messages.SUCCESS, msg)
                 return _redirect_after_post(redirect_url)
 
+        if 'save_balance_payment' in request.POST:
+            forms = BalanceAddForm.get_forms(request)
+            context['balance_payment_form_data'] = [form.render_js('from_template') for form in forms]
+            if forms.are_valid():
+                for form in forms:
+                    data = form.cleaned_data
+                    data['user'] = client
+                    data['item_type'] = BALANCEITEM_TYPE_PAYMENT
+                    BalanceItem(**data).save()
+                messages.add_message(request, messages.SUCCESS, u"Оплата добавлена.")
+                return _redirect_after_post(redirect_url)
+
+        if 'save_balance_invoice' in request.POST:
+            forms = BalanceAddForm.get_forms(request)
+            context['balance_invoice_form_data'] = [form.render_js('from_template') for form in forms]
+            if forms.are_valid():
+                for form in forms:
+                    data = form.cleaned_data
+                    data['amount'] = -data['amount']
+                    data['user'] = client
+                    data['item_type'] = BALANCEITEM_TYPE_INVOICE
+                    BalanceItem(**data).save()
+                messages.add_message(request, messages.SUCCESS, u"Счёт добавлен.")
+                return _redirect_after_post(redirect_url)
+
     _filter = QSFilter(request, OrderedItemsFilterForm)
     context['filter'] = _filter
     context['qs_filter_param'] = _filter.get_filters()
@@ -966,6 +1030,7 @@ def issues_client(request, client_id):
     context['edit_mode'] = 1
     context['issues_mode'] = 1
     context['client'] = client
+    context['balance_add_form_template'] = BalanceAddForm().render_js('from_template')
     return context
 
 
@@ -1275,13 +1340,126 @@ def index(request):
 @staff_member_required
 @render_to('cp/balance.html')
 def balance(request):
-    return {}
+    context = {}
+    session_store_prefix = "cp_balance"
+
+    _filter = QSFilter(request, BalanceFilterForm)
+    context['filter'] = _filter
+
+    LIST_HEADERS = [(x[0], x[1]) for x in BALANCE_FIELD_LIST]
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    context['headers'] = list(sort_headers.headers())
+
+    context['list_filters'] = get_list_filters(_filter, BALANCE_FIELD_LIST)
+
+    qs_filter = _filter.get_filters()
+
+    period, period_filter = get_period(request, session_store_prefix, "created_at")
+    qs_filter.update(period_filter)
+    context['period'] = period
+
+    qs = ordering(BalanceItem.objects.select_related().filter(**qs_filter), request, LIST_HEADERS)
+
+    res = []
+    for user, balanceitems in groupby(qs, lambda x: x.user):
+
+        balance = 0
+        last_modified = None
+
+        for b in balanceitems:
+            balance += b.amount
+            if not last_modified or last_modified < b.modified_at:
+                last_modified = b.modified_at
+
+        res.append({
+            'user': user,
+            'user_group': UserProfile.objects.get(user=user).client_group,
+            'balance': balance,
+            'last_modified': last_modified,
+        })
+
+    items_per_page = get_items_per_page(request, session_store_prefix)
+    context['items_per_page'] = items_per_page
+    paginator = SimplePaginator(request, res, items_per_page, 'page')
+    context['items'] = paginator.get_page_items()
+    context['paginator'] = paginator
+    context['total_balance'] = sum(x['balance'] for x in res)
+    return context
 
 
 @staff_member_required
 @render_to('cp/balance_client.html')
-def balance_client(request):
-    return {}
+def balance_client(request, client_id):
+    user = get_object_or_404(User, id=client_id)
+    context = {}
+
+    context['balance_payment_form_data'] = []
+    context['balance_invoice_form_data'] = []
+    if request.method == 'POST':
+        redirect_url = reverse("balance_client", args=[user.id])
+
+        if 'save_balance_payment' in request.POST:
+            forms = BalanceAddForm.get_forms(request)
+            context['balance_payment_form_data'] = [form.render_js('from_template') for form in forms]
+            if forms.are_valid():
+                for form in forms:
+                    data = form.cleaned_data
+                    data['user'] = user
+                    data['item_type'] = BALANCEITEM_TYPE_PAYMENT
+                    BalanceItem(**data).save()
+                messages.add_message(request, messages.SUCCESS, u"Оплата добавлена.")
+                return _redirect_after_post(redirect_url)
+
+        if 'save_balance_invoice' in request.POST:
+            forms = BalanceAddForm.get_forms(request)
+            context['balance_invoice_form_data'] = [form.render_js('from_template') for form in forms]
+            if forms.are_valid():
+                for form in forms:
+                    data = form.cleaned_data
+                    data['amount'] = -data['amount']
+                    data['user'] = user
+                    data['item_type'] = BALANCEITEM_TYPE_INVOICE
+                    BalanceItem(**data).save()
+                messages.add_message(request, messages.SUCCESS, u"Счёт добавлен.")
+                return _redirect_after_post(redirect_url)
+
+    context['user'] = user
+    session_store_prefix = "cp_balance_client"
+
+    _filter = QSFilter(request, BalanceClientFilterForm)
+    context['filter'] = _filter
+
+    LIST_HEADERS = [(x[0], x[1]) for x in BALANCE_CLIENT_FIELD_LIST]
+    sort_headers = SortHeaders(request, LIST_HEADERS)
+    context['headers'] = list(sort_headers.headers())
+
+    context['list_filters'] = get_list_filters(_filter, BALANCE_CLIENT_FIELD_LIST)
+
+    qs_filter = _filter.get_filters()
+
+    period, period_filter = get_period(request, session_store_prefix, "created_at")
+    qs_filter.update(period_filter)
+    context['period'] = period
+
+    qs = ordering(BalanceItem.objects.select_related().filter(user=user, **qs_filter), request, LIST_HEADERS)
+
+    items_per_page = get_items_per_page(request, session_store_prefix)
+    context['items_per_page'] = items_per_page
+    paginator = SimplePaginator(request, qs, items_per_page, 'page')
+    context['items'] = paginator.get_page_items()
+    context['paginator'] = paginator
+    context['total_amount'] = sum(x.amount for x in qs)
+    context['balance_add_form_template'] = BalanceAddForm().render_js('from_template')
+    return context
+
+
+@staff_member_required
+def balanceitem_delete(request, item_id):
+    obj = get_object_or_404(BalanceItem, id=item_id)
+    user = obj.user
+    obj.delete()
+    messages.add_message(request, messages.SUCCESS, u"Запись баланса удалена.")
+    return HttpResponseRedirect(reverse("balance_client", args=[user.id]))
 
 
 @staff_member_required

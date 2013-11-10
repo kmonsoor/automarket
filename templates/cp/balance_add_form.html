@@ -1,0 +1,26 @@
+<style>
+#tableBalanceAddForm {width: 100%;}
+#tableBalanceAddForm tr td {padding: 5px; font-weight: bold;}
+.balance_add_form_comment {width: 98%;}
+</style>
+<table id="tableBalanceAddForm">
+<tr>
+
+<td {% if form.comment.errors %}class="error"{% endif %}>
+{{ form.comment.label }}*<br />
+{% if form.comment.errors %}
+{{ form.comment.errors }}
+{% endif %}
+{{ form.comment }}
+</td>
+
+<td style="width: 25px;"{% if form.amount.errors %}class="error"{% endif %}>
+{{ form.amount.label }}*<br />
+{% if form.amount.errors %}
+{{ form.amount.errors }}
+{% endif %}
+{{ form.amount }}
+</td>
+
+</tr>
+</table>

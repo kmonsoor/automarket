@@ -280,6 +280,14 @@ class Shipment(models.Model):
                             issued_at=datetime.datetime.now()
                         )
 
+                BalanceItem(
+                    amount=shipment.cost,
+                    user=client,
+                    item_type=BALANCEITEM_TYPE_SHIPMENT,
+                    comment=u"Отгрузка %s" % shipment.full_code(),
+                    shipment=shipment,
+                ).save()
+
                 shipments.append(shipment)
         return shipments
 
@@ -508,6 +516,10 @@ class Invoice(models.Model):
         verbose_name = u"Инвойс"
         verbose_name_plural = u"Инвойсы"
         unique_together = ('code',)
+
+    @property
+    def orders(self):
+        return OrderedItem.objects.filter(invoice_code=self.code)
 
     def calculate_status(self):
         if self.status not in (INVOICE_STATUS_CLOSED,):
@@ -842,3 +854,31 @@ class Part(models.Model):
             'available': self.available,
             'maker': self.brand or self.area.title,
         }
+
+
+BALANCEITEM_TYPE_PAYMENT = 1
+BALANCEITEM_TYPE_INVOICE = 2
+BALANCEITEM_TYPE_PREINVOICE = 3
+BALANCEITEM_TYPE_SHIPMENT = 4
+
+BALANCEITEM_TYPE_CHOICES = (
+    (BALANCEITEM_TYPE_PAYMENT, u"Оплата"),
+    (BALANCEITEM_TYPE_INVOICE, u"Счет"),
+    (BALANCEITEM_TYPE_PREINVOICE, u"Предварительный счет"),
+    (BALANCEITEM_TYPE_SHIPMENT, u"Отгрузка"),
+)
+
+
+class BalanceItem(models.Model):
+    user = models.ForeignKey(User)
+    amount = models.FloatField(u"Сумма")
+    item_type = models.PositiveSmallIntegerField(u"Тип", choices=BALANCEITEM_TYPE_CHOICES, default=BALANCEITEM_TYPE_PAYMENT)
+    comment = models.TextField(u"Комментарий", null=True, blank=True)
+    shipment = models.ForeignKey(Shipment, null=True, blank=True)
+    invoice = models.ForeignKey(Invoice, null=True, blank=True)
+    created_at = models.DateTimeField(u"Создано", auto_now_add=True)
+    modified_at = models.DateTimeField(u"Создано", auto_now=True)
+
+    class Meta:
+        verbose_name = u"баланс"
+        verbose_name_plural = u"баланс"

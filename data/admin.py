@@ -508,6 +508,11 @@ class PartAdmin(admin.ModelAdmin):
     substitution_link.allow_tags = True
 
 
+class BalanceItemAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'user', 'comment', 'amount',)
+    list_filter = ('created_at', 'user')
+
+
 admin.site.register(Brand, BrandAdmin)
 admin.site.register(Direction, DirectionAdmin)
 admin.site.register(BrandGroup, BrandGroupAdmin)
@@ -518,3 +523,4 @@ admin.site.register(Staff, StaffAdmin)
 admin.site.register(CustomerAccount, CustomerAdmin)
 admin.site.register(ClientGroup, ClientGroupAdmin)
 admin.site.register(Part, PartAdmin)
+admin.site.register(BalanceItem, BalanceItemAdmin)

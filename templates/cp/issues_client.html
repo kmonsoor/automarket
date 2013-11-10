@@ -1,6 +1,37 @@
 {% extends 'cp/issues.html' %}
 {% load cp_tags %}
 
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript">
+    function createFieldSet(formId){
+        return Form.extend({
+            initialize: function(value) {
+                this.parent({{ balance_add_form_template|safe }}, value);
+                this.fieldset = new Element('fieldset');
+                this.fieldset.setProperty('class', 'module aligned');
+                this.fieldset.innerHTML = this.html;
+                $(formId).adopt(this.fieldset);
+            }
+        });
+    };
+    var balancePaymentFieldSet = createFieldSet('balance-payment-form');
+    var balanceInvoiceFieldSet = createFieldSet('balance-invoice-form');
+
+    Window.onDomReady(function() {
+        {% for data in balance_payment_form_data %}
+        new balancePaymentFieldSet({{ data|safe }});
+        jQuery('.save_balance_payment_block').show();
+        {% endfor %}
+        {% for data in balance_invoice_form_data %}
+        new balanceInvoiceFieldSet({{ data|safe }});
+        jQuery('.save_balance_invoice_block').show();
+        {% endfor %}
+    });
+
+</script>
+{% endblock %}
+
 {% block content %}
 <a href="/cp/export_order/?qs_filter=1&status=received_office&client__username__contains={{ client.username }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/>
 <h3>К выдаче: клиент {{ client.username }}</h3>
@@ -71,6 +102,27 @@
         </div>
     </form>
 </div>
+<form action="" method="post" id="process-balance-payment-form">
+    <br/>
+    <p align="right">
+        <a class="add_link" href="javascript:void(0)" onclick="new balancePaymentFieldSet(); jQuery('.save_balance_payment_block').show();">Добавить оплату</a>
+    </p>
+    <div id="balance-payment-form"></div>
+    <div class="save_balance_payment_block" style="text-align: right; display: none;">
+        <input type="submit" name="save_balance_payment" value="Сохранить" />
+        <br/>
+        <br/>
+    </div>
+</form>
+<form action="" method="post" id="process-balance-invoice-form">
+    <p align="right">
+        <a class="add_link" href="javascript:void(0)" onclick="new balanceInvoiceFieldSet(); jQuery('.save_balance_invoice_block').show();">Выставить счёт</a>
+    </p>
+    <div id="balance-invoice-form"></div>
+    <div class="save_balance_invoice_block" style="text-align: right; display: none;">
+        <input type="submit" name="save_balance_invoice" value="Сохранить" />
+    </div>
+</form>
 <form action="" method="post" id="issues-process-form">
     <div class="submit-row">
         <input type="submit" onclick="issue(); return false;" name="open_invoice_button" value="Отгрузить" />
