@@ -185,7 +185,7 @@ class Shipment(models.Model):
         verbose_name_plural = u"Отгрузки"
 
     def __unicode__(self):
-        return u"%s" % self.code
+        return u"%s %s" % (self.code, self.client,)
 
     @property
     def items(self):
@@ -281,7 +281,7 @@ class Shipment(models.Model):
                         )
 
                 BalanceItem(
-                    amount=shipment.cost,
+                    amount=-shipment.cost,
                     user=client,
                     item_type=BALANCEITEM_TYPE_SHIPMENT,
                     comment=u"Отгрузка %s" % shipment.full_code(),
@@ -877,8 +877,12 @@ class BalanceItem(models.Model):
     shipment = models.ForeignKey(Shipment, null=True, blank=True)
     invoice = models.ForeignKey(Invoice, null=True, blank=True)
     created_at = models.DateTimeField(u"Создано", auto_now_add=True)
+    created_at.editable = True
     modified_at = models.DateTimeField(u"Создано", auto_now=True)
 
     class Meta:
         verbose_name = u"баланс"
         verbose_name_plural = u"баланс"
+
+    def __unicode__(self):
+        return "%s %s" % (self.user.username, self.amount,)

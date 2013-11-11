@@ -508,9 +508,20 @@ class PartAdmin(admin.ModelAdmin):
     substitution_link.allow_tags = True
 
 
+from django.contrib.admin.filterspecs import FilterSpec, RelatedFilterSpec
+
+
+class UserOrderingFilter(RelatedFilterSpec):
+    def __init__(self, f, request, params, model, model_admin):
+        super(UserOrderingFilter, self).__init__(f, request, params, model, model_admin)
+        self.lookup_choices = sorted(f.get_choices(include_blank=False), key=lambda x: x[1])
+FilterSpec.filter_specs.insert(0, (lambda f: f.name == 'user', UserOrderingFilter))
+
+
 class BalanceItemAdmin(admin.ModelAdmin):
     list_display = ('created_at', 'user', 'comment', 'amount',)
-    list_filter = ('created_at', 'user')
+    list_filter = ('created_at', 'user',)
+    ordering = ('created_at',)
 
 
 admin.site.register(Brand, BrandAdmin)
