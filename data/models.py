@@ -874,8 +874,8 @@ class BalanceItem(models.Model):
     amount = models.FloatField(u"Сумма")
     item_type = models.PositiveSmallIntegerField(u"Тип", choices=BALANCEITEM_TYPE_CHOICES, default=BALANCEITEM_TYPE_PAYMENT)
     comment = models.TextField(u"Комментарий", null=True, blank=True)
-    shipment = models.ForeignKey(Shipment, null=True, blank=True)
-    invoice = models.ForeignKey(Invoice, null=True, blank=True)
+    shipment = models.ForeignKey(Shipment, null=True, blank=True, verbose_name=u"Отгрузка")
+    invoice = models.ForeignKey(Invoice, null=True, blank=True,  verbose_name=u"Инвойс")
     created_at = models.DateTimeField(u"Создано", auto_now_add=True)
     created_at.editable = True
     modified_at = models.DateTimeField(u"Создано", auto_now=True)
