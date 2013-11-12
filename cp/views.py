@@ -1369,8 +1369,8 @@ def balance(request):
 
         for b in balanceitems:
             balance += b.amount
-            if not last_modified or last_modified < b.modified_at:
-                last_modified = b.modified_at
+            if not last_modified or last_modified < b.created_at:
+                last_modified = b.created_at
 
         res.append({
             'user': user,
