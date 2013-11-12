@@ -1359,7 +1359,7 @@ def balance(request):
     qs_filter.update(period_filter)
     context['period'] = period
 
-    qs = ordering(BalanceItem.objects.select_related().filter(**qs_filter), request, LIST_HEADERS)
+    qs = BalanceItem.objects.select_related().filter(**qs_filter).order_by('user')
 
     res = []
     for user, balanceitems in groupby(qs, lambda x: x.user):
