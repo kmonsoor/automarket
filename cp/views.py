@@ -546,7 +546,7 @@ def invoice(request, invoice_id):
 
     invoice.calculate_status()
 
-    context['packages'] = Package.objects.filter(invoice=invoice).order_by('-created_at')
+    context['packages'] = Package.objects.filter(invoice=invoice, **_filter.get_filters()).order_by('-created_at')
 
     qs = OrderedItem.objects.select_related()\
         .filter(**_filter.get_filters())\
@@ -586,24 +586,25 @@ def invoice(request, invoice_id):
         ))
 
     total_packages = {}
-    sql = """
-        SELECT
-            SUM(total_cost),
-            SUM(weight * quantity),
-            SUM(delivery)
-        FROM
-            data_package
-        WHERE
-            invoice_id = %(invoice_id)i
-    """ % {'invoice_id': invoice.id}
+    if context['packages']:
+        sql = """
+            SELECT
+                SUM(total_cost),
+                SUM(weight * quantity),
+                SUM(delivery)
+            FROM
+                data_package
+            WHERE
+                id IN (%(packages)s)
+        """ % {'packages': ",".join("%s" % x.id for x in context['packages'])}
 
-    cursor = connection.cursor()
-    cursor.execute(sql)
-    res = cursor.fetchall()
-    if len(res) > 0:
-        total_packages = dict(zip(
-            ('total_cost', 'weight', 'delivery'), res[0])
-        )
+        cursor = connection.cursor()
+        cursor.execute(sql)
+        res = cursor.fetchall()
+        if len(res) > 0:
+            total_packages = dict(zip(
+                ('total_cost', 'weight', 'delivery'), res[0])
+            )
 
     def _sum(d1, d2):
         d = {}

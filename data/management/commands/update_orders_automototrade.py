@@ -15,7 +15,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.template.loader import render_to_string
 
-from data.models import OrderedItem, Invoice
+from data.models import OrderedItem, Invoice, BalanceItem
 
 
 NO_REFUSED = 'no'
@@ -194,6 +194,7 @@ class Command(BaseCommand):
                     i.received_at = datetime.datetime.now()
                     i.save()
                 i.calculate_status()
+                BalanceItem.create_or_update_by_invoice(i)
 
             text = u",".join(set(x[0] for x in new_invoices))
             send_mail(

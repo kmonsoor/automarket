@@ -521,7 +521,6 @@ FilterSpec.filter_specs.insert(0, (lambda f: f.name == 'user', UserOrderingFilte
 class BalanceItemAdmin(admin.ModelAdmin):
     list_display = ('created_at', 'user', 'comment', 'amount',)
     list_filter = ('created_at', 'user',)
-    ordering = ('created_at',)
 
 
 admin.site.register(Brand, BrandAdmin)
