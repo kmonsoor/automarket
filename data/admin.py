@@ -131,6 +131,7 @@ class AreaAdmin(admin.ModelAdmin):
 
 class BrandAdmin(admin.ModelAdmin):
     list_display = ('title',)
+    search_fields = ('title',)
 
 
 class DiscountAdmin(admin.ModelAdmin):
