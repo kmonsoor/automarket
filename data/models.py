@@ -160,7 +160,7 @@ dispatch_uid="38fy3f73")
 
 
 class Brand(models.Model):
-    title = models.CharField(max_length=255, verbose_name=u"Название")
+    title = models.CharField(max_length=255, verbose_name=u"Название", unique=True)
 
     class Meta:
         verbose_name = u"Бренд"
