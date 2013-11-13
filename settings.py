@@ -159,6 +159,11 @@ LOG_DIR = os.path.join(SITE_ROOT, '.logs') # for development only! need to be re
 LOG_INTERVAL = 'MIDNIGHT'
 # Loading host depending settings
 LOG_LEVEL = DEBUG and logging.DEBUG or logging.INFO
+
+USE_L10N = True
+DATETIME_INPUT_FORMATS = ("%Y.%m.%d %H:%M:%S",)
+DATETIME_FORMAT = "Y.m.d H:i:s"
+
 try:
     from settings_local import *
 except ImportError:

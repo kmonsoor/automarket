@@ -186,7 +186,7 @@ class Shipment(models.Model):
         verbose_name_plural = u"Отгрузки"
 
     def __unicode__(self):
-        return u"%s %s" % (self.code, self.client,)
+        return u"%s %s" % (self.client, self.code,)
 
     @property
     def items(self):

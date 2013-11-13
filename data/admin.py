@@ -523,6 +523,12 @@ class BalanceItemAdmin(admin.ModelAdmin):
     list_display = ('created_at', 'user', 'amount', 'item_type', 'comment')
     list_filter = ('created_at', 'user',)
 
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super(BalanceItemAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'shipment':
+            from data.models import Shipment
+            formfield.choices = ((x.id, x.__unicode__()) for x in Shipment.objects.all().order_by('client__username', 'code'))
+        return formfield
 
 admin.site.register(Brand, BrandAdmin)
 admin.site.register(Direction, DirectionAdmin)
