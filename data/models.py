@@ -901,7 +901,9 @@ class BalanceItem(models.Model):
             else:
                 item_type = BALANCEITEM_TYPE_PREINVOICE
                 amount = -sum(x.price_sale * x.quantity for x in orders)
-            b, _ = BalanceItem.objects.get_or_create(user=client, invoice=invoice, amount=amount)
+            b, _ = BalanceItem.objects.get_or_create(user=client, invoice=invoice)
+            b.item_type = item_type
+            b.amount = amount
             b.comment = u"Инвойс %s" % invoice.code
             b.item_type = item_type
             b.save()

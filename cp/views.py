@@ -546,7 +546,57 @@ def invoice(request, invoice_id):
 
     invoice.calculate_status()
 
-    context['packages'] = Package.objects.filter(invoice=invoice, **_filter.get_filters()).order_by('-created_at')
+    package_filter = _filter.get_filters()
+
+    print package_filter
+
+    if 'invoice_code__contains' in package_filter:
+        package_filter.update({'invoice__code__contains': package_filter.get('invoice_code__contains')})
+        del package_filter['invoice_code__contains']
+
+    print package_filter
+
+    if 'description_en__contains' in package_filter:
+        del package_filter['description_en__contains']
+        package_filter = {'id': 0}
+
+    if 'description_ru__contains' in package_filter:
+        del package_filter['description_ru__contains']
+        package_filter = {'id': 0}
+
+    if 'part_number_superseded__contains' in package_filter:
+        del package_filter['part_number_superseded__contains']
+        package_filter = {'id': 0}
+
+    if 'comment_supplier__contains' in package_filter:
+        del package_filter['comment_supplier__contains']
+        package_filter = {'id': 0}
+
+    if 'comment_customer__contains' in package_filter:
+        del package_filter['comment_customer__contains']
+        package_filter = {'id': 0}
+
+    if 'part_number__contains' in package_filter:
+        del package_filter['part_number__contains']
+        package_filter = {'id': 0}
+
+    if 'brand__title__contains' in package_filter:
+        del package_filter['brand__title__contains']
+        package_filter = {'id': 0}
+
+    if 'area__title__contains' in package_filter:
+        del package_filter['area__title__contains']
+        package_filter = {'id': 0}
+
+    if 'brandgroup__title__contains' in package_filter:
+        del package_filter['brandgroup__title__contains']
+        package_filter = {'id': 0}
+
+    if 'brandgroup__direction__po__icontains' in package_filter:
+        del package_filter['brandgroup__direction__po__icontains']
+        package_filter = {'id': 0}
+
+    context['packages'] = Package.objects.filter(invoice=invoice, **package_filter).order_by('-created_at')
 
     qs = OrderedItem.objects.select_related()\
         .filter(**_filter.get_filters())\
