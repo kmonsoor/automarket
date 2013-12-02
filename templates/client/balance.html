@@ -92,7 +92,7 @@ function buildQueryFilter() {
         <td>Итого:</td>
         <td></td>
         <td></td>
-        <td style="color: {% if total_amount < 0 %}red{% else %}green{% endif %};">{{ cl.total_amount|floatformat:2 }}</td>
+        <td style="color: {% if cl.total_amount < 0 %}red{% else %}green{% endif %};">{{ cl.total_amount|floatformat:2 }}</td>
     </tr>
     </tbody>
     </table>
