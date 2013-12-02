@@ -131,17 +131,19 @@ class BalanceFilterForm(forms.Form):
 BALANCE_CLIENT_FIELD_LIST = (
     (u'Дата', 'created_at', 'created_at', None),
     (u'Тип', 'item_type', 'item_type', None),
-    (u'Комментарий', 'comment', 'comment', 'comment'),
+    (u'Комментарий', 'comment', 'comment', 'comment__contains'),
     (u'Сумма', 'amount', 'amount', 'amount'),
     (u'Удалить', '', '', None),
 )
+
+BALANCE_CLIENT_FIELD_LIST_CLIENT = BALANCE_CLIENT_FIELD_LIST[:-1]
 
 
 class BalanceClientFilterForm(forms.Form):
     amount = forms.CharField(
         required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
     )
-    comment = forms.CharField(
+    comment__contains = forms.CharField(
         required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
     )
 

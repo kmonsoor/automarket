@@ -9,8 +9,8 @@ from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from data.models import OrderedItem, Brand, BrandGroup, Area, Basket, Shipment, Package
-from data.forms import OrderedItemsFilterForm, ShipmentsFilterForm
+from data.models import OrderedItem, Brand, BrandGroup, Area, Basket, Shipment, Package, BalanceItem
+from data.forms import OrderedItemsFilterForm, ShipmentsFilterForm, BalanceClientFilterForm
 from client.forms import SearchForm
 from common.views import PartSearch, MakerRequired
 from django.shortcuts import get_object_or_404
@@ -19,7 +19,7 @@ from django.contrib.auth.models import User
 from django.utils.html import escape, mark_safe
 
 from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
-from data.forms import CLIENT_FIELD_LIST, CLIENT_SHIPMENTS_FIELD_LIST
+from data.forms import CLIENT_FIELD_LIST, CLIENT_SHIPMENTS_FIELD_LIST, BALANCE_CLIENT_FIELD_LIST_CLIENT
 from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 from client.forms import BasketForm
@@ -603,6 +603,79 @@ def shipment(request, shipment_id):
     response['items_per_page'] = cl.items_per_page
     response['period'] = cl.period
     response['shipment'] = shipment
+    response['qs_filter_param'] = cl.filter.get_filters()
+    return response
+
+
+class ClientBalanceList(object):
+    def __init__(self, request, filter_form):
+        self.request = request
+        self.filter = QSFilter(request, filter_form)
+        session_store_prefix = "client_balance"
+        self.items_per_page = get_items_per_page(request, session_store_prefix)
+        self.period, self.period_filter = get_period(request, session_store_prefix, "created_at")
+        self.results = self.result_list()
+        self.headers = self.list_headers()
+        self.filters = self.list_filters()
+
+    def result_list(self):
+        return self.get_query_set()
+
+    def list_headers(self):
+        sort_headers = SortHeaders(self.request, [(x[0], x[1]) for x in BALANCE_CLIENT_FIELD_LIST_CLIENT])
+        return list(sort_headers.headers())
+
+    def list_filters(self):
+        def _inner():
+            for x in BALANCE_CLIENT_FIELD_LIST_CLIENT:
+                try:
+                    form_field = self.filter.form.__getitem__(x[3])
+                    yield form_field
+                except Exception:
+                    yield ""
+
+        return list(_inner())
+
+    def get_query_set(self):
+        order_field = self.request.GET.get('o', None)
+        order_direction = self.request.GET.get('ot', None)
+
+        order_by = '-created_at'
+        if order_field:
+            if order_direction == 'desc':
+                order_direction = '-'
+            else:
+                order_direction = ''
+            order_by = order_direction + BALANCE_CLIENT_FIELD_LIST_CLIENT[int(order_field)][1]
+
+        qs = (
+            BalanceItem.objects.select_related()
+            .filter(user=self.request.user)
+            .filter(**self.filter.get_filters())
+        )
+
+        if self.period_filter:
+            qs = qs.filter(**self.period_filter)
+
+        if order_by:
+            qs = qs.order_by(order_by)
+
+        self.total_amount = sum(x.amount for x in qs)
+
+        self.paginator = SimplePaginator(self.request, qs, self.items_per_page, 'page')
+        return self.paginator.get_page_items()
+
+
+@login_required
+@render_to('client/balance.html')
+def balance(request):
+    response = {}
+    cl = ClientBalanceList(request, BalanceClientFilterForm)
+    response['cl'] = cl
+    response['paginator'] = cl.paginator
+    response['items_per_page'] = cl.items_per_page
+    response['period'] = cl.period
+    response['shipments'] = shipments
     response['qs_filter_param'] = cl.filter.get_filters()
     return response
 

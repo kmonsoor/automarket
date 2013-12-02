@@ -21,6 +21,7 @@ jQuery.noConflict();
         <li><a class="{% navactive request 'client_search' %}" href="{% url client_search %}">Поиск</a></li>
         <li><a class="{% navactive request 'client_index' %}" href="{% url client_index %}">Мои заказы</a></li>
         {% block shipments_menu %}<li><a class="{% navactive request 'client_shipments' %}" href="{% url client_shipments %}">Мои отгрузки</a></li>{% endblock %}
+        <li><a class="{% navactive request 'client_balance' %}" href="{% url client_balance %}">Баланс</a></li>
     </ul>
 {% endblock %}
 
