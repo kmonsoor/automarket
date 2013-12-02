@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from django import forms
-from data.models import OrderedItem, Brand, ORDER_ITEM_STATUSES, Area, INVOICE_STATUSES
+from data.models import OrderedItem, ORDER_ITEM_STATUSES, Area, INVOICE_STATUSES
 
 STAFF_FIELD_LIST = (
     (u'PO', 'ponumber', 'ponumber', 'ponumber'),
@@ -60,7 +60,7 @@ class OrderedItemsFilterForm(forms.Form):
 INVOICES_FIELD_LIST = (
     (u'Код инвойса', 'code', 'code', 'code__contains'),
     (u'Дата получения', 'received_at', 'received_at', None),
-    (u'Состояние', 'status', 'status', 'status'),
+    (u'Состояние', 'status', 'status', None),
 )
 
 

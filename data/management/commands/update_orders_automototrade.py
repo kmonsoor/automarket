@@ -111,7 +111,7 @@ class Command(BaseCommand):
                     if order.status in ('in_delivery',) and client_price and invoice_list:
                         invoice = self.get_invoice(order, invoice_list)
                         order.invoice_code = invoice
-                        new_invoices.append((invoice, order.brandgroup))
+                        new_invoices.append((invoice, order.brandgroup,))
 
                     if part_number_superseded:
                         order.part_number_superseded = part_number_superseded
@@ -184,9 +184,8 @@ class Command(BaseCommand):
             )
 
         if len(new_invoices) > 0:
-
             for invoice_code, brandgroup in new_invoices:
-                i, _ = Invoice.objects.get_or_create(
+                i, created = Invoice.objects.get_or_create(
                     code=invoice_code,
                     brandgroup=brandgroup
                 )
@@ -196,11 +195,12 @@ class Command(BaseCommand):
                 i.calculate_status()
                 BalanceItem.create_or_update_by_invoice(i)
 
-            text = u",".join(set(x[0] for x in new_invoices))
-            send_mail(
-                u'Созданы новые инвойсы.', text,
-                settings.EMAIL_FROM, settings.MANAGERS_EMAILS, fail_silently=False
-            )
+                if created:
+                    text = u"Код: %s" % invoice_code
+                    send_mail(
+                        u'Создан новый инвойс %s' % invoice_code, text,
+                        settings.EMAIL_FROM, settings.MANAGERS_EMAILS, fail_silently=False
+                    )
 
         logger.info('Finish update orders')
         sys.exit()

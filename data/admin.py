@@ -528,6 +528,11 @@ class BalanceItemAdmin(admin.ModelAdmin):
         if db_field.name == 'shipment':
             from data.models import Shipment
             formfield.choices = (('', '---------',),) + tuple((x.id, x.__unicode__()) for x in Shipment.objects.all().order_by('client__username', 'code'))
+        if db_field.name == 'invoice':
+            from data.models import Invoice
+            formfield.choices = (('', '---------',),) + tuple((x.id, x.__unicode__()) for x in Invoice.objects.all().order_by('-code'))
+        if db_field.name == 'user':
+            formfield.choices = (('', '---------',),) + tuple((x.id, x.__unicode__()) for x in User.objects.all().order_by('username'))
         return formfield
 
 admin.site.register(Brand, BrandAdmin)

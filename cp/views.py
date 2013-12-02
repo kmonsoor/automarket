@@ -37,7 +37,7 @@ from data.models import (
     Invoice, Package, INVOICE_STATUS_RECEIVED, INVOICE_STATUS_CLOSED,
     PACKAGE_STATUSES, PACKAGE_STATUS_RECEIVED, PACKAGE_STATUS_ISSUED,
     Shipment, BalanceItem, UserProfile, BALANCEITEM_TYPE_PAYMENT,
-    BALANCEITEM_TYPE_INVOICE
+    BALANCEITEM_TYPE_INVOICE, MAP_STATUS_ORDER_TO_INVOICE
 )
 from data.forms import (
     OrderedItemsFilterForm, OrderedItemForm, STAFF_FIELD_LIST,
@@ -548,13 +548,9 @@ def invoice(request, invoice_id):
 
     package_filter = _filter.get_filters()
 
-    print package_filter
-
     if 'invoice_code__contains' in package_filter:
         package_filter.update({'invoice__code__contains': package_filter.get('invoice_code__contains')})
         del package_filter['invoice_code__contains']
-
-    print package_filter
 
     if 'description_en__contains' in package_filter:
         del package_filter['description_en__contains']
@@ -595,6 +591,9 @@ def invoice(request, invoice_id):
     if 'brandgroup__direction__po__icontains' in package_filter:
         del package_filter['brandgroup__direction__po__icontains']
         package_filter = {'id': 0}
+
+    if 'status' in package_filter:
+        package_filter['status'] = dict(MAP_STATUS_ORDER_TO_INVOICE).get(package_filter['status'], 0)
 
     context['packages'] = Package.objects.filter(invoice=invoice, **package_filter).order_by('-created_at')
 
@@ -767,6 +766,11 @@ def issues(request):
                 return _redirect_after_post(redirect_url)
             else:
                 orders = list(OrderedItem.objects.filter(id__in=order_ids))
+                already = filter(lambda x: x.shipment, orders)
+                if already:
+                    msg = u"Отгрузка не проведена. Позиции с ORDER ID: %s уже были отгружены." % ", ".join(str(x.id) for x in already)
+                    messages.add_message(request, messages.ERROR, msg)
+                    return _redirect_after_post(redirect_url)
                 shipments = Shipment._create(request, orders)
                 msg = u"Успешно отгружены. Количество новых отгрузок: <b>%i</b>." % len(shipments)
                 messages.add_message(request, messages.SUCCESS, msg)
@@ -1950,8 +1954,7 @@ def change_status(request):
 
     ids = request.POST.getlist('items')
     try:
-        orders = OrderedItem.objects\
-            .filter(id__in=ids, status='order').order_by('id')
+        orders = OrderedItem.objects.filter(id__in=ids, status='order').order_by('id')
     except:
         orders = []
 
@@ -1964,8 +1967,7 @@ def change_status(request):
         messages.add_message(request, messages.ERROR, msg)
         return HttpResponseRedirect('/cp/groups/')
 
-    ponumber = OrderedItem.objects\
-        .get_next_ponumber(orders[0].brandgroup.direction.id)
+    ponumber = OrderedItem.objects.get_next_ponumber(orders[0].brandgroup.direction.id)
     poprefix = orders[0].brandgroup.direction.po
     full_po = '%s%s' % (poprefix, ponumber)
 

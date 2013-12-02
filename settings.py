@@ -160,9 +160,12 @@ LOG_INTERVAL = 'MIDNIGHT'
 # Loading host depending settings
 LOG_LEVEL = DEBUG and logging.DEBUG or logging.INFO
 
-USE_L10N = True
-DATETIME_INPUT_FORMATS = ("%Y.%m.%d %H:%M:%S",)
-DATETIME_FORMAT = "Y.m.d H:i:s"
+#USE_L10N = True
+DATETIME_INPUT_FORMATS = ("%d.%m.%Y %H:%M:%S",)
+DATETIME_FORMAT = "d.m.Y H:i:s"
+DECIMAL_SEPARATOR = '.'
+DATE_FORMAT = 'd.m.Y'
+DATE_INPUT_FORMATS = ("%d.%m.%Y",)
 
 try:
     from settings_local import *

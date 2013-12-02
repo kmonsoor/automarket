@@ -1,6 +1,12 @@
 var current = null;
 var backend_url = null;
 
+jQuery(document).keypress(function(e) {
+    if (e.which == 13 && current) {
+        save();
+    }
+});
+
 function render_row(item_id) {
     // jQuery.get('/cp/ordered_item_row/'+ item_id +'/', function(response) {
     //     if (response) {

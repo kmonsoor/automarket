@@ -546,6 +546,29 @@ PACKAGE_STATUSES = (
     (PACKAGE_STATUS_ISSUED, u'выдано'),
 )
 
+ORDER_ITEM_STATUSES = (
+    ('order', u'новый заказ'),
+    ('moderation', u'на модерации'),
+    ('in_processing', u'в работе'),
+    ('wrong_number', u'отказ: некорректный номер'),
+    ('out_of_stock', u'отказ: отсутствует на складе'),
+    ('cancelled_customer', u'отказ: снято заказчиком'),
+    ('export_part', u'отказ: экспортная запчасть'),
+    ('back_order', u'back order'),
+    ('superseded', u'замена номера'),
+    ('received_supplier', u'получено поставщиком'),
+    ('in_delivery', u'в доставке'),
+    ('sent_representative', u'отправлено представителю'),
+    ('not_obtained_from_supplier', u'не получено от поставщика'),
+    ('received_office', u'получено офисом'),
+    ('issued', u'выдано'),
+)
+
+MAP_STATUS_ORDER_TO_INVOICE = (
+    ('received_office', PACKAGE_STATUS_RECEIVED),
+    ('issued', PACKAGE_STATUS_ISSUED),
+)
+
 
 class Package(models.Model):
     description = models.CharField(verbose_name=u"Описание", max_length=255)
