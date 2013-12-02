@@ -546,7 +546,12 @@ def invoice(request, invoice_id):
 
     invoice.calculate_status()
 
+    order_filter = _filter.get_filters()
     package_filter = _filter.get_filters()
+
+    if request.REQUEST.get('exclude_shipment'):
+        order_filter.update({'shipment__isnull': True})
+        package_filter.update({'shipment__isnull': True})
 
     if 'invoice_code__contains' in package_filter:
         package_filter.update({'invoice__code__contains': package_filter.get('invoice_code__contains')})
@@ -598,7 +603,7 @@ def invoice(request, invoice_id):
     context['packages'] = Package.objects.filter(invoice=invoice, **package_filter).order_by('-created_at')
 
     qs = OrderedItem.objects.select_related()\
-        .filter(**_filter.get_filters())\
+        .filter(**order_filter)\
         .filter(invoice_code=invoice.code)
 
     # calculate totals by filter
