@@ -898,7 +898,7 @@ BALANCEITEM_TYPE_CHOICES = (
 
 class BalanceItem(models.Model):
     user = models.ForeignKey(User)
-    amount = models.FloatField(u"Сумма")
+    amount = models.FloatField(u"Сумма", null=True)
     item_type = models.PositiveSmallIntegerField(u"Тип", choices=BALANCEITEM_TYPE_CHOICES, default=BALANCEITEM_TYPE_PAYMENT)
     comment = models.TextField(u"Комментарий", null=True, blank=True)
     shipment = models.ForeignKey(Shipment, null=True, blank=True, verbose_name=u"Отгрузка")
