@@ -322,9 +322,14 @@ class ClientOrderItemList(object):
                 order_direction = ''
             order_by = order_direction + self.LIST_HEADERS[int(order_field)][1]
 
+        filters = self.filter.get_filters()
+
+        if self.request.REQUEST.get('exclude_shipment'):
+            filters.update({'shipment__isnull': True})
+
         qs = OrderedItem.objects.select_related() \
                         .filter(client=self.request.user) \
-                        .filter(**self.filter.get_filters())
+                        .filter(**filters)
 
         if self.period_filter:
             qs = qs.filter(**self.period_filter)

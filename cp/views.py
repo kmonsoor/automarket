@@ -1968,7 +1968,7 @@ def change_status(request):
 
     basket_filled, msg = automototrade_basket_filled()
     if basket_filled:
-        msg = u'Заказ невозможен.'
+        msg = u'Заказ невозможен. Корзина не пустая.'
         messages.add_message(request, messages.ERROR, msg)
         return HttpResponseRedirect('/cp/groups/')
 

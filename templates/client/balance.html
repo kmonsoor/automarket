@@ -84,7 +84,17 @@ function buildQueryFilter() {
     <tr class="{% cycle row1,row2 %}">
     <td>{{ s.created_at|date:"d.m.Y H:i"|safe }}</td>
     <td>{{ s.get_item_type_display }}</td>
-    <td>{{ s.comment|default:"" }}</td>
+    <td>
+        {% if s.invoice %}
+            <a href="{% url client_index %}?qs_filter=1&exclude_shipment=1&invoice_code__contains={{ s.invoice.code|urlencode }}">{{ s.comment|default:"" }}</a>
+        {% else %}
+            {% if s.shipment %}
+                <a href="{% url client_shipment s.shipment.id %}">{{ s.comment|default:"" }}</a>
+            {% else %}
+                {{ s.comment|default:"" }}
+            {% endif %}
+        {% endif %}
+    </td>
     <td style="color: {% if s.amount < 0 %}red{% else %}green{% endif %};">{{ s.amount|floatformat:2 }}</td>
   </tr>
   {% endfor %}

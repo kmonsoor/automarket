@@ -918,18 +918,33 @@ class BalanceItem(models.Model):
     def create_or_update_by_invoice(cls, invoice):
         invoice_status = invoice.status
         for client, orders in itertools.groupby(invoice.orders.order_by('client'), lambda x: x.client):
-            if invoice_status == INVOICE_STATUS_RECEIVED:
-                item_type = BALANCEITEM_TYPE_INVOICE
-                amount = -sum(x.total_cost for x in orders) - sum(x.total_cost for x in Package.objects.filter(invoice=invoice, client=client))
-            else:
+            if invoice_status == INVOICE_STATUS_IN_DELIVERY:
                 item_type = BALANCEITEM_TYPE_PREINVOICE
                 amount = -sum(x.price_sale * x.quantity for x in orders)
+            else:
+                item_type = BALANCEITEM_TYPE_INVOICE
+                amount = -sum(x.total_cost for x in orders) - sum(x.total_cost for x in Package.objects.filter(invoice=invoice, client=client))
             b, _ = BalanceItem.objects.get_or_create(user=client, invoice=invoice)
             b.item_type = item_type
             b.amount = amount
             b.comment = u"Инвойс %s" % invoice.code
             b.item_type = item_type
             b.save()
+
+    @classmethod
+    def get_or_create_by_order(cls, order):
+        i = Invoice.objects.get(code=order.invoice_code)
+        b, created = BalanceItem.objects.get_or_create(user=order.client, invoice=i)
+        if created:
+            b.amount = 0.0
+            b.comment = u"Инвойс %s" % i.code
+            if i.status == INVOICE_STATUS_IN_DELIVERY:
+                item_type = BALANCEITEM_TYPE_PREINVOICE
+            else:
+                item_type = BALANCEITEM_TYPE_INVOICE
+            b.item_type = item_type
+            b.save()
+        return b
 
     @classmethod
     def create_by_shipment(cls, shipment, orders=[], packages=[]):
@@ -953,38 +968,37 @@ class BalanceItem(models.Model):
                 continue
             else:
                 b.amount -= -o.total_cost
-                b.save()
+                if b.amount == 0:
+                    b.delete()
+                else:
+                    b.save()
 
         for p in packages:
-            try:
-                b = BalanceItem.objects.get(user=p.client, invoice=p.invoice)
-            except BalanceItem.DoesNotExist:
-                continue
-            else:
-                b.amount -= -p.total_cost
-                b.save()
-
-    @classmethod
-    def backup_balanceitems_post_shipment_delete(cls, shipment, orders, packages):
-        for o in orders:
             try:
                 b = BalanceItem.objects.get(user=o.client, invoice__code=o.invoice_code)
             except BalanceItem.DoesNotExist:
                 continue
             else:
-                b.amount += -o.total_cost
-                b.save()
+                b.amount -= -p.total_cost
+                if b.amount == 0:
+                    b.delete()
+                else:
+                    b.save()
+
+    @classmethod
+    def backup_balanceitems_post_shipment_delete(cls, shipment, orders, packages):
+        for o in orders:
+            b = BalanceItem.get_or_create_by_order(o)
+            b.amount += -o.total_cost
+            b.save()
 
         for p in packages:
-            try:
-                b = BalanceItem.objects.get(user=p.client, invoice=p.invoice)
-            except BalanceItem.DoesNotExist:
-                continue
-            else:
-                b.amount += -p.total_cost
-                b.save()
+            b = BalanceItem.get_or_create_by_order(o)
+            b.amount += -p.total_cost
+            b.save()
 
         try:
             BalanceItem.objects.get(shipment=shipment).delete()
         except BalanceItem.DoesNotExist:
-            return True
+            pass
+        return True
