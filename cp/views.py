@@ -1438,6 +1438,8 @@ def balance(request):
             'last_modified': last_modified,
         })
 
+    res = sorted(res, key=lambda x: x['last_modified'], reverse=True)
+
     items_per_page = get_items_per_page(request, session_store_prefix)
     context['items_per_page'] = items_per_page
     paginator = SimplePaginator(request, res, items_per_page, 'page')
