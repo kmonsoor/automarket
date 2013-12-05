@@ -155,7 +155,7 @@ def search(request):
                                 # TODO - hardcoded 'OEM', we need do more sofisticated algo
                             except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
                                 # not price_setings for OEM and this area
-                                m, d, dp, pu, cm = AREA_MULTIPLIER_DEFAULT, None, None, None, COST_MARGIN_DEFAULT
+                                m, d, dp, pu, cm, brand_group, area = AREA_MULTIPLIER_DEFAULT, None, None, None, COST_MARGIN_DEFAULT, None, None
                             else:
                                 m, d, dp, pu, cm = area.get_brandgroup_settings(brand_group)
 
