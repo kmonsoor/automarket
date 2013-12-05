@@ -10,8 +10,11 @@ from django.conf import settings
 from django.contrib.auth.models import User
 
 from data.managers import OrderedItemManager
-from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT, \
-    DELIVERY_DEFAULT, DELIVERY_PERIOD_DEFAULT
+from data.settings import (
+    AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT,
+    DELIVERY_DEFAULT, DELIVERY_PERIOD_DEFAULT,
+    COST_MARGIN_DEFAULT
+)
 
 
 class Direction(models.Model):
@@ -22,11 +25,11 @@ class Direction(models.Model):
     multiplier = models.DecimalField(
         u'множитель', max_digits=7, decimal_places=3, blank=True, null=True
     )
+    cost_margin = models.FloatField(
+        verbose_name=u"Коэффициент минимального профита", blank=True, null=True
+    )
     delivery_period = models.IntegerField(
         u'Срок доставки (в днях)', blank=True, null=True
-    )
-    cost_margin = models.FloatField(
-        verbose_name=u"Минимальный профит (в процентах)", blank=True, null=True
     )
 
     class Meta:
@@ -45,6 +48,9 @@ class BrandGroup(models.Model):
     delivery = models.FloatField(verbose_name=u"доставка", blank=True, null=True)
     multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
                                      blank=True, null=True)
+    cost_margin = models.FloatField(
+        verbose_name=u"Коэффициент минимального профита", blank=True, null=True
+    )
     delivery_period = models.IntegerField(u'Срок доставки (в днях)',
         blank=True, null=True)
 
@@ -99,21 +105,38 @@ class Area(models.Model):
         except BrandGroupAreaSettings.DoesNotExist:
             return brand_group.get_settings()
         else:
-            m = [s.multiplier, brand_group.multiplier,
-                  brand_group.direction.multiplier,
-                  AREA_MULTIPLIER_DEFAULT]
-            d = [s.delivery, brand_group.delivery,
-                  brand_group.direction.delivery,
-                  DELIVERY_DEFAULT]
+            m = [
+                s.multiplier,
+                brand_group.multiplier,
+                brand_group.direction.multiplier,
+                AREA_MULTIPLIER_DEFAULT
+            ]
 
-            dp = [s.delivery_period, brand_group.delivery_period,
-                  brand_group.direction.delivery_period,
-                  DELIVERY_PERIOD_DEFAULT]
+            d = [
+                s.delivery,
+                brand_group.delivery,
+                brand_group.direction.delivery,
+                DELIVERY_DEFAULT
+            ]
+
+            dp = [
+                s.delivery_period,
+                brand_group.delivery_period,
+                brand_group.direction.delivery_period,
+                DELIVERY_PERIOD_DEFAULT
+            ]
 
             pu = s.price_updated_at
 
+            cm = [
+                s.cost_margin,
+                brand_group.cost_margin,
+                brand_group.direction.cost_margin,
+                COST_MARGIN_DEFAULT
+            ]
+
             first = lambda xs: [x for x in xs if x is not None][0]
-            return first(m), first(d), first(dp), pu
+            return first(m), first(d), first(dp), pu, first(cm)
 
 
 class BrandGroupAreaSettings(models.Model):
@@ -124,6 +147,9 @@ class BrandGroupAreaSettings(models.Model):
     delivery = models.FloatField(verbose_name=u"Стоимость доставки (за кг)", blank=True, null=True)
     multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
         blank=True, null=True)
+    cost_margin = models.FloatField(
+        verbose_name=u"Коэффициент минимального профита", blank=True, null=True
+    )
     delivery_period = models.IntegerField(u'Срок доставки (в днях)',
         blank=True, null=True)
 

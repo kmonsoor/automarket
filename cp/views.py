@@ -2325,7 +2325,7 @@ def get_brandgroup_settings(request, ordered_item_id):
     except OrderedItem.DoesNotExist:
         pass
     else:
-        m, d, dp, pu = ordered_item.area.get_brandgroup_settings(ordered_item.brandgroup)
+        m, d, dp, pu, mc = ordered_item.area.get_brandgroup_settings(ordered_item.brandgroup)
         return map(float, [m, d])
     return []
 

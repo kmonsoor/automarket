@@ -27,7 +27,7 @@ class DirectionAdmin(admin.ModelAdmin):
 class BrandGroupAreaSettingsInline(admin.TabularInline):
     model = BrandGroupAreaSettings
     extra = 0
-    fields = ('area', 'delivery', 'multiplier', 'delivery_period', 'price')
+    fields = ('area', 'delivery', 'multiplier', 'cost_margin', 'delivery_period', 'price')
 
     def get_formset(self, request, obj=None, **kwargs):
         return super(BrandGroupAreaSettingsInline, self)\

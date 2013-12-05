@@ -18,7 +18,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.utils.html import escape, mark_safe
 
-from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT
+from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT, COST_MARGIN_DEFAULT
 from data.forms import CLIENT_FIELD_LIST, CLIENT_SHIPMENTS_FIELD_LIST, BALANCE_CLIENT_FIELD_LIST_CLIENT
 from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
@@ -155,9 +155,9 @@ def search(request):
                                 # TODO - hardcoded 'OEM', we need do more sofisticated algo
                             except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
                                 # not price_setings for OEM and this area
-                                m, d, dp, pu = AREA_MULTIPLIER_DEFAULT, None, None, None
+                                m, d, dp, pu, cm = AREA_MULTIPLIER_DEFAULT, None, None, None, COST_MARGIN_DEFAULT
                             else:
-                                m, d, dp, pu = area.get_brandgroup_settings(brand_group)
+                                m, d, dp, pu, cm = area.get_brandgroup_settings(brand_group)
 
                             found['delivery_coef'] = d
                             found['delivery_period'] = dp
@@ -165,8 +165,7 @@ def search(request):
 
                             # TODO - add brand_group to get_discount
                             try:
-                                discount = request.user.get_profile()\
-                                    .get_discount(brand_group=brand_group, area=area)
+                                discount = request.user.get_profile().get_discount(brand_group=brand_group, area=area)
                             except Exception:
                                 discount = AREA_DISCOUNT_DEFAULT
                             discount = float(discount)
@@ -181,11 +180,9 @@ def search(request):
                             except Exception:
                                 found['core_price'] = 0.00
 
-                            cost_margin = brand_group.direction.cost_margin or settings.COST_DEFAULT_MARGIN
-
                             found['MSRP'] = float(value) * float(m)
                             if 'cost' in found and found['cost']:
-                                _msrp = found['cost'] * (float(100) + cost_margin) / float(100)
+                                _msrp = found['cost'] * cm
                                 if _msrp > found['MSRP']:
                                     found['MSRP'] = _msrp
 
