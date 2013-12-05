@@ -177,7 +177,11 @@ class Command(BaseCommand):
                 id__in=set(o.id for o in big_price_invoice_orders)
             ).update(big_price_invoice_order_mail_sent=True)
 
-            text = render_to_string('cp/mails/big_price_invoice_orders.txt', {'orders': orders})
+            text = render_to_string(
+                'cp/mails/big_price_invoice_orders.txt',
+                {'orders': big_price_invoice_orders}
+            )
+
             send_mail(
                 u'Цена в инвойсе больше, чем цена продажи', text,
                 settings.EMAIL_FROM, settings.MANAGERS_EMAILS, fail_silently=False
@@ -198,7 +202,7 @@ class Command(BaseCommand):
                 if created:
                     text = u"Код: %s" % invoice_code
                     send_mail(
-                        u'Создан новый инвойс %s' % invoice_code, text,
+                        u'Новый инвойс %s' % invoice_code, text,
                         settings.EMAIL_FROM, settings.MANAGERS_EMAILS, fail_silently=False
                     )
 
