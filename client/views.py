@@ -615,7 +615,7 @@ class ClientBalanceList(object):
         self.filter = QSFilter(request, filter_form)
         session_store_prefix = "client_balance"
         self.items_per_page = get_items_per_page(request, session_store_prefix)
-        self.period, self.period_filter = get_period(request, session_store_prefix, "created_at", "y")
+        self.period, self.period_filter = get_period(request, session_store_prefix, "created_at", "a")
         self.results = self.result_list()
         self.headers = self.list_headers()
         self.filters = self.list_filters()
