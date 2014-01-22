@@ -29,7 +29,7 @@ from django.db import connection
 re_RUS = re.compile(u'^([-_+.,:;!?><*&%$#@а-яА-Я0-9\u0451\u0401]|\s)+$')
 
 
-def get_period(request, prefix, field):
+def get_period(request, prefix, field, default_period=None):
     PERIOD_PARAM = 'period'
     PERIOD_PARAM_WEEK = 'w'
     PERIOD_PARAM_MONTH = 'm'
@@ -41,7 +41,7 @@ def get_period(request, prefix, field):
         PERIOD_PARAM_YEAR,
         PERIOD_PARAM_ALL
     )
-    PERIOD_PARAM_DEFAULT = PERIOD_PARAM_YEAR
+    PERIOD_PARAM_DEFAULT = default_period or PERIOD_PARAM_YEAR
 
     period = request.GET.get(PERIOD_PARAM)
 
@@ -615,7 +615,7 @@ class ClientBalanceList(object):
         self.filter = QSFilter(request, filter_form)
         session_store_prefix = "client_balance"
         self.items_per_page = get_items_per_page(request, session_store_prefix)
-        self.period, self.period_filter = get_period(request, session_store_prefix, "created_at")
+        self.period, self.period_filter = get_period(request, session_store_prefix, "created_at", "y")
         self.results = self.result_list()
         self.headers = self.list_headers()
         self.filters = self.list_filters()
