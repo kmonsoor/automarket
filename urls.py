@@ -51,7 +51,6 @@ urlpatterns += patterns('cp.views',
     url(r'^cp/import_order/', 'import_order', name='import_to_csv'),
     url(r'^cp/export_order/', 'export_order', name='export_to_csv'),
     url(r'^cp/$', 'index', name="cp_index"),
-
 )
 
 
@@ -69,4 +68,9 @@ urlpatterns += patterns('client.views',
     url(r'^client/balance/$', 'balance', name="client_balance"),
     url(r'^client/shipments/(?P<shipment_id>\d+)/$', 'shipment', name="client_shipment"),
     url(r'^client/', 'index', name='client_index'),
+)
+
+
+urlpatterns += patterns('',
+    (r'^rpc/$', 'rpc4django.views.serve_rpc_request'),
 )

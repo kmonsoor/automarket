@@ -116,12 +116,87 @@ def normalize_sum(value):
     return value
 
 
+def calc_part(part, user, render_for_template=True):
+    if not part.get('MSRP'):
+        return None
+
+    # try to find area and get multiplier
+    try:
+        # find an area by title
+        area = Area.objects.get(title__iexact=part['brandname'])
+        brand_group = BrandGroup.objects.get(title=part['brandgroup'])
+        # we need to find a valid multiplier for this area
+        # TODO - hardcoded 'OEM', we need do more sofisticated algo
+    except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
+        # not price_setings for OEM and this area
+        m, d, dp, pu, cm, brand_group, area = (
+            AREA_MULTIPLIER_DEFAULT, None, None, None, COST_MARGIN_DEFAULT, None, None)
+    else:
+        m, d, dp, pu, cm = area.get_brandgroup_settings(brand_group)
+
+    part['delivery_coef'] = d
+    part['delivery_period'] = dp
+    part['updated_at'] = pu
+    part['area'] = area and area.title or None
+    part['direction'] = brand_group and brand_group.direction.title or None
+
+    try:
+        discount = user.get_profile().get_discount(brand_group=brand_group, area=area)
+    except Exception:
+        discount = AREA_DISCOUNT_DEFAULT
+    discount = float(discount)
+
+    # we need to remove all "," as separators
+    # only last dot should be saved
+    value = float(normalize_sum(str(part['MSRP'])))
+
+    part['MSRP'] = value * float(m)
+    if 'cost' in part and part['cost']:
+        _msrp = part['cost'] * cm
+        if _msrp > part['MSRP']:
+            part['MSRP'] = _msrp
+
+    try:
+        part['core_price'] = float(normalize_sum(str(part['core_price'])))
+    except:
+        part['core_price'] = 0.00
+
+    part['your_price'] = part['MSRP'] * (100 - discount) / 100
+    part['your_economy'] = part['MSRP'] - part['your_price']
+    part['your_economy_perc'] = 100 - part['your_price'] / part['MSRP'] * 100
+
+    if render_for_template:
+        part['core_price'] = "%.2f" % part['core_price']
+        part['your_economy_perc'] = "%.2f" % part['your_economy_perc']
+        part['MSRP'] = "%.2f" % part['MSRP']
+        part['your_price'] = "%.2f" % part['your_price']
+        part['your_economy'] = "%.2f" % part['your_economy']
+
+        if len(part.get('sub_chain', [])) > 1:
+            last = part['sub_chain'].pop(-1)
+            part['sub_chain'] = mark_safe(
+                u"Номер заменён: "
+                + " -> ".join(part['sub_chain'])
+                + " -> <b>%s</b>" % last)
+        else:
+            part.pop('sub_chain', None)
+
+    return part
+
+
+def calc_parts(parts, user, render_for_template=True):
+    data = []
+    for part in parts:
+        if not part.get('MSRP'):
+            continue
+        data.append(calc_part(part, user, render_for_template))
+    return data
+
+
 @login_required
 @render_to('client/search.html')
 def search(request):
     data = []
-    found = None
-    maker_name = None
     msg = ''
 
     search_class = PartSearch()
@@ -144,79 +219,15 @@ def search(request):
                     founds = None
                     msg = u"Ничего не найдено"
                 else:
-                    for found in founds:
-                        if found['MSRP']:
-                            # try to find area and get multiplier
-                            try:
-                                # find an area by title
-                                area = Area.objects.get(title__iexact=found['brandname'])
-                                brand_group = BrandGroup.objects.get(title=found['brandgroup'])
-                                # we need to find a valid multiplier for this area
-                                # TODO - hardcoded 'OEM', we need do more sofisticated algo
-                            except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
-                                # not price_setings for OEM and this area
-                                m, d, dp, pu, cm, brand_group, area = AREA_MULTIPLIER_DEFAULT, None, None, None, COST_MARGIN_DEFAULT, None, None
-                            else:
-                                m, d, dp, pu, cm = area.get_brandgroup_settings(brand_group)
-
-                            found['delivery_coef'] = d
-                            found['delivery_period'] = dp
-                            found['updated_at'] = pu
-
-                            # TODO - add brand_group to get_discount
-                            try:
-                                discount = request.user.get_profile().get_discount(brand_group=brand_group, area=area)
-                            except Exception:
-                                discount = AREA_DISCOUNT_DEFAULT
-                            discount = float(discount)
-
-                            value = normalize_sum(str(found['MSRP']))
-
-                            # we need to remove all "," as separators
-                            # only last dot should be saved
-
-                            try:
-                                found['core_price'] = "%.2f" % float(normalize_sum(str(found['core_price'])))
-                            except Exception:
-                                found['core_price'] = 0.00
-
-                            found['MSRP'] = float(value) * float(m)
-                            if 'cost' in found and found['cost']:
-                                _msrp = found['cost'] * cm
-                                if _msrp > found['MSRP']:
-                                    found['MSRP'] = _msrp
-
-                            found['your_price'] = found['MSRP'] * (100 - discount) / 100
-                            found['your_economy'] = found['MSRP'] - found['your_price']
-                            found['your_economy_perc'] = "%.2f" % (100 - (found['your_price'] / found['MSRP']) * 100)
-                            # output
-                            found['MSRP'] = "%.2f" % found['MSRP']
-                            found['your_price'] = "%.2f" % found['your_price']
-                            found['your_economy'] = "%.2f" % found['your_economy']
-                            maker_name = found.get('maker', "") or found.get('brandname', "") or form.cleaned_data['maker']
-
-                            #local search
-                            if 'sub_chain' in found and found['sub_chain'] and len(found['sub_chain']) > 1:
-                                last = found['sub_chain'].pop(-1)
-                                found['sub_chain'] = mark_safe(u"Номер заменён: " + \
-                                    " -> ".join(found['sub_chain']) + \
-                                    " -> <b>%s</b>" % last)
-                            else:
-                                if 'sub_chain' in found:
-                                    del found['sub_chain']
-
-                            data.append(found)
-
+                    data = calc_parts(founds, request.user)
                     if len(data) < 1:
                         msg = u"Ничего не найдено"
     else:
         form = SearchForm(maker_choices=maker_choices)
-        maker = None
 
     context = {
         'form': form,
         'data': data,
-        'maker_name': maker_name,
         'msg': msg,
         'show_maker_field': show_maker_field,
     }
