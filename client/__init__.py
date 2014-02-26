@@ -3,6 +3,8 @@
 from rpc4django import rpcmethod
 from django.contrib.auth import authenticate
 
+from common.views import PartSearchLocal, PartSearch
+
 from client.views import calc_parts
 
 
@@ -20,7 +22,20 @@ def getBrandsByPartNumber(username, password, partnumber):
     </pre>
     <br/>
     '''
-    return []
+    user = authenticate(username=username, password=password)
+
+    if not user:
+        raise ValueError('Invalid username or password')
+
+    if not isinstance(partnumber, basestring):
+        raise ValueError('"partnumber" must be a string')
+
+    founds = PartSearchLocal().search(None, partnumber)
+
+    if not founds:
+        return PartSearch.makers
+
+    return list(p.get('maker') for p in founds)
 
 
 @rpcmethod(name='getPartsByPartNumber', signature=['array', 'string', 'string', 'string'])
@@ -44,8 +59,6 @@ def getPartsByPartNumber(username, password, partnumber, **kwargs):
 
     if not isinstance(partnumber, basestring):
         raise ValueError('"partnumber" must be a string')
-
-    from common.views import PartSearchLocal
 
     founds = PartSearchLocal().search(None, partnumber)
 
