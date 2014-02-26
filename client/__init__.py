@@ -45,9 +45,9 @@ def getBrandsByPartNumber(username, password, partnumber):
     founds = s.search(None, partnumber)
 
     if not founds:
-        return list(map(lambda x: x[0], s.get_make_options()))
+        return list(set(map(lambda x: x[0], s.get_make_options())))
 
-    return list(p.get('maker') for p in founds)
+    return list(set(p.get('maker') for p in founds))
 
 
 @rpcmethod(name='getPartsByPartNumber', signature=['array', 'string', 'string', 'string', 'string'])
