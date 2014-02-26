@@ -137,8 +137,9 @@ def calc_part(part, user, render_for_template=True):
     part['delivery_coef'] = d
     part['delivery_period'] = dp
     part['updated_at'] = pu
-    part['area'] = area and area.title or None
-    part['direction'] = brand_group and brand_group.direction.title or None
+    part['area_id'] = area and area.id or None
+    part['direction_id'] = brand_group and brand_group.direction.id or None
+    part['brandgroup_id'] = brand_group and brand_group.id or None
 
     try:
         discount = user.get_profile().get_discount(brand_group=brand_group, area=area)
@@ -205,7 +206,7 @@ def search(request):
 
     if request.method == 'POST':
         _post = request.POST.copy()
-        _post['part_number'] = re.sub('[^\w]', '', _post['part_number']).strip()
+        _post['part_number'] = re.sub('[^\w]', '', _post['part_number']).strip().upper()
         form = SearchForm(_post, maker_choices=maker_choices)
         if form.is_valid():
             maker = form.cleaned_data['maker']

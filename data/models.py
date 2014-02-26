@@ -866,11 +866,14 @@ class Part(models.Model):
         verbose_name_plural = u"детали"
 
     @classmethod
-    def get_data_parts(cls, partnumber):
+    def get_data_parts(cls, partnumber, maker=None):
         data = []
-        parts = cls.objects.filter(partnumber__iexact=partnumber)
+        parts = cls.objects.filter(partnumber=partnumber)
         for part in parts:
             data.append(part.get_data(sub_chain=[]))
+        if maker:
+            return filter(
+                lambda part: part['maker'].lower() == maker.lower(), data)
         return data
 
     def get_data(self, sub_chain=[]):
@@ -879,7 +882,7 @@ class Part(models.Model):
 
         if self.substitution:
             try:
-                sub = Part.objects.get(area=self.area, brandgroup=self.brandgroup, partnumber__iexact=self.substitution)
+                sub = Part.objects.get(area=self.area, brandgroup=self.brandgroup, partnumber=self.substitution)
             except Part.DoesNotExist:
                 pass
             else:
@@ -905,7 +908,7 @@ class Part(models.Model):
             'brandgroup': brandgroup_title,
             'party': self.party or PARTY_DEFAULT_COUNT,
             'available': self.available,
-            'maker': self.brand or self.area.title,
+            'maker': (self.brand and self.brand.title) or self.area.title,
         }
 
 

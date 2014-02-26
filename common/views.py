@@ -518,53 +518,13 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
 
 class PartSearchLocal(PartSearchBase):
     def get_make_options(self):
-        makers = [
-            ("Acura", "Acura"),
-            ("Audi", "Audi"),
-            ("BMW", "BMW"),
-            ("Buick", "Buick"),
-            ("Cadillac", "Cadillac"),
-            ("Chevrolet", "Chevrolet"),
-            ("Chrysler", "Chrysler"),
-            ("Dodge", "Dodge"),
-            ("Eagle", "Eagle"),
-            ("Ford", "Ford"),
-            ("Geo", "Geo"),
-            ("GMC", "GMC"),
-            ("Honda", "Honda"),
-            ("Hummer", "Hummer"),
-            ("Hyundai", "Hyundai"),
-            ("Infiniti", "Infiniti"),
-            ("Isuzu", "Isuzu"),
-            ("Jaguar", "Jaguar"),
-            ("Jeep", "Jeep"),
-            ("Kia", "Kia"),
-            ("LandRover", "LandRover"),
-            ("Lexus", "Lexus"),
-            ("Lincoln", "Lincoln"),
-            ("Mazda", "Mazda"),
-            ("Mercedes-Benz", "Mercedes-Benz"),
-            ("Mercury", "Mercury"),
-            ("MINI", "MINI"),
-            ("Mitsubishi", "Mitsubishi"),
-            ("Nissan", "Nissan"),
-            ("Oldsmobile", "Oldsmobile"),
-            ("Plymouth", "Plymouth"),
-            ("Pontiac", "Pontiac"),
-            ("Porsche", "Porsche"),
-            ("Saab", "Saab"),
-            ("Saturn", "Saturn"),
-            ("Scion", "Scion"),
-            ("Subaru", "Subaru"),
-            ("Suzuki", "Suzuki"),
-            ("Toyota", "Toyota"),
-            ("Volkswagen", "Volkswagen"),
-            ("Volvo", "Volvo"),
-        ]
-        return makers
+        return list(
+            Brand.objects.all()
+            .order_by('title')
+            .values_list('title', 'title'))
 
     def search(self, maker_id, partnumber):
-        return Part.get_data_parts(partnumber) or None
+        return Part.get_data_parts(partnumber, maker_id) or None
 
 
 class MakerRequired(Exception):

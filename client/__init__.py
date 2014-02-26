@@ -1,9 +1,10 @@
 # -*- coding=utf-8 -*-
+import re
 
 from rpc4django import rpcmethod
 from django.contrib.auth import authenticate
 
-from common.views import PartSearchLocal, PartSearch
+from common.views import PartSearchLocal
 
 from client.views import calc_parts
 
@@ -22,24 +23,35 @@ def getBrandsByPartNumber(username, password, partnumber):
     </pre>
     <br/>
     '''
+
+    if not isinstance(username, basestring):
+        raise ValueError('"username" must be a string')
+
+    if not isinstance(password, basestring):
+        raise ValueError('"password" must be a string')
+
+    if not isinstance(partnumber, basestring):
+        raise ValueError('"partnumber" must be a string')
+
     user = authenticate(username=username, password=password)
 
     if not user:
         raise ValueError('Invalid username or password')
 
-    if not isinstance(partnumber, basestring):
-        raise ValueError('"partnumber" must be a string')
+    s = PartSearchLocal()
 
-    founds = PartSearchLocal().search(None, partnumber)
+    partnumber = re.sub('[^\w]', '', partnumber).strip().upper()
+
+    founds = s.search(None, partnumber)
 
     if not founds:
-        return PartSearch.makers
+        return list(map(lambda x: x[0], s.get_make_options()))
 
     return list(p.get('maker') for p in founds)
 
 
-@rpcmethod(name='getPartsByPartNumber', signature=['array', 'string', 'string', 'string'])
-def getPartsByPartNumber(username, password, partnumber, **kwargs):
+@rpcmethod(name='getPartsByPartNumber', signature=['array', 'string', 'string', 'string', 'string'])
+def getPartsByPartNumber(username, password, brand, partnumber):
     '''
     Возвращает список деталей с подробной информацией.
 
@@ -52,15 +64,27 @@ def getPartsByPartNumber(username, password, partnumber, **kwargs):
     </pre>
     <br/>
     '''
+
+    if not isinstance(brand, basestring):
+        raise ValueError('"brand" must be a string')
+
+    if not isinstance(partnumber, basestring):
+        raise ValueError('"partnumber" must be a string')
+
+    if not isinstance(username, basestring):
+        raise ValueError('"username" must be a string')
+
+    if not isinstance(password, basestring):
+        raise ValueError('"password" must be a string')
+
     user = authenticate(username=username, password=password)
 
     if not user:
         raise ValueError('Invalid username or password')
 
-    if not isinstance(partnumber, basestring):
-        raise ValueError('"partnumber" must be a string')
+    partnumber = re.sub('[^\w]', '', partnumber).strip().upper()
 
-    founds = PartSearchLocal().search(None, partnumber)
+    founds = PartSearchLocal().search(brand, partnumber.upper())
 
     if not founds:
         return []
@@ -69,9 +93,9 @@ def getPartsByPartNumber(username, password, partnumber, **kwargs):
 
     data = []
     fields_map = (
-        ('direction', 'direction'),
-        ('brandgroup', 'brandgroup'),
-        ('area', 'area'),
+        ('direction_id', 'direction_id'),
+        ('brandgroup_id', 'brandgroup_id'),
+        ('area_id', 'area_id'),
         ('maker', 'brand'),
         ('partnumber', 'partnumber'),
         ('description_ru', 'description_ru'),
