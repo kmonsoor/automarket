@@ -1,7 +1,6 @@
 # -*- coding=utf-8 -*-
 
 from django.utils.translation import ugettext_lazy as _
-from django.core.urlresolvers import reverse
 from admin_tools.dashboard import modules, Dashboard, AppIndexDashboard
 # to activate your index dashboard add the following to your settings.py:
 #
@@ -25,8 +24,7 @@ class MyDashboard(Dashboard):
              'data.models.Discount',
              'data.models.ClientGroup',
              'data.models.Part',
-             'data.models.BalanceItem',
-             ]
+             'data.models.BalanceItem']
         ))
 
         # append an app list module for "Administration"
@@ -41,6 +39,11 @@ class MyDashboard(Dashboard):
         self.children.append(modules.RecentActions(
             title=_('Recent Actions'),
             limit=5
+        ))
+
+        self.children.append(modules.ModelList(
+            u'Боты',
+            ['common.models.FirstLineAutoParts']
         ))
 
 # to activate your app index dashboard add the following to your settings.py:
@@ -70,10 +73,10 @@ class CustomAppIndexDashboard(AppIndexDashboard):
                  'data.models.OrderedItem',
                  'data.models.Discount',
                  'data.models.ClientGroup',
-                 'data.models.Part',]
+                 'data.models.Part',
+                 'data.models.BalanceItem']
             ))
-        # default
-        else:
+        else: # default
             self.children.append(modules.ModelList(
                 title=self.app_title,
                 models=self.models,
