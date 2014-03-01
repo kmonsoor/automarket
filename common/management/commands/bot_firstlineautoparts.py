@@ -77,7 +77,7 @@ class Command(BaseCommand):
 
         try:
             part_counter = 0
-            for x in xrange(2):
+            while True:
                 resp = requests.get(url.format(brand, page), headers=headers)
                 resp.raise_for_status()
                 soup = BeautifulSoup(resp.content.decode('cp1251'))
