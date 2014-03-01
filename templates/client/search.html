@@ -22,8 +22,6 @@ function onsubmit_basket_form() {
 
 {% endblock %}
 
-{% block page_title %}Поиск{% endblock %}
-
 {% block page_content %}
 <div id="divSearch" style="text-align: left; min-width: 850px;">
   <div style="width:30%" class="aligned">
@@ -39,7 +37,8 @@ function onsubmit_basket_form() {
         </div>
       {% endif %}
       <div class="submit-row">
-      <input type="submit" value="Искать" class="default" /></div>
+        <input type="submit" value="Искать" class="default" style="width: 80px;"/>
+      </div>
 
     </form>
   </div>

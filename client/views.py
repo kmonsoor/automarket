@@ -9,10 +9,13 @@ from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
-from data.models import OrderedItem, Brand, BrandGroup, Area, Basket, Shipment, Package, BalanceItem
+from data.models import (
+    OrderedItem, Brand, BrandGroup, Area, Basket,
+    Shipment, Package, BalanceItem, search_local
+)
 from data.forms import OrderedItemsFilterForm, ShipmentsFilterForm, BalanceClientFilterForm
 from client.forms import SearchForm
-from common.views import PartSearch, MakerRequired
+from common.views import PartSearch
 from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -200,8 +203,8 @@ def search(request):
     data = []
     msg = ''
 
-    search_class = PartSearch()
-    maker_choices = search_class.maker_choices()
+    search_external = PartSearch()
+    maker_choices = search_external.maker_choices()
     show_maker_field = False
 
     if request.method == 'POST':
@@ -211,18 +214,24 @@ def search(request):
         if form.is_valid():
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
-            try:
-                founds = search_class.search(maker, part_number)
-            except MakerRequired:
-                show_maker_field = True
-            else:
-                if not founds:
-                    founds = None
-                    msg = u"Ничего не найдено"
+
+            founds = search_local(maker, part_number)
+            if founds:
+                makers = set(x['maker'] for x in founds)
+                if len(makers) > 1:
+                    show_maker_field = True
+                    form.fields['maker'].widget.choices = [('', '----')] + list((x, x) for x in makers)
                 else:
                     data = calc_parts(founds, request.user)
-                    if len(data) < 1:
+            else:
+                show_maker_field = True
+                if maker:
+                    founds = search_external.search(maker, part_number)
+                    if founds:
+                        data = calc_parts(founds, request.user)
+                    else:
                         msg = u"Ничего не найдено"
+                
     else:
         form = SearchForm(maker_choices=maker_choices)
 

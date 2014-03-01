@@ -912,6 +912,16 @@ class Part(models.Model):
         }
 
 
+def all_brands():
+    return list(
+        Brand.objects.all().order_by('title')
+        .values_list('title', flat=True))
+
+
+def search_local(maker_id, partnumber):
+    return Part.get_data_parts(partnumber, maker_id) or None
+
+
 BALANCEITEM_TYPE_PAYMENT = 1
 BALANCEITEM_TYPE_INVOICE = 2
 BALANCEITEM_TYPE_PREINVOICE = 3

@@ -43,7 +43,7 @@ class MyDashboard(Dashboard):
 
         self.children.append(modules.ModelList(
             u'Боты',
-            ['common.models.FirstLineAutoParts']
+            ['common.models.Bot1']
         ))
 
 # to activate your app index dashboard add the following to your settings.py:

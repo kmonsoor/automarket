@@ -4,7 +4,7 @@ import re
 from rpc4django import rpcmethod
 from django.contrib.auth import authenticate
 
-from common.views import PartSearchLocal
+from data.models import search_local, all_brands
 
 from client.views import calc_parts
 
@@ -38,14 +38,12 @@ def getBrandsByPartNumber(username, password, partnumber):
     if not user:
         raise ValueError('Invalid username or password')
 
-    s = PartSearchLocal()
-
     partnumber = re.sub('[^\w]', '', partnumber).strip().upper()
 
-    founds = s.search(None, partnumber)
+    founds = search_local(None, partnumber)
 
     if not founds:
-        return list(set(map(lambda x: x[0], s.get_make_options())))
+        return all_brands()
 
     return list(set(p.get('maker') for p in founds))
 

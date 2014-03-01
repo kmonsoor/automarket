@@ -1,5 +1,4 @@
 # -*- coding=utf-8 -*-
-# $Id$
 import mimetypes
 import datetime
 
