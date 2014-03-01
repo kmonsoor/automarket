@@ -516,25 +516,10 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
         return None
 
 
-class PartSearchLocal(PartSearchBase):
-    def get_make_options(self):
-        return list(
-            Brand.objects.all()
-            .order_by('title')
-            .values_list('title', 'title'))
-
-    def search(self, maker_id, partnumber):
-        return Part.get_data_parts(partnumber, maker_id) or None
-
-
-class MakerRequired(Exception):
-    pass
-
-
 class PartSearch(object):
 
     _search_registry = [
-        PartSearchLocal,
+        # PartSearchLocal,
         PartSearchAutopartspeople,
         PartSearchTradeMotionCom,
         PartSearchInfinitiPartsOnlineCom,
@@ -603,9 +588,7 @@ class PartSearch(object):
                 return None
             handler = s()
             maker_names = [x[1] for x in handler.get_make_options()]
-            if not maker_name in maker_names and not s is PartSearchLocal:
-                if not maker_name:
-                    raise MakerRequired
+            if not maker_name in maker_names:
                 return _make_search()
             maker_id = handler.get_maker_id(maker_name)
             try:
