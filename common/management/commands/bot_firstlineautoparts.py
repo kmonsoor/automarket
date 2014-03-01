@@ -75,7 +75,46 @@ class Command(BaseCommand):
 
         try:
             part_counter = 0
-            pass
+            while True:
+                resp = requests.get(url.format(brand, page), headers=headers)
+                resp.raise_for_status()
+                soup = BeautifulSoup(resp.content.decode('cp1251'))
+
+                max_page = int(
+                    soup.find(attrs={'class': 'pagegotoend'}).find('a').text)
+
+                logger.info(
+                    'brand %s: started page %s from %s', brand, page, max_page)
+
+                if page >= max_page:
+                    break
+
+                trs = soup.find('table', attrs={'class': 'myunit'}).findAll('tr')
+                for tr in trs:
+                    tds = tr.findAll('td')
+                    if not tds:
+                        continue
+
+                    sbs = None
+                    if len(tds) == 4:  # substitution
+                        sbs = tds.pop(3).find('a').text
+                    
+                    data = dict(zip(all_fields, map(lambda x: x.text, tds)))
+
+                    if sbs:
+                        data.update({'substitution': sbs})
+
+                    part = dict((f, data.get(f)) for f in need_fields)
+
+                    Bot1(**part).save()
+                    part_counter += 1
+
+                logger.info(
+                    'brand %s page %s: SAVED %s parts',
+                    brand, page, part_counter)
+
+                page += 1
+                time.sleep(sleep)
 
         except Exception as e:
             logger.error("%r", e)
