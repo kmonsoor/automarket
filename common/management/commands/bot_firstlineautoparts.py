@@ -11,6 +11,7 @@ logger = logging.getLogger('firstlineautoparts')
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
+from django.db import transaction
 
 from common.models import Bot1
 
@@ -59,6 +60,7 @@ class Command(BaseCommand):
         optparse.make_option('--sleep', dest='page'),
     )
 
+    @transaction.commit_manually
     def handle(self, *args, **options):
 
         sleep = float(options.get('sleep') or 0.5)
@@ -75,7 +77,7 @@ class Command(BaseCommand):
 
         try:
             part_counter = 0
-            while True:
+            for x in xrange(2):
                 resp = requests.get(url.format(brand, page), headers=headers)
                 resp.raise_for_status()
                 soup = BeautifulSoup(resp.content.decode('cp1251'))
@@ -106,8 +108,10 @@ class Command(BaseCommand):
 
                     part = dict((f, data.get(f)) for f in need_fields)
 
-                    Bot1(**part).save()
+                    Bot1.objects.create(**part)
                     part_counter += 1
+
+                transaction.commit()
 
                 logger.info(
                     'brand %s page %s: SAVED %s parts',
