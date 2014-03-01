@@ -13,6 +13,7 @@ from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from bulkops import insert_many
 from common.models import Bot1
 
 
@@ -63,7 +64,7 @@ class Command(BaseCommand):
     @transaction.commit_manually
     def handle(self, *args, **options):
 
-        sleep = float(options.get('sleep') or 0.5)
+        sleep = float(options.get('sleep') or 0)
 
         brand = options.get('brand').upper()
         if brand not in AUTO:
@@ -75,6 +76,7 @@ class Command(BaseCommand):
 
         logger.info('brand %s: started from page %s', brand, page)
 
+        parts = []
         try:
             part_counter = 0
             while True:
@@ -106,11 +108,10 @@ class Command(BaseCommand):
                     if sbs:
                         data.update({'substitution': sbs})
 
-                    part = dict((f, data.get(f)) for f in need_fields)
-
-                    Bot1.objects.create(**part)
+                    parts.append(Bot1(**dict((f, data.get(f)) for f in need_fields)))
                     part_counter += 1
 
+                insert_many(parts)
                 transaction.commit()
 
                 logger.info(
