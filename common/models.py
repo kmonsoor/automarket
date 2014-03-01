@@ -6,7 +6,7 @@ class Bot1(models.Model):
     area = models.CharField(max_length=255, verbose_name=u"Производитель", db_index=True)
     partnumber = models.CharField(max_length=255, verbose_name=u"Код", db_index=True)
     substitution = models.CharField(verbose_name=u"Замена", max_length=255, null=True, blank=True)
-    description = models.CharField(max_length=255, verbose_name=u"Описание", null=True, blank=True)
+    description = models.TextField(max_length=255, verbose_name=u"Описание", null=True, blank=True)
     delivery_period = models.CharField(max_length=255, verbose_name=u"Дней", null=True, blank=True)
     price = models.FloatField(verbose_name=u"Цена", null=True, blank=True)
     core = models.FloatField(verbose_name=u"Core", null=True, blank=True)
