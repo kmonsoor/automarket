@@ -6,7 +6,7 @@ from common.models import Bot1
 
 
 class Bot1Admin(admin.ModelAdmin):
-    list_display = ('partnumber', 'area', 'price_cost', 'price_plus_core',)
+    list_display = ('partnumber', 'area',)
     search_fields = ('partnumber',)
     list_filter = ('area',)
 

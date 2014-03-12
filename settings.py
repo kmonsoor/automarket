@@ -135,6 +135,7 @@ EMAIL_USE_TLS = False
 AUTH_PROFILE_MODULE = 'data.UserProfile'
 
 PRICE_UPLOAD_DIR = 'uploads/prices/' #override in production
+PART_ANALOG_UPLOAD_DIR = 'uploads/prices_analog/' #override in production
 
 AUTO_UPDATE_STATUSES_START_PONUMBER = 944 # SP944
 

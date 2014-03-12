@@ -178,5 +178,75 @@ class SavePriceFileCsvTask(SavePriceFileBase):
 
         return success
 
+
+class SavePartAnalog(Task):
+    accept_magic_kwargs = False
+
+    def run(self, filepath):
+        try:
+            mapping = (
+                (u'БРЭНД1', 'brand_id', lambda x: Brand.objects.get(title__iexact=x).id),
+                (u'АРТИКУЛ1', 'partnumber', unicode),
+                (u'БРЭНД2', 'brand_analog_id', lambda x: Brand.objects.get(title__iexact=x).id),
+                (u'АРТИКУЛ2', 'partnumber_analog', unicode),
+                (u'КОММЕНТАРИЙ1', 'comment1', unicode),
+                (u'КОММЕНТАРИЙ2', 'comment2', unicode),
+            )
+            fields = map(lambda x: x[1], mapping)
+
+            def clean_fieldname(cell_title):
+                return dict([(x[0], x[1]) for x in mapping])[cell_title.upper()]
+
+            def clean_fieldvalue(cell_title, cell_value):
+                cell_type = dict([(x[0], x[2]) for x in mapping])[cell_title.upper()]
+                return cell_type(cell_value)
+
+            def row_for_copy(data):
+                row = ((data.get(field) or NULL_COPY) for field in fields)
+                row = map(lambda x: str(("%s" % x).encode("UTF-8")), row)
+                return "%s\n" % "\t".join(row)
+
+            success = 1
+            with tempfile.TemporaryFile() as f:
+                with open(filepath, 'r') as file_contents:
+                    xls = xlsreader.readexcel(file_contents=file_contents.read())
+                    for sheet in xls.book.sheet_names():
+                        for row in xls.iter_dict(sheet):
+                            data = {}
+                            for cell_title, cell_value in row.iteritems():
+                                cleaned_fieldname = clean_fieldname(cell_title)
+                                cleaned_fieldvalue = clean_fieldvalue(cell_title, cell_value)
+                                data[cleaned_fieldname] = cleaned_fieldvalue
+                            f.write(row_for_copy(data))
+                            success += 1
+                f.seek(0)
+                cur = connection.cursor()
+                cur.execute("""TRUNCATE TABLE data_partanalog""")
+                cur.copy_from(f, 'data_partanalog', columns=fields)
+
+        except Exception, e:
+            logger.exception("%r" % e)
+            send_mail(
+                u"Загрузка аналогов прошла с ошибкой.",
+                u"Аналоги загружены не были. Ошибка в строке %s" % (success + 1),
+                settings.EMAIL_FROM,
+                settings.MANAGERS_EMAILS,
+                fail_silently=True
+            )
+            result = 'error!'
+            raise
+        else:
+            send_mail(
+                u"Загрузка аналогов прошла успешно.",
+                u"Всего загружено %s аналогов." % (success - 1),
+                settings.EMAIL_FROM,
+                settings.MANAGERS_EMAILS,
+                fail_silently=True
+            )
+            result = 'success: %s' % (success - 1)
+
+        return result
+
 tasks.register(SavePriceFileCsvTask)
 tasks.register(SavePriceFileXlsTask)
+tasks.register(SavePartAnalog)

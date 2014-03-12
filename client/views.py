@@ -11,7 +11,7 @@ from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from data.models import (
     OrderedItem, Brand, BrandGroup, Area, Basket,
-    Shipment, Package, BalanceItem, search_local
+    Shipment, Package, BalanceItem, search_local, search_analogs
 )
 from data.forms import OrderedItemsFilterForm, ShipmentsFilterForm, BalanceClientFilterForm
 from client.forms import SearchForm
@@ -44,7 +44,7 @@ def get_period(request, prefix, field, default_period=None):
         PERIOD_PARAM_YEAR,
         PERIOD_PARAM_ALL
     )
-    PERIOD_PARAM_DEFAULT = default_period or PERIOD_PARAM_YEAR
+    PERIOD_PARAM_DEFAULT = default_period or PERIOD_PARAM_ALL
 
     period = request.GET.get(PERIOD_PARAM)
 
@@ -200,7 +200,8 @@ def calc_parts(parts, user, render_for_template=True):
 @login_required
 @render_to('client/search.html')
 def search(request):
-    data = []
+    parts = []
+    analogs = []
     msg = ''
 
     search_external = PartSearch()
@@ -220,24 +221,30 @@ def search(request):
                 makers = set(x['maker'] for x in founds)
                 if len(makers) > 1:
                     show_maker_field = True
-                    form.fields['maker'].widget.choices = [('', '----')] + list((x, x) for x in makers)
+                    form.fields['maker'].widget.choices = [
+                        ('', '----')] + list((x, x) for x in makers)
                 else:
-                    data = calc_parts(founds, request.user)
+                    parts = calc_parts(founds, request.user)
             else:
                 show_maker_field = True
                 if maker:
                     founds = search_external.search(maker, part_number)
                     if founds:
-                        data = calc_parts(founds, request.user)
+                        parts = calc_parts(founds, request.user)
                     else:
                         msg = u"Ничего не найдено"
+
+            if founds:
+                analog_founds = search_analogs(founds)
+                analogs = calc_parts(analog_founds, request.user)
                 
     else:
         form = SearchForm(maker_choices=maker_choices)
 
     context = {
         'form': form,
-        'data': data,
+        'data': parts,
+        'analogs': analogs,
         'msg': msg,
         'show_maker_field': show_maker_field,
     }

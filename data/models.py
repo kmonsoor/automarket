@@ -84,7 +84,8 @@ class BrandGroup(models.Model):
         d = [self.delivery, self.direction.delivery, DELIVERY_DEFAULT]
         dp = [self.delivery_period, self.direction.delivery_period, DELIVERY_PERIOD_DEFAULT]
         first = lambda xs: [x for x in xs if x is not None][0]
-        return first(m), first(d), first(dp), None
+        cm = [self.cost_margin, self.direction.cost_margin, COST_MARGIN_DEFAULT]
+        return first(m), first(d), first(dp), None, first(cm)
 
 
 class Area(models.Model):
@@ -141,22 +142,29 @@ class Area(models.Model):
 
 class BrandGroupAreaSettings(models.Model):
 
-    brand_group = models.ForeignKey(BrandGroup, verbose_name=BrandGroup._meta.verbose_name)
-    area = models.ForeignKey(Area, verbose_name=Area._meta.verbose_name)
+    brand_group = models.ForeignKey(
+        BrandGroup, verbose_name=BrandGroup._meta.verbose_name)
 
-    delivery = models.FloatField(verbose_name=u"Стоимость доставки (за кг)", blank=True, null=True)
-    multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
-        blank=True, null=True)
+    area = models.ForeignKey(
+        Area, verbose_name=Area._meta.verbose_name)
+
+    delivery = models.FloatField(
+        verbose_name=u"Стоимость доставки (за кг)", blank=True, null=True)
+
+    multiplier = models.DecimalField(
+        u'множитель', max_digits=7, decimal_places=3, blank=True, null=True)
+
     cost_margin = models.FloatField(
-        verbose_name=u"Коэффициент минимального профита", blank=True, null=True
-    )
-    delivery_period = models.IntegerField(u'Срок доставки (в днях)',
-        blank=True, null=True)
+        verbose_name=u"Коэффициент минимального профита", blank=True, null=True)
 
-    price = models.FileField(u"Файл с ценами",
-        upload_to=settings.PRICE_UPLOAD_DIR, null=True, blank=True)
-    price_updated_at = models.DateTimeField(u"Дата обновления цен",
-        null=True, blank=True)
+    delivery_period = models.IntegerField(
+        u'Срок доставки (в днях)', blank=True, null=True)
+
+    price = models.FileField(
+        u"Файл с ценами", upload_to=settings.PRICE_UPLOAD_DIR, null=True, blank=True)
+
+    price_updated_at = models.DateTimeField(
+        u"Дата обновления цен", null=True, blank=True)
 
     def __unicode__(self):
         return u"%s - %s" % (self.brand_group, self.area)
@@ -849,14 +857,13 @@ class Part(models.Model):
     partnumber = models.CharField(u"номер детали", max_length=255, db_index=True)
     MSRP = models.FloatField(u"цена", null=True, blank=True)
     cost = models.FloatField(u"cost", null=True, blank=True)
-    core_price = models.FloatField(u"стоимость детали для восстановления",
-        null=True, blank=True)
-    substitution = models.CharField(u"номер замены", max_length=255,
-        null=True, blank=True, db_index=True)
-    description = models.TextField(u"описание детали на английском языке",
-        null=True, blank=True)
-    description_ru = models.TextField(verbose_name=u"Описание RUS",
-        blank=True, null=True)
+    core_price = models.FloatField(
+        u"стоимость детали для восстановления", null=True, blank=True)
+    substitution = models.CharField(
+        u"номер замены", max_length=255, null=True, blank=True, db_index=True)
+    description = models.TextField(
+        u"описание детали на английском языке", null=True, blank=True)
+    description_ru = models.TextField(u"Описание RUS", blank=True, null=True)
     party = models.IntegerField(u"Партия", null=True, blank=True)
     available = models.IntegerField(u"Наличие", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1041,3 +1048,28 @@ class BalanceItem(models.Model):
         except BalanceItem.DoesNotExist:
             pass
         return True
+
+
+class PartAnalog(models.Model):
+    brand = models.ForeignKey(Brand)
+    partnumber = models.CharField(max_length=255, db_index=True)
+    brand_analog = models.ForeignKey(Brand, related_name='brand_analog')
+    partnumber_analog = models.CharField(max_length=255, db_index=True)
+    comment1 = models.TextField(null=True, blank=True)
+    comment2 = models.TextField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = u"аналог"
+        verbose_name_plural = u"аналоги"
+
+
+def search_analogs(parts):
+    analogs = list(PartAnalog.objects.filter(
+        partnumber__in=set(x['partnumber'] for x in parts)))
+
+    data = []
+    for a in analogs:
+        founds = Part.get_data_parts(a.partnumber_analog, a.brand_analog.title)
+        if founds:
+            data.extend(founds)
+    return data

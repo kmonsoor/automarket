@@ -1,6 +1,7 @@
 # -*- coding=utf-8 -*-
 import mimetypes
 import datetime
+import os
 
 from django import forms
 from django.db.models import Q
@@ -9,14 +10,19 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.utils.translation import ugettext_lazy as _
+from django.core.files.storage import FileSystemStorage
 from django.core.urlresolvers import reverse
-from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
+from django.core.context_processors import csrf
+from django.shortcuts import get_object_or_404, render_to_response
+from django.http import HttpResponse, HttpResponseRedirect
 from django.core import serializers
 from django.conf import settings
 
 from data.models import *
 from data.forms import CLIENT_FIELD_LIST, STAFF_FIELD_LIST
+from data.tasks import (
+    SavePriceFileCsvTask, SavePriceFileXlsTask, SavePartAnalog
+)
 
 
 class DirectionAdmin(admin.ModelAdmin):
@@ -26,7 +32,9 @@ class DirectionAdmin(admin.ModelAdmin):
 class BrandGroupAreaSettingsInline(admin.TabularInline):
     model = BrandGroupAreaSettings
     extra = 0
-    fields = ('area', 'delivery', 'multiplier', 'cost_margin', 'delivery_period', 'price')
+    fields = (
+        'area', 'delivery', 'multiplier', 'cost_margin',
+        'delivery_period', 'price')
 
     def get_formset(self, request, obj=None, **kwargs):
         return super(BrandGroupAreaSettingsInline, self)\
@@ -86,29 +94,44 @@ class BrandGroupAdmin(admin.ModelAdmin):
         return HttpResponse(response, mimetype="text/json")
 
     def save_formset(self, request, form, formset, change):
-        super(BrandGroupAdmin, self).save_formset(request, form, formset, change)
+        super(BrandGroupAdmin, self).save_formset(
+            request, form, formset, change)
 
         for inline_form in formset.forms:
-            if isinstance(inline_form.instance, BrandGroupAreaSettings):
-                if inline_form.changed_data and 'price' in inline_form.changed_data:
-                    from data.tasks import SavePriceFileCsvTask, SavePriceFileXlsTask
-                    obj = inline_form.instance
-                    obj.price_updated_at = datetime.datetime.now()
-                    obj.save()
-                    XLS_MIMETYPE = 'application/vnd.ms-excel'
-                    if mimetypes.guess_type(obj.price.path)[0] == XLS_MIMETYPE:
-                        SavePriceFileXlsTask.apply_async([obj])
-                    else:
-                        SavePriceFileCsvTask.apply_async([obj])
-                    if 'price' in inline_form.cleaned_data and \
-                        inline_form.cleaned_data['price']:
-                        self.message_user(request,
-                            u"Файл `%s` отправлен на обработку. Цены для поставщика `%s` будут изменены в ближайшее время. Уведомление о завершении будет выслано на %s." % \
-                                (unicode(inline_form.cleaned_data['price']), unicode(obj.area.title), ",".join(settings.MANAGERS_EMAILS)))
-                    else:
-                        self.message_user(request,
-                            u"Цены для поставщика `%s` удалены." % unicode(obj.area.title))
 
+            if not inline_form.changed_data:
+                continue
+
+            if not isinstance(inline_form.instance, BrandGroupAreaSettings):
+                continue
+
+            obj = inline_form.instance
+
+            if 'price' in inline_form.changed_data:
+
+                if not inline_form.cleaned_data.get('price'):
+                    self.message_user(
+                        request,
+                        u"Цены для поставщика `%s` удалены." % (
+                            unicode(obj.area.title)))
+
+                handler = dict(
+                    ('application/vnd.ms-excel', SavePriceFileXlsTask),
+                ).get(
+                    mimetypes.guess_type(obj.price.path)[0],
+                    SavePriceFileCsvTask)
+
+                handler.apply_async([obj])
+
+                obj.price_updated_at = datetime.datetime.now()
+                obj.save()
+
+                self.message_user(
+                    request,
+                    u"Файл `%s` отправлен на обработку. Цены для поставщика `%s` будут изменены в ближайшее время. Уведомление о завершении будет выслано на %s." % (
+                        unicode(inline_form.cleaned_data['price']),
+                        unicode(obj.area.title),
+                        ",".join(settings.MANAGERS_EMAILS)))
 
 class AreaAdmin(admin.ModelAdmin):
     list_display = ('title', 'in_groups')
@@ -534,6 +557,65 @@ class BalanceItemAdmin(admin.ModelAdmin):
             formfield.choices = (('', '---------',),) + tuple((x.id, x.__unicode__()) for x in User.objects.all().order_by('username'))
         return formfield
 
+
+class PartAnalogAdmin(admin.ModelAdmin):
+    list_display = ('partnumber', 'brand', 'partnumber_analog', 'brand_analog',)
+    search_fields = ('partnumber_original', 'partnumber_analog',)
+
+    def get_urls(self):
+        from django.conf.urls.defaults import patterns, url
+        urls = super(PartAnalogAdmin, self).get_urls()
+        my_urls = patterns('',
+            url(r'^upload/$',
+                self.admin_site.admin_view(self.upload_analogs),
+                name='partanalog_upload')
+        )
+        return my_urls + urls
+
+    def upload_analogs(self, request):
+        model = self.model
+        opts = model._meta
+
+        class PartAnalogForm(forms.Form):
+            analog_file  = forms.FileField(label=u'Файл')
+
+        if request.method == 'POST':
+            form = PartAnalogForm(request.POST, request.FILES)
+            if form.is_valid():
+
+                storage = FileSystemStorage(
+                    location=settings.PART_ANALOG_UPLOAD_DIR)
+                filename = storage.save(None, request.FILES['analog_file'])
+
+                filepath = os.path.join(
+                    settings.PROJECT_ROOT,
+                    settings.PART_ANALOG_UPLOAD_DIR,
+                    filename)
+
+                SavePartAnalog.apply_async([filepath])
+
+                self.message_user(
+                    request,
+                    u"Файл с аналогами `%s` отправлен на обработку. Уведомление о завершении будет выслано на %s." % (
+                        unicode(filename), ",".join(settings.MANAGERS_EMAILS)))
+
+                return HttpResponseRedirect(
+                    reverse('admin:data_partanalog_changelist'))
+        else:
+            form = PartAnalogForm()
+
+        ctx = {
+            'form': form,
+            'root_path': self.admin_site.root_path,
+            'app_label': opts.app_label,
+            'opts': opts,
+        }
+        ctx.update(csrf(request))
+
+        return render_to_response(
+            'admin/data/partanalog/upload_analogs.html', ctx)
+
+
 admin.site.register(Brand, BrandAdmin)
 admin.site.register(Direction, DirectionAdmin)
 admin.site.register(BrandGroup, BrandGroupAdmin)
@@ -545,3 +627,4 @@ admin.site.register(CustomerAccount, CustomerAdmin)
 admin.site.register(ClientGroup, ClientGroupAdmin)
 admin.site.register(Part, PartAdmin)
 admin.site.register(BalanceItem, BalanceItemAdmin)
+admin.site.register(PartAnalog, PartAnalogAdmin)

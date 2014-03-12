@@ -24,6 +24,7 @@ class MyDashboard(Dashboard):
              'data.models.Discount',
              'data.models.ClientGroup',
              'data.models.Part',
+             'data.models.PartAnalog',
              'data.models.BalanceItem']
         ))
 
@@ -74,6 +75,7 @@ class CustomAppIndexDashboard(AppIndexDashboard):
                  'data.models.Discount',
                  'data.models.ClientGroup',
                  'data.models.Part',
+                 'data.models.PartAnalog',
                  'data.models.BalanceItem']
             ))
         else: # default

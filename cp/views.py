@@ -1415,7 +1415,7 @@ def balance(request):
     qs_filter = _filter.get_filters()
 
     period, period_filter = get_period(request, session_store_prefix, "created_at")
-    qs_filter.update(period_filter)
+    # qs_filter.update(period_filter)
     context['period'] = period
 
     qs = BalanceItem.objects.select_related().filter(**qs_filter).order_by('user')
