@@ -1,0 +1,85 @@
+{% for found in founds %}
+<form action="{% url client_basket_add %}" method="post" id="foundsForm{{ forloop.counter|add:delta }}">
+  {% if found.sub_chain %}
+  <tr class="{% if forloop.counter|divisibleby:2 %}row2{% else %}row1{% endif %}">
+    <td colspan=20 style="text-align: left;">{{ found.sub_chain }}</td>
+  </tr>
+  {% endif %}
+  <tr class="{% if forloop.counter|divisibleby:2 %}row2{% else %}row1{% endif %}">
+    {% if found.MSRP %}
+      <input type="hidden" name="area" value="{{ found.brandname }}" />
+      <input type="hidden" name="brandgroup" value="{{ found.brandgroup }}" />
+
+      <td>
+        {{ found.maker }}
+        <input type="hidden" name="brand_name" value="{{ found.maker }}" />
+      </td>
+
+      <td>
+        {{ found.partnumber }}
+        <input type="hidden" name="part_number" value="{{ found.partnumber }}" />
+      </td>
+
+      <td>
+          {{ found.description_ru|default:"" }}
+          <input type="hidden" name="description_ru" value="{{ found.description_ru }}" />
+      </td>
+
+      <td>
+          {{ found.description|default:"" }}
+          <input type="hidden" name="description" value="{{ found.description }}" />
+      </td>
+
+      <td>
+          {% if found.delivery_coef %}{{ found.delivery_coef }}${% endif %}
+      </td>
+
+      <td>
+        {{ found.MSRP }}$
+        <input type="hidden" name="msrp" value="{{ found.MSRP }}" />
+      </td>
+
+      <td>
+        <b>{{ found.your_price }}$</b>
+        <input type="hidden" name="user_price" value="{{ found.your_price }}" />
+      </td>
+
+      <td>
+        {{ found.core_price }}$
+        <input type="hidden" name="core_price" value="{{ found.core_price }}" />
+      </td>
+
+      <td>
+        {{ found.your_economy}}$ или {{ found.your_economy_perc}}%
+      </td>
+
+      <td>
+        {% if found.party and found.party > 1 %}{{ found.party }} шт.{% endif %}
+        <!-- <input type="hidden" name="party" value="{{ found.party }}" /> -->
+        <input type="hidden" name="quantity" value="{{ found.party|default:1 }}" />
+      </td>
+
+      <td>
+        {% if found.available %}{{ found.available }} шт.{% endif %}
+      </td>
+
+      <td>
+        {% if found.delivery_period %}{{ found.delivery_period }} дн.{% endif %}
+      </td>
+
+      <td>
+        {{ found.updated_at|date:"d N Y" }}
+      </td>
+
+      <td class="order-button-wrapper" style="width: 80px;">
+        <a class="add_link" href="javascript: void(0);" onclick="jQuery('#foundsForm{{ forloop.counter|add:delta }}').submit();">
+          В корзину
+        </a>
+      </td>
+
+    {% else %}
+      <td colspan=20>Не поставляется</td>
+    {% endif %}
+  </tr>
+</form>
+{% endfor %}
