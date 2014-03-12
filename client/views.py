@@ -176,7 +176,7 @@ def calc_part(part, user, render_for_template=True):
         part['your_price'] = "%.2f" % part['your_price']
         part['your_economy'] = "%.2f" % part['your_economy']
 
-        if len(part.get('sub_chain', [])) > 1:
+        if len(part.get('sub_chain') or []) > 1:
             last = part['sub_chain'].pop(-1)
             part['sub_chain'] = mark_safe(
                 u"Номер заменён: "

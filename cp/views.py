@@ -94,7 +94,7 @@ def get_status_options_package():
     return [{'value': i[0], 'option': i[1]} for i in PACKAGE_STATUSES]
 
 
-def get_period(request, prefix, field):
+def get_period(request, prefix, field, period=''):
     PERIOD_PARAM = 'period'
     PERIOD_PARAM_WEEK = 'w'
     PERIOD_PARAM_MONTH = 'm'
@@ -106,7 +106,7 @@ def get_period(request, prefix, field):
         PERIOD_PARAM_YEAR,
         PERIOD_PARAM_ALL
     )
-    PERIOD_PARAM_DEFAULT = PERIOD_PARAM_YEAR
+    PERIOD_PARAM_DEFAULT = period or PERIOD_PARAM_YEAR
 
     period = request.GET.get(PERIOD_PARAM)
 
@@ -1414,7 +1414,7 @@ def balance(request):
 
     qs_filter = _filter.get_filters()
 
-    period, period_filter = get_period(request, session_store_prefix, "created_at")
+    period, period_filter = get_period(request, session_store_prefix, "created_at", "a")
     # qs_filter.update(period_filter)
     context['period'] = period
 
@@ -1499,7 +1499,7 @@ def balance_client(request, client_id):
 
     qs_filter = _filter.get_filters()
 
-    period, period_filter = get_period(request, session_store_prefix, "created_at")
+    period, period_filter = get_period(request, session_store_prefix, "created_at", "a")
     qs_filter.update(period_filter)
     context['period'] = period
 

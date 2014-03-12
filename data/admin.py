@@ -59,7 +59,7 @@ class BrandGroupAreaSettingsInline(admin.TabularInline):
 
 class BrandGroupAdmin(admin.ModelAdmin):
     list_display = ('title', 'direction', 'description', 'add_brand_to_comment',
-        'show_delivery', 'show_multiplier')
+        'show_delivery', 'show_multiplier', 'cost_margin',)
     list_filter = ('direction',)
     filter_horizontal = ['area']
     inlines = [BrandGroupAreaSettingsInline]
