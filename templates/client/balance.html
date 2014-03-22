@@ -28,20 +28,27 @@ tr.alt td {
 
 </style>
 <script type="text/javascript">
-var qs = new Array();
+
 function getFilterItemsPerPage() {
     var val = jQuery('#items-per-page-filter-select').val();
-    qs.push("items_per_page=" + val);
+    return "items_per_page=" + val;
 }
 
 function getFilterPeriod() {
     var val = jQuery('#period-filter-select').val();
-    qs.push("period=" + val);
+    return "period=" + val;
+}
+
+function showPreinvoices() {
+    var val = jQuery('#show-preinvoices').attr('checked');
+    return "preinvoices=" + (+ val);
 }
 
 function buildQueryFilter() {
-    getFilterPeriod();
-    getFilterItemsPerPage();
+    var qs = new Array();
+    qs.push(getFilterPeriod());
+    qs.push(getFilterItemsPerPage());
+    qs.push(showPreinvoices());
     location.href='{{ request.path }}?' + qs.join("&");
 }
 </script>
@@ -51,7 +58,7 @@ function buildQueryFilter() {
 
 {% block page_content %}
 <div class="" id="changelist">
-<form method="{{ filter.method }}" action="{% url client_balance %}{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
+<form method="{{ filter.method }}" action="{% url client_balance %}">
 <input type="hidden" name="qs_filter" value="1">
 <input type="submit" value="Фильтр">
 <input type="submit" name="qs_filter_clear" value="Очистить">
@@ -67,7 +74,9 @@ function buildQueryFilter() {
     <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
     <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
     <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>
-</select>
+</select>&nbsp;&nbsp;&nbsp;
+<input onclick="buildQueryFilter();" type="checkbox" id="show-preinvoices" name="show_preinvoices" {% if show_preinvoices %}checked="checked"{% endif %} />
+<label for="show-preinvoices">Отображать предварительные счета</label>
 <br/><br/>
 <div class="module" id="changelist">
 <table>

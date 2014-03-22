@@ -83,7 +83,7 @@ def getParts(username, password, brand, partnumber):
     founds = search_local(brand, partnumber.upper())
 
     if not founds:
-        return []
+        return {}
 
     analog_founds = search_analogs(founds)
 

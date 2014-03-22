@@ -11,7 +11,8 @@ from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from data.models import (
     OrderedItem, Brand, BrandGroup, Area, Basket,
-    Shipment, Package, BalanceItem, search_local, search_analogs
+    Shipment, Package, BalanceItem, search_local, search_analogs,
+    BALANCEITEM_TYPE_PREINVOICE
 )
 from data.forms import OrderedItemsFilterForm, ShipmentsFilterForm, BalanceClientFilterForm
 from client.forms import SearchForm
@@ -108,6 +109,25 @@ def get_items_per_page(request, prefix):
         items_per_page = ITEM_PER_PAGE_DEFAULT
 
     return items_per_page
+
+
+def get_show_preinvoices(request, prefix):
+    SHOW_PREINVOICES_PARAM = 'preinvoices'
+    SHOW_PREINVOICES_PARAM_DEFAULT_VALUE = 0
+    try:
+        show_preinvoices = int(request.GET.get(SHOW_PREINVOICES_PARAM))
+    except (ValueError, TypeError):
+        show_preinvoices = None
+
+    session_key = "%s_%s" % (prefix, SHOW_PREINVOICES_PARAM)
+    if show_preinvoices is None:
+        show_preinvoices = request.session.get(
+            session_key, SHOW_PREINVOICES_PARAM_DEFAULT_VALUE)  
+
+    request.session[session_key] = show_preinvoices
+    request.session.modified = True
+
+    return show_preinvoices
 
 
 def normalize_sum(value):
@@ -639,9 +659,10 @@ class ClientBalanceList(object):
     def __init__(self, request, filter_form):
         self.request = request
         self.filter = QSFilter(request, filter_form)
-        session_store_prefix = "client_balance"
-        self.items_per_page = get_items_per_page(request, session_store_prefix)
-        self.period, self.period_filter = get_period(request, session_store_prefix, "created_at", "a")
+        self.session_store_prefix = "client_balance"
+        self.items_per_page = get_items_per_page(request, self.session_store_prefix)
+        self.period, self.period_filter = get_period(request, self.session_store_prefix, "created_at", "a")
+        self.show_preinvoices = get_show_preinvoices(request, self.session_store_prefix)
         self.results = self.result_list()
         self.headers = self.list_headers()
         self.filters = self.list_filters()
@@ -685,6 +706,9 @@ class ClientBalanceList(object):
         if self.period_filter:
             qs = qs.filter(**self.period_filter)
 
+        if not self.show_preinvoices:
+            qs = qs.exclude(item_type=BALANCEITEM_TYPE_PREINVOICE)
+
         if order_by:
             qs = qs.order_by(order_by)
 
@@ -705,6 +729,8 @@ def balance(request):
     response['period'] = cl.period
     response['shipments'] = shipments
     response['qs_filter_param'] = cl.filter.get_filters()
+    response['show_preinvoices'] = get_show_preinvoices(
+        request, cl.session_store_prefix)
     return response
 
 
