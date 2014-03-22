@@ -13,6 +13,7 @@ from SOAPpy import WSDL
 from django.http import HttpResponseRedirect
 from django.contrib.auth import login, logout, authenticate
 from django.conf import settings
+from django.core.urlresolvers import reverse
 
 from lib.decorators import render_to
 from common.forms import UserAuthForm
@@ -23,18 +24,28 @@ from BeautifulSoup import BeautifulSoup, NavigableString
 @render_to('common/start.html')
 def start(request):
     message = ''
+
+    if request.user.is_staff and request.user.is_active and request.user.is_authenticated():
+        return HttpResponseRedirect(reverse('cp_index'))
+
+    if request.user.is_active and request.user.is_authenticated():
+        return HttpResponseRedirect(reverse('client_search'))
+
     if request.method == 'POST':
         form = UserAuthForm(request.POST.copy())
         if form.is_valid():
-            user = authenticate(username=form.cleaned_data['username'], password=form.cleaned_data['password'])
+            user = authenticate(
+                username=form.cleaned_data['username'],
+                password=form.cleaned_data['password'])
+
             if user is not None:
                 if user.is_active:
                     login(request, user)
                     # Staff goes to /cp/
                     if user.is_staff:
-                        return HttpResponseRedirect('/cp/')
+                        return HttpResponseRedirect(reverse('cp_index'))
                     else:
-                        return HttpResponseRedirect('/client/search/')
+                        return HttpResponseRedirect(reverse('client_search'))
                 else:
                     message = 'Ваша учетная запись временно отключена'
         else:
