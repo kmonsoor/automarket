@@ -243,11 +243,11 @@ class RPCDispatcher(object):
         self.jsonrpcdispatcher = JSONRPCDispatcher(json_encoder)
         self.xmlrpcdispatcher = XMLRPCDispatcher()
 
-        if not restrict_introspection:
-            self.register_method(self.system_listmethods)
+        # if not restrict_introspection:
+        #     self.register_method(self.system_listmethods)
             # self.register_method(self.system_methodhelp)
             # self.register_method(self.system_methodsignature)
-            self.register_method(self.system_describe)
+            # self.register_method(self.system_describe)
 
         if not restrict_ootb_auth:
             self.register_method(self.system_login)
@@ -257,19 +257,6 @@ class RPCDispatcher(object):
 
     @rpcmethod(name='info', signature=['struct'])
     def system_describe(self):
-        '''
-        Возвращает информацию о всех поддерживаемых методах.
-
-        <br/><br/>Python XML-RPC:
-        <pre class="prettyprint lang-python">
-        from xmlrpclib import ServerProxy
-        server = ServerProxy('http://newparts-online.com/rpc/')
-        response = server.info()
-        print response
-        </pre>
-        <br/>
-        '''
-
         description = {}
         description['serviceType'] = 'JSONRPC+XMLRPC'
         description['serviceURL'] = self.url,
@@ -283,19 +270,6 @@ class RPCDispatcher(object):
 
     @rpcmethod(name='listMethods', signature=['array'])
     def system_listmethods(self):
-        '''
-        Возвращает список всех поддерживаемых методов.
-
-        <br/><br/>Python XML-RPC:
-        <pre class="prettyprint lang-python">
-        from xmlrpclib import ServerProxy
-        server = ServerProxy('http://newparts-online.com/rpc/')
-        response = server.listMethods()
-        print response
-        </pre>
-        <br/>
-        '''
-
         methods = [method.name for method in self.rpcmethods]
         methods.sort()
         return methods

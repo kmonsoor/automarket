@@ -6,11 +6,11 @@ from django.contrib.auth import authenticate
 
 from data.models import search_local, all_brands
 
-from client.views import calc_parts
+from client.views import calc_parts, search_analogs
 
 
-@rpcmethod(name='getBrandsByPartNumber', signature=['array', 'string', 'string', 'string'])
-def getBrandsByPartNumber(username, password, partnumber):
+@rpcmethod(name='getBrands', signature=['array', 'string', 'string', 'string'])
+def getBrands(username, password, partnumber):
     '''
     Возвращает список брендов.
 
@@ -18,8 +18,7 @@ def getBrandsByPartNumber(username, password, partnumber):
     <pre class="prettyprint lang-python">
     from xmlrpclib import ServerProxy
     server = ServerProxy('http://newparts-online.com/rpc/')
-    response = server.getBrandsByPartNumber('username', 'password', 'YOK93209')
-    print response
+    response = server.getBrands('username', 'password', 'YOK93209')
     </pre>
     <br/>
     '''
@@ -48,17 +47,16 @@ def getBrandsByPartNumber(username, password, partnumber):
     return list(set(p.get('maker') for p in founds))
 
 
-@rpcmethod(name='getPartsByPartNumber', signature=['array', 'string', 'string', 'string', 'string'])
-def getPartsByPartNumber(username, password, brand, partnumber):
+@rpcmethod(name='getParts', signature=['struct', 'string', 'string', 'string', 'string'])
+def getParts(username, password, brand, partnumber):
     '''
-    Возвращает список деталей с подробной информацией.
+    Возвращает найденные детали и их аналоги с подробной информацией.
 
     <br/><br/>Python XML-RPC:
     <pre class="prettyprint lang-python">
     from xmlrpclib import ServerProxy
     server = ServerProxy('http://newparts-online.com/rpc/')
-    response = server.getPartsByPartNumber('username', 'password', 'YOK93209')
-    print response
+    response = server.getParts('username', 'password', 'VOLVO', 'YOK93209')
     </pre>
     <br/>
     '''
@@ -87,9 +85,12 @@ def getPartsByPartNumber(username, password, brand, partnumber):
     if not founds:
         return []
 
-    parts = calc_parts(founds, user, render_for_template=False)
+    analog_founds = search_analogs(founds)
 
-    data = []
+    parts = calc_parts(founds, user, render_for_template=False)
+    analogs = calc_parts(analog_founds, user)
+
+    data = {}
     fields_map = (
         ('direction_id', 'direction_id'),
         ('brandgroup_id', 'brandgroup_id'),
@@ -107,7 +108,13 @@ def getPartsByPartNumber(username, password, brand, partnumber):
         ('delivery_period', 'delivery_period'),
         ('updated_at', 'updated_at'),
     )
-    for part in parts:
-        data.append(dict((v2, part.get(v1)) for v1, v2 in fields_map))
 
-    return data or []
+    data['parts'] = []
+    for part in parts:
+        data['parts'].append(dict((v2, part.get(v1)) for v1, v2 in fields_map))
+
+    data['analogs'] = []
+    for analog in analogs:
+        data['analogs'].append(dict((v2, analog.get(v1)) for v1, v2 in fields_map))
+
+    return data or {}
