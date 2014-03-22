@@ -82,7 +82,7 @@ def getPartsByPartNumber(username, password, brand, partnumber):
 
     partnumber = re.sub('[^\w]', '', partnumber).strip().upper()
 
-    founds = PartSearchLocal().search(brand, partnumber.upper())
+    founds = search_local(brand, partnumber.upper())
 
     if not founds:
         return []

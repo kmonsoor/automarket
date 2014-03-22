@@ -349,9 +349,6 @@ class ClientOrderItemList(object):
 
         filters = self.filter.get_filters()
 
-        if self.request.REQUEST.get('exclude_shipment'):
-            filters.update({'shipment__isnull': True})
-
         qs = OrderedItem.objects.select_related() \
                         .filter(client=self.request.user) \
                         .filter(**filters)
@@ -408,6 +405,7 @@ def index(request):
     response['paginator'] = cl.paginator
     response['items_per_page'] = cl.items_per_page
     response['period'] = cl.period
+    response['qs_filter_param'] = cl.filter.get_filters()
     return response
 
 

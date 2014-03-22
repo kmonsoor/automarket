@@ -426,7 +426,7 @@ class OrderedItem(models.Model):
                      inspect.getframeinfo(inspect.currentframe().f_back)[2])
 
         if self.delivery_coef is None:
-            multiplier, delivery, delivery_period, price_updated_at = \
+            multiplier, delivery, delivery_period, price_updated_at, mc = \
                 self.area.get_brandgroup_settings(self.brandgroup)
             self.delivery_coef = delivery
 

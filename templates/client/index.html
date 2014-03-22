@@ -52,7 +52,7 @@ function buildQueryFilter() {
 {% block page_content %}
 <div class="" id="changelist">
 <form method="{{ filter.method }}" action="/client/{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
-<a href="/client/export_order/?qs_filter=1&shipment__id={{ shipment.id }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/><br/>
+<a href="/client/export_order/?qs_filter=1&{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/><br/>
 <input type="hidden" name="qs_filter" value="1">
 <input type="submit" value="Фильтр">
 <input type="submit" name="qs_filter_clear" value="Очистить">

@@ -86,7 +86,7 @@ function buildQueryFilter() {
     <td>{{ s.get_item_type_display }}</td>
     <td>
         {% if s.invoice %}
-            <a href="{% url client_index %}?qs_filter=1&exclude_shipment=1&invoice_code__contains={{ s.invoice.code|urlencode }}">{{ s.comment|default:"" }}</a>
+            <a href="{% url client_index %}?qs_filter=1&shipment__isnull=1&invoice_code__contains={{ s.invoice.code|urlencode }}">{{ s.comment|default:"" }}</a>
         {% else %}
             {% if s.shipment %}
                 <a href="{% url client_shipment s.shipment.id %}">{{ s.comment|default:"" }}</a>

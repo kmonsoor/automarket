@@ -37,8 +37,8 @@ class BrandGroupAreaSettingsInline(admin.TabularInline):
         'delivery_period', 'price')
 
     def get_formset(self, request, obj=None, **kwargs):
-        return super(BrandGroupAreaSettingsInline, self)\
-            .get_formset(request, obj, **kwargs)
+        return super(BrandGroupAreaSettingsInline, self).get_formset(
+            request, obj, **kwargs)
 
     def get_object(self, request):
         object_id = request.META['PATH_INFO'].strip('/').split('/')[-1]
@@ -53,8 +53,8 @@ class BrandGroupAreaSettingsInline(admin.TabularInline):
             brand_group = self.get_object(request)
             if brand_group:
                 kwargs['queryset'] = brand_group.area.all().order_by('title')
-        return super(BrandGroupAreaSettingsInline, self) \
-               .formfield_for_foreignkey(db_field, request, **kwargs)
+        return super(BrandGroupAreaSettingsInline, self).formfield_for_foreignkey(
+            db_field, request, **kwargs)
 
 
 class BrandGroupAdmin(admin.ModelAdmin):
@@ -115,9 +115,9 @@ class BrandGroupAdmin(admin.ModelAdmin):
                         u"Цены для поставщика `%s` удалены." % (
                             unicode(obj.area.title)))
 
-                handler = dict(
+                handler = dict((
                     ('application/vnd.ms-excel', SavePriceFileXlsTask),
-                ).get(
+                )).get(
                     mimetypes.guess_type(obj.price.path)[0],
                     SavePriceFileCsvTask)
 

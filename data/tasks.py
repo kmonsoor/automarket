@@ -37,32 +37,16 @@ class SavePriceFileBase(Task):
         self.area_id = price.area.id
         self.brandgroup_id = price.brand_group.id
 
-        try:
-            success = self.save_parts(price)
-        except Exception, e:
-            logger.exception("%r" % e)
-            send_mail(
-                u"Загрузка деталей для `%s` прошла с ошибкой." % price.area.title,
-                u"Детали загружены не были.",
-                settings.EMAIL_FROM,
-                settings.MANAGERS_EMAILS,
-                fail_silently=True
-            )
-            response = 'error!'
-            raise
-        else:
-            send_mail(
-                u"Загрузка деталей для `%s` прошла успешно." % price.area.title,
-                u"Всего загружено %s деталей." % success,
-                settings.EMAIL_FROM,
-                settings.MANAGERS_EMAILS,
-                fail_silently=True
-            )
-            response = 'ok!'
-        finally:
-            f.close()
-
-        return response
+        success = self.save_parts(price)
+        send_mail(
+            u"Загрузка деталей для `%s` прошла успешно." % price.area.title,
+            u"Всего загружено %s деталей." % success,
+            settings.EMAIL_FROM,
+            settings.MANAGERS_EMAILS,
+            fail_silently=True
+        )
+        f.close()
+        return 'ok!'
 
     def save_parts(self, price):
         raise NotImplementedError
@@ -123,24 +107,34 @@ class SavePriceFileXlsTask(SavePriceFileBase):
             cell_type = dict([(x[0], x[2]) for x in mapping])[cell_title.upper()]
             return cell_type(cell_value)
 
-        success = 0
-        with tempfile.TemporaryFile() as f:
-            xls = xlsreader.readexcel(file_contents=price.price.read())
-            for sheet in xls.book.sheet_names():
-                for row in xls.iter_dict(sheet):
-                    data = {}
-                    for cell_title, cell_value in row.iteritems():
-                        cleaned_fieldname = clean_fieldname(cell_title)
-                        cleaned_fieldvalue = clean_fieldvalue(cell_title, cell_value)
-                        data[cleaned_fieldname] = cleaned_fieldvalue
+        success = 1
+    	try:
+            with tempfile.TemporaryFile() as f:
+                xls = xlsreader.readexcel(file_contents=price.price.read())
+                for sheet in xls.book.sheet_names():
+                    for row in xls.iter_dict(sheet):
+                        data = {}
+                        for cell_title, cell_value in row.iteritems():
+                            cleaned_fieldname = clean_fieldname(cell_title)
+                            cleaned_fieldvalue = clean_fieldvalue(cell_title, cell_value)
+                            data[cleaned_fieldname] = cleaned_fieldvalue
 
-                    if data.get('partnumber'):
-                        f.write(self.row_for_copy(data))
-                        success += 1
+                        if data.get('partnumber'):
+                            f.write(self.row_for_copy(data))
+                            success += 1
 
-            self._copy(f)
-
-        return success
+                self._copy(f)
+    	except Exception, e:
+    	    logger.exception("%r" % e)
+            send_mail(
+                u"Загрузка деталей для `%s` прошла с ошибкой." % price.area.title,
+                u"Детали загружены не были. Ошибка в строке %s" % (success + 2),
+                settings.EMAIL_FROM,
+                settings.MANAGERS_EMAILS,
+                fail_silently=True
+            )
+            raise
+        return success - 1
 
 
 class SavePriceFileCsvTask(SavePriceFileBase):
@@ -159,54 +153,65 @@ class SavePriceFileCsvTask(SavePriceFileBase):
         fields_types_map = dict([x[1:3] for x in mapping])
         fields = [fields_map[x.strip()] for x in price.price.readline().split(sep)]
 
-        success = 0
-        with tempfile.TemporaryFile() as f:
-            for counter, line in enumerate(price.price):
-                if counter == 0:
-                    continue
+    	success = 1
+    	try:
+            with tempfile.TemporaryFile() as f:
+                for counter, line in enumerate(price.price):
+                    if counter == 0:
+                        continue
 
-                data = {}
-                for field, value in zip(fields, [x.strip() for x in line.split(sep)]):
-                    if value:
-                        data[field] = fields_types_map[field](value)
+                    data = {}
+                    for field, value in zip(fields, [x.strip() for x in line.split(sep)]):
+                        if value:
+                            data[field] = fields_types_map[field](value)
 
-                if data.get('partnumber'):
-                    f.write(self.row_for_copy(data))
-                    success += 1
+                    if data.get('partnumber'):
+                        f.write(self.row_for_copy(data))
+                        success += 1
 
-            self._copy(f)
+                self._copy(f)
+        except Exception, e:
+            logger.exception("%r" % e)
+            send_mail(
+                u"Загрузка деталей для `%s` прошла с ошибкой." % price.area.title,
+                u"Детали загружены не были. Ошибка в строке %s" % (success + 2),
+                settings.EMAIL_FROM,
+                settings.MANAGERS_EMAILS,
+                fail_silently=True
+            )
+            raise
 
-        return success
+    	return success - 1
 
 
 class SavePartAnalog(Task):
     accept_magic_kwargs = False
 
     def run(self, filepath):
+        mapping = (
+            (u'БРЭНД1', 'brand_id', lambda x: Brand.objects.get(title__iexact=x).id),
+            (u'АРТИКУЛ1', 'partnumber', unicode),
+            (u'БРЭНД2', 'brand_analog_id', lambda x: Brand.objects.get(title__iexact=x).id),
+            (u'АРТИКУЛ2', 'partnumber_analog', unicode),
+            (u'КОММЕНТАРИЙ1', 'comment1', unicode),
+            (u'КОММЕНТАРИЙ2', 'comment2', unicode),
+        )
+        fields = map(lambda x: x[1], mapping)
+
+        def clean_fieldname(cell_title):
+            return dict([(x[0], x[1]) for x in mapping])[cell_title.upper()]
+
+        def clean_fieldvalue(cell_title, cell_value):
+            cell_type = dict([(x[0], x[2]) for x in mapping])[cell_title.upper()]
+            return cell_type(cell_value)
+
+        def row_for_copy(data):
+            row = ((data.get(field) or NULL_COPY) for field in fields)
+            row = map(lambda x: str(("%s" % x).encode("UTF-8")), row)
+            return "%s\n" % "\t".join(row)
+
+        success = 1
         try:
-            mapping = (
-                (u'БРЭНД1', 'brand_id', lambda x: Brand.objects.get(title__iexact=x).id),
-                (u'АРТИКУЛ1', 'partnumber', unicode),
-                (u'БРЭНД2', 'brand_analog_id', lambda x: Brand.objects.get(title__iexact=x).id),
-                (u'АРТИКУЛ2', 'partnumber_analog', unicode),
-                (u'КОММЕНТАРИЙ1', 'comment1', unicode),
-                (u'КОММЕНТАРИЙ2', 'comment2', unicode),
-            )
-            fields = map(lambda x: x[1], mapping)
-
-            def clean_fieldname(cell_title):
-                return dict([(x[0], x[1]) for x in mapping])[cell_title.upper()]
-
-            def clean_fieldvalue(cell_title, cell_value):
-                cell_type = dict([(x[0], x[2]) for x in mapping])[cell_title.upper()]
-                return cell_type(cell_value)
-
-            def row_for_copy(data):
-                row = ((data.get(field) or NULL_COPY) for field in fields)
-                row = map(lambda x: str(("%s" % x).encode("UTF-8")), row)
-                return "%s\n" % "\t".join(row)
-
-            success = 1
             with tempfile.TemporaryFile() as f:
                 with open(filepath, 'r') as file_contents:
                     xls = xlsreader.readexcel(file_contents=file_contents.read())
@@ -228,7 +233,7 @@ class SavePartAnalog(Task):
             logger.exception("%r" % e)
             send_mail(
                 u"Загрузка аналогов прошла с ошибкой.",
-                u"Аналоги загружены не были. Ошибка в строке %s" % (success + 1),
+                u"Аналоги загружены не были.",
                 settings.EMAIL_FROM,
                 settings.MANAGERS_EMAILS,
                 fail_silently=True

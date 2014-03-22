@@ -55,6 +55,7 @@ class OrderedItemsFilterForm(forms.Form):
     status = forms.ChoiceField(required=False, choices=(('', u'Отображать все'),) + ORDER_ITEM_STATUSES,\
             widget=forms.Select(attrs={'class':'qs_filter'}))
     shipment__id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+    shipment__isnull = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
 
 
 INVOICES_FIELD_LIST = (
