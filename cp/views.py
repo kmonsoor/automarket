@@ -549,10 +549,7 @@ def invoice(request, invoice_id):
     order_filter = _filter.get_filters()
     package_filter = _filter.get_filters()
 
-    if request.REQUEST.get('exclude_shipment'):
-        order_filter.update({'shipment__isnull': True})
-        package_filter.update({'shipment__isnull': True})
-
+    # FIXME
     if 'invoice_code__contains' in package_filter:
         package_filter.update({'invoice__code__contains': package_filter.get('invoice_code__contains')})
         del package_filter['invoice_code__contains']

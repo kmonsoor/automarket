@@ -80,7 +80,7 @@
                         <td>{{ s.created_at|date:"d.m.Y H:i"|safe }}</td>
                         <td>{{ s.get_item_type_display }}</td>
                         <td>
-                            {% if s.invoice %}<a href="{% url invoice s.invoice.id %}?qs_filter=1&client__username__contains={{ s.user.username }}&exclude_shipment=1">{{ s.comment|default:"" }}</a>{% else %}
+                            {% if s.invoice %}<a href="{% url invoice s.invoice.id %}?qs_filter=1&client__username__contains={{ s.user.username }}&shipment__isnull=1">{{ s.comment|default:"" }}</a>{% else %}
                             {% if s.shipment %}<a href="{% url shipment s.shipment.id %}">{{ s.comment|default:"" }}</a>
                             {% else %}{{ s.comment|default:"" }}
                             {% endif %}{% endif %}
