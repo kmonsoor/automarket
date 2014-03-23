@@ -98,7 +98,6 @@ INSTALLED_APPS = (
     'common',
     'lib',
     'south',
-    # 'xmlrpc',
     'rpc4django',
 )
 

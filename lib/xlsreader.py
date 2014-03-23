@@ -1,6 +1,6 @@
 # -*- coding=utf-8 -*-
 import os
-import xlrd
+from lib import xlrd
 
 class readexcel(object): 
     """ source: http://gizmojo.org/code/readexcel/

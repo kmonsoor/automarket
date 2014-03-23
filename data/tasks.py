@@ -19,41 +19,29 @@ NULL_COPY = '\N'
 
 class SavePriceFileBase(Task):
     accept_magic_kwargs = False
+    mapping = ()
 
     def run(self, price):
+        self.price = price
+        if not self.price.price:
+            return 'empty!'
+        self._clear()
+        success = self._save()
+        return 'ok! saved %s parts!' % success
 
+    def _clear(self):
         cur = connection.cursor()
         cur.execute("""
             DELETE FROM data_part
             WHERE area_id=%s AND brandgroup_id=%s
-        """ % (price.area.id, price.brand_group.id)
+        """ % (self.price.area.id, self.price.brand_group.id)
         )
         cur.close()
+        return True
 
-        f = price.price
-        if not f:
-            return 'ok!'
-
-        self.area_id = price.area.id
-        self.brandgroup_id = price.brand_group.id
-
-        success = self.save_parts(price)
-        send_mail(
-            u"Загрузка деталей для `%s` прошла успешно." % price.area.title,
-            u"Всего загружено %s деталей." % success,
-            settings.EMAIL_FROM,
-            settings.MANAGERS_EMAILS,
-            fail_silently=True
-        )
-        f.close()
-        return 'ok!'
-
-    def save_parts(self, price):
-        raise NotImplementedError
-
-    def row_for_copy(self, data):
+    def _row_for_copy(self, data):
         row = [
-            self.area_id,
+            self.price.area.id,
             data.get('partnumber'),
             data.get('MSRP'),
             data.get('cost'),
@@ -64,7 +52,7 @@ class SavePriceFileBase(Task):
             data.get('brand'),
             data.get('party'),
             data.get('available'),
-            self.brandgroup_id,
+            self.price.brand_group.id,
             data.get('description_ru'),
         ]
         row = map(lambda x: x or NULL_COPY, row)
@@ -85,103 +73,77 @@ class SavePriceFileBase(Task):
         cur.close()
         return True
 
+    def _save(self):
+        fields_map = dict([x[0:2] for x in self.mapping])
+        fields_types_map = dict([x[1:3] for x in self.mapping])
+
+        with tempfile.TemporaryFile() as f:
+            try:
+                success = 0
+                for counter, line in enumerate(self.iter_lines(self.price), 1):
+                    if counter == 1:  # header
+                        fields = [fields_map[x.upper()] for x in line]
+                        continue
+                    data = dict(
+                        (f, fields_types_map[f](v))
+                        for f, v in zip(fields, line)
+                        if v)
+                    if data.get('partnumber'):
+                        f.write(self._row_for_copy(data))
+                        success += 1
+                self._copy(f)
+            except Exception, e:
+                logger.exception("%r", e)
+                msg = u"Загрузка %s прошла с ошибкой. Ошибка в строке %s." % (
+                    self.price.area.title, counter)
+                send_mail(
+                    msg, msg, settings.EMAIL_FROM,
+                    settings.MANAGERS_EMAILS, fail_silently=True)
+                raise
+            else:
+                logger.info(
+                    "price saved for %s, %s items",
+                    self.price.area.title, success)
+                msg = u"Загрузка %s прошла успешно. Загружено %s позиций." % (
+                    self.price.area.title, success)
+                send_mail(
+                    msg, msg, settings.EMAIL_FROM,
+                    settings.MANAGERS_EMAILS, fail_silently=True)
+                return success
+
 
 class SavePriceFileXlsTask(SavePriceFileBase):
+    mapping = (
+        (u'БРЭНД', 'brand', lambda x: Brand.objects.get(title__iexact=x).id),
+        (u'АРТИКУЛ', 'partnumber', unicode),
+        (u'НАИМЕНОВАНИЕ', 'description_ru', unicode),
+        (u'АББРЕВИАТУРА', 'description', unicode),
+        (u'LIST', 'MSRP', float),
+        (u'ВХОД', 'cost', float),
+        (u'ПАРТИЯ', 'party', str),
+        (u'НАЛИЧИЕ', 'available', int),
+    )
 
-    def save_parts(self, price):
-        mapping = (
-            (u'БРЭНД', 'brand', lambda x: Brand.objects.get(title__iexact=x).id),
-            (u'АРТИКУЛ', 'partnumber', unicode),
-            (u'НАИМЕНОВАНИЕ', 'description_ru', unicode),
-            (u'АББРЕВИАТУРА', 'description', unicode),
-            (u'LIST', 'MSRP', float),
-            (u'ВХОД', 'cost', float),
-            (u'ПАРТИЯ', 'party', str),
-            (u'НАЛИЧИЕ', 'available', int),
-        )
-
-        def clean_fieldname(cell_title):
-            return dict([(x[0], x[1]) for x in mapping])[cell_title.upper()]
-
-        def clean_fieldvalue(cell_title, cell_value):
-            cell_type = dict([(x[0], x[2]) for x in mapping])[cell_title.upper()]
-            return cell_type(cell_value)
-
-        success = 1
-    	try:
-            with tempfile.TemporaryFile() as f:
-                xls = xlsreader.readexcel(file_contents=price.price.read())
-                for sheet in xls.book.sheet_names():
-                    for row in xls.iter_dict(sheet):
-                        data = {}
-                        for cell_title, cell_value in row.iteritems():
-                            cleaned_fieldname = clean_fieldname(cell_title)
-                            cleaned_fieldvalue = clean_fieldvalue(cell_title, cell_value)
-                            data[cleaned_fieldname] = cleaned_fieldvalue
-
-                        if data.get('partnumber'):
-                            f.write(self.row_for_copy(data))
-                            success += 1
-
-                self._copy(f)
-    	except Exception, e:
-    	    logger.exception("%r" % e)
-            send_mail(
-                u"Загрузка деталей для `%s` прошла с ошибкой." % price.area.title,
-                u"Детали загружены не были. Ошибка в строке %s" % (success + 2),
-                settings.EMAIL_FROM,
-                settings.MANAGERS_EMAILS,
-                fail_silently=True
-            )
-            raise
-        return success - 1
+    def iter_lines(self, price):
+        xls = xlsreader.readexcel(file_contents=price.price.read())
+        for sheet in xls.book.sheet_names():
+            for line in xls.iter_list(sheet):
+                yield line
 
 
 class SavePriceFileCsvTask(SavePriceFileBase):
+    mapping = (
+        ('PART#', 'partnumber', unicode),
+        ('LISTPRICE', 'MSRP', float),
+        ('COST', 'cost', float),
+        ('DESCRIPTION', 'description', unicode),
+        ('CORE', 'core_price', float),
+        ('SUBSTITUTION', 'substitution', unicode),
+    )
 
-    def save_parts(self, price):
-        sep = '\t'
-        mapping = (
-            ('Part#', 'partnumber', unicode),
-            ('ListPrice', 'MSRP', float),
-            ('Cost', 'cost', float),
-            ('Description', 'description', unicode),
-            ('Core', 'core_price', float),
-            ('Substitution', 'substitution', unicode),
-        )
-        fields_map = dict([x[0:2] for x in mapping])
-        fields_types_map = dict([x[1:3] for x in mapping])
-        fields = [fields_map[x.strip()] for x in price.price.readline().split(sep)]
-
-    	success = 1
-    	try:
-            with tempfile.TemporaryFile() as f:
-                for counter, line in enumerate(price.price):
-                    if counter == 0:
-                        continue
-
-                    data = {}
-                    for field, value in zip(fields, [x.strip() for x in line.split(sep)]):
-                        if value:
-                            data[field] = fields_types_map[field](value)
-
-                    if data.get('partnumber'):
-                        f.write(self.row_for_copy(data))
-                        success += 1
-
-                self._copy(f)
-        except Exception, e:
-            logger.exception("%r" % e)
-            send_mail(
-                u"Загрузка деталей для `%s` прошла с ошибкой." % price.area.title,
-                u"Детали загружены не были. Ошибка в строке %s" % (success + 2),
-                settings.EMAIL_FROM,
-                settings.MANAGERS_EMAILS,
-                fail_silently=True
-            )
-            raise
-
-    	return success - 1
+    def iter_lines(self, price):
+        for line in price.price:
+            yield (x.strip() for x in line.split('\t'))
 
 
 class SavePartAnalog(Task):
@@ -196,61 +158,51 @@ class SavePartAnalog(Task):
             (u'КОММЕНТАРИЙ1', 'comment1', unicode),
             (u'КОММЕНТАРИЙ2', 'comment2', unicode),
         )
-        fields = map(lambda x: x[1], mapping)
+        all_fields = map(lambda x: x[1], mapping)
+        fields_map = dict([x[0:2] for x in mapping])
+        fields_types_map = dict([x[1:3] for x in mapping])
 
-        def clean_fieldname(cell_title):
-            return dict([(x[0], x[1]) for x in mapping])[cell_title.upper()]
-
-        def clean_fieldvalue(cell_title, cell_value):
-            cell_type = dict([(x[0], x[2]) for x in mapping])[cell_title.upper()]
-            return cell_type(cell_value)
-
-        def row_for_copy(data):
-            row = ((data.get(field) or NULL_COPY) for field in fields)
+        def _row_for_copy(data):
+            row = ((data.get(f) or NULL_COPY) for f in all_fields)
             row = map(lambda x: str(("%s" % x).encode("UTF-8")), row)
             return "%s\n" % "\t".join(row)
 
-        success = 1
+        success = 0
         try:
             with tempfile.TemporaryFile() as f:
                 with open(filepath, 'r') as file_contents:
                     xls = xlsreader.readexcel(file_contents=file_contents.read())
                     for sheet in xls.book.sheet_names():
-                        for row in xls.iter_dict(sheet):
-                            data = {}
-                            for cell_title, cell_value in row.iteritems():
-                                cleaned_fieldname = clean_fieldname(cell_title)
-                                cleaned_fieldvalue = clean_fieldvalue(cell_title, cell_value)
-                                data[cleaned_fieldname] = cleaned_fieldvalue
-                            f.write(row_for_copy(data))
-                            success += 1
+                        for counter, line in enumerate(xls.iter_list(sheet), 1):
+                            if counter == 1:  # header
+                                fields = [fields_map[x.upper()] for x in line]
+                                continue
+                            data = dict(
+                                (f, fields_types_map[f](v))
+                                for f, v in zip(fields, line)
+                                if v)
+                            if data.get('partnumber'):
+                                f.write(_row_for_copy(data))
+                                success += 1
                 f.seek(0)
                 cur = connection.cursor()
                 cur.execute("""TRUNCATE TABLE data_partanalog""")
-                cur.copy_from(f, 'data_partanalog', columns=fields)
-
+                cur.copy_from(f, 'data_partanalog', columns=all_fields)
+                cur.close()
         except Exception, e:
-            logger.exception("%r" % e)
+            logger.exception("%r", e)
+            msg = u"Загрузка аналогов прошла с ошибкой. Ошибка в строке %s." % counter
             send_mail(
-                u"Загрузка аналогов прошла с ошибкой.",
-                u"Аналоги загружены не были.",
-                settings.EMAIL_FROM,
-                settings.MANAGERS_EMAILS,
-                fail_silently=True
-            )
-            result = 'error!'
+                msg, msg, settings.EMAIL_FROM,
+                settings.MANAGERS_EMAILS, fail_silently=True)
             raise
         else:
+            logger.info("analogs saved, %s items", success)
+            msg = u"Загрузка аналогов прошла успешно. Загружено %s позиций" % success
             send_mail(
-                u"Загрузка аналогов прошла успешно.",
-                u"Всего загружено %s аналогов." % (success - 1),
-                settings.EMAIL_FROM,
-                settings.MANAGERS_EMAILS,
-                fail_silently=True
-            )
-            result = 'success: %s' % (success - 1)
-
-        return result
+                msg, msg, settings.EMAIL_FROM,
+                settings.MANAGERS_EMAILS, fail_silently=True)
+        return success
 
 tasks.register(SavePriceFileCsvTask)
 tasks.register(SavePriceFileXlsTask)
