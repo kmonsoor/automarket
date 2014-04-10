@@ -210,9 +210,9 @@ class Shipment(models.Model):
     number = models.IntegerField(verbose_name=u"Номер", default=1)
     client = models.ForeignKey(User, verbose_name=u"Клиент", related_name=u"shipment_client")
     manager = models.ForeignKey(User, verbose_name=u"Менеджер", related_name=u"shipment_manager")
-    user = models.ForeignKey(User, verbose_name=u"Отгрузивший пользователь", related_name=u"user")
-
-    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, verbose_name=u"Создатель отгрузки", related_name=u"user")
+    created_at = models.DateTimeField(verbose_name=u"Время создания", auto_now_add=True)
+    created_at.editable = True
 
     class Meta:
         unique_together = ('code', 'number', 'client',)

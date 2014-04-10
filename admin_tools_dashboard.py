@@ -16,7 +16,8 @@ class MyDashboard(Dashboard):
         # append an app list module for "Applications"
         self.children.append(modules.ModelList(
             u'Настройки приложения и данные',
-            ['data.models.Direction',
+            [
+            'data.models.Direction',
              'data.models.BrandGroup',
              'data.models.Area',
              'data.models.Brand',
@@ -25,7 +26,9 @@ class MyDashboard(Dashboard):
              'data.models.ClientGroup',
              'data.models.Part',
              'data.models.PartAnalog',
-             'data.models.BalanceItem']
+             'data.models.BalanceItem',
+             'data.models.Shipment'
+            ]
         ))
 
         # append an app list module for "Administration"
@@ -76,7 +79,8 @@ class CustomAppIndexDashboard(AppIndexDashboard):
                  'data.models.ClientGroup',
                  'data.models.Part',
                  'data.models.PartAnalog',
-                 'data.models.BalanceItem']
+                 'data.models.BalanceItem',
+                 'data.models.Shipment']
             ))
         else: # default
             self.children.append(modules.ModelList(

@@ -616,12 +616,33 @@ class PartAnalogAdmin(admin.ModelAdmin):
             'admin/data/partanalog/upload_analogs.html', ctx)
 
 
+class ShipmentAdmin(admin.ModelAdmin):
+    list_display = ('full_code', '_client', '_manager')
+    search_fields = ('code', 'client__username', 'manager__username',)
+
+    def full_code(self, obj):
+        return "%s-%s" % (obj.code, obj.number)
+    full_code.short_description = u"Код"
+    full_code.allow_tags = True
+
+    def _manager(self, obj):
+        return obj.manager and obj.manager.username
+    _manager.short_description = u"Менеджер"
+    _manager.allow_tags = True
+
+    def _client(self, obj):
+        return obj.client and obj.client.username
+    _client.short_description = u"Клиент"
+    _client.allow_tags = True
+
+
 admin.site.register(Brand, BrandAdmin)
 admin.site.register(Direction, DirectionAdmin)
 admin.site.register(BrandGroup, BrandGroupAdmin)
 admin.site.register(Area, AreaAdmin)
 admin.site.register(OrderedItem, OrderedItemAdmin)
 admin.site.unregister(User)
+admin.site.register(Shipment, ShipmentAdmin)
 admin.site.register(Staff, StaffAdmin)
 admin.site.register(CustomerAccount, CustomerAdmin)
 admin.site.register(ClientGroup, ClientGroupAdmin)
