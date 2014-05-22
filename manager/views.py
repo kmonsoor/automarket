@@ -5,7 +5,7 @@ import datetime
 import dateutil
 import random
 import string
-from collections import defaultdict, Counter
+from collections import defaultdict
 from itertools import groupby
 
 from django.contrib import messages
@@ -19,6 +19,7 @@ from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
+from lib.collections import Counter
 
 from common.decorators import manager_required
 
