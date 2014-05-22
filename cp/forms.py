@@ -1,11 +1,8 @@
 # -*- coding=UTF-8 -*-
 
-import datetime
 from django import forms
-from django.conf import settings
 from django.contrib.auth.models import User
-from data.models import BrandGroup, Brand, OrderedItem, Area
-from lib.widgets import JQueryAutoComplete
+from data.models import BrandGroup, Brand, Area
 from lib.dynamicforms import Form
 
 
@@ -122,6 +119,7 @@ class SearchForm(forms.Form):
         self.fields['maker'].widget.choices = maker_choices
     maker = forms.CharField(widget=forms.Select(choices=()), label=u'MAKE', required=True)
     part_number = forms.CharField(widget=forms.TextInput(attrs={'size':15}), label=u'Part Number', required=True)
+
 
 class ImportXlsForm(forms.Form):
     xls_file = forms.Field(widget=forms.FileInput(), required=False, label="Файл")

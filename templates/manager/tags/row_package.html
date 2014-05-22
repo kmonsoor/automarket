@@ -1,0 +1,27 @@
+{% load manager_tags %}
+<td>&nbsp;</td>
+{% if 'ponumber' in user_fields %}{% table_td p 'description' p.editable 'editDescriptionPackage' 1 'package_' %}{% endif %}
+{% if 'brandgroup' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'area' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'brand' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'part_number' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'comment_customer' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'created' in user_fields %}{% table_td p 'created_at' 0 '' %}{% endif %}
+{% if 'received_office_at' in user_fields %}{% table_td p 'received_at' 0 '' %}{% endif %}
+{% if 'quantity' in user_fields %}{% table_td p 'quantity' p.editable 'editQuantityPackage' 1 'package_' %}{% endif %}
+{% if 'part_number_superseded' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'client' in user_fields %}<td>{{ p.client|default:"" }}</td>{% endif %}
+{% if 'description_ru' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'description_en' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'id' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'price_base' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'weight' in user_fields %}{% table_td p 'weight' p.editable 'editWeightPackage' 1 'package_' %}{% endif %}
+{% if 'delivery' in user_fields %}{% table_td p 'delivery' 0 '' 0 %}{% endif %}
+{% if 'price_sale' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'price_discount' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'cost' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'total_cost' in user_fields %}{% table_td p 'total_cost' 0 '' %}{% endif %}
+{% if 'invoice_code' in user_fields %}{% table_td p 'invoice' 0 '' %}{% endif %}
+{% if 'status' in user_fields %}{% table_td_status p %}{% endif %}
+{% if 'issued_at' in user_fields %}{% table_td p 'issued_at' 0 '' %}{% endif %}
+<td>&nbsp;</td>

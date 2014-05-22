@@ -1,5 +1,4 @@
 # -*- coding=utf-8 -*-
-import inspect
 import itertools
 import datetime
 import logging
@@ -20,17 +19,14 @@ from data.settings import (
 class Direction(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     po = models.CharField(max_length=255, verbose_name=u"PO")
-
-    delivery = models.FloatField(verbose_name=u"доставка", blank=True, null=True)
+    delivery = models.FloatField(
+        verbose_name=u"доставка", blank=True, null=True)
     multiplier = models.DecimalField(
-        u'множитель', max_digits=7, decimal_places=3, blank=True, null=True
-    )
+        u'множитель', max_digits=7, decimal_places=3, blank=True, null=True)
     cost_margin = models.FloatField(
-        verbose_name=u"Коэффициент минимального профита", blank=True, null=True
-    )
+        verbose_name=u"Коэффициент минимального профита", blank=True, null=True)
     delivery_period = models.IntegerField(
-        u'Срок доставки (в днях)', blank=True, null=True
-    )
+        u'Срок доставки (в днях)', blank=True, null=True)
 
     class Meta:
         verbose_name = u'Направление'
@@ -43,19 +39,20 @@ class Direction(models.Model):
 class BrandGroup(models.Model):
     direction = models.ForeignKey(Direction, verbose_name=u"Направление")
     title = models.CharField(verbose_name=u"Название", max_length=10)
-    description = models.TextField(verbose_name=u"Описание", null=True, blank=True)
-
-    delivery = models.FloatField(verbose_name=u"доставка", blank=True, null=True)
-    multiplier = models.DecimalField(u'множитель', max_digits=7, decimal_places=3, \
-                                     blank=True, null=True)
+    description = models.TextField(
+        verbose_name=u"Описание", null=True, blank=True)
+    delivery = models.FloatField(
+        verbose_name=u"доставка", blank=True, null=True)
+    multiplier = models.DecimalField(
+        u'множитель', max_digits=7, decimal_places=3, blank=True, null=True)
     cost_margin = models.FloatField(
-        verbose_name=u"Коэффициент минимального профита", blank=True, null=True
-    )
-    delivery_period = models.IntegerField(u'Срок доставки (в днях)',
-        blank=True, null=True)
-
-    area = models.ManyToManyField('Area', verbose_name=u"Поставщики", null=True, blank=True)
-    add_brand_to_comment = models.BooleanField(verbose_name=u"В поле 'Comment2' добавляется значение поля 'Brand'",
+        verbose_name=u"Коэффициент минимального профита", blank=True, null=True)
+    delivery_period = models.IntegerField(
+        u'Срок доставки (в днях)', blank=True, null=True)
+    area = models.ManyToManyField(
+        'Area', verbose_name=u"Поставщики", null=True, blank=True)
+    add_brand_to_comment = models.BooleanField(
+        verbose_name=u"В поле 'Comment2' добавляется значение поля 'Brand'",
         default=False)
 
     class Meta:
@@ -69,28 +66,50 @@ class BrandGroup(models.Model):
         class ps(dict):
             __slots__ = ['area', 'multiplier', 'delivery']
 
-        current_settings = dict(tuple([(x.area.id, x) for x in \
-            BrandGroupAreaSettings.objects.select_related().filter(brand_group=self)]))
+        current_settings = dict(
+            (x.area.id, x)
+            for x in BrandGroupAreaSettings.objects.select_related().filter(
+                brand_group=self))
+
         for area in self.area.all():
             if area.id in current_settings:
-                multiplier, delivery = (getattr(current_settings.get(area.id), x) \
-                for x in ['multiplier', 'delivery'])
+                multiplier, delivery = (
+                    getattr(current_settings.get(area.id), x)
+                    for x in ['multiplier', 'delivery'])
             else:
                 multiplier = delivery = None
+
             yield ps(area=area, multiplier=multiplier, delivery=delivery)
 
     def get_settings(self):
-        m = [self.multiplier, self.direction.multiplier, AREA_MULTIPLIER_DEFAULT]
-        d = [self.delivery, self.direction.delivery, DELIVERY_DEFAULT]
-        dp = [self.delivery_period, self.direction.delivery_period, DELIVERY_PERIOD_DEFAULT]
+        m = [
+            self.multiplier,
+            self.direction.multiplier,
+            AREA_MULTIPLIER_DEFAULT]
+
+        d = [
+            self.delivery,
+            self.direction.delivery,
+            DELIVERY_DEFAULT]
+
+        dp = [
+            self.delivery_period,
+            self.direction.delivery_period,
+            DELIVERY_PERIOD_DEFAULT]
+
+        cm = [
+            self.cost_margin,
+            self.direction.cost_margin,
+            COST_MARGIN_DEFAULT]
+
         first = lambda xs: [x for x in xs if x is not None][0]
-        cm = [self.cost_margin, self.direction.cost_margin, COST_MARGIN_DEFAULT]
         return first(m), first(d), first(dp), None, first(cm)
 
 
 class Area(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
-    brands = models.ManyToManyField('Brand', null=True, blank=True, verbose_name=u'Бренды')
+    brands = models.ManyToManyField(
+        'Brand', null=True, blank=True, verbose_name=u'Бренды')
 
     class Meta:
         verbose_name = u"Поставщик"
@@ -102,7 +121,8 @@ class Area(models.Model):
 
     def get_brandgroup_settings(self, brand_group):
         try:
-            s = BrandGroupAreaSettings.objects.get(area=self, brand_group=brand_group)
+            s = BrandGroupAreaSettings.objects.get(
+                area=self, brand_group=brand_group)
         except BrandGroupAreaSettings.DoesNotExist:
             return brand_group.get_settings()
         else:
@@ -110,22 +130,19 @@ class Area(models.Model):
                 s.multiplier,
                 brand_group.multiplier,
                 brand_group.direction.multiplier,
-                AREA_MULTIPLIER_DEFAULT
-            ]
+                AREA_MULTIPLIER_DEFAULT]
 
             d = [
                 s.delivery,
                 brand_group.delivery,
                 brand_group.direction.delivery,
-                DELIVERY_DEFAULT
-            ]
+                DELIVERY_DEFAULT]
 
             dp = [
                 s.delivery_period,
                 brand_group.delivery_period,
                 brand_group.direction.delivery_period,
-                DELIVERY_PERIOD_DEFAULT
-            ]
+                DELIVERY_PERIOD_DEFAULT]
 
             pu = s.price_updated_at
 
@@ -133,8 +150,7 @@ class Area(models.Model):
                 s.cost_margin,
                 brand_group.cost_margin,
                 brand_group.direction.cost_margin,
-                COST_MARGIN_DEFAULT
-            ]
+                COST_MARGIN_DEFAULT]
 
             first = lambda xs: [x for x in xs if x is not None][0]
             return first(m), first(d), first(dp), pu, first(cm)
@@ -155,13 +171,15 @@ class BrandGroupAreaSettings(models.Model):
         u'множитель', max_digits=7, decimal_places=3, blank=True, null=True)
 
     cost_margin = models.FloatField(
-        verbose_name=u"Коэффициент минимального профита", blank=True, null=True)
+        verbose_name=u"Коэффициент минимального профита",
+        blank=True, null=True)
 
     delivery_period = models.IntegerField(
         u'Срок доставки (в днях)', blank=True, null=True)
 
     price = models.FileField(
-        u"Файл с ценами", upload_to=settings.PRICE_UPLOAD_DIR, null=True, blank=True)
+        u"Файл с ценами", upload_to=settings.PRICE_UPLOAD_DIR,
+        null=True, blank=True)
 
     price_updated_at = models.DateTimeField(
         u"Дата обновления цен", null=True, blank=True)
@@ -174,27 +192,10 @@ class BrandGroupAreaSettings(models.Model):
         verbose_name = u"запись настроек"
         verbose_name_plural = u"Настройки для поставщиков"
 
-# M2M brand_group - area
-'''
-def brangroup_area_changed(sender, instance, action, reverse, model, pk_set, **kwargs):
-    # Delete removed
-    if pk_set:
-    BrandGroupAreaSettings.objects.filter(brand_group=instance) \
-                              .exclude(area__id__in=list(pk_set)) \
-                              .delete()
-    # Will be created for new ones
-    for area_id in pk_set:
-        obj, created = \
-        BrandGroupSettings.objects.get_or_create(brand_group=instance, \
-                                                 area=model.objects.get(pk=area_id))
-
-models.signals.m2m_changed.connect(brangroup_area_changed, sender=BrandGroup.area.through,
-dispatch_uid="38fy3f73")
-'''
-
 
 class Brand(models.Model):
-    title = models.CharField(max_length=255, verbose_name=u"Название", unique=True)
+    title = models.CharField(
+        max_length=255, verbose_name=u"Название", unique=True)
 
     class Meta:
         verbose_name = u"Бренд"
@@ -206,12 +207,18 @@ class Brand(models.Model):
 
 
 class Shipment(models.Model):
-    code = models.CharField(verbose_name=u"Код", max_length=255)
-    number = models.IntegerField(verbose_name=u"Номер", default=1)
-    client = models.ForeignKey(User, verbose_name=u"Клиент", related_name=u"shipment_client")
-    manager = models.ForeignKey(User, verbose_name=u"Менеджер", related_name=u"shipment_manager")
-    user = models.ForeignKey(User, verbose_name=u"Создатель отгрузки", related_name=u"user")
-    created_at = models.DateTimeField(verbose_name=u"Время создания", auto_now_add=True)
+    code = models.CharField(
+        verbose_name=u"Код", max_length=255)
+    number = models.IntegerField(
+        verbose_name=u"Номер", default=1)
+    client = models.ForeignKey(
+        User, verbose_name=u"Клиент", related_name=u"shipment_client")
+    manager = models.ForeignKey(
+        User, verbose_name=u"Менеджер", related_name=u"shipment_manager")
+    user = models.ForeignKey(
+        User, verbose_name=u"Создатель отгрузки", related_name=u"user")
+    created_at = models.DateTimeField(
+        verbose_name=u"Время создания", auto_now_add=True)
     created_at.editable = True
 
     class Meta:
@@ -270,16 +277,16 @@ class Shipment(models.Model):
         for client, orders in orders_by_clients.iteritems():
             by_clients_and_managers.setdefault(client, {})
             for order in orders:
-                by_clients_and_managers[client]\
-                    .setdefault(order.manager, {'orders': [], 'packages': []})['orders']\
-                    .append(order)
+                by_clients_and_managers[client].setdefault(
+                    order.manager, {'orders': [], 'packages': []}
+                )['orders'].append(order)
 
         for client, packages in packages_by_clients.iteritems():
             by_clients_and_managers.setdefault(client, {})
             for package in packages:
-                by_clients_and_managers[client]\
-                    .setdefault(package.manager, {'orders': [], 'packages': []})['packages']\
-                    .append(package)
+                by_clients_and_managers[client].setdefault(
+                    package.manager, {'orders': [], 'packages': []}
+                )['packages'].append(package)
 
         shipments = []
         for client, by_manager in by_clients_and_managers.iteritems():
@@ -301,33 +308,34 @@ class Shipment(models.Model):
                 shipment.save()
 
                 if items['orders']:
-                    OrderedItem.objects\
-                        .filter(id__in=set(x.id for x in items['orders']))\
-                        .update(
-                            shipment=shipment,
-                            status='issued',
-                            issued_at=datetime.datetime.now()
-                        )
+                    (OrderedItem.objects
+                    .filter(id__in=set(x.id for x in items['orders']))
+                    .update(
+                        shipment=shipment,
+                        status='issued',
+                        issued_at=datetime.datetime.now()))
 
                 if items['packages']:
-                    Package.objects\
-                        .filter(id__in=set(x.id for x in items['packages']))\
-                        .update(
-                            shipment=shipment,
-                            status=PACKAGE_STATUS_ISSUED,
-                            issued_at=datetime.datetime.now()
-                        )
+                    (Package.objects
+                    .filter(id__in=set(x.id for x in items['packages']))
+                    .update(
+                        shipment=shipment,
+                        status=PACKAGE_STATUS_ISSUED,
+                        issued_at=datetime.datetime.now()))
 
-                BalanceItem.create_by_shipment(shipment, items['orders'], items['packages'])
+                BalanceItem.create_by_shipment(
+                    shipment, items['orders'], items['packages'])
 
                 shipments.append(shipment)
+
         return shipments
 
     @transaction.commit_on_success
     def _delete(self):
         orders = OrderedItem.objects.filter(shipment=self)
         packages = Package.objects.filter(shipment=self)
-        BalanceItem.backup_balanceitems_post_shipment_delete(self, orders, packages)
+        BalanceItem.backup_balanceitems_post_shipment_delete(
+            self, orders, packages)
         orders.update(shipment=None, status='received_office')
         packages.update(shipment=None, status=PACKAGE_STATUS_RECEIVED)
         self.delete()
@@ -354,54 +362,91 @@ ORDER_ITEM_STATUSES = (
 
 
 class OrderedItem(models.Model):
-    brandgroup = models.ForeignKey(BrandGroup, verbose_name=u"Группа поставщиков")
+    brandgroup = models.ForeignKey(
+        BrandGroup, verbose_name=u"Группа поставщиков")
     area = models.ForeignKey(Area, verbose_name=u"Поставщик")
     brand = models.ForeignKey(Brand, verbose_name=u"Бренд")
-    ponumber = models.IntegerField(verbose_name=u"Номер заказа", blank=True, null=True)
-    part_number = models.CharField(verbose_name=u"Номер детали", max_length=255, db_index=True)
-    part_number_superseded = models.CharField(max_length=255, null=True, blank=True, verbose_name=u"Новый номер(замена)")
-    comment_customer = models.TextField(verbose_name=u"Комментарий заказчика", blank=True, null=True)
-    comment_supplier = models.TextField(verbose_name=u"Комментарий поставщика", blank=True, null=True)
+    ponumber = models.IntegerField(
+        verbose_name=u"Номер заказа", blank=True, null=True)
+    part_number = models.CharField(
+        verbose_name=u"Номер детали", max_length=255, db_index=True)
+    part_number_superseded = models.CharField(
+        max_length=255, null=True, blank=True,
+        verbose_name=u"Новый номер(замена)")
+    comment_customer = models.TextField(
+        verbose_name=u"Комментарий заказчика", blank=True, null=True)
+    comment_supplier = models.TextField(
+        verbose_name=u"Комментарий поставщика", blank=True, null=True)
 
-    quantity = models.PositiveIntegerField(verbose_name=u'Количество', null=True, blank=True)
-    price_invoice = models.FloatField(verbose_name=u"Цена из инвойса от поставщика", blank=True, null=True)
+    quantity = models.PositiveIntegerField(
+        verbose_name=u'Количество', null=True, blank=True)
+    price_invoice = models.FloatField(
+        verbose_name=u"Цена из инвойса от поставщика", blank=True, null=True)
     # quantity*price_invoice
-    total_w_ship = models.FloatField(verbose_name=u"TOTAL", null=True, blank=True)
+    total_w_ship = models.FloatField(
+        verbose_name=u"TOTAL", null=True, blank=True)
 
-    client = models.ForeignKey(User, verbose_name=u"Клиент", related_name=u"client")
-    client_order_id = models.IntegerField(verbose_name=u"Номер заказа для клиента", blank=True, null=True)
-    manager = models.ForeignKey(User, verbose_name=u"Менеджер", related_name=u"manager")
-    description_ru = models.TextField(verbose_name=u"Описание RUS", blank=True, null=True)
-    description_en = models.TextField(verbose_name=u"Описание ENG", blank=True, null=True)
+    client = models.ForeignKey(
+        User, verbose_name=u"Клиент", related_name=u"client")
+    client_order_id = models.IntegerField(
+        verbose_name=u"Номер заказа для клиента", blank=True, null=True)
+    manager = models.ForeignKey(
+        User, verbose_name=u"Менеджер", related_name=u"manager")
+    description_ru = models.TextField(
+        verbose_name=u"Описание RUS", blank=True, null=True)
+    description_en = models.TextField(
+        verbose_name=u"Описание ENG", blank=True, null=True)
 
-    price_base = models.FloatField(verbose_name=u'Базовая Цена', null=True, blank=True)
-    price_sale = models.FloatField(verbose_name=u"Цена продажи", null=True, blank=True)
-    price_discount = models.FloatField(verbose_name=u"Цена продажи со скидкой", null=True, blank=True)
-    weight = models.FloatField(verbose_name=u"Вес одной детали", null=True, blank=True)
+    price_base = models.FloatField(
+        verbose_name=u'Базовая Цена', null=True, blank=True)
+    price_sale = models.FloatField(
+        verbose_name=u"Цена продажи", null=True, blank=True)
+    price_discount = models.FloatField(
+        verbose_name=u"Цена продажи со скидкой", null=True, blank=True)
+    weight = models.FloatField(
+        verbose_name=u"Вес одной детали", null=True, blank=True)
     #weight*Const
-    delivery_coef = models.FloatField(verbose_name=u"Цена доставки за кг", blank=True, null=True)
-    delivery = models.FloatField(verbose_name=u"Доставка", null=True, blank=True)
+    delivery_coef = models.FloatField(
+        verbose_name=u"Цена доставки за кг", blank=True, null=True)
+    delivery = models.FloatField(
+        verbose_name=u"Доставка", null=True, blank=True)
 
     # price_discount + delievery OR price_sale + delivery
-    cost = models.FloatField(verbose_name=u"Окончательная цена за деталь", null=True, blank=True)
+    cost = models.FloatField(
+        verbose_name=u"Окончательная цена за деталь", null=True, blank=True)
     # cost*quantity
-    total_cost = models.FloatField(verbose_name=u"Окончательная цена за все", null=True, blank=True)
+    total_cost = models.FloatField(
+        verbose_name=u"Окончательная цена за все", null=True, blank=True)
 
-    status = models.CharField(max_length=50, choices=ORDER_ITEM_STATUSES, default='order', verbose_name=u"Статус")
-    status_modified = models.DateTimeField(verbose_name=u"Дата изменения статуса", editable=False, null=True, blank=True)
+    status = models.CharField(
+        max_length=50, choices=ORDER_ITEM_STATUSES,
+        default='order', verbose_name=u"Статус")
+    status_modified = models.DateTimeField(
+        verbose_name=u"Дата изменения статуса", editable=False,
+        null=True, blank=True)
 
-    previous_status = models.CharField(max_length=50, verbose_name=u"Прежний статус", null=True, blank=True,)
-    created = models.DateTimeField(auto_now_add=True, verbose_name=u"Дата создания")
-    received_office_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Получено офисом")
-    issued_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Отгружено")
-    modified = models.DateTimeField(auto_now=True, verbose_name=u"Дата изменения", editable=False)
-    invoice_code = models.CharField(max_length=255, verbose_name=u'Инвойс', null=True, blank=True, db_index=True)
+    previous_status = models.CharField(
+        max_length=50, verbose_name=u"Прежний статус", null=True, blank=True)
+    created = models.DateTimeField(
+        auto_now_add=True, verbose_name=u"Дата создания")
+    received_office_at = models.DateTimeField(
+        null=True, blank=True, verbose_name=u"Получено офисом")
+    issued_at = models.DateTimeField(
+        null=True, blank=True, verbose_name=u"Отгружено")
+    modified = models.DateTimeField(
+        auto_now=True, verbose_name=u"Дата изменения", editable=False)
+    invoice_code = models.CharField(
+        max_length=255, verbose_name=u'Инвойс',
+        null=True, blank=True, db_index=True)
     parent = models.ForeignKey('self', null=True, blank=True)
 
-    big_price_invoice_order_mail_sent = models.BooleanField(verbose_name=u'Цена в инвойсе больше цены продажи. Отправлено письмо.', default=False)
+    big_price_invoice_order_mail_sent = models.BooleanField(
+        verbose_name=u'Цена в инвойсе больше цены продажи. Отправлено письмо.',
+        default=False)
     editable = models.BooleanField(verbose_name=u"Редактируемая", default=True)
 
-    shipment = models.ForeignKey(Shipment, verbose_name=u"Отгрузка", null=True, blank=True)
+    shipment = models.ForeignKey(
+        Shipment, verbose_name=u"Отгрузка", null=True, blank=True)
 
     objects = OrderedItemManager()
 
@@ -414,16 +459,13 @@ class OrderedItem(models.Model):
 
     @property
     def do_calc_totals_by_status(self):
-        _statuses = {
+        s = {
             'US': ['received_office', 'issued'],
             'MSK': ['receiced_office', 'sent_representative']
         }
-        return self.status in _statuses.get(self.brandgroup.direction.title, [])
+        return self.status in s.get(self.brandgroup.direction.title, [])
 
     def save(self, *args, **kwargs):
-
-        logger.debug("OrderedItem save: called from %r" % \
-                     inspect.getframeinfo(inspect.currentframe().f_back)[2])
 
         if self.delivery_coef is None:
             multiplier, delivery, delivery_period, price_updated_at, mc = \
@@ -435,18 +477,8 @@ class OrderedItem(models.Model):
         if not self.weight:
             self.delivery = None
 
-        logger.debug("OrderedItem save: delivery is: %r" % self.delivery)
         if self.quantity and self.price_invoice:
-            logger.debug("OrderedItem save: quantity and price_invoice defined")
             self.total_w_ship = self.price_invoice * self.quantity
-
-        # TODO - making dinamic discount. Now price_discount is set manually
-        #if self.price_sale and self.client and self.area and not self.price_discount:
-        #    try:
-        #        discount = Discount.objects.get(user=self.client, area=self.area)
-        #        self.price_discount = self.price_sale - self.price_sale*discount.discount/100
-        #    except Discount.DoesNotExist:
-        #        pass
 
         try:
             calc_price = [x for x in [self.price_discount, self.price_sale] if x][0]
@@ -472,10 +504,6 @@ class OrderedItem(models.Model):
             if self.do_calc_totals_by_status:
                 self.cost = cost
                 self.total_cost = total_cost
-        # clear totals for unappropriate statuses
-        #if self.status != 'moderation' and not self.do_calc_totals_by_status:
-            #self.cost = None
-            #self.total_cost = None
 
         if self.status == 'issued' and not self.issued_at:
             self.issued_at = datetime.datetime.now()
@@ -495,8 +523,8 @@ class OrderedItem(models.Model):
         return dict(ORDER_ITEM_STATUSES).get(self.status, self.status)
 
     def get_po_verbose(self):
-        return u"%s%s" % (self.brandgroup.direction.po, self.ponumber,) \
-                           if self.ponumber else ''
+        return self.ponumber and u"%s%s" % (
+            self.brandgroup.direction.po, self.ponumber,) or ''
 
     @property
     def status_display(self):
@@ -516,12 +544,11 @@ class OrderedItem(models.Model):
 
     @property
     def exist_in_stk(self):
-        parts = Part.objects.filter(brand=self.brand,
-                                    brandgroup__direction__title='STK',
-                                    partnumber=self.part_number)
-        if len(parts) > 0:
-            return True
-        return False
+        parts = Part.objects.filter(
+            brand=self.brand,
+            brandgroup__direction__title='STK',
+            partnumber=self.part_number)
+        return bool(len(parts))
 
 
 INVOICE_STATUS_NONE = 0
@@ -537,12 +564,17 @@ INVOICE_STATUSES = (
 
 
 class Invoice(models.Model):
-    code = models.CharField(verbose_name=u"Код", max_length=255, db_index=True)
-    brandgroup = models.ForeignKey(BrandGroup, verbose_name=u"Группа поставщиков", null=True, blank=True)
-    status = models.IntegerField(verbose_name=u"Состояние", choices=INVOICE_STATUSES, default=INVOICE_STATUS_IN_DELIVERY)
-    received_at = models.DateTimeField(verbose_name=u"Дата получения", null=True, blank=True)
-    closed_at = models.DateTimeField(verbose_name=u"Дата закрытия", null=True, blank=True)
-
+    code = models.CharField(
+        verbose_name=u"Код", max_length=255, db_index=True)
+    brandgroup = models.ForeignKey(
+        BrandGroup, verbose_name=u"Группа поставщиков", null=True, blank=True)
+    status = models.IntegerField(
+        verbose_name=u"Состояние", choices=INVOICE_STATUSES,
+        default=INVOICE_STATUS_IN_DELIVERY)
+    received_at = models.DateTimeField(
+        verbose_name=u"Дата получения", null=True, blank=True)
+    closed_at = models.DateTimeField(
+        verbose_name=u"Дата закрытия", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
@@ -609,17 +641,28 @@ class Package(models.Model):
     invoice = models.ForeignKey(Invoice)
     weight = models.FloatField(verbose_name=u"Вес")
     quantity = models.PositiveIntegerField(verbose_name=u'Количество')
-    manager = models.ForeignKey(User, verbose_name=u"Менеджер", related_name=u"manager_package")
-
-    delivery_coef = models.FloatField(verbose_name=u"Стоимость доставки за кг", blank=True, null=True)
-    delivery = models.FloatField(verbose_name=u"Стоимость доставки", null=True, blank=True)
-    total_cost = models.FloatField(verbose_name=u"Окончательная цена за все", null=True, blank=True)
-    client = models.ForeignKey(User, verbose_name=u"Клиент", related_name=u"client_package", null=True, blank=True)
-    received_at = models.DateTimeField(verbose_name=u"Дата получения", null=True, blank=True)
-    status = models.IntegerField(verbose_name=u"Состояние", choices=PACKAGE_STATUSES, default=PACKAGE_STATUS_RECEIVED)
-    issued_at = models.DateTimeField(null=True, blank=True, verbose_name=u"Отгружено")
-    editable = models.BooleanField(verbose_name=u"Редактируемая", default=True)
-    shipment = models.ForeignKey(Shipment, verbose_name=u"Отгрузка", null=True, blank=True)
+    manager = models.ForeignKey(
+        User, verbose_name=u"Менеджер", related_name=u"manager_package")
+    delivery_coef = models.FloatField(
+        verbose_name=u"Стоимость доставки за кг", blank=True, null=True)
+    delivery = models.FloatField(
+        verbose_name=u"Стоимость доставки", null=True, blank=True)
+    total_cost = models.FloatField(
+        verbose_name=u"Окончательная цена за все", null=True, blank=True)
+    client = models.ForeignKey(
+        User, verbose_name=u"Клиент", related_name=u"client_package",
+        null=True, blank=True)
+    received_at = models.DateTimeField(
+        verbose_name=u"Дата получения", null=True, blank=True)
+    status = models.IntegerField(
+        verbose_name=u"Состояние", choices=PACKAGE_STATUSES,
+        default=PACKAGE_STATUS_RECEIVED)
+    issued_at = models.DateTimeField(
+        null=True, blank=True, verbose_name=u"Отгружено")
+    editable = models.BooleanField(
+        verbose_name=u"Редактируемая", default=True)
+    shipment = models.ForeignKey(
+        Shipment, verbose_name=u"Отгрузка", null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -650,7 +693,29 @@ class Package(models.Model):
 
         super(Package, self).save(*args, **kwargs)
 
-# ----------------------------------------------------------
+
+class CustomerAccount(User):
+    class Meta:
+        proxy = True
+        app_label = 'auth'
+        verbose_name = u"аккаунт клиента"
+        verbose_name_plural = u"аккаунты клиентов"
+
+
+class Manager(User):
+    class Meta:
+        proxy = True
+        app_label = 'auth'
+        verbose_name = u"аккаунт менеджера"
+        verbose_name_plural = u"аккаунты менеджеров"
+
+
+class Staff(User):
+    class Meta:
+        proxy = True
+        app_label = 'auth'
+        verbose_name = u"аккаунт администратора"
+        verbose_name_plural = u"аккаунты администраторов"
 
 
 class ClientGroupManager(models.Manager):
@@ -664,7 +729,9 @@ class ClientGroupManager(models.Manager):
 class ClientGroup(models.Model):
     title = models.CharField(u'название', max_length=255)
     order_item_fields = models.TextField(blank=True, null=True)
-    is_default = models.BooleanField(u'назначать новому пользователю по-умолчанию', default=False, editable=False)
+    is_default = models.BooleanField(
+        u'назначать новому пользователю по-умолчанию',
+        default=False, editable=False)
 
     objects = ClientGroupManager()
 
@@ -675,17 +742,11 @@ class ClientGroup(models.Model):
         verbose_name = u"запись группы клиентов"
         verbose_name_plural = u"Группы клиентов"
 
-    #def save(self, *args, **kwargs):
-    #    if self.default:
-    #        for x in ClientGroup.objects.exclude(pk=self.id):
-    #            x.default = False
-    #            x.save()
-    #    super(ClientGroup, self).save(*args, **kwargs)
-
 
 class BrandGroupDiscount(models.Model):
     user = models.ForeignKey(User, verbose_name=u"пользователь")
-    brand_group = models.ForeignKey(BrandGroup, verbose_name=u"группа поставщиков")
+    brand_group = models.ForeignKey(
+        BrandGroup, verbose_name=u"группа поставщиков")
     discount = models.FloatField(verbose_name=u"скидка (%)")
 
     class Meta:
@@ -696,7 +757,8 @@ class BrandGroupDiscount(models.Model):
 
 class Discount(models.Model):
     user = models.ForeignKey(User, verbose_name=u"пользователь")
-    brand_group = models.ForeignKey(BrandGroup, verbose_name=u"группа поставщиков", null=True)
+    brand_group = models.ForeignKey(
+        BrandGroup, verbose_name=u"группа поставщиков", null=True)
     area = models.ForeignKey(Area, verbose_name=u"поставщик")
     discount = models.FloatField(verbose_name=u"скидка (%)")
 
@@ -710,8 +772,10 @@ class Discount(models.Model):
 
 
 class BrandGroupClientGroupDiscount(models.Model):
-    client_group = models.ForeignKey(ClientGroup, verbose_name=u"Группа клиента")
-    brand_group = models.ForeignKey(BrandGroup, null=True, blank=True, verbose_name=u"группа поставщиков")
+    client_group = models.ForeignKey(
+        ClientGroup, verbose_name=u"Группа клиента")
+    brand_group = models.ForeignKey(
+        BrandGroup, null=True, blank=True, verbose_name=u"группа поставщиков")
     discount = models.FloatField(verbose_name=u"Скидка (%)")
 
     class Meta:
@@ -721,8 +785,10 @@ class BrandGroupClientGroupDiscount(models.Model):
 
 
 class ClientGroupDiscount(models.Model):
-    client_group = models.ForeignKey(ClientGroup, verbose_name=u"Группа клиента")
-    brand_group = models.ForeignKey(BrandGroup, null=True, blank=True, verbose_name=u"группа поставщиков")
+    client_group = models.ForeignKey(
+        ClientGroup, verbose_name=u"Группа клиента")
+    brand_group = models.ForeignKey(
+        BrandGroup, null=True, blank=True, verbose_name=u"группа поставщиков")
     area = models.ForeignKey(Area, verbose_name=u"Поставщик")
     discount = models.FloatField(verbose_name=u"Скидка (%)")
 
@@ -738,8 +804,11 @@ def on_client_group_create(sender, instance, created, **kwargs):
 
     def discounts():
         for brand_group in BrandGroup.objects.all():
-            BrandGroupClientGroupDiscount.objects.create(brand_group=brand_group,
-                       client_group=instance, discount=AREA_DISCOUNT_DEFAULT)
+            BrandGroupClientGroupDiscount.objects.create(
+                brand_group=brand_group,
+                client_group=instance,
+                discount=AREA_DISCOUNT_DEFAULT)
+
             for area in brand_group.area.all():
                 ClientGroupDiscount.objects.create(
                     area=area,
@@ -747,7 +816,6 @@ def on_client_group_create(sender, instance, created, **kwargs):
                     client_group=instance,
                     discount=AREA_DISCOUNT_DEFAULT)
 
-    #discounts()
     from data.forms import CLIENT_FIELD_LIST
     fields = [x[2] for x in CLIENT_FIELD_LIST]
     instance.order_item_fields = ','.join(fields)
@@ -758,8 +826,14 @@ models.signals.post_save.connect(on_client_group_create, sender=ClientGroup)
 
 class UserProfile(models.Model):
 
-    client_group = models.ForeignKey(ClientGroup, verbose_name=u"группа", blank=True, null=True)
+    client_group = models.ForeignKey(
+        ClientGroup, verbose_name=u"группа", blank=True, null=True)
+    client_manager = models.ForeignKey(
+        User, verbose_name='менеджер',
+        related_name='client_manager', null=True, blank=True)
     order_item_fields = models.TextField(blank=True, default="")
+    is_manager = models.BooleanField(
+        verbose_name=u"статус менеджера", blank=True, default=False)
     user = models.ForeignKey(User, unique=True)
 
     def get_discount(self, brand_group=None, area=None):
@@ -771,41 +845,39 @@ class UserProfile(models.Model):
         # first try to find self discount for selected brand_group and area
         if brand_group and area:
             try:
-                user_discount = Discount.objects.get(user=self.user, \
-                                                     brand_group=brand_group, \
-                                                     area=area).discount
+                user_discount = Discount.objects.get(
+                    user=self.user,
+                    brand_group=brand_group,
+                    area=area).discount
             except (Discount.DoesNotExist, AttributeError):
                 pass
             # try to find group discount got selected barand group and area
             try:
-                cgd = ClientGroupDiscount.objects.get(client_group=self.client_group, \
-                                        brand_group=brand_group, area=area)
-                group_discount = cgd.discount
+                group_discount = ClientGroupDiscount.objects.get(
+                    client_group=self.client_group,
+                    brand_group=brand_group, area=area).discount
             except (ClientGroupDiscount.DoesNotExist, AttributeError):
                 pass
-
             # try to find self discount only for brand_group
             try:
-                brand_group_user_discount = \
-                BrandGroupDiscount.objects.get(user=self.user, brand_group=brand_group) \
-                                          .discount
+                brand_group_user_discount = BrandGroupDiscount.objects.get(
+                    user=self.user,
+                    brand_group=brand_group).discount
             except (BrandGroupDiscount.DoesNotExist, AttributeError):
                 pass
-
             # try to find group discount only for brand_group
             try:
-                brand_group_discount = \
-                BrandGroupClientGroupDiscount.objects \
-                   .get(client_group=self.client_group, brand_group=brand_group) \
-                   .discount
+                brand_group_discount = BrandGroupClientGroupDiscount.objects.get(
+                    client_group=self.client_group,
+                    brand_group=brand_group).discount
             except (BrandGroupClientGroupDiscount.DoesNotExist, AttributeError):
                 pass
-
         # Return first not null value
-        return [x for x in \
-                [user_discount, group_discount,
-                 brand_group_user_discount, brand_group_discount,
-                 AREA_DISCOUNT_DEFAULT] if x is not None][0]
+        return [
+            x for x in [
+                user_discount, group_discount, brand_group_user_discount,
+                brand_group_discount, AREA_DISCOUNT_DEFAULT]
+            if x is not None][0]
 
     def get_order_fields(self):
         try:
@@ -817,6 +889,7 @@ class UserProfile(models.Model):
         else:
             fields = self.order_item_fields.split(",")
         if not fields:
+            from data.forms import CLIENT_FIELD_LIST
             return [x[2] for x in CLIENT_FIELD_LIST]
         return fields
 
@@ -889,7 +962,10 @@ class Part(models.Model):
 
         if self.substitution:
             try:
-                sub = Part.objects.get(area=self.area, brandgroup=self.brandgroup, partnumber=self.substitution)
+                sub = Part.objects.get(
+                    area=self.area,
+                    brandgroup=self.brandgroup,
+                    partnumber=self.substitution)
             except Part.DoesNotExist:
                 pass
             else:
@@ -945,10 +1021,14 @@ BALANCEITEM_TYPE_CHOICES = (
 class BalanceItem(models.Model):
     user = models.ForeignKey(User)
     amount = models.FloatField(u"Сумма", null=True)
-    item_type = models.PositiveSmallIntegerField(u"Тип", choices=BALANCEITEM_TYPE_CHOICES, default=BALANCEITEM_TYPE_PAYMENT)
+    item_type = models.PositiveSmallIntegerField(
+        u"Тип", choices=BALANCEITEM_TYPE_CHOICES,
+        default=BALANCEITEM_TYPE_PAYMENT)
     comment = models.TextField(u"Комментарий", null=True, blank=True)
-    shipment = models.ForeignKey(Shipment, null=True, blank=True, verbose_name=u"Отгрузка")
-    invoice = models.ForeignKey(Invoice, null=True, blank=True,  verbose_name=u"Инвойс")
+    shipment = models.ForeignKey(
+        Shipment, null=True, blank=True, verbose_name=u"Отгрузка")
+    invoice = models.ForeignKey(
+        Invoice, null=True, blank=True,  verbose_name=u"Инвойс")
     created_at = models.DateTimeField(u"Создано", auto_now_add=True)
     created_at.editable = True
     modified_at = models.DateTimeField(u"Создано", auto_now=True)
@@ -963,13 +1043,15 @@ class BalanceItem(models.Model):
     @classmethod
     def create_or_update_by_invoice(cls, invoice):
         invoice_status = invoice.status
-        for client, orders in itertools.groupby(invoice.orders.order_by('client'), lambda x: x.client):
+        for client, orders in itertools.groupby(
+                invoice.orders.order_by('client'), lambda x: x.client):
             if invoice_status == INVOICE_STATUS_IN_DELIVERY:
                 item_type = BALANCEITEM_TYPE_PREINVOICE
                 amount = -sum(x.price_sale * x.quantity for x in orders)
             else:
                 item_type = BALANCEITEM_TYPE_INVOICE
-                amount = -sum(x.total_cost for x in orders) - sum(x.total_cost for x in Package.objects.filter(invoice=invoice, client=client))
+                amount = -sum(x.total_cost for x in orders) - sum(
+                    x.total_cost for x in Package.objects.filter(invoice=invoice, client=client))
             b, _ = BalanceItem.objects.get_or_create(user=client, invoice=invoice)
             b.item_type = item_type
             b.amount = amount
@@ -1004,12 +1086,13 @@ class BalanceItem(models.Model):
             user=shipment.client,
             item_type=BALANCEITEM_TYPE_SHIPMENT,
             comment=u"Отгрузка %s" % shipment.full_code(),
-            shipment=shipment,
+            shipment=shipment
         ).save()
 
         for o in orders:
             try:
-                b = BalanceItem.objects.get(user=o.client, invoice__code=o.invoice_code)
+                b = BalanceItem.objects.get(
+                    user=o.client, invoice__code=o.invoice_code)
             except BalanceItem.DoesNotExist:
                 continue
             else:
@@ -1021,7 +1104,8 @@ class BalanceItem(models.Model):
 
         for p in packages:
             try:
-                b = BalanceItem.objects.get(user=o.client, invoice__code=o.invoice_code)
+                b = BalanceItem.objects.get(
+                    user=o.client, invoice__code=o.invoice_code)
             except BalanceItem.DoesNotExist:
                 continue
             else:

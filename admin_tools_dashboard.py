@@ -2,96 +2,134 @@
 
 from django.utils.translation import ugettext_lazy as _
 from admin_tools.dashboard import modules, Dashboard, AppIndexDashboard
-# to activate your index dashboard add the following to your settings.py:
-#
-# ADMIN_TOOLS_INDEX_DASHBOARD = 'admin_tools_dashboard_settings.CustomIndexDashboard'
+
 
 class MyDashboard(Dashboard):
 
     # we want a 3 columns layout
     columns = 2
     title = u'Настройки и администрирование сайта'
+
     def __init__(self, **kwargs):
         Dashboard.__init__(self, **kwargs)
-        # append an app list module for "Applications"
+
         self.children.append(modules.ModelList(
             u'Настройки приложения и данные',
             [
-            'data.models.Direction',
-             'data.models.BrandGroup',
-             'data.models.Area',
-             'data.models.Brand',
-             'data.models.OrderedItem',
-             'data.models.Discount',
-             'data.models.ClientGroup',
-             'data.models.Part',
-             'data.models.PartAnalog',
-             'data.models.BalanceItem',
-             'data.models.Shipment'
-            ]
-        ))
+                'data.models.Direction',
+                'data.models.BrandGroup',
+                'data.models.Area',
+                'data.models.Brand',
+                'data.models.OrderedItem',
+                'data.models.Discount',
+                'data.models.Part',
+                'data.models.PartAnalog',
+                'data.models.BalanceItem',
+                'data.models.Shipment'
+            ]))
 
-        # append an app list module for "Administration"
         self.children.append(modules.ModelList(
             u'Управление пользователями',
-            ['data.admin.Staff',
-             'data.admin.CustomerAccount',
-             'django.contrib.auth.models.Group',
-             ]))
+            [
+                'data.models.Staff',
+                'django.contrib.auth.models.Group',
+                'data.models.CustomerAccount',
+                'data.models.ClientGroup',
+                'data.models.Manager',
+            ]))
 
-        # append a recent actions module
         self.children.append(modules.RecentActions(
             title=_('Recent Actions'),
-            limit=5
-        ))
+            limit=5))
 
         self.children.append(modules.ModelList(
-            u'Боты',
-            ['common.models.Bot1']
-        ))
+            u'Боты', ['common.models.Bot1']))
 
-# to activate your app index dashboard add the following to your settings.py:
-#
-# ADMIN_TOOLS_APP_INDEX_DASHBOARD = 'admin_tools_dashboard.CustomAppIndexDashboard'
 
 class CustomAppIndexDashboard(AppIndexDashboard):
-    """
-    Custom app index dashboard for automototrade.
-    """
+
     def __init__(self, *args, **kwargs):
         AppIndexDashboard.__init__(self, *args, **kwargs)
 
         # we disable title because its redundant with the model list module
         self.title = ''
 
-        # append a model list module
-
-        # for data app
         if self.app_title.lower() == "data":
             self.children.append(modules.ModelList(
                 u'Настройки приложения и данные',
-                ['data.models.Direction',
-                 'data.models.BrandGroup',
-                 'data.models.Area',
-                 'data.models.Brand',
-                 'data.models.OrderedItem',
-                 'data.models.Discount',
-                 'data.models.ClientGroup',
-                 'data.models.Part',
-                 'data.models.PartAnalog',
-                 'data.models.BalanceItem',
-                 'data.models.Shipment']
-            ))
-        else: # default
+                [
+                    'data.models.Direction',
+                    'data.models.BrandGroup',
+                    'data.models.Area',
+                    'data.models.Brand',
+                    'data.models.OrderedItem',
+                    'data.models.Discount',
+                    'data.models.Part',
+                    'data.models.PartAnalog',
+                    'data.models.BalanceItem',
+                    'data.models.Shipment'
+                ]))
+        elif self.app_title.lower() == "auth":
+            self.children.append(modules.ModelList(
+                u'Управление пользователями',
+                [
+                    'data.models.Staff',
+                    'django.contrib.auth.models.Group',
+                    'data.models.CustomerAccount',
+                    'data.models.ClientGroup',
+                    'data.models.Manager',
+                ]))
+        else:
             self.children.append(modules.ModelList(
                 title=self.app_title,
-                models=self.models,
-            ))
-        # append a recent actions module
+                models=self.models))
+
         self.children.append(modules.RecentActions(
             title=_('Recent Actions'),
-            include_list=self.get_app_content_types(),
-        ))
+            include_list=self.get_app_content_types()))
+
+    def init_with_context(self, context):
+        """
+        Use this method if you need to access the request context.
+        """
+        pass
+
+
+class ManagerDashboard(Dashboard):
+
+    columns = 1
+    title = u''
+
+    def __init__(self, **kwargs):
+        Dashboard.__init__(self, **kwargs)
+
+        self.children.append(modules.ModelList(
+            u'Управление пользователями',
+            [
+                'data.models.CustomerAccount',
+                'data.models.ClientGroup',
+            ]))
+
+
+class ManagerAppIndexDashboard(AppIndexDashboard):
+
+    def __init__(self, *args, **kwargs):
+        AppIndexDashboard.__init__(self, *args, **kwargs)
+
+        # we disable title because its redundant with the model list module
+        self.title = ''
+
+        if self.app_title.lower() == "auth":
+            self.children.append(modules.ModelList(
+                u'Управление пользователями',
+                [
+                    'data.models.CustomerAccount',
+                    'data.models.ClientGroup',
+                ]))
+        else:
+            self.children.append(modules.ModelList(
+                title=self.app_title,
+                models=self.models))
 
     def init_with_context(self, context):
         """

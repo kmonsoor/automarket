@@ -6,6 +6,7 @@ import os
 from django import forms
 from django.db.models import Q
 from django.contrib import admin
+from django.contrib.admin.filterspecs import FilterSpec, RelatedFilterSpec
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
@@ -19,10 +20,18 @@ from django.core import serializers
 from django.conf import settings
 
 from data.models import *
-from data.forms import CLIENT_FIELD_LIST, STAFF_FIELD_LIST
+from data.forms import CLIENT_FIELD_LIST, STAFF_FIELD_LIST, MANAGER_FIELD_LIST
 from data.tasks import (
     SavePriceFileCsvTask, SavePriceFileXlsTask, SavePartAnalog
 )
+
+def is_manager(user):
+    try:
+        user_profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        return False
+    else:
+        return user_profile.is_manager
 
 
 class DirectionAdmin(admin.ModelAdmin):
@@ -42,10 +51,12 @@ class BrandGroupAreaSettingsInline(admin.TabularInline):
 
     def get_object(self, request):
         object_id = request.META['PATH_INFO'].strip('/').split('/')[-1]
+
         try:
             object_id = int(object_id)
         except ValueError:
             return None
+
         return BrandGroup.objects.get(pk=object_id)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -53,12 +64,14 @@ class BrandGroupAreaSettingsInline(admin.TabularInline):
             brand_group = self.get_object(request)
             if brand_group:
                 kwargs['queryset'] = brand_group.area.all().order_by('title')
+
         return super(BrandGroupAreaSettingsInline, self).formfield_for_foreignkey(
             db_field, request, **kwargs)
 
 
 class BrandGroupAdmin(admin.ModelAdmin):
-    list_display = ('title', 'direction', 'description', 'add_brand_to_comment',
+    list_display = (
+        'title', 'direction', 'description', 'add_brand_to_comment',
         'show_delivery', 'show_multiplier', 'cost_margin',)
     list_filter = ('direction',)
     filter_horizontal = ['area']
@@ -66,13 +79,13 @@ class BrandGroupAdmin(admin.ModelAdmin):
 
     def show_multiplier(self, obj):
         return obj.multiplier if obj.multiplier is not None else u''
-    show_multiplier.short_description = \
-    BrandGroup._meta.get_field_by_name('multiplier')[0].verbose_name
+    show_multiplier.short_description = BrandGroup._meta.get_field_by_name(
+        'multiplier')[0].verbose_name
 
     def show_delivery(self, obj):
         return obj.delivery if obj.delivery is not None else u''
-    show_delivery.short_description = \
-    BrandGroup._meta.get_field_by_name('delivery')[0].verbose_name
+    show_delivery.short_description = BrandGroup._meta.get_field_by_name(
+        'delivery')[0].verbose_name
 
     def get_urls(self):
         from django.conf.urls.defaults import patterns
@@ -141,11 +154,10 @@ class AreaAdmin(admin.ModelAdmin):
     def in_groups(self, obj):
         links = []
         for b in obj.brandgroup_set.all():
-            links.append((reverse("admin:data_brandgroup_change",
-                                  args=[b.id]), b.title))
+            links.append(
+                (reverse("admin:data_brandgroup_change", args=[b.id]), b.title))
         if links:
-            return u", ".join(map(lambda x: '<a href="%s">%s</a>' % \
-                                  x, links))
+            return u", ".join(map(lambda x: '<a href="%s">%s</a>' % x, links))
         return '---'
     in_groups.short_description = u"Входит в группы"
     in_groups.allow_tags = True
@@ -162,19 +174,16 @@ class DiscountAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field == 'user':
-            kwargs['queryset'] = User.objets\
-                .filter(is_staff=False).order_by('username')
-        return super(DiscountAdmin, self) \
-        .formfield_for_foreignkey(db_field, request, **kwargs)
+            kwargs['queryset'] = User.objets.filter(is_staff=False).order_by('username')
+        return super(DiscountAdmin, self).formfield_for_foreignkey(
+            db_field, request, **kwargs)
 
 
 class OrderedItemForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(OrderedItemForm, self).__init__(*args, **kwargs)
-        self.fields['client'].queryset = \
-                User.objects.all().order_by('username')
-        self.fields['manager'].queryset = \
-                User.objects.all().order_by('username')
+        self.fields['client'].queryset = User.objects.all().order_by('username')
+        self.fields['manager'].queryset = User.objects.all().order_by('username')
 
 
 class OrderedItemAdmin(admin.ModelAdmin):
@@ -189,8 +198,7 @@ class OrderedItemAdmin(admin.ModelAdmin):
     def lookup_allowed(self, lookup, *args, **kwargs):
         if lookup.startswith(self.valid_lookups):
             return True
-        return super(OrderedItemAdmin, self)\
-            .lookup_allowed(lookup, *args, **kwargs)
+        return super(OrderedItemAdmin, self).lookup_allowed(lookup, *args, **kwargs)
 
     def po_number(self, obj):
         return '%s%s' % (obj.brandgroup.direction.po, obj.ponumber or '-',)
@@ -198,51 +206,24 @@ class OrderedItemAdmin(admin.ModelAdmin):
     po_number.short_description = u'PO'
 
 
-class CustomerAccount(User):
-    class Meta:
-        proxy = True
-        app_label = 'auth'
-        verbose_name = u"аккаунт клиента"
-        verbose_name_plural = u"аккаунты клиентов"
-
-
-class Staff(User):
-    class Meta:
-        proxy = True
-        app_label = 'auth'
-        verbose_name = u"аккаунт менеджера"
-        verbose_name_plural = u"аккаунты менеджеров"
-
-
-# User administration
-class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'first_name', 'last_name',
-        'groups_list', 'is_staff', 'last_login',)
-    list_filter = ['is_active']
-
-    def groups_list(self, obj):
-        groups = [x['name'] for x in obj.groups.values()]
-        return (',').join(groups) if groups else u'Нет группы'
-    groups_list.allow_tags = True
-    groups_list.short_description = u'Группа'
-    filter_horizontal = ['user_permissions', 'groups']
-
-
 class StaffProfileInline(admin.StackedInline):
     model = UserProfile
-    exclude = ['client_group']
+    fk_name = 'user'
+    exclude = ['client_group', 'client_manager', 'is_manager',]
     template = 'admin/data/user/userprofile_inline.html'
     extra = 0
 
 
-class StaffAdmin(CustomUserAdmin):
+class StaffAdmin(UserAdmin):
     readonly_fields = ['is_staff']
     inlines = [StaffProfileInline]
     change_form_template = 'admin/data/user/change_form.html'
     filter_horizontal = ['user_permissions', 'groups']
+    list_display = ('username', 'email', 'first_name', 'last_name', 'last_login',)
+    list_filter = []
 
     def queryset(self, request):
-        qs = super(UserAdmin, self).queryset(request)
+        qs = super(StaffAdmin, self).queryset(request)
         qs = qs.filter(Q(is_staff=True) | Q(is_superuser=True))
         return qs
 
@@ -254,26 +235,28 @@ class StaffAdmin(CustomUserAdmin):
     def change_view(self, request, object_id, extra_context=None):
         extra_context = {}
         obj = get_object_or_404(User, pk=object_id)
+
         try:
             profile = obj.get_profile()
         except Exception:
             profile = None
+
         if not profile:
-            profile = \
-            UserProfile.objects.create(user=obj)
+            profile = UserProfile.objects.create(user=obj)
 
         extra_context['client_order_item_fields'] = []
 
         fff = profile.order_item_fields
 
         if fff:
-            extra_context['original_order_item_fields'] = \
-                fff.split(',')
+            extra_context['original_order_item_fields'] = fff.split(',')
         else:
             extra_context['original_order_item_fields'] = ""
+
         if request.POST:
-            extra_context['original_order_item_fields'] = \
-            request.POST.get("order_item_fields", "").split(",")
+            extra_context['original_order_item_fields'] = request.POST.get(
+                "order_item_fields", "").split(",")
+
         for a in [(x[2], x[0]) for x in STAFF_FIELD_LIST]:
             a = list(a)
             if a[0] in extra_context['original_order_item_fields']:
@@ -281,14 +264,101 @@ class StaffAdmin(CustomUserAdmin):
             else:
                 a.append(False)
             extra_context['client_order_item_fields'].append(a)
-        return super(StaffAdmin, self)\
-            .change_view(request, object_id, extra_context)
+
+        return super(StaffAdmin, self).change_view(
+            request, object_id, extra_context)
+
+
+class ManagerProfileInline(admin.StackedInline):
+    model = UserProfile
+    fk_name = 'user'
+    exclude = ['client_group', 'client_manager', 'is_manager',]
+    template = 'admin/data/user/userprofile_inline.html'
+    extra = 0
+
+
+class ManagerAdmin(UserAdmin):
+    inlines = [ManagerProfileInline]
+    change_form_template = 'admin/data/user/change_form.html'
+    list_display = ('username', 'email', 'first_name', 'last_name', 'last_login',)
+    list_filter = []
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+    )
+
+    def has_change_permission(self, request, obj=None):
+        if request.user.has_perm('auth.can_change_managers'):
+            return True
+        return False
+
+    def has_add_permission(self, request):
+        if request.user.has_perm('auth.can_add_managers'):
+            return True
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.has_perm('auth.can_delete_managers'):
+            return True
+        return False
+
+    def queryset(self, request):
+        qs = super(UserAdmin, self).queryset(request)
+        ids = list(
+            UserProfile.objects
+            .filter(is_manager=True)
+            .values_list('user_id', flat=True))
+        qs = qs.filter(id__in=ids)
+        return qs
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.is_staff = False
+        obj.save()
+
+    def change_view(self, request, object_id, extra_context=None):
+        extra_context = {}
+        obj = get_object_or_404(User, pk=object_id)
+
+        try:
+            profile = obj.get_profile()
+        except Exception:
+            profile = None
+
+        if not profile:
+            profile = UserProfile.objects.create(user=obj, is_manager=True)
+
+        extra_context['client_order_item_fields'] = []
+
+        fff = profile.order_item_fields
+
+        if fff:
+            extra_context['original_order_item_fields'] = fff.split(',')
+        else:
+            extra_context['original_order_item_fields'] = ""
+
+        if request.POST:
+            extra_context['original_order_item_fields'] = request.POST.get(
+                "order_item_fields", "").split(",")
+
+        for a in [(x[2], x[0]) for x in MANAGER_FIELD_LIST]:
+            a = list(a)
+            if a[0] in extra_context['original_order_item_fields']:
+                a.append(True)
+            else:
+                a.append(False)
+            extra_context['client_order_item_fields'].append(a)
+
+        return super(ManagerAdmin, self).change_view(
+            request, object_id, extra_context)
 
 
 class CUserCreationForm(UserCreationForm):
-    client_group = forms.ModelChoiceField( \
-        queryset=ClientGroup.objects.all().order_by('title'), \
-        label="Группа", required=False)
+    client_group = forms.ModelChoiceField(
+        queryset=ClientGroup.objects.all().order_by('title'),
+        label="Группа",
+        required=False)
 
     def save(self, *args, **kwargs):
         user = super(CUserCreationForm, self).save(*args, **kwargs)
@@ -297,11 +367,12 @@ class CUserCreationForm(UserCreationForm):
             profile = user.get_profile()
         except Exception:
             profile = None
+
         if not profile:
             group = self.cleaned_data.get('client_group')
             if not group:
                 group = ClientGroup.objects.get_default()
-            profile = UserProfile.objects.create(user=user, client_group=group)
+            UserProfile.objects.create(user=user, client_group=group)
         return user
 
 
@@ -330,24 +401,34 @@ class DiscountInline(admin.TabularInline):
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
+    exclude = ['is_manager',]
+    fk_name = 'user'
     extra = 0
     template = 'admin/data/user/userprofile_inline.html'
 
     def formfield_for_foreignkey(self, db_field, *args, **kwargs):
         if db_field.name == 'client_group':
             kwargs['queryset'] = ClientGroup.objects.all().order_by('title')
-        return super(UserProfileInline, self) \
-                .formfield_for_foreignkey(db_field, *args, **kwargs)
+        if db_field.name == 'client_manager':
+            ids = list(
+                UserProfile.objects
+                .filter(is_manager=True)
+                .values_list('user_id', flat=True))
+            kwargs['queryset'] = User.objects.filter(id__in=ids).order_by('username')
+
+        return super(UserProfileInline, self).formfield_for_foreignkey(
+            db_field, *args, **kwargs)
 
 
-class CustomerAdmin(CustomUserAdmin):
+class CustomerAdmin(UserAdmin):
     readonly_fields = ['is_staff', 'is_superuser', 'last_login', 'date_joined']
-    list_display = ('username', 'id', 'email', 'first_name', 'last_name',
-        'groups_list', 'is_staff', 'last_login',)
-
     add_form = CUserCreationForm
-
     inlines = [UserProfileInline, UserBrandGroupDiscountInline, DiscountInline]
+    change_form_template = 'admin/data/user/change_form.html'
+    add_form_template = 'admin/data/user/change_form.html'
+    list_display = [
+        'username', 'email', 'first_name', 'last_name', 'is_active']
+    list_filter = []
 
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
@@ -364,26 +445,27 @@ class CustomerAdmin(CustomUserAdmin):
     def has_change_permission(self, request, obj=None):
         if request.user.has_perm('auth.can_change_clients'):
             return True
-        return False
+        return is_manager(request.user)
 
     def has_add_permission(self, request):
         if request.user.has_perm('auth.can_add_clients'):
             return True
-        return False
+        return is_manager(request.user)
 
     def has_delete_permission(self, request, obj=None):
         if request.user.has_perm('auth.can_delete_clients'):
             return True
-        return False
+        return is_manager(request.user)
 
     def queryset(self, request):
         qs = super(UserAdmin, self).queryset(request)
         qs = qs.exclude(Q(is_staff=True) | Q(is_superuser=True))
+        if is_manager(request.user):
+            client_ids = list(UserProfile.objects.filter(
+                client_manager=request.user
+            ).values_list('user', flat=True))
+            qs = qs.filter(id__in=client_ids)
         return qs
-
-    change_form_template = 'admin/data/user/change_form.html'
-    add_form_template = 'admin/data/user/change_form.html'
-    list_display = ['username', 'email', 'first_name', 'last_name', 'is_active']
 
     def change_view(self, request, object_id, extra_context=None):
         extra_context = {}
@@ -392,26 +474,24 @@ class CustomerAdmin(CustomUserAdmin):
             profile = obj.get_profile()
         except Exception:
             profile = None
+
         if not profile:
-            profile = \
-            UserProfile.objects.create(user=obj, \
-                client_group=ClientGroup.objects.get_default())
+            profile = UserProfile.objects.create(
+                user=obj, client_group=ClientGroup.objects.get_default())
 
         extra_context['client_order_item_fields'] = []
 
-        fff = profile.order_item_fields
-
-        if not fff:
-            fff = profile.client_group.order_item_fields
+        fff = profile.order_item_fields or profile.client_group.order_item_fields
 
         if fff:
-            extra_context['original_order_item_fields'] = \
-                fff.split(',')
+            extra_context['original_order_item_fields'] = fff.split(',')
         else:
             extra_context['original_order_item_fields'] = ""
+
         if request.POST:
-            extra_context['original_order_item_fields'] = \
-            request.POST.get("order_item_fields", "").split(",")
+            extra_context['original_order_item_fields'] = request.POST.get(
+                "order_item_fields", "").split(",")
+
         for a in [(x[2], x[0]) for x in CLIENT_FIELD_LIST]:
             a = list(a)
             if a[0] in extra_context['original_order_item_fields']:
@@ -419,8 +499,9 @@ class CustomerAdmin(CustomUserAdmin):
             else:
                 a.append(False)
             extra_context['client_order_item_fields'].append(a)
-        return super(CustomerAdmin, self)\
-            .change_view(request, object_id, extra_context)
+
+        return super(CustomerAdmin, self).change_view(
+            request, object_id, extra_context)
 
 
 class ClientGroupAddForm(forms.ModelForm):
@@ -441,6 +522,7 @@ class ClientGroupDiscountInlineForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(ClientGroupDiscountInlineForm, self).__init__(*args, **kwargs)
+
         if self.instance.brand_group:
             self.fields['area'].queryset = self.instance.brand_group.area.all()
         else:
@@ -461,6 +543,21 @@ class ClientGroupAdmin(admin.ModelAdmin):
     add_form = ClientGroupAddForm
     inlines = [BrandGroupClientGroupDiscountInline, ClientGroupDiscountInline]
 
+    def has_change_permission(self, request, obj=None):
+        if is_manager(request.user):
+            return True
+        return super(ClientGroupAdmin, self).has_change_permission(request, obj)
+
+    def has_add_permission(self, request):
+        if is_manager(request.user):
+            return True
+        return super(ClientGroupAdmin, self).has_add_permission(request)
+
+    def has_delete_permission(self, request, obj=None):
+        if is_manager(request.user):
+            return True
+        return super(ClientGroupAdmin, self).has_delete_permission(request, obj)
+
     def get_form(self, request, obj=None, **kwargs):
         """
         Use special form during user creation
@@ -479,14 +576,15 @@ class ClientGroupAdmin(admin.ModelAdmin):
         obj = get_object_or_404(ClientGroup, id=object_id)
         extra_context['client_order_item_fields'] = []
         fff = obj.order_item_fields
+
         if fff:
-            extra_context['original_order_item_fields'] = \
-                fff.split(',')
+            extra_context['original_order_item_fields'] = fff.split(',')
         else:
             extra_context['original_order_item_fields'] = ""
         if request.POST:
-            extra_context['original_order_item_fields'] = \
-            request.POST.get("order_item_fields", "").split(",")
+            extra_context['original_order_item_fields'] = request.POST.get(
+                "order_item_fields", "").split(",")
+
         for a in [(x[2], x[0]) for x in CLIENT_FIELD_LIST]:
             a = list(a)
             if a[0] in extra_context['original_order_item_fields']:
@@ -494,8 +592,8 @@ class ClientGroupAdmin(admin.ModelAdmin):
             else:
                 a.append(False)
             extra_context['client_order_item_fields'].append(a)
-        return super(ClientGroupAdmin, self) \
-                      .change_view(request, object_id, extra_context)
+        return super(ClientGroupAdmin, self).change_view(
+            request, object_id, extra_context)
 
 
 class PartAdmin(admin.ModelAdmin):
@@ -531,9 +629,6 @@ class PartAdmin(admin.ModelAdmin):
     substitution_link.allow_tags = True
 
 
-from django.contrib.admin.filterspecs import FilterSpec, RelatedFilterSpec
-
-
 class UserOrderingFilter(RelatedFilterSpec):
     def __init__(self, f, request, params, model, model_admin):
         super(UserOrderingFilter, self).__init__(f, request, params, model, model_admin)
@@ -547,14 +642,22 @@ class BalanceItemAdmin(admin.ModelAdmin):
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         formfield = super(BalanceItemAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+
         if db_field.name == 'shipment':
-            from data.models import Shipment
-            formfield.choices = (('', '---------',),) + tuple((x.id, x.__unicode__()) for x in Shipment.objects.all().order_by('client__username', 'code'))
+            formfield.choices = (
+                ('', '---------',),) + tuple((x.id, x.__unicode__())
+                for x in Shipment.objects.all().order_by('client__username', 'code'))
+
         if db_field.name == 'invoice':
-            from data.models import Invoice
-            formfield.choices = (('', '---------',),) + tuple((x.id, x.__unicode__()) for x in Invoice.objects.all().order_by('-code'))
+            formfield.choices = (
+                ('', '---------',),) + tuple((x.id, x.__unicode__())
+                for x in Invoice.objects.all().order_by('-code'))
+
         if db_field.name == 'user':
-            formfield.choices = (('', '---------',),) + tuple((x.id, x.__unicode__()) for x in User.objects.all().order_by('username'))
+            formfield.choices = (
+                ('', '---------',),) + tuple((x.id, x.__unicode__())
+                for x in User.objects.all().order_by('username'))
+
         return formfield
 
 
@@ -636,16 +739,31 @@ class ShipmentAdmin(admin.ModelAdmin):
     _client.allow_tags = True
 
 
+class ManagerAdminSite(admin.sites.AdminSite):
+    def has_permission(self, request):
+        try:
+            user_profile = UserProfile.objects.get(user=request.user)
+        except UserProfile.DoesNotExist:
+            return False
+        else:
+            return user_profile.is_manager
+
+manager_admin_site = ManagerAdminSite(name='manageradminsite')
+manager_admin_site.register(CustomerAccount, CustomerAdmin)
+manager_admin_site.register(ClientGroup, ClientGroupAdmin)
+
+
 admin.site.register(Brand, BrandAdmin)
 admin.site.register(Direction, DirectionAdmin)
 admin.site.register(BrandGroup, BrandGroupAdmin)
 admin.site.register(Area, AreaAdmin)
 admin.site.register(OrderedItem, OrderedItemAdmin)
-admin.site.unregister(User)
 admin.site.register(Shipment, ShipmentAdmin)
-admin.site.register(Staff, StaffAdmin)
-admin.site.register(CustomerAccount, CustomerAdmin)
-admin.site.register(ClientGroup, ClientGroupAdmin)
 admin.site.register(Part, PartAdmin)
 admin.site.register(BalanceItem, BalanceItemAdmin)
 admin.site.register(PartAnalog, PartAnalogAdmin)
+admin.site.unregister(User)
+admin.site.register(Staff, StaffAdmin)
+admin.site.register(Manager, ManagerAdmin)
+admin.site.register(CustomerAccount, CustomerAdmin)
+admin.site.register(ClientGroup, ClientGroupAdmin)

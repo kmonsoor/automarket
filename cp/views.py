@@ -9,6 +9,7 @@ import random
 import dateutil
 from itertools import groupby
 
+from django.core import serializers
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
@@ -123,20 +124,17 @@ def get_period(request, prefix, field, period=''):
     rated_period = None
     if period:
         now = datetime.now()
-        if period == 'w':
+        if period == PERIOD_PARAM_WEEK:
             rated_period = now + dateutil.relativedelta.relativedelta(
                 weeks=-1, weekday=dateutil.relativedelta.calendar.SATURDAY,
-                hour=0, minute=0, second=0, microsecond=0
-            )
-        elif period == 'm':
+                hour=0, minute=0, second=0, microsecond=0)
+        elif period == PERIOD_PARAM_MONTH:
             rated_period = now + dateutil.relativedelta.relativedelta(
-                day=1, hour=0, minute=0, second=0, microsecond=0
-            )
-        elif period == 'y':
+                day=1, hour=0, minute=0, second=0, microsecond=0)
+        elif period == PERIOD_PARAM_YEAR:
             rated_period = now + dateutil.relativedelta.relativedelta(
-                month=1, day=1, hour=0, minute=0, second=0, microsecond=0
-            )
-        elif period == 'a':
+                month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        elif period == PERIOD_PARAM_ALL:
             pass
 
     if rated_period:
@@ -1292,16 +1290,17 @@ def index(request):
         user_fields = request.user.get_profile().get_order_fields()
     except Exception:
         user_fields = None
+
     if user_fields:
-        STAFF_FIELDS = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
+        fields = [x for x in STAFF_FIELD_LIST if x[2] in user_fields]
     else:
-        STAFF_FIELDS = STAFF_FIELD_LIST
-    context['staff_fields'] = [x[2] for x in STAFF_FIELDS]
-    LIST_HEADERS = [(x[0], x[1]) for x in STAFF_FIELDS]
+        fields = STAFF_FIELD_LIST
+    context['staff_fields'] = [x[2] for x in fields]
+    LIST_HEADERS = [(x[0], x[1]) for x in fields]
     sort_headers = SortHeaders(request, LIST_HEADERS)
 
     list_filters = []
-    for x in STAFF_FIELDS:
+    for x in fields:
         try:
             form_field = _filter.form.__getitem__(x[3])
             list_filters.append(form_field)
@@ -1329,47 +1328,25 @@ def index(request):
 
     qs = OrderedItem.objects.select_related().filter(**qs_filter)
 
-    # calculate totals by filter
     total_row = []
     if _filter.is_set:
-        from django.db import connection
+        from collections import defaultdict
+        total = defaultdict(float)
+        total_qs = qs.exclude(
+            status__in=('failure', 'wrong_number', 'out_of_stock',
+                        'cancelled_customer', 'export_part'))
 
-        td = "U0"
-        q, params = qs._as_sql(connection)
-        from_clause = q.split("FROM")[1]
+        for i in total_qs:
+            total['weight'] += (i.weight or 0) * i.quantity
+            total['total_cost'] += (i.total_cost or 0)
+            total['delivery'] += (i.delivery or 0)
+            total['price_sale'] += i.quantity * (i.price_discount or i.price_sale or 0)
+            total['price_invoice'] += (i.price_invoice or 0) * i.quantity
 
-        where = from_clause.split("WHERE")
-        if len(where) > 1:
-            from_clause = where[0]
-            where = [where[1]]
-        else:
-            where = []
-        where.append("%s.status NOT IN ('failure', 'wrong_number', 'out_of_stock', 'cancelled_customer', 'export_part')" % td)
-        where = "WHERE %s" % "AND ".join(where)
+        for f in fields:
+            total_row.append(total.get(f[2], u""))
 
-        sql = """
-            SELECT
-                SUM(%(p)s.total_cost),
-                SUM(%(p)s.weight*%(p)s.quantity),
-                SUM(%(p)s.delivery),
-                SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
-                SUM(%(p)s.price_invoice*%(p)s.quantity)
-                FROM %(from)s %(where)s
-        """ % {'p': td, 'from': from_clause, 'where': where}
-        cursor = connection.cursor()
-        cursor.execute(sql, params)
-        res = cursor.fetchall()
-        if len(res) > 0:
-            total = dict(zip(
-                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0]
-            ))
-
-            for f in STAFF_FIELDS:
-                field_name = f[2].split("__")[0]
-                if field_name[:2] == "po":
-                    total_row.append(u"Итого:")
-                else:
-                    total_row.append(total.get(field_name, u""))
+    context['total_row'] = total_row
 
     if order_by:
         qs = qs.order_by(order_by)
@@ -1389,7 +1366,6 @@ def index(request):
     context['items'] = paginator.get_page_items()
     context['paginator'] = paginator
     context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
-    context['total_row'] = total_row
     context['edit_mode'] = 1
     return context
 
@@ -1788,7 +1764,7 @@ class PackageSaver(object):
 
 
 @ajax_request
-@staff_member_required
+# @staff_member_required
 def position_edit(request, content_type, item_id):
     logger.debug("position_edit called with args: %s, %s" % (content_type, item_id))
     models = {'ordered_item': OrderedItem, 'package': Package}
@@ -2340,3 +2316,15 @@ def ordered_item_row(request, item_id):
     context = RequestContext(request, c)
     html = render_to_string("cp/tags/table/row.html", context_instance=context)
     return HttpResponse(content=html)
+
+
+def get_brandgroup_areas(request, brandgroup_id):
+    response = ''
+    try:
+        brandgroup = BrandGroup.objects.get(pk=brandgroup_id)
+    except BrandGroup.DoesNotExist:
+        response = ''
+    else:
+        response = serializers.serialize('json',
+            brandgroup.area.all(), fields=('id', 'title'))
+    return HttpResponse(response, mimetype="text/json")

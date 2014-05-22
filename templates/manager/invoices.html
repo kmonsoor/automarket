@@ -1,0 +1,42 @@
+{% extends 'manager/index.html' %}
+{% load manager_tags %}
+
+{% block menu_invoices %}<a class="menu-active" href="{% url manager_invoices %}">Инвойсы</a>{% endblock %}
+{% block menu_index %}<a href="{% url manager_index %}">Заказы</a>{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    #changelist table tbody td { padding: 5px; }
+    #changelist table thead input.qs_filter, #changelist table thead select.qs_filter { width: 98%; }
+</style>
+{% endblock %}
+
+{% block export_link %}{% endblock %}
+
+{% block table %}
+<div class="module" id="changelist">
+    <table>
+        <thead>
+            <tr>{% table_header_sort headers %}</tr>
+            <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+            {% for f in list_filters %}
+                <td>{{ f }}</td>
+            {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in items %}
+              <tr class="{% cycle row1,row2 %}">
+                <td><a href="{% url manager_invoice i.id %}">{{ i.code }}</a></td>
+                <td>{{ i.received_at|date:"d.m.Y"|safe }}</td>
+                <td>{{ i.get_status_display }}</td>
+              </tr>
+            {% endfor %}
+            <tr>
+                <td colspan={{ headers|length }}>{% include "paginator.html" %}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

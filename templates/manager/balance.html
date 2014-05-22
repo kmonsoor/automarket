@@ -1,0 +1,43 @@
+{% extends 'manager/index.html' %}
+{% load manager_tags %}
+
+{% block menu_balance %}<a class="menu-active" href="{% url manager_balance %}">Баланс</a>{% endblock %}
+{% block menu_index %}<a href="{% url manager_index %}">Заказы</a>{% endblock %}
+
+{% block export_link %}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    #changelist table tbody td {padding: 5px;}
+    #changelist table thead input.qs_filter, #changelist table thead select.qs_filter {width: 96%;}
+</style>
+{% endblock %}
+
+{% block table_body %}
+    {% for s in items %}
+      <tr class="{% cycle row1,row2 %}">
+        <td></td>
+        <td><a href="{% url manager_balance_client s.user.id %}">{{ s.user }}</a></td>
+        <td>{{ s.user_group|default:"" }}</td>
+        <td>{{ s.user.first_name }} {{ s.user.last_name }}</td>
+        <td>{{ s.user.email }}</td>
+        <td>{{ s.last_modified|date:"d.m.Y H:i"|safe }}</td>
+        <td style="color: {% if s.balance < 0 %}red{% else %}green{% endif %};">{{ s.balance|floatformat:2 }}</td>
+        <td></td>
+      </tr>
+    {% endfor %}
+    <tr class="alt">
+        <td></td>
+        <td>Итого:</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td style="color: {% if total_balance < 0 %}red{% else %}green{% endif %};">{{ total_balance|floatformat:2 }}</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
+    </tr>
+{% endblock %}

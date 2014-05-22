@@ -1,0 +1,27 @@
+{% load manager_tags %}
+<td>&nbsp;</td>
+{% if 'ponumber' in user_fields %}{% table_td i 'get_po_verbose' 0 '' %}{% endif %}
+{% if 'brandgroup' in user_fields %}{% table_td i 'brandgroup' 0 '' %}{% endif %}
+{% if 'area' in user_fields %}{% table_td i 'area' 0 '' %}{% endif %}
+{% if 'brand' in user_fields %}{% table_td i 'brand' 0 '' %}{% endif %}
+{% if 'part_number' in user_fields %}{% table_td i 'part_number' 0 '' %}{% endif %}
+{% if 'comment_customer' in user_fields %}{% table_td i 'comment_customer' 0 '' %}{% endif %}
+{% if 'created' in user_fields %}{% table_td i 'created' 0 '' %}{% endif %}
+{% if 'received_office_at' in user_fields %}{% table_td i 'received_office_at' 0 '' %}{% endif %}
+{% if 'quantity' in user_fields %}{% table_td i 'quantity' 0 '' %}{% endif %}
+{% if 'part_number_superseded' in user_fields %}{% table_td i 'part_number_superseded' i.editable 'editSuperseded' %}{% endif %}
+{% if 'client' in user_fields %}<td>{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</td>{% endif %}
+{% if 'description_ru' in user_fields %}{% table_td i 'description_ru' i.editable 'editDescriptionRu' %}{% endif %}
+{% if 'description_en' in user_fields %}{% table_td i 'description_en' i.editable 'editDescriptionEn' %}{% endif %}
+{% if 'id' in user_fields %}{% table_td i 'id' 0 '' %}{% endif %}
+{% if 'price_base' in user_fields %}{% table_td i 'price_base' i.editable 'editPriceBase' 0 %}{% endif %}
+{% if 'weight' in user_fields %}{% table_td i 'weight' i.editable 'editWeight' %}{% endif %}
+{% if 'delivery' in user_fields %}{% table_td i 'delivery' 0 '' 0 %}{% endif %}
+{% if 'price_sale' in user_fields %}{% table_td i 'price_sale' 0 '' 0 %}{% endif %}
+{% if 'price_discount' in user_fields %}{% table_td i 'price_discount' i.editable 'editPriceDiscount' 0 %}{% endif %}
+{% if 'cost' in user_fields %}{% table_td i 'cost' 0 '' 0 %}{% endif %}
+{% if 'total_cost' in user_fields %}{% table_td i 'total_cost' 0 '' 0 %}{% endif %}
+{% if 'invoice_code' in user_fields %}{% table_td i 'invoice_code' i.editable 'editInvoiceCode' %}{% endif %}
+{% if 'status' in user_fields %}{% table_td_status i %}{% endif %}
+{% if 'issued_at' in user_fields %}{% table_td i 'issued_at' 0 '' %}{% endif %}
+<td>&nbsp;</td>

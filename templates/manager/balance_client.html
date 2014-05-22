@@ -1,0 +1,108 @@
+{% extends 'manager/index.html' %}
+{% load manager_tags %}
+
+{% block menu_balance %}<a class="menu-active" href="{% url manager_balance %}">Баланс</a>{% endblock %}
+{% block menu_index %}<a href="{% url manager_index %}">Заказы</a>{% endblock %}
+
+{% block export_link %}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    #changelist table tbody td {padding: 5px;}
+    #changelist table thead input.qs_filter, #changelist table thead select.qs_filter {width: 96%;}
+</style>
+<script type="text/javascript">
+    function createFieldSet(formId){
+        return Form.extend({
+            initialize: function(value) {
+                this.parent({{ balance_add_form_template|safe }}, value);
+                this.fieldset = new Element('fieldset');
+                this.fieldset.setProperty('class', 'module aligned');
+                this.fieldset.innerHTML = this.html;
+                $(formId).adopt(this.fieldset);
+            }
+        });
+    };
+
+    var balancePaymentFieldSet = createFieldSet('balance-payment-form');
+    var balanceInvoiceFieldSet = createFieldSet('balance-invoice-form');
+
+    Window.onDomReady(function() {
+        {% for data in balance_payment_form_data %}
+        new balancePaymentFieldSet({{ data|safe }});
+        jQuery('.save_balance_payment_block').show();
+        {% endfor %}
+        {% for data in balance_invoice_form_data %}
+        new balanceInvoiceFieldSet({{ data|safe }});
+        jQuery('.save_balance_invoice_block').show();
+        {% endfor %}
+    });
+
+</script>
+{% endblock %}
+
+{% block content_title %}
+<h3>Баланс клиента {{ user.username }}</h3>
+<br/>
+{% endblock %}
+
+{% block table_body %}
+{% for s in items %}
+  <tr class="{% cycle row1,row2 %}">
+    <td></td>
+    <td>{{ s.created_at|date:"d.m.Y H:i"|safe }}</td>
+    <td>{{ s.get_item_type_display }}</td>
+    <td>
+        {% if s.invoice %}
+        <a href="{% url manager_invoice s.invoice.id %}?qs_filter=1&client__username__contains={{ s.user.username }}&shipment__isnull=1">{{ s.comment|default:"" }}</a>
+        {% else %}
+        {% if s.shipment %}
+        <a href="{% url manager_shipment s.shipment.id %}">{{ s.comment|default:"" }}</a>
+        {% else %}
+        {{ s.comment|default:"" }}
+        {% endif %}
+        {% endif %}
+    </td>
+    <td style="color: {% if s.amount < 0 %}red{% else %}green{% endif %};">{{ s.amount|floatformat:2 }}</td>
+    <td style="width: 1%;"><a class="delete_link" title="Удалить" href="{% url manager_balanceitem_delete s.id %}"></a></td>
+    <td></td>
+  </tr>
+{% endfor %}
+<tr class="alt">
+    <td></td>
+    <td>Итого:</td>
+    <td></td>
+    <td></td>
+    <td style="color: {% if total_amount < 0 %}red{% else %}green{% endif %};">{{ total_amount|floatformat:2 }}</td>
+    <td></td>
+    <td></td>
+</tr>
+<tr>
+    <td colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
+</tr>
+{% endblock %}
+
+{% block content_bottom %}
+<form action="" method="post" id="process-balance-payment-form">
+    <br/>
+    <p align="right">
+        <a class="add_link" href="javascript:void(0)" onclick="new balancePaymentFieldSet(); jQuery('.save_balance_payment_block').show();">Добавить оплату</a>
+    </p>
+    <div id="balance-payment-form"></div>
+    <div class="save_balance_payment_block" style="text-align: right; display: none;">
+        <input type="submit" name="save_balance_payment" value="Сохранить" />
+        <br/>
+        <br/>
+    </div>
+</form>
+<form action="" method="post" id="process-balance-invoice-form">
+    <p align="right">
+        <a class="add_link" href="javascript:void(0)" onclick="new balanceInvoiceFieldSet(); jQuery('.save_balance_invoice_block').show();">Выставить счёт</a>
+    </p>
+    <div id="balance-invoice-form"></div>
+    <div class="save_balance_invoice_block" style="text-align: right; display: none;">
+        <input type="submit" name="save_balance_invoice" value="Сохранить" />
+    </div>
+</form>
+{% endblock %}

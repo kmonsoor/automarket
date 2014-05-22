@@ -21,15 +21,27 @@ from data.models import *
 from BeautifulSoup import BeautifulSoup, NavigableString
 
 
+def _is_manager(user):
+    try:
+        user_profile = UserProfile.objects.get(user=user)
+    except UserProfile.DoesNotExist:
+        return False
+    else:
+        return user_profile.is_manager
+
+
 @render_to('common/start.html')
 def start(request):
     message = ''
 
-    if request.user.is_staff and request.user.is_active and request.user.is_authenticated():
-        return HttpResponseRedirect(reverse('cp_index'))
-
     if request.user.is_active and request.user.is_authenticated():
-        return HttpResponseRedirect(reverse('client_search'))
+        if request.user.is_staff:
+            redirect_url = reverse('cp_index')
+        elif _is_manager(request.user):
+            redirect_url = reverse('manager_index')
+        else:
+            redirect_url = reverse('client_search')
+        return HttpResponseRedirect(redirect_url)
 
     if request.method == 'POST':
         form = UserAuthForm(request.POST.copy())
@@ -41,9 +53,10 @@ def start(request):
             if user is not None:
                 if user.is_active:
                     login(request, user)
-                    # Staff goes to /cp/
                     if user.is_staff:
                         return HttpResponseRedirect(reverse('cp_index'))
+                    elif _is_manager(user):
+                        return HttpResponseRedirect(reverse('manager_index'))
                     else:
                         return HttpResponseRedirect(reverse('client_search'))
                 else:

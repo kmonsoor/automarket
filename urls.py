@@ -5,6 +5,8 @@ from django.conf import settings
 admin.autodiscover()
 urlpatterns = patterns('',)
 
+from data.admin import manager_admin_site
+
 if settings.DEBUG:
     urlpatterns += patterns('',
         (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
@@ -46,6 +48,7 @@ urlpatterns += patterns('cp.views',
     url(r'^cp/ordered_item/(?P<item_id>\d+)/$', 'get_ordered_item', name="get_ordered_item"),
     url(r'^cp/ordered_item_row/(?P<item_id>\d+)/$', 'ordered_item_row', name="ordered_item_row"),
     url(r'^cp/get_brandgroup_settings/(?P<ordered_item_id>[\d]+)/$', 'get_brandgroup_settings', name='get_brandgroup_settings'),
+    url(r'^cp/brandgroup/(?P<brandgroup_id>[\d]+)/areas/$', 'get_brandgroup_areas', name='get_brandgroup_areas'),
     url(r'^cp/export/(?P<group_id>\d+)/$', 'export', name="export_group"),
     url(r'^cp/export/$', 'export_selected'),
     url(r'^cp/import_order/', 'import_order', name='import_to_csv'),
@@ -68,6 +71,21 @@ urlpatterns += patterns('client.views',
     url(r'^client/balance/$', 'balance', name="client_balance"),
     url(r'^client/shipments/(?P<shipment_id>\d+)/$', 'shipment', name="client_shipment"),
     url(r'^client/', 'index', name='client_index'),
+)
+
+urlpatterns += patterns('manager.views',
+    url(r'^manager/issues/client/(?P<client_id>\d+)/$', 'issues_client', name="manager_issues_client"),
+    url(r'^manager/issues/$', 'issues', name="manager_issues"),
+    url(r'^manager/invoices/(?P<invoice_id>\d+)/$', 'invoice', name="manager_invoice"),
+    url(r'^manager/invoices/$', 'invoices', name="manager_invoices"),
+    url(r'^manager/shipments/$', 'shipments', name="manager_shipments"),
+    url(r'^manager/shipments/(?P<shipment_id>\d+)/$', 'shipment', name="manager_shipment"),
+    url(r'^manager/balance/client/(?P<client_id>\d+)/$', 'balance_client', name="manager_balance_client"),
+    url(r'^manager/balance/delete/(?P<item_id>\d+)/$', 'balanceitem_delete', name="manager_balanceitem_delete"),
+    url(r'^manager/balance/$', 'balance', name="manager_balance"),
+    url(r'^manager/export_order/', 'export_order', name='manager_export_orders'),
+    url(r'^manager/', 'index', name='manager_index'),
+    url(r'^manager_admin/', include(manager_admin_site.urls)),
 )
 
 

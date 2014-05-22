@@ -1,0 +1,63 @@
+{% extends 'manager/index.html' %}
+
+{% block menu_issues %}<a class="menu-active" href="{% url manager_issues %}">К выдаче</a>{% endblock %}
+{% block menu_index %}<a href="{% url manager_index %}">Заказы</a>{% endblock %}
+
+{% block export_link %}
+<a href="{% url manager_export_orders %}?qs_filter=1&{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a>
+<br/>
+<br/>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript">
+    function issue() {
+        var orderIds = new Array();
+        var packageIds = new Array();
+        jQuery('.select_row:checked').each(function() {
+            orderIds.push(jQuery(this).attr('name').replace('select_row_', ''));
+        });
+        jQuery('.select_package:checked').each(function() {
+            packageIds.push(jQuery(this).attr('name').replace('select_package_', ''));
+        });
+        if ((orderIds.length +  packageIds.length) > 0) {
+            jQuery('input[name=issued_orders]').val(orderIds.join(','));
+            jQuery('input[name=issued_packages]').val(packageIds.join(','));
+            jQuery('#issues-process-form').submit();
+        }
+        return false;
+    }
+</script>
+{% endblock %}
+
+{% block table_body %}
+{% for i in items %}
+  <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}" class="order_row">
+    {% include "manager/tags/row_issue.html" %}
+  </tr>
+{% endfor %}
+{% if total_row %}
+  <tr class="alt">
+      {% for val in total_row %}
+          <td>
+            {% if val %}{{ val|floatformat:2 }}{% else %}{% endif %}
+          </td>
+      {% endfor %}
+  </tr>
+{% endif %}
+<tr>
+  <td style="text-align: left;" colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
+</tr>
+{% endblock %}
+
+{% block content_bottom %}
+<form action="" method="post" id="issues-process-form">
+    <div class="submit-row">
+        <input type="submit" onclick="issue();" name="open_invoice_button" value="Отгрузить" />
+        <input type="hidden" name="issued" value="1" />
+        <input type="hidden" name="issued_orders" value="" />
+        <input type="hidden" name="issued_packages" value="" />
+    </div>
+</form>
+{% endblock %}

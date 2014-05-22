@@ -47,8 +47,14 @@ ADMIN_MEDIA_PREFIX = "/media/admin/"
 SECRET_KEY = '%^i)f6-(3d$&n2l0-=wnnj0=vldr@xtakth%50htl9s3a1510!'
 
 # Admin tools settings
-ADMIN_TOOLS_INDEX_DASHBOARD = 'admin_tools_dashboard.MyDashboard'
-ADMIN_TOOLS_APP_INDEX_DASHBOARD = 'admin_tools_dashboard.CustomAppIndexDashboard'
+ADMIN_TOOLS_INDEX_DASHBOARD = {
+    'django.contrib.admin.site': 'admin_tools_dashboard.MyDashboard',
+    'data.admin.manager_admin_site': 'admin_tools_dashboard.ManagerDashboard',
+}
+ADMIN_TOOLS_APP_INDEX_DASHBOARD = {
+    'django.contrib.admin.site': 'admin_tools_dashboard.CustomAppIndexDashboard',
+    'data.admin.manager_admin_site': 'admin_tools_dashboard.ManagerAppIndexDashboard',
+}
 ADMIN_TOOLS_MENU = 'admin_tools_menu.CustomMenu'
 
 ADMIN_TOOLS_THEMING_CSS = 'css/admin_tools_theming.css'
@@ -95,6 +101,7 @@ INSTALLED_APPS = (
     'data',
     'client',
     'cp',
+    'manager',
     'common',
     'lib',
     'south',

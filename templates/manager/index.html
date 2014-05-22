@@ -1,0 +1,101 @@
+{% extends 'manager_base.html' %}
+{% load manager_tags %}
+
+{% block menu_index %}<a class="menu-active" href="{% url manager_index %}">Заказы</a>{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{{ MEDIA_URL }}js/order_processing.js"></script>
+<script type="text/javascript">
+  var backend_url = '/cp/position/edit/ordered_item/';
+  var caller = 'index';
+</script>
+{% endblock %}
+
+{% block content %}
+
+  {% block export_link %}
+  <a href="{% url manager_export_orders %}">Экспорт</a>
+  <br/>
+  <br/>
+  {% endblock %}
+
+  {% block content_title %}{% endblock %}
+
+  <form method="{{ filter.method }}" action="{{ request.path }}">
+    {% block filter_form %}
+    <input type="hidden" name="qs_filter" value="1">
+    <input type="submit" value="Фильтр">
+    <input type="submit" name="qs_filter_clear" value="Очистить">&nbsp;
+
+    Количество записей на странице:
+    <select onchange="buildQueryFilter();" id="items-per-page-filter-select">
+        <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+        <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+        <option value="200"{% ifequal items_per_page 200 %} selected {% endifequal %}>200</option>
+    </select>&nbsp;&nbsp;
+
+    За период:
+    <select onchange="buildQueryFilter();" id="period-filter-select">
+        <option value="w"{% ifequal period 'w' %} selected {% endifequal %}>неделя</option>
+        <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
+        <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
+        <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>
+    </select>
+    <br/>
+    <br/>
+    {% endblock %}
+
+    {% block table %}
+    <div class="module" id="changelist">
+      <table>
+        <thead>
+          <tr>
+            <th>&nbsp;</th>
+            {% table_header_sort headers %}
+            <th>&nbsp;</th>
+          </tr>
+          <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+            <td>&nbsp;</td>
+            {% for f in list_filters %}
+              <td>
+                {% ifequal f.name 'ponumber' %}
+                  <div style="width: 60px;">
+                    <input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" style="width: 25%;">&nbsp;{{ f }}
+                  </div>
+                {% else %}
+                  {{ f }}
+                {% endifequal %}
+              </td>
+            {% endfor %}
+            <td>&nbsp;</td>
+          </tr>
+        </thead>
+        <tbody>
+          {% block table_body %}
+            {% for i in items %}
+              <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}" class="order_row">
+                {% include "manager/tags/row.html" %}
+              </tr>
+            {% endfor %}
+            {% if total_row %}
+              <tr class="alt">
+                  {% for val in total_row %}
+                      <td>
+                        {% if val %}{{ val|floatformat:2 }}{% else %}{% endif %}
+                      </td>
+                  {% endfor %}
+              </tr>
+            {% endif %}
+            <tr>
+              <td style="text-align: left;" colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
+            </tr>
+          {% endblock %}
+        </tbody>
+      </table>
+      {% block after_table %}{% endblock %}
+    </div>
+    {% endblock %}
+  </form>
+  {% block content_bottom %}{% endblock %}
+{% endblock %}

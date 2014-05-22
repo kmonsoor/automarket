@@ -3,6 +3,7 @@
 from django import forms
 from data.models import OrderedItem, ORDER_ITEM_STATUSES, Area, INVOICE_STATUSES
 
+
 STAFF_FIELD_LIST = (
     (u'PO', 'ponumber', 'ponumber', 'ponumber'),
     (u'Направление', 'brandgroup__title', 'brandgroup', 'brandgroup__title__contains'),
@@ -33,6 +34,13 @@ STAFF_FIELD_LIST = (
     (u'Статус', 'status', 'status', 'status'),
     (u'Отгружено', 'issued_at', 'issued_at', None),
 )
+
+
+MANAGER_FIELD_LIST = tuple(
+    filter(
+        lambda f: f[2] not in ('comment_supplier', 'price_invoice', 'total_w_ship', 'manager',),
+        STAFF_FIELD_LIST))
+
 
 class OrderedItemsFilterForm(forms.Form):
     brandgroup__direction__po__icontains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'}))
@@ -87,9 +95,17 @@ SHIPMENTS_FIELD_LIST = (
     (u'Итоговая сумма', '', '', None),
 )
 
-CLIENT_SHIPMENTS_FIELD_LIST = list(SHIPMENTS_FIELD_LIST)
-CLIENT_SHIPMENTS_FIELD_LIST.pop(2)
-CLIENT_SHIPMENTS_FIELD_LIST = tuple(CLIENT_SHIPMENTS_FIELD_LIST)
+
+MANAGER_SHIPMENTS_FIELD_LIST = tuple(
+    filter(
+        lambda f: f[2] not in ('manager',),
+        SHIPMENTS_FIELD_LIST))
+
+
+CLIENT_SHIPMENTS_FIELD_LIST = tuple(
+    filter(
+        lambda f: f[2] not in ('client',),
+        SHIPMENTS_FIELD_LIST))
 
 
 class ShipmentsFilterForm(forms.Form):

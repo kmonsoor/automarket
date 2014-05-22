@@ -28,4 +28,3 @@ class CustomMenu(Menu):
         Use this method if you need to access the request context.
         """
         pass
-

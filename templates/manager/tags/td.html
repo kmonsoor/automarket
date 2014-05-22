@@ -1,0 +1,22 @@
+{% load i18n %}{% if editable and not item.failed %}
+<td id="{{ prefix }}{{ field_name }}_row_{{ item.id }}" class="editable" onclick="{{ jscallback }}({{ item.id }})">
+    <div id="{{ prefix }}{{ field_name }}_display_{{ item.id }}">{{ value|default:"" }}</div>
+    <div id="{{ prefix }}{{ field_name }}_{{ item.id }}" style="display: none">{{ value|default:"" }}</div>
+    <span id="{{ prefix }}{{ field_name }}_buttons_{{ item.id }}" style="display: none">
+    <a class="addlink" onclick="{{ prefix }}save(); return false;" href="javascript:void(0);">{% trans "Save" %}</a>
+    &nbsp;&nbsp;
+    <a class="deletelink" onclick="cancel(); return false;" href="javascript:void(0);" >{% trans "Cancel" %}</a></span>
+</td>
+{% else %}
+<td id="{{ prefix }}{{ field_name }}_row_{{ item.id }}" class="{% if item.superseded and field_name == part_number %}superseded{% endif %}">
+<div id="{{ prefix }}{{field_name }}_display_{{ item.id }}"
+{% if class_line %}class="{{ class_line }}"{% endif %}>
+{% if not item.failed %}
+{{ value|default:"" }}
+{% endif %}
+{% if item.failed and show_if_failed %}
+{{ value|default:"" }}
+{% endif %}
+</div>
+</td>
+{% endif %}

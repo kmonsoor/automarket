@@ -152,11 +152,7 @@ tr.alt td {
       {% if issues_mode %}<td>&nbsp;</td>{% endif %}
       {% for val in total_row %}
           <td>
-          {% if forloop.first %}
-            {% ifequal val 'Итого:' %}<b>{{ val }}</b>{% else %}{{ val|floatformat:2 }}{% endifequal %}
-          {% else %}
-            {% if val %}{{ val|floatformat:2 }}{% else %}{% endif %}
-          {% endif %}
+            {% if val %}<b>{{ val|floatformat:2 }}</b>{% else %}{% endif %}
           </td>
       {% endfor %}
   </tr>

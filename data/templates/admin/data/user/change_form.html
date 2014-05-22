@@ -4,7 +4,7 @@
 {{ block.super }}
 <script type="text/javascript">
 $ = django.jQuery;
-var brand_group_base_url = "{% url admin:data_brandgroup_changelist %}";
+var brand_group_base_url = "/cp/brandgroup/";
 
 function build_fields_string() {
   var value = new Array();

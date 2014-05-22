@@ -1,0 +1,32 @@
+{% extends 'manager/index.html' %}
+{% load manager_tags %}
+
+{% block menu_shipments %}<a class="menu-active" href="{% url manager_shipments %}">Отгрузки</a>{% endblock %}
+{% block menu_index %}<a href="{% url manager_index %}">Заказы</a>{% endblock %}
+
+{% block export_link %}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    #changelist table tbody td {padding: 5px;}
+    #changelist table thead input.qs_filter, #changelist table thead select.qs_filter {width: 96%;}
+</style>
+{% endblock %}
+
+{% block table_body %}
+    {% for s in items %}
+      <tr class="{% cycle row1,row2 %}">
+        <td></td>
+        <td><a href="{% url manager_shipment s.id %}">{{ s.created_at|date:"d.m.Y H:i"|safe }}</a></td>
+        <td>{{ s.client }}</td>
+        <td>{{ s.full_code }}</td>
+        <td>{{ s.weight }}</td>
+        <td>{{ s.cost }}</td>
+        <td></td>
+      </tr>
+    {% endfor %}
+    <tr>
+        <td colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
+    </tr>
+{% endblock %}

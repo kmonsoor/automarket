@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block global_title %}Менеджемент{% endblock %}
+
+{% block extrahead %}
+<script type="text/javascript" src="{{ MEDIA_URL }}js/jquery-ui-1.8.7/ui/jquery-ui.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}js/jquery-ui-1.8.7/themes/base/jquery-ui.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/qs_filter.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/changelists.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/forms.css" />
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/dashboard.css" />
+{{ block.super }}
+
+<script type="text/javascript">
+var ajax_loader_img_path = '{{ MEDIA_URL }}img/icons/ajax-loader.gif';
+var qs = new Array();
+
+function getFilterItemsPerPage() {
+    var val = jQuery('#items-per-page-filter-select').val();
+    qs.push("items_per_page=" + val);
+}
+
+function getFilterPeriod() {
+    var val = jQuery('#period-filter-select').val();
+    qs.push("period=" + val);
+}
+
+function buildQueryFilter() {
+    getFilterPeriod();
+    getFilterItemsPerPage();
+    location.href='{{ request.path }}?' + qs.join("&");
+}
+</script>
+
+<style type="text/css">
+  input, select {
+    font-size: 90%;
+  }
+
+  table {
+    border: 1px solid #DDD;
+  }
+
+  table td {
+    padding:1px 5px;
+    vertical-align: middle;
+    font-size: 80%;
+  }
+
+  tr.alt td {
+      font-weight: 600;
+  }
+
+  td.center {
+    text-align: center;
+
+  }
+
+  td.right {
+    text-align: right;
+  }
+
+  .module {
+    background: none repeat scroll 0 0 white;
+    background: none repeat scroll 0 0 white;
+    border: none;
+    margin-bottom: 5px;
+  }
+</style>
+{% endblock %}
+
+{% block global_menu %}
+<ul>
+    <li>{% block menu_index %}<a href="{% url manager_index %}">Заказы</a>{% endblock %}</li>
+    <li>{% block menu_invoices %}<a href="{% url manager_invoices %}">Инвойсы</a>{% endblock %}</li>
+    <li>{% block menu_issues %}<a href="{% url manager_issues %}">К выдаче</a>{% endblock %}</li>
+    <li>{% block menu_shipments %}<a href="{% url manager_shipments %}">Отгрузки</a>{% endblock %}</li>
+    <li>{% block menu_balance %}<a href="{% url manager_balance %}">Баланс</a>{% endblock %}</li>
+    <li>|</li>
+    <li>{% block menu_admin %}<a href="/manager_admin/">Клиенты</a>{% endblock %}</li>
+</ul>
+{% endblock %}
+
