@@ -420,7 +420,7 @@ class OrderedItem(models.Model):
 
     status = models.CharField(
         max_length=50, choices=ORDER_ITEM_STATUSES,
-        default='order', verbose_name=u"Статус")
+        default='moderation', verbose_name=u"Статус")
     status_modified = models.DateTimeField(
         verbose_name=u"Дата изменения статуса", editable=False,
         null=True, blank=True)

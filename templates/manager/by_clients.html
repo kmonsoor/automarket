@@ -1,0 +1,107 @@
+{% extends 'manager_base.html' %}
+{% load manager_tags %}
+
+{% block menu_by_clients %}<a class="menu-active" href="{% url manager_by_clients %}">По клиентам</a>{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">
+<style>
+.admin_table .header th {
+    color:#666;
+    padding:2px 5px;
+    font-size:11px;
+    background:#e1e1e1 url(/media/img/admin/nav-bg.gif) top left repeat-x;
+    border-left:1px solid #ddd;
+    border-bottom:1px solid #ddd;
+    border-right:1px solid #ddd;
+}
+.admin_table TH {
+    line-height: 1.3;
+}
+</style>
+<script type="text/javascript">
+
+function orderItems() {
+    var orderIds = new Array();
+    jQuery('.select_row:checked').each(function() {
+        orderIds.push(jQuery(this).attr('name').replace('select_row_', ''));
+    });
+    if (orderIds.length > 0) {
+        jQuery('input[name=order_ids]').val(orderIds.join(','));
+        jQuery('#order-process-form').submit();
+    }
+    return false;
+};
+
+function selectClientOrders(selectbox, clientId) {
+    var isChecked = jQuery(selectbox).attr('checked');
+    jQuery('tr.client_' + clientId + ' input.select_row').attr('checked', isChecked);
+    return false;
+};
+
+function selectClientOrder(selectbox, clientId) {
+    var allClientOrdersIsChecked = true;
+    jQuery('tr.client_' + clientId + ' input.select_row').each(function(){
+        if (!jQuery(this).attr('checked')) {
+            allClientOrdersIsChecked = false;
+        }
+    });
+    jQuery('input[name=select_client_' + clientId + ']').attr('checked', allClientOrdersIsChecked);
+    return false;
+}
+
+function selectAll(selectbox) {
+    var isChecked = jQuery(selectbox).attr('checked');
+    jQuery('.select_row, .select_client_rows').attr('checked', isChecked);
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="module" id="changelist">
+    {% if items %}
+    <table class="admin_table">
+        <thead>
+            <tr class="header">
+                <th><input type="checkbox" name="select_all" onclick="selectAll(this)" /></th>
+                {% for h in headers %}
+                <th>{{ h }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+        {% for client, client_orders in items.iteritems %}
+            <tr>
+                <th style="text-align: center;">
+                    <input type="checkbox" name="select_client_{{ client.id }}"  class="select_client_rows" onclick="selectClientOrders(this, {{ client.id }})" />
+                </th>
+                <th colspan="{{ headers|length }}">
+                    {{ client.username }}
+                </th>
+            </tr>
+            {% for i in client_orders %}
+                <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} client_{{ client.id }}" class="order_row">
+                    <td align="center"><input type="checkbox" name="select_row_{{ i.id }}" class="select_row" onclick="selectClientOrder(this, {{ client.id }})" /></td>
+                    {% for field in user_fields %}
+                    {% table_td i field 0 '' %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        {% endfor %}
+        </tbody>
+    </table>
+    <form action="" method="post" id="order-process-form">
+        <div class="submit-row">
+            <div class="order_items" style="text-align: right;">
+                <input type="submit" onclick="orderItems();" name="order_items" value="Заказать выделенные" />
+                <input type="hidden" name="order_ids" value="" />
+            </div>
+        </div>
+    </form>
+    {% else %}
+        <h1>Новых заказов нет</h1>
+    {% endif %}
+</div>
+{% endblock %}
+

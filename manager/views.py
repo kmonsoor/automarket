@@ -257,6 +257,67 @@ def index(request):
 
 
 @manager_required
+@render_to('manager/by_clients.html')
+def by_clients(request):
+    context = {}
+
+    client_ids = list(
+        UserProfile.objects.filter(
+            client_manager=request.user
+        ).values_list('user', flat=True))
+
+    qs = OrderedItem.objects.select_related().filter(
+        client__id__in=client_ids,
+        status__in=('moderation',))
+    ids = list(qs.values_list('id', flat=True))
+
+    if request.method == 'POST':
+        redirect_url = reverse("manager_by_clients")
+        if request.POST.get('order_items'):
+            try:
+                order_ids = map(int, request.POST.get('order_ids').split(','))
+                if not filter(lambda o: o in ids, order_ids):
+                    raise ValueError
+            except (ValueError, TypeError, AttributeError):
+                msg = u"Невалидные данные"
+                messages.add_message(request, messages.ERROR, msg)
+                return _redirect_after_post(redirect_url)
+            else:
+                orders = OrderedItem.objects.filter(id__in=order_ids)
+                orders.update(status='order')
+                msg = u"Заказаны <b>%i</b> позиций." % len(orders)
+                messages.add_message(request, messages.SUCCESS, msg)
+                return _redirect_after_post(redirect_url)
+
+    show_fields = (
+        'brandgroup', 'area', 'brand', 'part_number', 'comment',
+        'quantity', 'description_ru', 'description_en',
+        'price_base', 'price_sale',)
+
+    fields = filter(
+        lambda x: x[2] in show_fields,
+        get_user_fields(request.user))
+
+    context['user_fields'] = [x[2] for x in fields]
+    context['headers'] = [x[0] for x in fields]
+
+    items = {}
+    for item in qs:
+        items.setdefault(item.client, []).append(item)
+
+    context['items'] = items
+
+    return context
+
+
+@manager_required
+@render_to('manager/order.html')
+def order(request):
+    context = {}
+    return context
+
+
+@manager_required
 @render_to('manager/invoices.html')
 def invoices(request):
     context = {}
@@ -278,7 +339,16 @@ def invoices(request):
     qs_filter.update(period_filter)
     context['period'] = period
 
-    qs = Invoice.objects.select_related().filter(**qs_filter)
+    client_ids = list(
+        UserProfile.objects.filter(
+            client_manager=request.user
+        ).values_list('user', flat=True))
+
+    invoice_codes = set(OrderedItem.objects.filter(
+        client__id__in=client_ids).values_list('invoice_code', flat=True))
+
+    qs = Invoice.objects.select_related().filter(
+        code__in=invoice_codes, **qs_filter)
 
     order_by = get_ordering(request, list_headers, field='received_at')
     if order_by:

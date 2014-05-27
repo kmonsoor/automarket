@@ -84,6 +84,8 @@ urlpatterns += patterns('manager.views',
     url(r'^manager/balance/delete/(?P<item_id>\d+)/$', 'balanceitem_delete', name="manager_balanceitem_delete"),
     url(r'^manager/balance/$', 'balance', name="manager_balance"),
     url(r'^manager/export_order/', 'export_order', name='manager_export_orders'),
+    url(r'^manager/by_clients/$', 'by_clients', name="manager_by_clients"),
+    url(r'^manager/order/$', 'order', name="manager_order"),
     url(r'^manager/', 'index', name='manager_index'),
     url(r'^manager_admin/', include(manager_admin_site.urls)),
 )

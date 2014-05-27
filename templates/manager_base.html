@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% block global_title %}Менеджемент{% endblock %}
 
 {% block extrahead %}
 <script type="text/javascript" src="{{ MEDIA_URL }}js/jquery-ui-1.8.7/ui/jquery-ui.js"></script>
@@ -71,13 +70,15 @@ function buildQueryFilter() {
 
 {% block global_menu %}
 <ul>
+    <!-- <li>{% block menu_order %}<a href="{% url manager_order %}">Новый заказ</a>{% endblock %}</li> -->
     <li>{% block menu_index %}<a href="{% url manager_index %}">Заказы</a>{% endblock %}</li>
+    <li>{% block menu_by_clients %}<a href="{% url manager_by_clients %}">По клиентам</a>{% endblock %}</li>
     <li>{% block menu_invoices %}<a href="{% url manager_invoices %}">Инвойсы</a>{% endblock %}</li>
     <li>{% block menu_issues %}<a href="{% url manager_issues %}">К выдаче</a>{% endblock %}</li>
     <li>{% block menu_shipments %}<a href="{% url manager_shipments %}">Отгрузки</a>{% endblock %}</li>
     <li>{% block menu_balance %}<a href="{% url manager_balance %}">Баланс</a>{% endblock %}</li>
     <li>|</li>
-    <li>{% block menu_admin %}<a href="/manager_admin/">Клиенты</a>{% endblock %}</li>
+    <li>{% block menu_admin %}<a href="/manager_admin/">Администрирование</a>{% endblock %}</li>
 </ul>
 {% endblock %}
 
