@@ -360,6 +360,8 @@ class CUserCreationForm(UserCreationForm):
         label="Группа",
         required=False)
 
+    creator = forms.IntegerField()
+
     def save(self, *args, **kwargs):
         user = super(CUserCreationForm, self).save(*args, **kwargs)
         user.save()
@@ -372,7 +374,14 @@ class CUserCreationForm(UserCreationForm):
             group = self.cleaned_data.get('client_group')
             if not group:
                 group = ClientGroup.objects.get_default()
-            UserProfile.objects.create(user=user, client_group=group)
+
+            client_manager = None
+            creator = User.objects.get(id=self.cleaned_data['creator'])
+            if creator.get_profile().is_manager:
+                client_manager = creator
+
+            UserProfile.objects.create(
+                user=user, client_group=group, client_manager=client_manager)
         return user
 
 
@@ -438,7 +447,7 @@ class CustomerAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2', 'client_group')}
+            'fields': ('username', 'password1', 'password2', 'client_group', 'creator')}
         ),
     )
 

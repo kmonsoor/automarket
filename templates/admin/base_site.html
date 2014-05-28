@@ -5,7 +5,7 @@
 
 {% block extrastyle %}
 {{ block.super }}
-{% if user.is_active and user.is_staff %}
+{% if user.is_active %}
 {% if not is_popup %}
 {% admin_tools_render_menu_css %}
 {% endif %}
@@ -13,13 +13,17 @@
 {% endblock %}
 
 {% block branding %}
-<h1 id="site-name">{% trans 'Newparts-online.com administration' %}</h1>
+<h1 id="site-name">Администрирование</h1>
 {% endblock %}
 
 {% block nav-global %}
-{% if user.is_active and user.is_staff %}
-{% if not is_popup %}
+{% if user.is_active %}
+{% if user.is_staff %}
 {% admin_tools_render_menu %}
+{% else %}
+<ul id="navigation-menu">
+<li class="menu-item first"><a href="/">Менеджемент</a></li>
+</ul>
 {% endif %}
 {% endif %}
 {% endblock %}

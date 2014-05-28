@@ -34,7 +34,7 @@ function showPopUp( url, winx, winy, name, scroll ) {
     </div>
     {% block global_menu %}{% endblock %}
     <div id="user-tools">
-    Добро пожаловать, <strong>{{ user.username }}</strong>   |   <a href="/accounts/logout/">Выход</a></div>
+    Добро пожаловать, <strong>{{ user.username }}</strong> {% if user.is_staff %}<span class="role">(Администратор)</span>{% endif %}  |   <a href="/accounts/logout/">Выход</a></div>
 </div> 
 {% endblock %}
 <div id="content">

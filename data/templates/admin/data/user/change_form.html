@@ -62,6 +62,9 @@ $(document).ready(function(){
 
   $("select[id^=id_discount_set]").live('change', populate_area_boxes);
 
+  $('#id_creator').val('{{request.user.id}}');
+  $('.creator').css({'display': 'none'});
+
 });
 </script>
 {% endblock %}

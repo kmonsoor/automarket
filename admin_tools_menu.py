@@ -15,7 +15,7 @@ class CustomMenu(Menu):
         Menu.__init__(self, **kwargs)
         self.children.append(items.MenuItem(
             title=u"Менеджемент",
-            url='/cp/'
+            url=reverse('cp_index')
         ))
         self.children.append(items.MenuItem(
             title = u'Настройки',
