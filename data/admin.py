@@ -752,7 +752,7 @@ class ManagerAdminSite(admin.sites.AdminSite):
     def has_permission(self, request):
         try:
             user_profile = UserProfile.objects.get(user=request.user)
-        except UserProfile.DoesNotExist:
+        except:
             return False
         else:
             return user_profile.is_manager
