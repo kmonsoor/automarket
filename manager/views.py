@@ -156,6 +156,8 @@ def get_user_fields(user):
         fields = MANAGER_FIELD_LIST
     else:
         fields = [x for x in MANAGER_FIELD_LIST if x[2] in user_fields]
+    if not fields:
+        fields = MANAGER_FIELD_LIST
     return fields
 
 
