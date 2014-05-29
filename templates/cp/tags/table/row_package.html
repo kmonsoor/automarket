@@ -5,6 +5,7 @@
   {% if 'area' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'brand' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'part_number' in staff_fields %}<td>&nbsp;</td>{% endif %}
+  {% if 'part_number_superseded' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'comment_customer' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'comment_supplier' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'created' in staff_fields %}<td id="created_at_package_row_{{ p.id }}" align="center">
@@ -20,7 +21,6 @@
   {% if 'quantity' in staff_fields %}{% table_td p 'quantity' p.editable 'editQuantityPackage' 1 'package_' %}{% endif %}
   {% if 'price_invoice' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'total_w_ship' in staff_fields %}<td>&nbsp;</td>{% endif %}
-  {% if 'part_number_superseded' in staff_fields %}<td>&nbsp;</td>{% endif %}
   {% if 'manager' in staff_fields %}{% table_td p 'manager' 0 '' %}{% endif %}
   {% if 'client' in staff_fields %}<td>{{ p.client|default:"" }}</td>{% endif %}
   {% if 'description_ru' in staff_fields %}<td>&nbsp;</td>{% endif %}

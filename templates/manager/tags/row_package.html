@@ -5,11 +5,11 @@
 {% if 'area' in user_fields %}<td>&nbsp;</td>{% endif %}
 {% if 'brand' in user_fields %}<td>&nbsp;</td>{% endif %}
 {% if 'part_number' in user_fields %}<td>&nbsp;</td>{% endif %}
+{% if 'part_number_superseded' in user_fields %}<td>&nbsp;</td>{% endif %}
 {% if 'comment_customer' in user_fields %}<td>&nbsp;</td>{% endif %}
 {% if 'created' in user_fields %}{% table_td p 'created_at' 0 '' %}{% endif %}
 {% if 'received_office_at' in user_fields %}{% table_td p 'received_at' 0 '' %}{% endif %}
 {% if 'quantity' in user_fields %}{% table_td p 'quantity' p.editable 'editQuantityPackage' 1 'package_' %}{% endif %}
-{% if 'part_number_superseded' in user_fields %}<td>&nbsp;</td>{% endif %}
 {% if 'client' in user_fields %}<td>{{ p.client|default:"" }}</td>{% endif %}
 {% if 'description_ru' in user_fields %}<td>&nbsp;</td>{% endif %}
 {% if 'description_en' in user_fields %}<td>&nbsp;</td>{% endif %}

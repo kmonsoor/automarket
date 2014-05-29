@@ -5,11 +5,11 @@
 {% if 'area' in user_fields %}{% table_td i 'area' 0 '' %}{% endif %}
 {% if 'brand' in user_fields %}{% table_td i 'brand' 0 '' %}{% endif %}
 {% if 'part_number' in user_fields %}{% table_td i 'part_number' 0 '' %}{% endif %}
+{% if 'part_number_superseded' in user_fields %}{% table_td i 'part_number_superseded' i.editable 'editSuperseded' %}{% endif %}
 {% if 'comment_customer' in user_fields %}{% table_td i 'comment_customer' 0 '' %}{% endif %}
 {% if 'created' in user_fields %}{% table_td i 'created' 0 '' %}{% endif %}
 {% if 'received_office_at' in user_fields %}{% table_td i 'received_office_at' 0 '' %}{% endif %}
 {% if 'quantity' in user_fields %}{% table_td i 'quantity' 0 '' %}{% endif %}
-{% if 'part_number_superseded' in user_fields %}{% table_td i 'part_number_superseded' i.editable 'editSuperseded' %}{% endif %}
 {% if 'client' in user_fields %}<td><a href="{% url manager_issues_client i.client.id %}">{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</a></td>{% endif %}
 {% if 'description_ru' in user_fields %}{% table_td i 'description_ru' i.editable 'editDescriptionRu' %}{% endif %}
 {% if 'description_en' in user_fields %}{% table_td i 'description_en' i.editable 'editDescriptionEn' %}{% endif %}
