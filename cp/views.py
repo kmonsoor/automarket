@@ -1404,9 +1404,14 @@ def balance(request):
             if not last_modified or last_modified < b.created_at:
                 last_modified = b.created_at
 
+        try:
+            client_group = UserProfile.objects.get(user=user).client_group
+        except:
+            client_group = None
+
         res.append({
             'user': user,
-            'user_group': UserProfile.objects.get(user=user).client_group,
+            'user_group': client_group,
             'balance': balance,
             'last_modified': last_modified,
         })

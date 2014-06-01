@@ -924,6 +924,12 @@ def basket_order(request):
         return HttpResponseRedirect('/client/search/')
     # common objects
     adminuser = User.objects.get(pk=1)
+
+    try:
+        manager = request.user.get_profile().client_manager
+    except:
+        manager = None
+
     brandgroup_default = BrandGroup.objects.get(title="OEM")
 
     def get_orderitem_data(item):
@@ -959,7 +965,7 @@ def basket_order(request):
         data['client'] = request.user
         data['quantity'] = item.quantity
         data['part_number'] = item.part_number
-        data['manager'] = adminuser
+        data['manager'] = manager or adminuser
         data['price_base'] = item.msrp
         data['price_sale'] = item.get_price()
         return (data, item)
