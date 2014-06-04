@@ -183,6 +183,21 @@ def get_total_row(qs, fields):
     return list(total.get(f[2], u"") for f in fields)
 
 
+def get_total_exclude_statuses():
+    return (
+        'failure', 'wrong_number', 'out_of_stock',
+        'cancelled_customer', 'export_part',)
+
+
+def get_total_orders_with_packages(qs_orders, qs_packages, fields):
+    total_orders = get_total(
+        qs_orders.exclude(status__in=get_total_exclude_statuses()), fields)
+    total_packages = get_total(qs_packages, fields)
+    total_dict = dict(Counter(total_orders) + Counter(total_packages))
+    total = list(total_dict.get(f[2], '') for f in fields)
+    return total
+
+
 def _random(length=5):
     yield "".join([random.choice(string.letters) for x in xrange(0, length)])
 
@@ -193,68 +208,107 @@ def _redirect_after_post(url):
     )
 
 
+class ManagerOrderItems(object):
+    filter_form = OrderedItemsFilterForm
+    session_store_prefix = 'manager_index'
+    default_order_by = 'created'
+
+    def __init__(self, request):
+        self.request = request
+        self.items = self.get_items()
+
+    @property
+    def filter(self):
+        return QSFilter(self.request, self.filter_form)
+
+    @property
+    def fields(self):
+        return get_user_fields(self.request.user)
+
+    @property
+    def user_fields(self):
+        return list(x[2] for x in self.fields)
+
+    @property
+    def headers(self):
+        sort_headers = SortHeaders(
+            self.request, [(x[0], x[1]) for x in self.fields])
+        return list(sort_headers.headers())
+
+    @property
+    def filters(self):
+        return get_list_filters(self.filter, self.fields)
+
+    @property
+    def period(self):
+        return get_period(
+            self.request, self.session_store_prefix, self.default_order_by)[0]
+
+    @property
+    def period_filter(self):
+        return get_period(
+            self.request, self.session_store_prefix, self.default_order_by)[1]
+
+    @property
+    def items_per_page(self):
+        return get_items_per_page(self.request, self.session_store_prefix)
+
+    @property
+    def ordering(self):
+        return get_ordering(
+            self.request, [(x[0], x[1]) for x in self.fields], self.default_order_by)
+
+    @property
+    def client_ids(self):
+        return list(
+            UserProfile.objects.filter(
+                client_manager=self.request.user
+            ).values_list('user', flat=True))
+
+    @property
+    def qs_filter(self):
+        qs_filter = self.filter.get_filters()
+        qs_filter.update(self.period_filter)
+        return qs_filter
+
+    def get_items(self):
+
+        qs = OrderedItem.objects.select_related().filter(
+            client__id__in=self.client_ids, **self.qs_filter)
+
+        if self.ordering:
+            qs = qs.order_by(self.ordering)
+
+        if self.filter.is_set:
+            self.total = get_total_row(
+                qs.exclude(status__in=get_total_exclude_statuses()),
+                self.fields)
+
+        self.paginator = SimplePaginator(
+            self.request, qs, self.items_per_page, 'page')
+
+        # grouping parents orders
+        if not self.filter.is_set:
+
+            items_list = list(
+                x for x in self.paginator.get_page_items()
+                if not x.parent)
+
+            for order in OrderedItem.objects.filter(
+                parent__id__in=set(x.id for x in items_list)
+            ):
+                items_list.insert(items_list.index(order.parent), order)
+
+            self.paginator.page.object_list = items_list
+
+        return self.paginator.get_page_items()
+
+
 @manager_required
 @render_to('manager/index.html')
 def index(request):
-
     context = {}
-    session_store_prefix = 'manager_index'
-
-    _filter = QSFilter(request, OrderedItemsFilterForm)
-    context['filter'] = _filter
-
-    fields = get_user_fields(request.user)
-    context['user_fields'] = [x[2] for x in fields]
-    list_headers = [(x[0], x[1]) for x in fields]
-
-    sort_headers = SortHeaders(request, list_headers)
-    context['headers'] = list(sort_headers.headers())
-
-    context['list_filters'] = get_list_filters(_filter, fields)
-
-    qs_filter = _filter.get_filters()
-
-    period, period_filter = get_period(
-        request, session_store_prefix, 'created')
-    qs_filter.update(period_filter)
-    context['period'] = period
-
-    client_ids = list(
-        UserProfile.objects.filter(
-            client_manager=request.user
-        ).values_list('user', flat=True))
-
-    qs = OrderedItem.objects.select_related().filter(
-        client__id__in=client_ids, **qs_filter)
-
-    total_row = []
-    if _filter.is_set:
-        total_row = get_total_row(
-            qs.exclude(
-                status__in=(
-                    'failure', 'wrong_number', 'out_of_stock',
-                    'cancelled_customer', 'export_part')),
-            fields)
-    context['total_row'] = total_row
-
-    order_by = get_ordering(request, list_headers)
-    if order_by:
-        qs = qs.order_by(order_by)
-
-    items_per_page = get_items_per_page(request, session_store_prefix)
-    context['items_per_page'] = items_per_page
-    paginator = SimplePaginator(request, qs, items_per_page, 'page')
-
-    # grouping parents orders
-    if not _filter.is_set:
-        items_list = list(x for x in paginator.get_page_items() if not x.parent)
-        for order in OrderedItem.objects.filter(
-                parent__id__in=set(x.id for x in items_list)):
-            items_list.insert(items_list.index(order.parent), order)
-        paginator.page.object_list = items_list
-
-    context['items'] = paginator.get_page_items()
-    context['paginator'] = paginator
+    context['cl'] = ManagerOrderItems(request)
     return context
 
 
@@ -262,16 +316,6 @@ def index(request):
 @render_to('manager/by_clients.html')
 def by_clients(request):
     context = {}
-
-    client_ids = list(
-        UserProfile.objects.filter(
-            client_manager=request.user
-        ).values_list('user', flat=True))
-
-    qs = OrderedItem.objects.select_related().filter(
-        client__id__in=client_ids,
-        status__in=('moderation',))
-    ids = list(qs.values_list('id', flat=True))
 
     if request.method == 'POST':
         redirect_url = reverse("manager_by_clients")
@@ -291,6 +335,16 @@ def by_clients(request):
                 messages.add_message(request, messages.SUCCESS, msg)
                 return _redirect_after_post(redirect_url)
 
+    client_ids = list(
+        UserProfile.objects.filter(
+            client_manager=request.user
+        ).values_list('user', flat=True))
+
+    qs = OrderedItem.objects.select_related().filter(
+        client__id__in=client_ids,
+        status__in=('moderation',))
+    ids = list(qs.values_list('id', flat=True))
+
     show_fields = (
         'brandgroup', 'area', 'brand', 'part_number', 'comment',
         'quantity', 'description_ru', 'description_en',
@@ -308,7 +362,6 @@ def by_clients(request):
         items.setdefault(item.client, []).append(item)
 
     context['items'] = items
-
     return context
 
 
@@ -319,113 +372,87 @@ def order(request):
     return context
 
 
+
+class ManagerInvoices(ManagerOrderItems):
+    filter_form = InvoicesFilterForm
+    session_store_prefix = 'manager_invoices'
+    default_order_by = 'received_at'
+
+    @property
+    def fields(self):
+        return INVOICES_FIELD_LIST
+
+    def get_items(self):
+
+        invoice_codes = set(OrderedItem.objects.filter(
+            client__id__in=self.client_ids
+        ).values_list('invoice_code', flat=True))
+
+        qs = Invoice.objects.select_related().filter(
+            code__in=invoice_codes, **self.qs_filter)
+
+        if self.ordering:
+            qs = qs.order_by(self.ordering)
+
+        self.paginator = SimplePaginator(
+            self.request, qs, self.items_per_page, 'page')
+        return self.paginator.get_page_items()
+
+
 @manager_required
 @render_to('manager/invoices.html')
 def invoices(request):
     context = {}
-    session_store_prefix = 'manager_invoices'
-
-    _filter = QSFilter(request, InvoicesFilterForm)
-    context['filter'] = _filter
-
-    list_headers = [(x[0], x[1]) for x in INVOICES_FIELD_LIST]
-    sort_headers = SortHeaders(request, list_headers)
-    context['headers'] = list(sort_headers.headers())
-
-    context['list_filters'] = get_list_filters(_filter, INVOICES_FIELD_LIST)
-
-    qs_filter = _filter.get_filters()
-
-    period, period_filter = get_period(
-        request, session_store_prefix, 'received_at')
-    qs_filter.update(period_filter)
-    context['period'] = period
-
-    client_ids = list(
-        UserProfile.objects.filter(
-            client_manager=request.user
-        ).values_list('user', flat=True))
-
-    invoice_codes = set(OrderedItem.objects.filter(
-        client__id__in=client_ids).values_list('invoice_code', flat=True))
-
-    qs = Invoice.objects.select_related().filter(
-        code__in=invoice_codes, **qs_filter)
-
-    order_by = get_ordering(request, list_headers, field='received_at')
-    if order_by:
-        qs = qs.order_by(order_by)
-
-    items_per_page = get_items_per_page(request, session_store_prefix)
-    context['items_per_page'] = items_per_page
-    paginator = SimplePaginator(request, qs, items_per_page, 'page')
-    context['items'] = paginator.get_page_items()
-    context['paginator'] = paginator
-
+    context['cl'] = ManagerInvoices(request)
     return context
+
+
+
+class ManagerInvoice(ManagerOrderItems):
+    session_store_prefix = 'manager_invoice'
+
+    def __init__(self, *args, **kwargs):
+        self.invoice = kwargs.pop('invoice')
+        super(ManagerInvoice, self).__init__(*args, **kwargs)
+
+    @property
+    def qs_filter(self):
+        qs_filter = super(ManagerInvoice, self).qs_filter
+        qs_filter['invoice_code__contains'] = self.invoice.code
+        return qs_filter
+
+    def get_items(self):
+
+        qs_orders = OrderedItem.objects.select_related().filter(
+            client__id__in=self.client_ids, **self.qs_filter)
+
+        if self.ordering:
+            qs_orders = qs_orders.order_by(self.ordering)
+
+        qs_packages = Package.objects.filter(
+            client__id__in=self.client_ids,
+            invoice=self.invoice
+        ).order_by('-created_at')
+        self.packages = qs_packages
+
+        self.total = get_total_orders_with_packages(
+            qs_orders, qs_packages, self.fields)
+
+        self.paginator = SimplePaginator(
+            self.request, qs_orders, self.items_per_page, 'page')
+
+        return self.paginator.get_page_items()
 
 
 @manager_required
 @render_to('manager/invoice.html')
 def invoice(request, invoice_id):
+    context = {}
+    package_data = []
+
     invoice = get_object_or_404(Invoice, id=invoice_id)
-    context = {'invoice': invoice}
-    session_store_prefix = 'manager_invoice'
-
-    _filter = QSFilter(request, OrderedItemsFilterForm)
-    context['filter'] = _filter
-    context['qs_filter_param'] = _filter.get_filters()
-
-    fields = get_user_fields(request.user)
-    context['user_fields'] = [x[2] for x in fields]
-    list_headers = [(x[0], x[1]) for x in fields]
-
-    sort_headers = SortHeaders(request, list_headers)
-    context['headers'] = list(sort_headers.headers())
-
-    context['list_filters'] = get_list_filters(_filter, fields)
-
     invoice.calculate_status()
 
-    client_ids = list(
-        UserProfile.objects.filter(
-            client_manager=request.user
-        ).values_list('user', flat=True))
-
-    qs_packages = Package.objects.filter(
-        client__id__in=client_ids,
-        invoice=invoice).order_by('-created_at')
-    context['packages'] = qs_packages
-
-    qs_orders = OrderedItem.objects.select_related().filter(
-        client__id__in=client_ids,
-        invoice_code=invoice.code,
-        **_filter.get_filters())
-
-    order_by = get_ordering(request, list_headers)
-    if order_by:
-        qs_orders = qs_orders.order_by(order_by)
-
-    total_orders = get_total(
-        qs_orders.exclude(
-            status__in=(
-                'failure', 'wrong_number', 'out_of_stock',
-                'cancelled_customer', 'export_part')),
-        fields)
-
-    total_packages = get_total(qs_packages, fields)
-
-    total = dict(Counter(total_orders) + Counter(total_packages))
-    context['total_row'] = list(total.get(f[2], '') for f in fields)
-
-    items_per_page = get_items_per_page(request, session_store_prefix)
-    context['items_per_page'] = items_per_page
-    paginator = SimplePaginator(request, qs_orders, items_per_page, 'page')
-
-    context['items'] = paginator.get_page_items()
-    context['paginator'] = paginator
-
-    package_data = []
     if request.method == 'POST':
         redirect_url = reverse("manager_invoice", args=[invoice.id])
 
@@ -447,25 +474,33 @@ def invoice(request, invoice_id):
                     request, messages.SUCCESS, u"Упаковка добавлена.")
                 return _redirect_after_post(redirect_url)
 
+    context['cl'] = ManagerInvoice(request, invoice=invoice)
     context['package_template'] = PackageItemForm().render_js('from_template')
     context['package_data'] = package_data
-
     return context
+
+
+class ManagerIssues(ManagerOrderItems):
+    session_store_prefix = 'manager_issues'
+
+    @property
+    def qs_filter(self):
+        qs_filter = super(ManagerIssues, self).qs_filter
+        qs_filter['status'] = 'received_office'
+        return qs_filter
 
 
 @manager_required
 @render_to('manager/issues.html')
 def issues(request):
     context = {}
-    session_store_prefix = 'manager_issues'
 
     if request.method == 'POST':
         redirect_url = reverse('manager_issues')
 
         if request.POST.get('issued'):
             try:
-                order_ids = map(
-                    int, request.POST.get('issued_orders').split(','))
+                order_ids = map(int, request.POST.get('issued_orders').split(','))
             except:
                 msg = u"Невалидные данные"
                 messages.add_message(request, messages.ERROR, msg)
@@ -483,74 +518,64 @@ def issues(request):
                 messages.add_message(request, messages.SUCCESS, msg)
                 return _redirect_after_post(redirect_url)
 
-    _filter = QSFilter(request, OrderedItemsFilterForm)
-    context['filter'] = _filter
-    context['qs_filter_param'] = _filter.get_filters()
-    context['qs_filter_param']['status'] = 'received_office'
-
-    fields = get_user_fields(request.user)
-    context['user_fields'] = [x[2] for x in fields]
-    list_headers = [(x[0], x[1]) for x in fields]
-
-    sort_headers = SortHeaders(request, list_headers)
-    context['headers'] = list(sort_headers.headers())
-
-    context['list_filters'] = get_list_filters(_filter, fields)
-
-    client_ids = list(
-        UserProfile.objects.filter(
-            client_manager=request.user
-        ).values_list('user', flat=True))
-
-    qs = (
-        OrderedItem.objects
-            .select_related()
-            .filter(
-                status__in=('received_office',),
-                shipment__isnull=True,
-                client__id__in=client_ids,
-                **_filter.get_filters()))
-
-    order_by = get_ordering(request, list_headers)
-    if order_by:
-        qs = qs.order_by(order_by)
-
-    total_row = []
-    if _filter.is_set:
-        total_row = get_total_row(
-            qs.exclude(
-                status__in=(
-                    'failure', 'wrong_number', 'out_of_stock',
-                    'cancelled_customer', 'export_part')),
-            fields)
-    context['total_row'] = total_row
-
-    items_per_page = get_items_per_page(request, session_store_prefix)
-    context['items_per_page'] = items_per_page
-
-    paginator = SimplePaginator(request, qs, items_per_page, 'page')
-    context['items'] = paginator.get_page_items()
-    context['paginator'] = paginator
+    context['cl'] = ManagerIssues(request)
     return context
+
+
+class ManagerIssuesClient(ManagerOrderItems):
+    session_store_prefix = 'manager_issues_client'
+
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.pop('client')
+        super(ManagerIssuesClient, self).__init__(*args, **kwargs)
+
+    @property
+    def qs_filter(self):
+        qs_filter = super(ManagerIssuesClient, self).qs_filter
+        qs_filter['status'] = 'received_office'
+        qs_filter['client__username__contains'] = self.client.username
+        return qs_filter
+
+    def get_items(self):
+
+        qs_orders = OrderedItem.objects.select_related().filter(
+            client__id__in=self.client_ids, **self.qs_filter)
+
+        if self.ordering:
+            qs_orders= qs_orders.order_by(self.ordering)
+
+        qs_packages = Package.objects.filter(
+            status__in=(PACKAGE_STATUS_RECEIVED,),
+            client__id=self.client.id
+        ).order_by('-created_at')
+        self.packages = qs_packages
+
+        self.total = get_total_orders_with_packages(
+            qs_orders, qs_packages, self.fields)
+
+        self.paginator = SimplePaginator(
+            self.request, qs_orders, self.items_per_page, 'page')
+
+        return self.paginator.get_page_items()
 
 
 @manager_required
 @render_to('manager/issues_client.html')
 def issues_client(request, client_id):
-
     context = {}
-    session_store_prefix = 'manager_issues_client'
 
     client_ids = list(
         UserProfile.objects.filter(
             client_manager=request.user
         ).values_list('user', flat=True))
 
-    if int(client_id) not in client_ids:
+    try:
+        if int(client_id) not in client_ids:
+            raise ValueError
+    except (ValueError, TypeError):
         raise Http404
 
     client = get_object_or_404(User, id=client_id)
-    context['client'] = client
 
     if request.method == 'POST':
         redirect_url = reverse("manager_issues_client", args=[client_id])
@@ -612,109 +637,81 @@ def issues_client(request, client_id):
                     request, messages.SUCCESS, u"Счёт добавлен.")
                 return _redirect_after_post(redirect_url)
 
-    _filter = QSFilter(request, OrderedItemsFilterForm)
-    context['filter'] = _filter
-    context['qs_filter_param'] = _filter.get_filters()
-
-    fields = get_user_fields(request.user)
-    context['user_fields'] = [x[2] for x in fields]
-    list_headers = [(x[0], x[1]) for x in fields]
-
-    sort_headers = SortHeaders(request, list_headers)
-    context['headers'] = list(sort_headers.headers())
-
-    context['list_filters'] = get_list_filters(_filter, fields)
-
-    qs_filter = _filter.get_filters()
-
-    qs_filter.update({
-        'status__in': ('received_office',),
-        'shipment__isnull': True,
-        'client__id': client_id,
-    })
-    qs_orders = OrderedItem.objects.select_related().filter(**qs_filter)
-
-    qs_packages = Package.objects.filter(
-        status__in=(PACKAGE_STATUS_RECEIVED,),
-        client__id=client_id,
-        shipment__isnull=True,
-    ).order_by('-created_at')
-    context['packages'] = qs_packages
-
-    total_orders = get_total(
-        qs_orders.exclude(
-            status__in=(
-                'failure', 'wrong_number', 'out_of_stock',
-                'cancelled_customer', 'export_part')),
-        fields)
-
-    total_packages = get_total(qs_packages, fields)
-
-    total = dict(Counter(total_orders) + Counter(total_packages))
-    context['total_row'] = list(total.get(f[2], '') for f in fields)
-
-    order_by = get_ordering(request, list_headers)
-    if order_by:
-        qs_orders = qs_orders.order_by(order_by)
-
-    items_per_page = get_items_per_page(request, session_store_prefix)
-    context['items_per_page'] = items_per_page
-    paginator = SimplePaginator(request, qs_orders, items_per_page, 'page')
-    context['items'] = paginator.get_page_items()
-    context['paginator'] = paginator
-    context['balance_add_form_template'] = BalanceAddForm(
-        ).render_js('from_template')
+    context['cl'] = ManagerIssuesClient(request, client=client)
+    context['balance_add_form_template'] = BalanceAddForm().render_js('from_template')
     return context
+
+
+class ManagerShipments(ManagerOrderItems):
+    filter_form = ShipmentsFilterForm
+    session_store_prefix = 'manager_shipments'
+    default_order_by = 'created_at'
+
+    @property
+    def fields(self):
+        return MANAGER_SHIPMENTS_FIELD_LIST
+
+    def get_items(self):
+
+        qs = Shipment.objects.select_related().filter(
+            client__id__in=self.client_ids, **self.qs_filter)
+
+        if self.ordering:
+            qs = qs.order_by(self.ordering)
+
+        self.paginator = SimplePaginator(
+            self.request, qs, self.items_per_page, 'page')
+        return self.paginator.get_page_items()
 
 
 @manager_required
 @render_to('manager/shipments.html')
 def shipments(request):
     context = {}
-    session_store_prefix = 'manager_shipments'
-
-    _filter = QSFilter(request, ShipmentsFilterForm)
-    context['filter'] = _filter
-
-    list_headers = [(x[0], x[1]) for x in MANAGER_SHIPMENTS_FIELD_LIST]
-    sort_headers = SortHeaders(request, list_headers)
-    context['headers'] = list(sort_headers.headers())
-    context['list_filters'] = get_list_filters(
-        _filter, MANAGER_SHIPMENTS_FIELD_LIST)
-
-    qs_filter = _filter.get_filters()
-
-    period, period_filter = get_period(
-        request, session_store_prefix, "created_at")
-    qs_filter.update(period_filter)
-    context['period'] = period
-
-    client_ids = list(
-        UserProfile.objects.filter(
-            client_manager=request.user
-        ).values_list('user', flat=True))
-
-    qs = Shipment.objects.select_related().filter(
-        client__id__in=client_ids, **qs_filter)
-
-    order_by = get_ordering(request, list_headers, field='created_at')
-    if order_by:
-        qs = qs.order_by(order_by)
-
-    items_per_page = get_items_per_page(request, session_store_prefix)
-    context['items_per_page'] = items_per_page
-    paginator = SimplePaginator(request, qs, items_per_page, 'page')
-    context['items'] = paginator.get_page_items()
-    context['paginator'] = paginator
-
+    context['cl'] = ManagerShipments(request)
     return context
+
+
+class ManagerShipment(ManagerOrderItems):
+    session_store_prefix = 'manager_shipment'
+
+    def __init__(self, *args, **kwargs):
+        self.shipment = kwargs.pop('shipment')
+        super(ManagerShipment, self).__init__(*args, **kwargs)
+
+    @property
+    def qs_filter(self):
+        qs_filter = super(ManagerShipment, self).qs_filter
+        qs_filter['shipment__id'] = self.shipment.id
+        return qs_filter
+
+    def get_items(self):
+
+        qs_orders = OrderedItem.objects.select_related().filter(
+            client__id__in=self.client_ids, **self.qs_filter)
+
+        if self.ordering:
+            qs_orders = qs_orders.order_by(self.ordering)
+
+        qs_packages = Package.objects.filter(
+            shipment__id=self.shipment.id,
+            client__id__in=self.client_ids
+        ).order_by('-created_at')
+        self.packages = qs_packages
+
+        self.total = get_total_orders_with_packages(
+            qs_orders, qs_packages, self.fields)
+
+        self.paginator = SimplePaginator(
+            self.request, qs_orders, self.items_per_page, 'page')
+
+        return self.paginator.get_page_items()
 
 
 @manager_required
 @render_to('manager/shipment.html')
 def shipment(request, shipment_id):
     context = {}
-    session_store_prefix = 'manager_shipment'
 
     shipment = get_object_or_404(Shipment, id=shipment_id)
 
@@ -731,141 +728,110 @@ def shipment(request, shipment_id):
                 request, messages.SUCCESS, u"Отгрузка отменена.")
             return HttpResponseRedirect(reverse("manager_shipments"))
 
-    _filter = QSFilter(request, OrderedItemsFilterForm)
-    context['filter'] = _filter
-    context['qs_filter_param'] = _filter.get_filters()
-
-    fields = get_user_fields(request.user)
-    context['user_fields'] = [x[2] for x in fields]
-    list_headers = [(x[0], x[1]) for x in fields]
-
-    sort_headers = SortHeaders(request, list_headers)
-    context['headers'] = list(sort_headers.headers())
-    context['list_filters'] = get_list_filters(_filter, fields)
-
-    qs_filter = _filter.get_filters()
-    qs_filter.update({'shipment__id': shipment.id})
-
-    client_ids = list(
-        UserProfile.objects.filter(
-            client_manager=request.user
-        ).values_list('user', flat=True))
-
-    qs_orders = OrderedItem.objects.select_related().filter(
-        client__id__in=client_ids, **qs_filter)
-
-    qs_packages = Package.objects.filter(
-        shipment__id=shipment.id,
-        client__id__in=client_ids
-    ).order_by('-created_at')
-    context['packages'] = qs_packages
-
-    order_by = get_ordering(request, list_headers)
-    if order_by:
-        qs_orders = qs_orders.order_by(order_by)
-
-    total_orders = get_total(
-        qs_orders.exclude(
-            status__in=(
-                'failure', 'wrong_number', 'out_of_stock',
-                'cancelled_customer', 'export_part')),
-        fields)
-
-    total_packages = get_total(qs_packages, fields)
-
-    total = dict(Counter(total_orders) + Counter(total_packages))
-    context['total_row'] = list(total.get(f[2], '') for f in fields)
-
-    items_per_page = get_items_per_page(request, session_store_prefix)
-    context['items_per_page'] = items_per_page
-    paginator = SimplePaginator(request, qs_orders, items_per_page, 'page')
-
-    context['items'] = paginator.get_page_items()
-    context['paginator'] = paginator
-    context['shipment'] = shipment
+    context['cl'] = ManagerShipment(request, shipment=shipment)
 
     return context
+
+
+class ManagerBalance(ManagerOrderItems):
+    filter_form = BalanceFilterForm
+    session_store_prefix = 'manager_balance'
+    default_order_by = 'created_at'
+
+    @property
+    def fields(self):
+        return BALANCE_FIELD_LIST
+
+    def get_items(self):
+
+        qs = BalanceItem.objects.select_related().filter(
+            user__id__in=self.client_ids, **self.qs_filter
+        ).order_by('user')
+
+        res = []
+        for user, balanceitems in groupby(qs, lambda x: x.user):
+
+            balance = 0
+            last_modified = None
+
+            for b in balanceitems:
+                balance += b.amount
+                if not last_modified or last_modified < b.created_at:
+                    last_modified = b.created_at
+
+            res.append({
+                'user': user,
+                'user_group': UserProfile.objects.get(user=user).client_group,
+                'balance': balance,
+                'last_modified': last_modified,
+            })
+        res = sorted(res, key=lambda x: x['last_modified'], reverse=True)
+
+        self.total = sum(x['balance'] for x in res)
+
+        self.paginator = SimplePaginator(
+            self.request, res, self.items_per_page, 'page')
+        return self.paginator.get_page_items()
 
 
 @manager_required
 @render_to('manager/balance.html')
 def balance(request):
     context = {}
-    session_store_prefix = 'manager_balance'
-
-    _filter = QSFilter(request, BalanceFilterForm)
-    context['filter'] = _filter
-
-    list_headers = [(x[0], x[1]) for x in BALANCE_FIELD_LIST]
-    sort_headers = SortHeaders(request, list_headers)
-    context['headers'] = list(sort_headers.headers())
-    context['list_filters'] = get_list_filters(
-        _filter, BALANCE_FIELD_LIST)
-
-    qs_filter = _filter.get_filters()
-
-    period, period_filter = get_period(
-        request, session_store_prefix, 'created_at')
-    context['period'] = period
-
-    client_ids = list(
-        UserProfile.objects.filter(
-            client_manager=request.user
-        ).values_list('user', flat=True))
-
-    qs = BalanceItem.objects.select_related().filter(
-        user__id__in=client_ids, **qs_filter).order_by('user')
-
-    res = []
-    for user, balanceitems in groupby(qs, lambda x: x.user):
-
-        balance = 0
-        last_modified = None
-
-        for b in balanceitems:
-            balance += b.amount
-            if not last_modified or last_modified < b.created_at:
-                last_modified = b.created_at
-
-        res.append({
-            'user': user,
-            'user_group': UserProfile.objects.get(user=user).client_group,
-            'balance': balance,
-            'last_modified': last_modified,
-        })
-    res = sorted(res, key=lambda x: x['last_modified'], reverse=True)
-
-    items_per_page = get_items_per_page(request, session_store_prefix)
-    context['items_per_page'] = items_per_page
-    paginator = SimplePaginator(request, res, items_per_page, 'page')
-    context['items'] = paginator.get_page_items()
-    context['paginator'] = paginator
-    context['total_balance'] = sum(x['balance'] for x in res)
+    context['cl'] = ManagerBalance(request)
     return context
+
+
+class ManagerBalanceClient(ManagerOrderItems):
+    filter_form = BalanceClientFilterForm
+    session_store_prefix = 'manager_balance_client'
+    default_order_by = 'created_at'
+
+    def __init__(self, *args, **kwargs):
+        self.client = kwargs.pop('client')
+        super(ManagerBalanceClient, self).__init__(*args, **kwargs)
+
+    @property
+    def fields(self):
+        return BALANCE_CLIENT_FIELD_LIST
+
+    def get_items(self):
+
+        qs = BalanceItem.objects.select_related().filter(
+            user=self.client, **self.qs_filter)
+
+        if self.ordering:
+            qs = qs.order_by(self.ordering)
+
+        self.total = sum(x.amount for x in qs)
+
+        self.paginator = SimplePaginator(
+            self.request, qs, self.items_per_page, 'page')
+        return self.paginator.get_page_items()
 
 
 @manager_required
 @render_to('manager/balance_client.html')
 def balance_client(request, client_id):
-
-    user = get_object_or_404(User, id=client_id)
+    context = {}
 
     client_ids = list(
         UserProfile.objects.filter(
             client_manager=request.user
         ).values_list('user', flat=True))
 
-    if user.id not in client_ids:
+    try:
+        if int(client_id) not in client_ids:
+            raise ValueError
+    except (ValueError, TypeError):
         raise Http404
 
-    context = {}
-    context['user'] = user
-    session_store_prefix = 'manager_balance_client'
+    client = get_object_or_404(User, id=client_id)
 
     context['balance_payment_form_data'] = []
     context['balance_invoice_form_data'] = []
     if request.method == 'POST':
-        redirect_url = reverse('manager_balance_client', args=[user.id])
+        redirect_url = reverse('manager_balance_client', args=[client.id])
 
         if 'save_balance_payment' in request.POST:
             forms = BalanceAddForm.get_forms(request)
@@ -874,7 +840,7 @@ def balance_client(request, client_id):
             if forms.are_valid():
                 for form in forms:
                     data = form.cleaned_data
-                    data['user'] = user
+                    data['user'] = client
                     data['item_type'] = BALANCEITEM_TYPE_PAYMENT
                     BalanceItem(**data).save()
                 messages.add_message(
@@ -889,42 +855,14 @@ def balance_client(request, client_id):
                 for form in forms:
                     data = form.cleaned_data
                     data['amount'] = -data['amount']
-                    data['user'] = user
+                    data['user'] = client
                     data['item_type'] = BALANCEITEM_TYPE_INVOICE
                     BalanceItem(**data).save()
                 messages.add_message(
                     request, messages.SUCCESS, u'Счёт добавлен.')
                 return _redirect_after_post(redirect_url)
 
-    _filter = QSFilter(request, BalanceClientFilterForm)
-    context['filter'] = _filter
-
-    list_headers = [(x[0], x[1]) for x in BALANCE_CLIENT_FIELD_LIST]
-    sort_headers = SortHeaders(request, list_headers)
-    context['headers'] = list(sort_headers.headers())
-    context['list_filters'] = get_list_filters(
-        _filter, BALANCE_CLIENT_FIELD_LIST)
-
-    qs_filter = _filter.get_filters()
-
-    period, period_filter = get_period(
-        request, session_store_prefix, 'created_at')
-    qs_filter.update(period_filter)
-    context['period'] = period
-
-    qs = BalanceItem.objects.select_related().filter(
-        user=user, **qs_filter)
-
-    order_by = get_ordering(request, list_headers, field='created_at')
-    if order_by:
-        qs = qs.order_by(order_by)
-
-    items_per_page = get_items_per_page(request, session_store_prefix)
-    context['items_per_page'] = items_per_page
-    paginator = SimplePaginator(request, qs, items_per_page, 'page')
-    context['items'] = paginator.get_page_items()
-    context['paginator'] = paginator
-    context['total_amount'] = sum(x.amount for x in qs)
+    context['cl'] = ManagerBalanceClient(request, client=client)
     context['balance_add_form_template'] = BalanceAddForm().render_js('from_template')
     return context
 

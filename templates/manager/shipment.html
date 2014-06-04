@@ -14,45 +14,9 @@ function showPasswordDialog() {
 </script>
 {% endblock %}
 
-{% block export_link %}
-<a href="{% url manager_export_orders %}?qs_filter=1&shipment__id={{ shipment.id }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a>
-<br/>
-{% endblock %}
-
 {% block content_title %}
 {% include "cp/password.html" %}
-<h3>Отгрузка {{ shipment.full_code }}</h3>
-<br/>
-{% endblock %}
-
-{% block table_body %}
-{% for i in items %}
-  <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}">
-    {% include "manager/tags/row.html" %}
-  </tr>
-{% endfor %}
-<tr style="text-align: left;">
-    <td colspan={{ headers|length|add:"1" }}>{% include "paginator.html" %}</td>
-</tr>
-{% if packages %}
-    <tr class="row_packages_header">
-        <td colspan={{ headers|length|add:"1" }} style="text-align: left; font-weight: bold; padding: 5px; color:#666; font-size:11px; background:#e1e1e1 url(/media/img/admin/nav-bg.gif) top left repeat-x; border-left:1px solid #ddd; border-bottom:1px solid #ddd;">Упаковки</td>
-    </tr>
-    {% for p in packages %}
-        <tr class="{% cycle row1,row2 %} row_package_{{ p.id }} row_package">
-            {% include "manager/tags/row_package.html" %}
-        </tr>
-    {% endfor %}
-{% endif %}
-<tr class="alt">
-  <td></td>
-  {% for val in total_row %}
-      <td>
-        {% if val %}<b>{{ val|floatformat:2 }}</b>{% else %}{% endif %}
-      </td>
-  {% endfor %}
-  <td></td>
-</tr>
+<h4>Отгрузка {{ cl.shipment.full_code }}</h4>
 {% endblock %}
 
 {% block content_bottom %}

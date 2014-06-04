@@ -43,6 +43,10 @@
 
 /* PAGINATOR */
 
+#changelist table tbody td.paginator-wrapper {
+    text-align: left;
+}
+
 .paginator {
     font-size: 11px;
     padding-top: 10px;

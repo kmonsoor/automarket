@@ -15,7 +15,7 @@
 {% endblock %}
 
 {% block table_body %}
-    {% for s in items %}
+    {% for s in cl.items %}
       <tr class="{% cycle row1,row2 %}">
         <td></td>
         <td><a href="{% url manager_shipment s.id %}">{{ s.created_at|date:"d.m.Y H:i"|safe }}</a></td>
@@ -27,6 +27,10 @@
       </tr>
     {% endfor %}
     <tr>
-        <td colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
+        <td colspan={{ cl.headers|length|add:"2" }}>
+            {% with cl.paginator as paginator %}
+            {% include "paginator.html" %}
+            {% endwith %}
+        </td>
     </tr>
 {% endblock %}

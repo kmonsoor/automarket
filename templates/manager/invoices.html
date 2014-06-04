@@ -18,24 +18,26 @@
 <div class="module" id="changelist">
     <table>
         <thead>
-            <tr>{% table_header_sort headers %}</tr>
+            <tr>{% table_header_sort cl.headers %}</tr>
             <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
-            {% for f in list_filters %}
+            {% for f in cl.filters %}
                 <td>{{ f }}</td>
             {% endfor %}
             </tr>
         </thead>
         <tbody>
-            {% for i in items %}
+            {% for i in cl.items %}
               <tr class="{% cycle row1,row2 %}">
                 <td><a href="{% url manager_invoice i.id %}">{{ i.code }}</a></td>
                 <td>{{ i.received_at|date:"d.m.Y"|safe }}</td>
                 <td>{{ i.get_status_display }}</td>
               </tr>
             {% endfor %}
+            {% with cl.paginator as paginator %}
             <tr>
                 <td colspan={{ headers|length }}>{% include "paginator.html" %}</td>
             </tr>
+            {% endwith %}
         </tbody>
     </table>
 </div>

@@ -1,29 +1,29 @@
 {% load manager_tags %}
 <td align="center"><input type="checkbox" class="select_row" name="select_row_{{ i.id }}" /></td>
-{% if 'ponumber' in user_fields %}{% table_td i 'get_po_verbose' 0 '' %}{% endif %}
-{% if 'brandgroup' in user_fields %}{% table_td i 'brandgroup' 0 '' %}{% endif %}
-{% if 'area' in user_fields %}{% table_td i 'area' 0 '' %}{% endif %}
-{% if 'brand' in user_fields %}{% table_td i 'brand' 0 '' %}{% endif %}
-{% if 'part_number' in user_fields %}{% table_td i 'part_number' 0 '' %}{% endif %}
-{% if 'part_number_superseded' in user_fields %}{% table_td i 'part_number_superseded' i.editable 'editSuperseded' %}{% endif %}
-{% if 'comment_customer' in user_fields %}{% table_td i 'comment_customer' 0 '' %}{% endif %}
-{% if 'created' in user_fields %}{% table_td i 'created' 0 '' %}{% endif %}
-{% if 'received_office_at' in user_fields %}{% table_td i 'received_office_at' 0 '' %}{% endif %}
-{% if 'quantity' in user_fields %}{% table_td i 'quantity' 0 '' %}{% endif %}
-{% if 'client' in user_fields %}<td><a href="{% url manager_issues_client i.client.id %}">{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</a></td>{% endif %}
-{% if 'description_ru' in user_fields %}{% table_td i 'description_ru' i.editable 'editDescriptionRu' %}{% endif %}
-{% if 'description_en' in user_fields %}{% table_td i 'description_en' i.editable 'editDescriptionEn' %}{% endif %}
-{% if 'id' in user_fields %}{% table_td i 'id' 0 '' %}{% endif %}
-{% if 'price_base' in user_fields %}{% table_td i 'price_base' i.editable 'editPriceBase' 0 %}{% endif %}
-{% if 'weight' in user_fields %}{% table_td i 'weight' i.editable 'editWeight' %}{% endif %}
-{% if 'delivery' in user_fields %}{% table_td i 'delivery' 0 '' 0 %}{% endif %}
-{% if 'price_sale' in user_fields %}{% table_td i 'price_sale' 0 '' 0 %}{% endif %}
-{% if 'price_discount' in user_fields %}{% table_td i 'price_discount' i.editable 'editPriceDiscount' 0 %}{% endif %}
-{% if 'cost' in user_fields %}{% table_td i 'cost' 0 '' 0 %}{% endif %}
-{% if 'total_cost' in user_fields %}{% table_td i 'total_cost' 0 '' 0 %}{% endif %}
-{% if 'invoice_code' in user_fields %}{% table_td i 'invoice_code' i.editable 'editInvoiceCode' %}{% endif %}
-{% if 'status' in user_fields %}{% table_td_status i %}{% endif %}
-{% if 'issued_at' in user_fields %}{% table_td i 'issued_at' 0 '' %}{% endif %}
+{% if 'ponumber' in cl.user_fields %}{% table_td i 'get_po_verbose' 0 '' %}{% endif %}
+{% if 'brandgroup' in cl.user_fields %}{% table_td i 'brandgroup' 0 '' %}{% endif %}
+{% if 'area' in cl.user_fields %}{% table_td i 'area' 0 '' %}{% endif %}
+{% if 'brand' in cl.user_fields %}{% table_td i 'brand' 0 '' %}{% endif %}
+{% if 'part_number' in cl.user_fields %}{% table_td i 'part_number' 0 '' %}{% endif %}
+{% if 'part_number_superseded' in cl.user_fields %}{% table_td i 'part_number_superseded' i.editable 'editSuperseded' %}{% endif %}
+{% if 'comment_customer' in cl.user_fields %}{% table_td i 'comment_customer' 0 '' %}{% endif %}
+{% if 'created' in cl.user_fields %}{% table_td i 'created' 0 '' %}{% endif %}
+{% if 'received_office_at' in cl.user_fields %}{% table_td i 'received_office_at' 0 '' %}{% endif %}
+{% if 'quantity' in cl.user_fields %}{% table_td i 'quantity' 0 '' %}{% endif %}
+{% if 'client' in cl.user_fields %}<td><a href="{% url manager_issues_client i.client.id %}">{{ i.client }}{% if i.client_order_id %}/{{ i.client_order_id }}{% endif %}</a></td>{% endif %}
+{% if 'description_ru' in cl.user_fields %}{% table_td i 'description_ru' i.editable 'editDescriptionRu' %}{% endif %}
+{% if 'description_en' in cl.user_fields %}{% table_td i 'description_en' i.editable 'editDescriptionEn' %}{% endif %}
+{% if 'id' in cl.user_fields %}{% table_td i 'id' 0 '' %}{% endif %}
+{% if 'price_base' in cl.user_fields %}{% table_td i 'price_base' i.editable 'editPriceBase' 0 %}{% endif %}
+{% if 'weight' in cl.user_fields %}{% table_td i 'weight' i.editable 'editWeight' %}{% endif %}
+{% if 'delivery' in cl.user_fields %}{% table_td i 'delivery' 0 '' 0 %}{% endif %}
+{% if 'price_sale' in cl.user_fields %}{% table_td i 'price_sale' 0 '' 0 %}{% endif %}
+{% if 'price_discount' in cl.user_fields %}{% table_td i 'price_discount' i.editable 'editPriceDiscount' 0 %}{% endif %}
+{% if 'cost' in cl.user_fields %}{% table_td i 'cost' 0 '' 0 %}{% endif %}
+{% if 'total_cost' in cl.user_fields %}{% table_td i 'total_cost' 0 '' 0 %}{% endif %}
+{% if 'invoice_code' in cl.user_fields %}{% table_td i 'invoice_code' i.editable 'editInvoiceCode' %}{% endif %}
+{% if 'status' in cl.user_fields %}{% table_td_status i %}{% endif %}
+{% if 'issued_at' in cl.user_fields %}{% table_td i 'issued_at' 0 '' %}{% endif %}
 <td>&nbsp;</td>
 
 

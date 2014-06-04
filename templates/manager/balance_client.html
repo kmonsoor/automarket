@@ -43,12 +43,12 @@
 {% endblock %}
 
 {% block content_title %}
-<h3>Баланс клиента {{ user.username }}</h3>
+<h4>Баланс клиента {{ cl.client.username }}</h4>
 <br/>
 {% endblock %}
 
 {% block table_body %}
-{% for s in items %}
+{% for s in cl.items %}
   <tr class="{% cycle row1,row2 %}">
     <td></td>
     <td>{{ s.created_at|date:"d.m.Y H:i"|safe }}</td>
@@ -74,12 +74,16 @@
     <td>Итого:</td>
     <td></td>
     <td></td>
-    <td style="color: {% if total_amount < 0 %}red{% else %}green{% endif %};">{{ total_amount|floatformat:2 }}</td>
+    <td style="color: {% if cl.total < 0 %}red{% else %}green{% endif %};">{{ cl.total|floatformat:2 }}</td>
     <td></td>
     <td></td>
 </tr>
 <tr>
-    <td colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
+    <td colspan={{ cl.headers|length|add:"2" }}>
+        {% with cl.paginator as paginator %}
+        {% include "paginator.html" %}
+        {% endwith %}
+    </td>
 </tr>
 {% endblock %}
 

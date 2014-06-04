@@ -559,12 +559,12 @@ class ClientGroupAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         if is_manager(request.user):
-            return True
+            return False
         return super(ClientGroupAdmin, self).has_add_permission(request)
 
     def has_delete_permission(self, request, obj=None):
         if is_manager(request.user):
-            return True
+            return False
         return super(ClientGroupAdmin, self).has_delete_permission(request, obj)
 
     def get_form(self, request, obj=None, **kwargs):

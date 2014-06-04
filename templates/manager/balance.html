@@ -14,8 +14,10 @@
 </style>
 {% endblock %}
 
+{% block filter_form_period %}{% endblock %}
+
 {% block table_body %}
-    {% for s in items %}
+    {% for s in cl.items %}
       <tr class="{% cycle row1,row2 %}">
         <td></td>
         <td><a href="{% url manager_balance_client s.user.id %}">{{ s.user }}</a></td>
@@ -34,10 +36,14 @@
         <td></td>
         <td></td>
         <td></td>
-        <td style="color: {% if total_balance < 0 %}red{% else %}green{% endif %};">{{ total_balance|floatformat:2 }}</td>
+        <td style="color: {% if cl.total < 0 %}red{% else %}green{% endif %};">{{ cl.total|floatformat:2 }}</td>
         <td></td>
     </tr>
     <tr>
-        <td colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
+        <td colspan={{ cl.headers|length|add:"2" }}>
+            {% with cl.paginator as paginator %}
+            {% include "paginator.html" %}
+            {% endwith %}
+        </td>
     </tr>
 {% endblock %}

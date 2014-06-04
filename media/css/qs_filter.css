@@ -12,3 +12,7 @@ table td {
 table td select.qs_filter {
     width: 160px;
 }
+
+.tr-filter-set {
+    border: solid 2px green;
+}

@@ -1105,7 +1105,7 @@ class BalanceItem(models.Model):
         for p in packages:
             try:
                 b = BalanceItem.objects.get(
-                    user=o.client, invoice__code=o.invoice_code)
+                    user=p.client, invoice__code=p.invoice.code)
             except BalanceItem.DoesNotExist:
                 continue
             else:

@@ -52,44 +52,16 @@
 </script>
 {% endblock %}
 
-{% block export_link %}
-<a href="{% url manager_export_orders %}?qs_filter=1&status=received_office&client__username__contains={{ client.username }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a>
-<br/>
-{% endblock %}
-
 {% block content_title %}
-<h3>Клиент {{ client.username }}</h3>
-<br/>
+<h4>К выдаче {{ cl.client.username }}</h4>
 {% endblock %}
 
-{% block table_body %}
-{% for i in items %}
+{% block items %}
+{% for i in cl.items %}
   <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}">
     {% include "manager/tags/row_issue.html" %}
   </tr>
 {% endfor %}
-<tr style="text-align: left;">
-    <td colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
-</tr>
-{% if packages %}
-    <tr class="row_packages_header">
-        <td colspan={{ headers|length|add:"1" }} style="text-align: left; font-weight: bold; padding: 5px; color:#666; font-size:11px; background:#e1e1e1 url(/media/img/admin/nav-bg.gif) top left repeat-x; border-left:1px solid #ddd; border-bottom:1px solid #ddd;">Упаковки</td>
-    </tr>
-    {% for p in packages %}
-        <tr class="{% cycle row1,row2 %} row_package_{{ p.id }} row_package">
-            {% include "manager/tags/row_package.html" %}
-        </tr>
-    {% endfor %}
-{% endif %}
-<tr class="alt">
-  <td><!-- checkbox --></td>
-  {% for val in total_row %}
-      <td>
-        {% if val %}<b>{{ val|floatformat:2 }}</b>{% else %}{% endif %}
-      </td>
-  {% endfor %}
-  <td><!-- column "delete" --></td>
-</tr>
 {% endblock %}
 
 {% block after_table %}

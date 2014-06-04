@@ -15,35 +15,39 @@
 {% block content %}
 
   {% block export_link %}
-  <a href="{% url manager_export_orders %}">Экспорт</a>
+  <a href="{% url manager_export_orders %}{% if cl.qs_filter.items %}?qs_filter=1{% for k, v in cl.qs_filter.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}{% endif %}">Экспорт</a>
   <br/>
   <br/>
   {% endblock %}
 
   {% block content_title %}{% endblock %}
 
-  <form method="{{ filter.method }}" action="{{ request.path }}">
+  <form method="{{ cl.filter.method }}" action="{{ request.path }}">
     {% block filter_form %}
-    <input type="hidden" name="qs_filter" value="1">
-    <input type="submit" value="Фильтр">
-    <input type="submit" name="qs_filter_clear" value="Очистить">&nbsp;
+      <input type="hidden" name="qs_filter" value="1">
+      <input type="submit" value="Фильтр">
+      <input type="submit" name="qs_filter_clear" value="Очистить">&nbsp;
 
-    Количество записей на странице:
-    <select onchange="buildQueryFilter();" id="items-per-page-filter-select">
-        <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
-        <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
-        <option value="200"{% ifequal items_per_page 200 %} selected {% endifequal %}>200</option>
-    </select>&nbsp;&nbsp;
+      {% block filter_form_items_per_page %}
+        Количество записей на странице:
+        <select onchange="buildQueryFilter();" id="items-per-page-filter-select">
+            <option value="50"{% ifequal cl.items_per_page 50 %} selected {% endifequal %}>50</option>
+            <option value="100"{% ifequal cl.items_per_page 100 %} selected {% endifequal %}>100</option>
+            <option value="200"{% ifequal cl.items_per_page 200 %} selected {% endifequal %}>200</option>
+        </select>&nbsp;&nbsp;
+      {% endblock %}
 
-    За период:
-    <select onchange="buildQueryFilter();" id="period-filter-select">
-        <option value="w"{% ifequal period 'w' %} selected {% endifequal %}>неделя</option>
-        <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
-        <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
-        <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>
-    </select>
-    <br/>
-    <br/>
+      {% block filter_form_period %}
+        За период:
+        <select onchange="buildQueryFilter();" id="period-filter-select">
+            <option value="w"{% ifequal cl.period 'w' %} selected {% endifequal %}>неделя</option>
+            <option value="m"{% ifequal cl.period 'm' %} selected {% endifequal %}>месяц</option>
+            <option value="y"{% ifequal cl.period 'y' %} selected {% endifequal %}>год</option>
+            <option value="a"{% ifequal cl.period 'a' %} selected {% endifequal %}>все</option>
+        </select>
+      {% endblock %}
+      <br/>
+      <br/>
     {% endblock %}
 
     {% block table %}
@@ -52,12 +56,12 @@
         <thead>
           <tr>
             <th>&nbsp;</th>
-            {% table_header_sort headers %}
+            {% table_header_sort cl.headers %}
             <th>&nbsp;</th>
           </tr>
-          <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
+          <tr{% if filter.is_set %} class="tr-filter-set"{% endif %}>
             <td>&nbsp;</td>
-            {% for f in list_filters %}
+            {% for f in cl.filters %}
               <td>
                 {% ifequal f.name 'ponumber' %}
                   <div style="width: 60px;">
@@ -73,23 +77,52 @@
         </thead>
         <tbody>
           {% block table_body %}
-            {% for i in items %}
+
+            {% block items %}
+            {% for i in cl.items %}
               <tr id="table_row_{{ i.id }}" class="{% cycle row1,row2 %} {{ i.status }}" class="order_row">
                 {% include "manager/tags/row.html" %}
               </tr>
             {% endfor %}
-            {% if total_row %}
+            {% endblock %}
+
+            {% block after_items %}
+            {% if cl.packages %}
+              <tr class="row_packages_header">
+                <td colspan={{ cl.headers|length|add:"1" }} style="text-align: left; font-weight: bold; padding: 5px; color:#666; font-size:11px; background:#e1e1e1 url(/media/img/admin/nav-bg.gif) top left repeat-x; border-left:1px solid #ddd; border-bottom:1px solid #ddd;">Упаковки</td>
+              </tr>
+              {% for p in cl.packages %}
+                <tr class="{% cycle row1,row2 %} row_package_{{ p.id }} row_package">
+                  {% include "manager/tags/row_package.html" %}
+                </tr>
+              {% endfor %}
+            {% endif %}
+            {% endblock %}
+
+            {% block total_row %}
+            {% if cl.total %}
               <tr class="alt">
-                  {% for val in total_row %}
+                  <td>&nbsp;</td>
+                  {% for val in cl.total %}
                       <td>
                         {% if val %}{{ val|floatformat:2 }}{% else %}{% endif %}
                       </td>
                   {% endfor %}
+                  <td>&nbsp;</td>
               </tr>
             {% endif %}
+            {% endblock %}
+
+            {% block paginator %}
             <tr>
-              <td style="text-align: left;" colspan={{ headers|length|add:"2" }}>{% include "paginator.html" %}</td>
+              <td class="paginator-wrapper" colspan={{ cl.headers|length|add:"2" }}>
+                {% with cl.paginator as paginator %}
+                {% include "paginator.html" %}
+                {% endwith %}
+              </td>
             </tr>
+            {% endblock %}
+
           {% endblock %}
         </tbody>
       </table>
