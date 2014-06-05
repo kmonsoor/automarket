@@ -1,4 +1,5 @@
 # -*- coding=utf-8 -*-
+import re
 import os
 import pyExcelerator as xl
 import datetime
@@ -21,11 +22,13 @@ from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from lib.collections import Counter
 from common.decorators import manager_required
+from common.views import PartSearch
 
 from data.models import (
-    OrderedItem, ORDER_ITEM_STATUSES, UserProfile,
-    Invoice, Package, Shipment, BalanceItem, BALANCEITEM_TYPE_INVOICE,
-    PACKAGE_STATUS_RECEIVED, BALANCEITEM_TYPE_PAYMENT, BrandGroup
+    OrderedItem, UserProfile, Invoice, Package, Shipment, BalanceItem,
+    BALANCEITEM_TYPE_INVOICE, PACKAGE_STATUS_RECEIVED,
+    BALANCEITEM_TYPE_PAYMENT, BrandGroup,
+    search_local, search_analogs, Basket, calc_parts
 )
 
 from data.forms import (
@@ -37,14 +40,10 @@ from data.forms import (
     BalanceAddForm
 )
 
-from manager.forms import OrderItemForm
+from manager.forms import OrderItemForm, SearchForm
 
 import logging
 logger = logging.getLogger("manager.views")
-
-
-def get_status_options():
-    return list({'value': i[0], 'option': i[1]} for i in ORDER_ITEM_STATUSES)
 
 
 def get_period(request, prefix, field, period=''):
@@ -204,8 +203,15 @@ def _random(length=5):
 
 def _redirect_after_post(url):
     return HttpResponseRedirect(
-        "%s?%s=%s" % (url, _random().next(), _random().next())
-    )
+        "%s?%s=%s" % (url, _random().next(), _random().next()))
+
+def get_client_choice(manager):
+    return (('', 'выбрать'),) + tuple(
+        UserProfile.objects
+            .filter(client_manager=manager)
+            .order_by('user__username')
+            .values_list('user__id', 'user__username')
+        )
 
 
 class ManagerOrderItems(object):
@@ -445,13 +451,7 @@ def invoice(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id)
     invoice.calculate_status()
 
-    client_choice = (
-        tuple(
-            UserProfile.objects
-                .filter(client_manager=request.user)
-                .order_by('user__username')
-                .values_list('user__id', 'user__username')
-        ) + (('', 'выбрать'),))
+    client_choice = get_client_choice(request.user)
 
     package_forms_is_valid = True
     if request.method == 'POST':
@@ -888,13 +888,7 @@ def balanceitem_delete(request, item_id):
 def order(request):
     context = {}
 
-    client_choice = (
-        tuple(
-            UserProfile.objects
-                .filter(client_manager=request.user)
-                .order_by('user__username')
-                .values_list('user__id', 'user__username')
-        ) + (('', 'выбрать'),))
+    client_choice = get_client_choice(request.user)
 
     if request.method == 'POST':
         item_forms = OrderItemForm.get_forms(
@@ -939,12 +933,6 @@ def order(request):
     return context
 
 
-from common.views import PartSearch
-from manager.forms import SearchForm
-from data.models import search_local, search_analogs, Basket
-from client.views import calc_parts
-import re
-
 @manager_required
 @render_to('manager/search.html')
 def search(request):
@@ -953,18 +941,31 @@ def search(request):
     msg = ''
 
     search_external = PartSearch()
-    maker_choices = search_external.maker_choices()
+    maker_choice = search_external.maker_choices()
+    client_choice = get_client_choice(request.user)
     show_maker_field = False
+    client = None
 
     if request.method == 'POST':
         _post = request.POST.copy()
-        _post['part_number'] = re.sub('[^\w]', '', _post['part_number']).strip().upper()
-        form = SearchForm(_post, maker_choices=maker_choices)
+
+        _post['part_number'] = re.sub(
+            '[^\w]', '', _post['part_number']).strip().upper()
+
+        form = SearchForm(
+            _post, maker_choice=maker_choice, client_choice=client_choice)
+
         if form.is_valid():
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
 
+            try:
+                client = User.objects.get(id=form.cleaned_data['client'])
+            except:
+                client = None
+
             founds = search_local(maker, part_number)
+
             if founds:
                 makers = set(x['maker'] for x in founds)
                 if len(makers) > 1:
@@ -972,22 +973,23 @@ def search(request):
                     form.fields['maker'].widget.choices = [
                         ('', '----')] + list((x, x) for x in makers)
                 else:
-                    parts = calc_parts(founds, request.user)
+                    parts = calc_parts(founds, request.user, client)
             else:
                 show_maker_field = True
                 if maker:
                     founds = search_external.search(maker, part_number)
                     if founds:
-                        parts = calc_parts(founds, request.user)
+                        parts = calc_parts(founds, request.user, client)
                     else:
                         msg = u"Ничего не найдено"
 
             if founds:
                 analog_founds = search_analogs(founds)
-                analogs = calc_parts(analog_founds, request.user)
+                analogs = calc_parts(analog_founds, request.user, client)
                 
     else:
-        form = SearchForm(maker_choices=maker_choices)
+        form = SearchForm(
+            maker_choice=maker_choice, client_choice=client_choice)
 
     context = {
         'form': form,
@@ -995,11 +997,13 @@ def search(request):
         'analogs': analogs,
         'msg': msg,
         'show_maker_field': show_maker_field,
+        'client': client,
     }
 
-    context['basket_items'] = Basket.objects\
-        .filter(user=request.user, order_item_id__isnull=True)\
-        .order_by('-id')
+    context['basket_items'] = Basket.objects.filter(
+        creator=request.user,
+        order_item_id__isnull=True
+    ).order_by('-id')
 
     context['basket_price_sum'] = reduce(
         lambda x, y: x + y,

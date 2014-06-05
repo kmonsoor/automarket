@@ -4,20 +4,50 @@
 
 {% block menu_search %}<a class="menu-active" href="{% url manager_search %}">Поиск</a>{% endblock %}
 
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript">
+  function onsubmit_basket_form() {
+    if(document.pressed == 'update') {
+      document.basket_form.action ="{% url basket_update %}?redirect_path={% url manager_search %}";
+    }
+    if(document.pressed == 'order') {
+      document.basket_form.action ="{% url basket_order %}?redirect_path={% url manager_search %}";
+    }
+    return true;
+  }
+</script>
+<style>
+  #id_part_number {
+    width: 40%;
+    font-size: 12px;
+  }
+  #id_client, #id_maker {
+    width: 42%;
+    font-size: 12px;
+  }
+</style>
+{% endblock %}
+
 {% block page_title %}Поиск{% endblock %}
 
 {% block content %}
+
 <div id="divSearch" style="text-align: left; min-width: 850px;">
   <div style="width:30%" class="aligned">
     <form method="post" id="formSearch" action="">
       <div class="form-row">
         {{ form.part_number.errors }}
-        <label for="id_part_number">Введите номер* :</label> {{ form.part_number }}
+        <label for="id_part_number">{{ form.part_number.label }}*</label> {{ form.part_number }}
+      </div>
+      <div class="form-row">
+        {{ form.client.errors }}
+        <label for="id_client">{{ form.client.label }}*</label> {{ form.client }}
       </div>
       {% if show_maker_field %}
         <div class="form-row">
           {{ form.maker.errors }}
-          <label for="id_maker">Выберите марку* :</label> {{ form.maker }}
+          <label for="id_maker">{{ form.maker.label }}*</label> {{ form.maker }}
         </div>
       {% endif %}
       <div class="submit-row">
@@ -40,12 +70,14 @@
             <th><b>Стоимость доставки*</b></th>
             <th><b>Цена</b></th>
             <th><b>Ваша Цена</b></th>
+            <th><b>Цена клиента</b></th>
             <th><b>Цена невозвратной детали**</b></th>
             <th><b>Вы экономите</b></th>
             <th><b>Партия</b></th>
             <th><b>Наличие</b></th>
             <th><b>Срок доставки</b></th>
             <th><b>Дата обновления</b></th>
+            <th class="order-button-wrapper"></th>
         </tr>
       </thead>
       <tbody>
@@ -65,6 +97,58 @@
       </tbody>
     </table>
   {% endif %}
+</div>
+<div class=aligned">
+{% if basket_items %}
+<br/>
+<h3>Корзина</h3>
+<form method="post" onsubmit="return onsubmit_basket_form();" id="id_basket_form" name="basket_form">
+<table class="dataTable" width="100%;">
+<thead>
+<tr class="row1">
+<th><b>Клиент</b></th>
+<th><b>Марка</b></th>
+<th><b>Номер</b></th>
+<th><b>Описание ENG</b></th>
+<th><b>Описание RUS</b></th>
+<th><b>Комментарий</b></th>
+<th><b>Цена за ед.</b></th>
+<th><b>Количество</b></th>
+<th><b>Стоимость</b></th>
+<th></td>
+</tr>
+</thead>
+<tbody>
+{% for item in basket_items %}
+<tr class="{% cycle 'row1' 'row2' %}">
+<td><b>{{ item.user }}</b></td>
+<td>{{ item.brand_name }}</td>
+<td>{{ item.part_number }}</td>
+<td>{{ item.description }}</td>
+<td><textarea name="descriptionru_{{item.id}}" id="" cols="15" rows="2">{{ item.description_ru|default:"" }}</textarea></td>
+<td><textarea name="comment1_{{item.id}}" id="" cols="15" rows="2">{{ item.comment1|default:"" }}</textarea></td>
+<td>{{ item.get_price }}$</td>
+<td><input size="5" type="text" name="quantity_{{item.id}}" value="{{ item.quantity }}" /></td>
+<td>{{ item.get_price_total }}$</td>
+<td style="width: 80px; text-align: left;"><a class="delete_link" href="{% url basket_delete item.id %}?redirect_path={% url manager_search %}">Удалить</a></td>
+</tr>
+{% endfor %}
+<tr class="alt"><th colspan="8" style="text-align: right;"><b>Общая стоимость:</b></th>
+<th colspan="1"><b>{{ basket_price_sum }}</b></th>
+<td style="width: 125px; text-align: left;"><a class="delete_link" href="{% url basket_clear %}?redirect_path={% url manager_search %}">Очистить корзину</a></td>
+</tr>
+</tbody>
+</table>
+<div class="submit-row">
+
+<input type="submit" name="operation" onclick="document.pressed='update'" value="Обновить" />
+<input type="submit" class="default" name="operation" onclick="document.pressed='order'" value="Заказать*" />
+&nbsp;&nbsp;&nbsp;
+</div>
+<p class="help">* - перед заказом заполните, пожалуйста, поле "Описание RUS" на русском языке</p>
+</form>
+{% endif %}
+</div>
 </div>
 {% endblock %}
 

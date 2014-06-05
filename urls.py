@@ -7,10 +7,12 @@ urlpatterns = patterns('',)
 
 from data.admin import manager_admin_site
 
+
 if settings.DEBUG:
     urlpatterns += patterns('',
         (r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
     )
+
 
 urlpatterns += patterns('',
     url(r'^admin/', include(admin.site.urls)),
@@ -23,9 +25,20 @@ urlpatterns += patterns('common.views',
     url(r'^accounts/logout/$','exit'),
 )
 
+
 urlpatterns += patterns('',
     url(r'^admin_tools/', include('admin_tools.urls')),
 )
+
+
+urlpatterns += patterns('data.views',
+    url(r'^basket/add/', 'basket_add', name="basket_add"),
+    url(r'^basket/order/', 'basket_order', name="basket_order"),
+    url(r'^basket/clear/', 'basket_clear', name="basket_clear"),
+    url(r'^basket/update/', 'basket_update', name="basket_update"),
+    url(r'^basket/delete/(?P<item_id>[\d]+)/', 'basket_delete', name="basket_delete"),
+)
+
 
 urlpatterns += patterns('cp.views',
     url(r'^cp/search/$', 'search', name="search"),
@@ -59,11 +72,6 @@ urlpatterns += patterns('cp.views',
 
 urlpatterns += patterns('client.views',
     url(r'^client/search/$', 'search', name='client_search'),
-    url(r'^client/basket/add/', 'basket_add', name="client_basket_add"),
-    url(r'^client/basket/order/', 'basket_order', name="client_basket_order"),
-    url(r'^client/basket/clear/', 'basket_clear', name="client_basket_clear"),
-    url(r'^client/basket/update/', 'basket_update', name="client_basket_update"),
-    url(r'^client/basket/delete/(?P<item_id>[\d]+)/', 'basket_delete', name="client_basket_delete"),
     url(r'^client/help/(?P<brandgroup_id>[\d]+)/area/$', 'help_area_list', name='area_list'),
     url(r'^client/help/(?P<area_id>[\d]+)/brands/$', 'help_brands_list', name='brands_list'),
     url(r'^client/export_order/$', 'export_order', name="client_export_order"),
@@ -72,6 +80,7 @@ urlpatterns += patterns('client.views',
     url(r'^client/shipments/(?P<shipment_id>\d+)/$', 'shipment', name="client_shipment"),
     url(r'^client/', 'index', name='client_index'),
 )
+
 
 urlpatterns += patterns('manager.views',
     url(r'^manager/issues/client/(?P<client_id>\d+)/$', 'issues_client', name="manager_issues_client"),

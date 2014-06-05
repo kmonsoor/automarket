@@ -10,27 +10,27 @@ from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from data.models import (
-    OrderedItem, Brand, BrandGroup, Area, Basket,
-    Shipment, Package, BalanceItem, search_local, search_analogs,
+    OrderedItem, BrandGroup, Area, Basket,
+    Shipment, Package, BalanceItem, search_local, search_analogs, calc_parts,
     BALANCEITEM_TYPE_PREINVOICE
 )
-from data.forms import OrderedItemsFilterForm, ShipmentsFilterForm, BalanceClientFilterForm
+from data.forms import (
+    OrderedItemsFilterForm, ShipmentsFilterForm, BalanceClientFilterForm
+)
+
 from client.forms import SearchForm
 from common.views import PartSearch
 from django.shortcuts import get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.models import User
-from django.utils.html import escape, mark_safe
 
-from data.settings import AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT, COST_MARGIN_DEFAULT
-from data.forms import CLIENT_FIELD_LIST, CLIENT_SHIPMENTS_FIELD_LIST, BALANCE_CLIENT_FIELD_LIST_CLIENT
-from django.http import HttpResponse, HttpResponseRedirect
+from data.forms import (
+    CLIENT_FIELD_LIST,
+    CLIENT_SHIPMENTS_FIELD_LIST,
+    BALANCE_CLIENT_FIELD_LIST_CLIENT
+)
+from django.http import HttpResponse
 from django.conf import settings
-from client.forms import BasketForm
 
 from django.db import connection
-
-re_RUS = re.compile(u'^([-_+.,:;!?><*&%$#@а-яА-Я0-9\u0451\u0401]|\s)+$')
 
 
 def get_period(request, prefix, field, default_period=None):
@@ -130,93 +130,6 @@ def get_show_preinvoices(request, prefix):
     return show_preinvoices
 
 
-def normalize_sum(value):
-    value = str(value)
-    value = value.replace(',', '.')
-    parts = value.split(".")
-    m, d = parts[0:-1], parts[-1]
-    value = "".join(m) + "." + d
-    return value
-
-
-def calc_part(part, user, render_for_template=True):
-    if not part.get('MSRP'):
-        return None
-
-    # try to find area and get multiplier
-    try:
-        # find an area by title
-        area = Area.objects.get(title__iexact=part['brandname'])
-        brand_group = BrandGroup.objects.get(title=part['brandgroup'])
-        # we need to find a valid multiplier for this area
-        # TODO - hardcoded 'OEM', we need do more sofisticated algo
-    except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
-        # not price_setings for OEM and this area
-        m, d, dp, pu, cm, brand_group, area = (
-            AREA_MULTIPLIER_DEFAULT, None, None, None, COST_MARGIN_DEFAULT, None, None)
-    else:
-        m, d, dp, pu, cm = area.get_brandgroup_settings(brand_group)
-
-    part['delivery_coef'] = d
-    part['delivery_period'] = dp
-    part['updated_at'] = pu
-    part['area_id'] = area and area.id or None
-    part['direction_id'] = brand_group and brand_group.direction.id or None
-    part['brandgroup_id'] = brand_group and brand_group.id or None
-
-    try:
-        discount = user.get_profile().get_discount(brand_group=brand_group, area=area)
-    except Exception:
-        discount = AREA_DISCOUNT_DEFAULT
-    discount = float(discount)
-
-    # we need to remove all "," as separators
-    # only last dot should be saved
-    value = float(normalize_sum(str(part['MSRP'])))
-
-    part['MSRP'] = value * float(m)
-    if 'cost' in part and part['cost']:
-        _msrp = part['cost'] * cm
-        if _msrp > part['MSRP']:
-            part['MSRP'] = _msrp
-
-    try:
-        part['core_price'] = float(normalize_sum(str(part['core_price'])))
-    except:
-        part['core_price'] = 0.00
-
-    part['your_price'] = part['MSRP'] * (100 - discount) / 100
-    part['your_economy'] = part['MSRP'] - part['your_price']
-    part['your_economy_perc'] = 100 - part['your_price'] / part['MSRP'] * 100
-
-    if render_for_template:
-        part['core_price'] = "%.2f" % part['core_price']
-        part['your_economy_perc'] = "%.2f" % part['your_economy_perc']
-        part['MSRP'] = "%.2f" % part['MSRP']
-        part['your_price'] = "%.2f" % part['your_price']
-        part['your_economy'] = "%.2f" % part['your_economy']
-
-        if len(part.get('sub_chain') or []) > 1:
-            last = part['sub_chain'].pop(-1)
-            part['sub_chain'] = mark_safe(
-                u"Номер заменён: "
-                + " -> ".join(part['sub_chain'])
-                + " -> <b>%s</b>" % last)
-        else:
-            part.pop('sub_chain', None)
-
-    return part
-
-
-def calc_parts(parts, user, render_for_template=True):
-    data = []
-    for part in parts:
-        if not part.get('MSRP'):
-            continue
-        data.append(calc_part(part, user, render_for_template))
-    return data
-
-
 @login_required
 @render_to('client/search.html')
 def search(request):
@@ -269,9 +182,10 @@ def search(request):
         'show_maker_field': show_maker_field,
     }
 
-    context['basket_items'] = Basket.objects\
-        .filter(user=request.user, order_item_id__isnull=True)\
-        .order_by('-id')
+    context['basket_items'] = Basket.objects.filter(
+        creator=request.user,
+        order_item_id__isnull=True
+    ).order_by('-id')
 
     context['basket_price_sum'] = reduce(
         lambda x, y: x + y,
@@ -824,161 +738,3 @@ def export_order(request):
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
     return response
-
-
-@login_required
-def basket_add(request):
-    user = request.user
-    form = BasketForm(request.POST or None, user=user)
-
-    if not form.is_valid():
-        messages.add_message(request, messages.ERROR, u"Ошибка корзины")
-        return HttpResponseRedirect("/client/search/?be=1")
-    else:
-        form.save()
-        return HttpResponseRedirect("/client/search/")
-
-
-@login_required
-def basket_delete(request, item_id):
-    b = get_object_or_404(Basket, user=request.user, pk=item_id)
-    b.delete()
-    return HttpResponseRedirect('/client/search/')
-
-
-@login_required
-def basket_clear(request):
-    Basket.objects.filter(user=request.user, order_item_id__isnull=True).delete()
-    return HttpResponseRedirect("/client/search/")
-
-
-def description_ru_validate(value=None):
-    if value and re_RUS.match(value):
-        return True
-    return False
-
-
-@login_required
-def basket_update(request, redirect=True):
-    bitems = [(x, y) for x, y in request.POST.copy().items() if x.startswith("quantity_")]
-    errors = {'quantity': False, 'description_ru': False, 'comment1': False}
-    # quantity
-    for index, q in bitems:
-        try:
-            q = int(q)
-            assert q >= 0
-            item_id = int(index.split("_")[1])
-            b = Basket.objects.get(user=request.user, pk=item_id)
-        except (AssertionError, TypeError, ValueError, IndexError, Basket.DoesNotExist):
-            errors['quantity'] = True
-        else:
-            b.quantity = q
-            b.save()
-
-    # find description RUS
-    descriptions = [(x, y) for x, y in request.POST.copy().items() if x.startswith("descriptionru_")]
-    for index, value in descriptions:
-        try:
-            item_id = int(index.split("_")[1])
-            assert description_ru_validate(value) is True
-
-            b = Basket.objects.get(user=request.user, pk=item_id)
-            b.description_ru = value
-            b.save()
-        except (AssertionError, TypeError, ValueError, Basket.DoesNotExist):
-            errors['description_ru'] = True
-
-    # find comments
-    comments = [(x, y) for x, y in request.POST.copy().items() if x.startswith("comment1_")]
-
-    for index, value in [(x, y) for x, y in comments if y]:
-        item_id = index.split("_")[1]
-        try:
-            b = Basket.objects.get(user=request.user, pk=item_id)
-            b.comment1 = escape(value)
-            b.save()
-        except Basket.DoesNotExist:
-            pass
-
-    if errors['quantity']:
-        messages.add_message(request, messages.ERROR, u"Количество должно быть больше 0. Проверьте позиции")
-    if errors['description_ru']:
-        messages.add_message(request, messages.ERROR, u"Поле `Описание RUS` должно быть заполнено русскими буквами для каждой позиции. Пожалуйста, проверьте!")
-
-    if redirect:
-        return HttpResponseRedirect("/client/search/")
-    else:
-        return not any(errors.values())
-
-
-@login_required
-def basket_order(request):
-    # recalculate by quantity field
-    ok = basket_update(request, redirect=False)
-    if not ok:
-        return HttpResponseRedirect('/client/search/')
-
-    bi = Basket.objects.filter(user=request.user, order_item_id__isnull=True)
-    if not bi:
-        messages.add_message(request, messages.ERROR, u"Ваша корзина пуста")
-        return HttpResponseRedirect('/client/search/')
-    # common objects
-    adminuser = User.objects.get(pk=1)
-
-    try:
-        manager = request.user.get_profile().client_manager
-    except:
-        manager = None
-
-    brandgroup_default = BrandGroup.objects.get(title="OEM")
-
-    def get_orderitem_data(item):
-        data = {}
-
-        if all([item.brandgroup, item.area, item.brand_name]):
-            data['brandgroup'] = BrandGroup.objects.get(title__iexact=item.brandgroup)
-            data['area'] = Area.objects.get(title__iexact=item.area)
-            data['brand'] = Brand.objects.get(title__iexact=item.brand_name)
-        else:  # remove it
-            sql = """
-            select a.area_id, a.brand_id from data_area_brands a
-            left join data_brand b on (b.id=a.brand_id)
-            left join data_area c on (c.id=a.area_id)
-            where c.id in (select area_id from data_brandgroup_area where brandgroup_id=%s)
-            and b.title=%s;
-            """
-            cursor = connection.cursor()
-            cursor.execute(sql, [brandgroup_default.id, item.brand_name])
-            rows = cursor.fetchall()
-            cursor.close()
-
-            if not rows:
-                return (None, item)
-            row = dict(zip(('area_id', 'brand_id'), rows[0]))
-            data['brandgroup'] = brandgroup_default
-            data['area'] = Area.objects.get(pk=row['area_id'])
-            data['brand'] = Brand.objects.get(pk=row['brand_id'])
-
-        data['description_en'] = item.description
-        data['description_ru'] = item.description_ru or u""
-        data['comment_customer'] = item.comment1 or u""
-        data['client'] = request.user
-        data['quantity'] = item.quantity
-        data['part_number'] = item.part_number
-        data['manager'] = manager or adminuser
-        data['price_base'] = item.msrp
-        data['price_sale'] = item.get_price()
-        return (data, item)
-
-    to_save = [x for x in map(get_orderitem_data, list(bi)) if x[0]]
-    client_order_id = OrderedItem.objects.get_next_client_order_id(request.user)
-
-    for t, item in to_save:
-        oi = OrderedItem(**t)
-        oi.client_order_id = client_order_id
-        oi.save()
-        item.order_item_id = oi.id
-        item.save()
-
-    messages.add_message(request, messages.SUCCESS, u"Заказ оформлен")
-    return HttpResponseRedirect("/client/")

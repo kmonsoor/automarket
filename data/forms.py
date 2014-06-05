@@ -6,7 +6,8 @@ from django.contrib.auth.models import User
 from lib.dynamicforms import Form
 
 from data.models import (
-    OrderedItem, ORDER_ITEM_STATUSES, Area, INVOICE_STATUSES
+    OrderedItem, Area, Basket,
+    ORDER_ITEM_STATUSES, INVOICE_STATUSES
 )
 
 
@@ -42,34 +43,78 @@ STAFF_FIELD_LIST = (
 )
 
 
+manager_exclude_fields = (
+    'comment_supplier', 'price_invoice', 'total_w_ship', 'manager',)
 MANAGER_FIELD_LIST = tuple(
-    filter(
-        lambda f: f[2] not in ('comment_supplier', 'price_invoice', 'total_w_ship', 'manager',),
-        STAFF_FIELD_LIST))
+    filter(lambda f: f[2] not in manager_exclude_fields, STAFF_FIELD_LIST))
 
 
 class OrderedItemsFilterForm(forms.Form):
-    brandgroup__direction__po__icontains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'}))
-    ponumber = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'style': 'width: 42%;', 'class':'qs_filter'}))
-    brandgroup__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    area__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    brand__title__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    part_number__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    comment_customer__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    comment_supplier__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    price_invoice__gte = forms.CharField(label='от', required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    price_invoice__lte = forms.CharField(label='до', required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    part_number_superseded__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    description_ru__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    description_en__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'}))
-    manager__username__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    client__username__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    invoice_code__contains = forms.CharField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    status = forms.ChoiceField(required=False, choices=(('', u'Отображать все'),) + ORDER_ITEM_STATUSES,\
-            widget=forms.Select(attrs={'class':'qs_filter'}))
-    shipment__id = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
-    shipment__isnull = forms.IntegerField(required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+    brandgroup__direction__po__icontains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'}))
+
+    ponumber = forms.IntegerField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={'style': 'width: 42%;', 'class':'qs_filter'}))
+
+    brandgroup__title__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    area__title__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    brand__title__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    part_number__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    comment_customer__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    comment_supplier__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    price_invoice__gte = forms.CharField(
+        label='от', required=False,
+        widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    price_invoice__lte = forms.CharField(
+        label='до', required=False,
+        widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    part_number_superseded__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    description_ru__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    description_en__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    id = forms.IntegerField(
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'}))
+
+    manager__username__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    client__username__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    invoice_code__contains = forms.CharField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    status = forms.ChoiceField(
+        required=False,
+        choices=(('', u'Отображать все'),) + ORDER_ITEM_STATUSES,
+        widget=forms.Select(attrs={'class':'qs_filter'}))
+
+    shipment__id = forms.IntegerField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
+
+    shipment__isnull = forms.IntegerField(
+        required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
 
 
 INVOICES_FIELD_LIST = (
@@ -81,15 +126,12 @@ INVOICES_FIELD_LIST = (
 
 class InvoicesFilterForm(forms.Form):
     code__contains = forms.CharField(
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'qs_filter'})
-    )
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'}))
 
     status = forms.ChoiceField(
         required=False,
         choices=(('', u'Отображать все'),) + INVOICE_STATUSES,
-        widget=forms.Select(attrs={'class': 'qs_filter'})
-    )
+        widget=forms.Select(attrs={'class': 'qs_filter'}))
 
 
 SHIPMENTS_FIELD_LIST = (
@@ -141,14 +183,13 @@ BALANCE_FIELD_LIST = (
 
 class BalanceFilterForm(forms.Form):
     user__username__contains = forms.CharField(
-        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
-    )
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'}))
+
     user__email__contains = forms.CharField(
-        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
-    )
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'}))
+
     user__first_name__contains = forms.CharField(
-        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'})
-    )
+        required=False, widget=forms.TextInput(attrs={'class': 'qs_filter'}))
 
 
 BALANCE_CLIENT_FIELD_LIST = (
@@ -211,7 +252,8 @@ class OrderedItemForm(forms.Form):
             try:
                 value = float(self.cleaned_data['price'])
             except:
-                raise forms.ValidationError('Введите десятичное значение с разделителем - точка!')
+                raise forms.ValidationError(
+                    u'Введите десятичное значение с разделителем - точка!')
             return value
         else:
             return self.cleaned_data['price']
@@ -227,26 +269,24 @@ class PackageForm(forms.Form):
 class OrderedItemInlineForm(forms.ModelForm):
     class Meta:
         model = OrderedItem
-        fields = \
-            ['comment_supplier',
-             'price_invoice',
-             'part_number_superseded',
-             'description_ru',
-             'description_en',
-             'price_base',
-             'weight',
-             'price_discount',
-             'invoice_code']
+        fields = [
+            'comment_supplier', 'price_invoice', 'part_number_superseded',
+            'description_ru', 'description_en', 'price_base', 'weight',
+            'price_discount', 'invoice_code']
 
 
 class PartPriceUploadForm(forms.Form):
-    area = forms.ModelChoiceField(queryset=Area.objects.all(), 
-                                  to_field_name='title')
+    area = forms.ModelChoiceField(
+        queryset=Area.objects.all(),
+        to_field_name='title')
+
     data = forms.FileField()
 
 
 def users():
-    users = [(x.id, str(x)) for x in User.objects.filter(is_staff=False).order_by('username')]
+    users = [
+        (x.id, str(x))
+        for x in User.objects.filter(is_staff=False).order_by('username')]
     users.insert(0, ('', 'выбрать',))
     return users
 
@@ -287,7 +327,8 @@ class PackageItemForm(Form):
             try:
                 client = User.objects.get(id=client)
             except User.DoesNotExist:
-                raise forms.ValidationError(u"Такого пользователя не существует")
+                raise forms.ValidationError(
+                    u"Такого пользователя не существует")
             return client
 
 
@@ -304,3 +345,36 @@ class BalanceAddForm(Form):
         widget=forms.TextInput(attrs={'class': 'balance_add_form_amount'}),
         label=u'Сумма',
         required=True)
+
+
+class BasketForm(forms.Form):
+    user = forms.IntegerField(required=False)
+    brandgroup = forms.CharField(required=False)
+    area = forms.CharField(required=False)
+    part_number = forms.CharField()
+    description = forms.CharField(required=False)
+    description_ru = forms.CharField(required=False)
+    msrp = forms.FloatField(required=False)
+    user_price = forms.FloatField(required=False)
+    brand_name = forms.CharField(required=False)
+    core_price = forms.FloatField(required=False)
+    quantity = forms.IntegerField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        self.creator = kwargs.pop('creator')
+        super(BasketForm, self).__init__(*args, **kwargs)
+
+    def clean_user(self):
+        userid = self.cleaned_data.get('user')
+        if userid:
+            user = User.objects.get(id=userid)
+            if user.get_profile().client_manager == self.creator:
+                return user
+        return self.creator
+
+    def save(self):
+        cd = self.cleaned_data
+        cd['creator'] = self.creator
+        b = Basket(**cd)
+        b.save()
+        return b

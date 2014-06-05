@@ -22,13 +22,12 @@ ROLES = []
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'sqlite3'          # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'ado_mssql'.
-DATABASE_NAME = 'dev.sqlite.db3'             # Or path to database file if using sqlite3.
-DATABASE_USER = ''             # Not used with sqlite3.
-DATABASE_PASSWORD = ''         # Not used with sqlite3.
-DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
-DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
-
+DATABASE_ENGINE = 'sqlite3'
+DATABASE_NAME = 'dev.sqlite.db3'
+DATABASE_USER = ''
+DATABASE_PASSWORD = ''
+DATABASE_HOST = ''
+DATABASE_PORT = ''
 
 TIME_ZONE = 'Europe/Minsk'
 
@@ -62,7 +61,6 @@ ADMIN_TOOLS_THEMING_CSS = 'css/admin_tools_theming.css'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
-#     'django.template.loaders.eggs.load_template_source',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -79,7 +77,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.doc.XViewMiddleware',
-    # 'lib.SQLLogMiddleware.SQLLogMiddleware',
 )
 
 ROOT_URLCONF = 'urls'
@@ -112,6 +109,7 @@ INSTALLED_APPS += (
     'djcelery', 
     'kombu.transport.django',
 )
+
 import djcelery
 djcelery.setup_loader()
 
@@ -140,8 +138,8 @@ EMAIL_USE_TLS = False
 
 AUTH_PROFILE_MODULE = 'data.UserProfile'
 
-PRICE_UPLOAD_DIR = 'uploads/prices/' #override in production
-PART_ANALOG_UPLOAD_DIR = 'uploads/prices_analog/' #override in production
+PRICE_UPLOAD_DIR = 'uploads/prices/'
+PART_ANALOG_UPLOAD_DIR = 'uploads/prices_analog/'
 
 AUTO_UPDATE_STATUSES_START_PONUMBER = 944 # SP944
 
@@ -150,34 +148,18 @@ try:
 except:
     pass
 
-
-# Logging settings
-import logging
-from log_handlers import NullHandler, TimedRotatingFileHandlerSafe
-# Logging settings
-LOG_DIR = os.path.join(SITE_ROOT, '.logs') # for development only! need to be rewritten
-# A log rollover occurs
-# S - Seconds
-# M - Minutes
-# H - Hours
-# D - Days
-# MIDNIGHT - roll over at midnight
-# W{0-6} - roll over on a certain day; 0 - Monday
-LOG_INTERVAL = 'MIDNIGHT'
-# Loading host depending settings
-LOG_LEVEL = DEBUG and logging.DEBUG or logging.INFO
-
-#USE_L10N = True
 DATETIME_INPUT_FORMATS = ("%d.%m.%Y %H:%M:%S",)
 DATETIME_FORMAT = "d.m.Y H:i:s"
 DECIMAL_SEPARATOR = '.'
 DATE_FORMAT = 'd.m.Y'
 DATE_INPUT_FORMATS = ("%d.%m.%Y",)
 
-try:
-    from settings_local import *
-except ImportError:
-    pass
+
+# Logging settings
+import logging
+LOG_DIR = os.path.join(SITE_ROOT, '.logs')
+LOG_INTERVAL = 'MIDNIGHT'
+LOG_LEVEL = DEBUG and logging.DEBUG or logging.INFO
 
 if not os.path.exists(LOG_DIR):
     try:
@@ -187,25 +169,6 @@ if not os.path.exists(LOG_DIR):
 
 LOG_FILE = os.path.join(LOG_DIR, 'debug.log')
 ERR_FILE = os.path.join(LOG_DIR, 'error.log')
-
 FORMAT = '[%(asctime)s] [%(levelname)s] [PID: '+str(os.getpid())+'] [%(name)s]:  %(message)s'
 FORMATTER = logging.Formatter(FORMAT)
-
-
-logging.basicConfig(level=LOG_LEVEL,
-                    format=FORMAT,
-                    filename=LOG_FILE)
-
-#logging.basicConfig(level=logging.NOTSET, stream=NullHandler())
-
-#root = logging.root
-#log_handler = TimedRotatingFileHandlerSafe(LOG_FILE, when=LOG_INTERVAL)
-#log_handler.setLevel(LOG_LEVEL)
-#log_handler.setFormatter(FORMATTER)
-#root.addHandler(log_handler)
-
-#err_handler = TimedRotatingFileHandlerSafe(ERR_FILE, when=LOG_INTERVAL)
-#err_handler.setLevel(logging.ERROR)
-#err_handler.setFormatter(FORMATTER)
-#root.addHandler(err_handler)
-
+logging.basicConfig(level=LOG_LEVEL, format=FORMAT, filename=LOG_FILE)

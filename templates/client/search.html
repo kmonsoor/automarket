@@ -11,10 +11,10 @@
 <script type="text/javascript">
 function onsubmit_basket_form() {
   if(document.pressed == 'update') {
-   document.basket_form.action ="{% url client_basket_update %}";
+   document.basket_form.action ="{% url basket_update %}?redirect_path={% url client_search %}";
   }
   if(document.pressed == 'order') {
-    document.basket_form.action ="{% url client_basket_order %}";
+    document.basket_form.action ="{% url basket_order %}?redirect_path={% url client_search %}";
   }
   return true;
 }
@@ -112,12 +112,12 @@ function onsubmit_basket_form() {
 <td>{{ item.get_price }}$</td>
 <td><input size="5" type="text" name="quantity_{{item.id}}" value="{{ item.quantity }}" /></td>
 <td>{{ item.get_price_total }}$</td>
-<td style="width: 80px; text-align: left;"><a class="delete_link" href="{% url client_basket_delete item.id %}">Удалить</a></td>
+<td style="width: 80px; text-align: left;"><a class="delete_link" href="{% url basket_delete item.id %}?redirect_path={% url client_search %}">Удалить</a></td>
 </tr>
 {% endfor %}
 <tr class="alt"><th colspan="7" style="text-align: right;"><b>Общая стоимость:</b></th>
 <th colspan="1"><b>{{ basket_price_sum }}</b></th>
-<td style="width: 125px; text-align: left;"><a class="delete_link" href="{% url client_basket_clear %}">Очистить корзину</a></td>
+<td style="width: 125px; text-align: left;"><a class="delete_link" href="{% url basket_clear %}?redirect_path={% url client_search %}">Очистить корзину</a></td>
 </tr>
 </tbody>
 </table>

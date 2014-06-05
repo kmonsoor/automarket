@@ -7,6 +7,7 @@ logger = logging.getLogger('data.models')
 from django.db import models, transaction
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.utils.html import mark_safe
 
 from data.managers import OrderedItemManager
 from data.settings import (
@@ -700,6 +701,7 @@ class Package(models.Model):
 
 class Basket(models.Model):
     user = models.ForeignKey(User)
+    creator = models.ForeignKey(User, related_name='creator')
     part_number = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     msrp = models.FloatField(null=True, blank=True)
@@ -803,6 +805,102 @@ def all_brands():
 
 def search_local(maker_id, partnumber):
     return Part.get_data_parts(partnumber, maker_id) or None
+
+
+def normalize_sum(value):
+    value = str(value)
+    value = value.replace(',', '.')
+    parts = value.split(".")
+    m, d = parts[0:-1], parts[-1]
+    value = "".join(m) + "." + d
+    return value
+
+
+def calc_part(part, user, render_for_template=True):
+    if not part.get('MSRP'):
+        return None
+
+    res = part.copy()
+
+    # try to find area and get multiplier
+    try:
+        # find an area by title
+        area = Area.objects.get(title__iexact=part['brandname'])
+        brand_group = BrandGroup.objects.get(title=part['brandgroup'])
+        # we need to find a valid multiplier for this area
+        # TODO - hardcoded 'OEM', we need do more sofisticated algo
+    except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
+        # not price_setings for OEM and this area
+        m, d, dp, pu, cm, brand_group, area = (
+            AREA_MULTIPLIER_DEFAULT, None, None, None, COST_MARGIN_DEFAULT, None, None)
+    else:
+        m, d, dp, pu, cm = area.get_brandgroup_settings(brand_group)
+
+    res['delivery_coef'] = d
+    res['delivery_period'] = dp
+    res['updated_at'] = pu
+    res['area_id'] = area and area.id or None
+    res['direction_id'] = brand_group and brand_group.direction.id or None
+    res['brandgroup_id'] = brand_group and brand_group.id or None
+
+    try:
+        discount = user.get_profile().get_discount(
+            brand_group=brand_group, area=area)
+    except Exception:
+        discount = AREA_DISCOUNT_DEFAULT
+    discount = float(discount)
+
+    # we need to remove all "," as separators
+    # only last dot should be saved
+    value = float(normalize_sum(str(part['MSRP'])))
+
+    res['MSRP'] = value * float(m)
+    if 'cost' in part and part['cost']:
+        _msrp = part['cost'] * cm
+        if _msrp > part['MSRP']:
+            res['MSRP'] = _msrp
+
+    try:
+        res['core_price'] = float(normalize_sum(str(part['core_price'])))
+    except:
+        res['core_price'] = 0.00
+
+    res['your_price'] = res['MSRP'] * (100 - discount) / 100
+    res['your_economy'] = res['MSRP'] - res['your_price']
+    res['your_economy_perc'] = 100 - res['your_price'] / res['MSRP'] * 100
+
+    if render_for_template:
+        res['core_price'] = "%.2f" % res['core_price']
+        res['your_economy_perc'] = "%.2f" % res['your_economy_perc']
+        res['MSRP'] = "%.2f" % res['MSRP']
+        res['your_price'] = "%.2f" % res['your_price']
+        res['your_economy'] = "%.2f" % res['your_economy']
+
+        if len(part.get('sub_chain') or []) > 1:
+            last = part['sub_chain'][-1]
+            res['sub_chain'] = mark_safe(
+                u"Номер заменён: "
+                + " -> ".join(part['sub_chain'])
+                + " -> <b>%s</b>" % last)
+        else:
+            res.pop('sub_chain', None)
+
+    return res
+
+
+def calc_parts(parts, user, client=None, render_for_template=True):
+    data = []
+    for part in parts:
+        if not part.get('MSRP'):
+            continue
+        _part = calc_part(part, user, render_for_template)
+        if client:
+            _part.update(dict(
+                ('client_%s' % k, v)
+                for k, v in calc_part(part, client, render_for_template).items()))
+            _part['client'] = client
+        data.append(_part)
+    return data
 
 
 BALANCEITEM_TYPE_PAYMENT = 1
@@ -1171,8 +1269,55 @@ class UserProfile(models.Model):
     manager_group = models.ForeignKey(
         ManagerGroup, verbose_name=u"группа менеджера", blank=True, null=True)
 
-
     def get_discount(self, brand_group=None, area=None):
+        if self.is_manager:
+            return self.get_manager_discount(brand_group, area)
+        return self.get_client_discount(brand_group, area)
+
+    def get_manager_discount(self, brand_group=None, area=None):
+        user_discount = None
+        group_discount = None
+        brand_group_user_discount = None
+        brand_group_discount = None
+
+        if brand_group and area:
+            try:
+                user_discount = Discount.objects.get(
+                    user=self.user,
+                    brand_group=brand_group,
+                    area=area).discount
+            except (Discount.DoesNotExist, AttributeError):
+                pass
+
+            try:
+                group_discount = ManagerGroupDiscount.objects.get(
+                    manager_group=self.manager_group,
+                    brand_group=brand_group,
+                    area=area).discount
+            except ManagerGroupDiscount.DoesNotExist, AttributeError:
+                pass
+
+            try:
+                brand_group_user_discount = BrandGroupDiscount.objects.get(
+                    user=self.user,
+                    brand_group=brand_group).discount
+            except (BrandGroupDiscount.DoesNotExist, AttributeError):
+                pass
+
+            try:
+                brand_group_discount = BrandGroupManagerGroupDiscount.objects.get(
+                    manager_group=self.manager_group,
+                    brand_group=brand_group).discount
+            except (BrandGroupManagerGroupDiscount.DoesNotExist, AttributeError):
+                pass
+
+        return [
+            x for x in [
+                user_discount, group_discount, brand_group_user_discount,
+                brand_group_discount, AREA_DISCOUNT_DEFAULT]
+            if x is not None][0]
+
+    def get_client_discount(self, brand_group=None, area=None):
         user_discount = None
         group_discount = None
         brand_group_user_discount = None
@@ -1189,21 +1334,11 @@ class UserProfile(models.Model):
                 pass
 
             try:
-                if self.is_manager:
-                    group_discount = ManagerGroupDiscount.objects.get(
-                        manager_group=self.manager_group,
-                        brand_group=brand_group,
-                        area=area).discount
-                else:
-                    group_discount = ClientGroupDiscount.objects.get(
-                        client_group=self.client_group,
-                        brand_group=brand_group,
-                        area=area).discount
-            except (
-                ClientGroupDiscount.DoesNotExist,
-                ManagerGroupDiscount.DoesNotExist,
-                AttributeError
-            ):
+                group_discount = ClientGroupDiscount.objects.get(
+                    client_group=self.client_group,
+                    brand_group=brand_group,
+                    area=area).discount
+            except (ClientGroupDiscount.DoesNotExist, AttributeError):
                 pass
 
             try:
@@ -1214,21 +1349,12 @@ class UserProfile(models.Model):
                 pass
 
             try:
-                if self.manager:
-                    brand_group_discount = BrandGroupManagerGroupDiscount.objects.get(
-                        manager_group=self.manager_group,
-                        brand_group=brand_group).discount
-                else:
-                    brand_group_discount = BrandGroupClientGroupDiscount.objects.get(
-                        client_group=self.client_group,
-                        brand_group=brand_group).discount
-            except (
-                BrandGroupClientGroupDiscount.DoesNotExist,
-                BrandGroupManagerGroupDiscount.DoesNotExist,
-                AttributeError
-            ):
+                brand_group_discount = BrandGroupClientGroupDiscount.objects.get(
+                    client_group=self.client_group,
+                    brand_group=brand_group).discount
+            except (BrandGroupClientGroupDiscount.DoesNotExist, AttributeError):
                 pass
-        # Return first not null value
+
         return [
             x for x in [
                 user_discount, group_discount, brand_group_user_discount,

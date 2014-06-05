@@ -21,7 +21,7 @@ from data.models import *
 from BeautifulSoup import BeautifulSoup, NavigableString
 
 
-def _is_manager(user):
+def is_manager(user):
     try:
         user_profile = UserProfile.objects.get(user=user)
     except UserProfile.DoesNotExist:
@@ -37,7 +37,7 @@ def start(request):
     if request.user.is_active and request.user.is_authenticated():
         if request.user.is_staff:
             redirect_url = reverse('cp_index')
-        elif _is_manager(request.user):
+        elif is_manager(request.user):
             redirect_url = reverse('manager_index')
         else:
             redirect_url = reverse('client_search')
@@ -55,7 +55,7 @@ def start(request):
                     login(request, user)
                     if user.is_staff:
                         return HttpResponseRedirect(reverse('cp_index'))
-                    elif _is_manager(user):
+                    elif is_manager(user):
                         return HttpResponseRedirect(reverse('manager_index'))
                     else:
                         return HttpResponseRedirect(reverse('client_search'))

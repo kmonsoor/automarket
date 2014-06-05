@@ -137,14 +137,22 @@ class SearchForm(forms.Form):
 
     maker = forms.CharField(
         widget=forms.Select(choices=[]),
-        label=u'MAKE', required=False)
+        label=u'Выберите марку',
+        required=False)
+
+    client = forms.CharField(
+        widget=forms.Select(),
+        label=u'Выберите клиента',
+        required=True)
 
     part_number = forms.CharField(
         widget=forms.TextInput(),
-        label=u'Part Number',
+        label=u'Введите номер',
         required=True)
 
     def __init__(self, *args, **kwargs):
-        maker_choices = kwargs.pop("maker_choices")
+        self.maker_choice = kwargs.pop("maker_choice")
+        self.client_choice = kwargs.pop('client_choice')
         super(SearchForm, self).__init__(*args, **kwargs)
-        self.fields['maker'].widget.choices = maker_choices
+        self.fields['maker'].widget.choices = self.maker_choice
+        self.fields['client'].widget.choices = self.client_choice
