@@ -1,0 +1,64 @@
+{% for found in founds %}
+  {% if found.sub_chain %}
+  <tr class="{% if forloop.counter|divisibleby:2 %}row2{% else %}row1{% endif %}">
+    <td colspan=20 style="text-align: left;">{{ found.sub_chain }}</td>
+  </tr>
+  {% endif %}
+  <tr class="{% if forloop.counter|divisibleby:2 %}row2{% else %}row1{% endif %}">
+    {% if found.MSRP %}
+      <td>
+        {{ found.maker }}
+      </td>
+
+      <td>
+        {{ found.partnumber }}
+      </td>
+
+      <td>
+          {{ found.description_ru|default:"" }}
+      </td>
+
+      <td>
+          {{ found.description|default:"" }}
+      </td>
+
+      <td>
+          {% if found.delivery_coef %}{{ found.delivery_coef }}${% endif %}
+      </td>
+
+      <td>
+        {{ found.MSRP }}$
+      </td>
+
+      <td>
+        <b>{{ found.your_price }}$</b>
+      </td>
+
+      <td>
+        {{ found.core_price }}$
+      </td>
+
+      <td>
+        {{ found.your_economy}}$ или {{ found.your_economy_perc}}%
+      </td>
+
+      <td>
+        {% if found.party and found.party > 1 %}{{ found.party }} шт.{% endif %}
+      </td>
+
+      <td>
+        {% if found.available %}{{ found.available }} шт.{% endif %}
+      </td>
+
+      <td>
+        {% if found.delivery_period %}{{ found.delivery_period }} дн.{% endif %}
+      </td>
+
+      <td>
+        {{ found.updated_at|date:"d N Y" }}
+      </td>
+    {% else %}
+      <td colspan=20>Не поставляется</td>
+    {% endif %}
+  </tr>
+{% endfor %}

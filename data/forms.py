@@ -1,7 +1,13 @@
 # -*- coding:utf-8 -*-
 
 from django import forms
-from data.models import OrderedItem, ORDER_ITEM_STATUSES, Area, INVOICE_STATUSES
+from django.contrib.auth.models import User
+
+from lib.dynamicforms import Form
+
+from data.models import (
+    OrderedItem, ORDER_ITEM_STATUSES, Area, INVOICE_STATUSES
+)
 
 
 STAFF_FIELD_LIST = (
@@ -237,3 +243,64 @@ class PartPriceUploadForm(forms.Form):
     area = forms.ModelChoiceField(queryset=Area.objects.all(), 
                                   to_field_name='title')
     data = forms.FileField()
+
+
+def users():
+    users = [(x.id, str(x)) for x in User.objects.filter(is_staff=False).order_by('username')]
+    users.insert(0, ('', 'выбрать',))
+    return users
+
+
+class PackageItemForm(Form):
+    TEMPLATE = 'data/packageitem_form.html'
+    CORE = ('weight',)
+
+    description = forms.CharField(
+        widget=forms.TextInput(attrs={'size': 20}),
+        label=u'Описание',
+        required=True)
+
+    quantity = forms.IntegerField(
+        min_value=1,
+        widget=forms.TextInput(attrs={'size': 5, 'class': 'quantity'}),
+        label=u'Q',
+        required=True)
+
+    weight = forms.FloatField(
+        widget=forms.TextInput(attrs={'size': 7, 'class': 'weight'}),
+        label=u'Weight',
+        required=True)
+
+    client = forms.CharField(
+        widget=forms.Select(),
+        label=u'CL',
+        required=False)
+
+    def __init__(self, *args, **kwargs):
+        self.client_choice = kwargs.pop('client_choice', None)
+        super(PackageItemForm, self).__init__(*args, **kwargs)
+        self.fields['client'].widget.choices = self.client_choice or users()
+
+    def clean_client(self):
+        client = self.cleaned_data.get('client')
+        if client:
+            try:
+                client = User.objects.get(id=client)
+            except User.DoesNotExist:
+                raise forms.ValidationError(u"Такого пользователя не существует")
+            return client
+
+
+class BalanceAddForm(Form):
+    TEMPLATE = 'data/balance_add_form.html'
+    CORE = ('amount',)
+
+    comment = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'balance_add_form_comment'}),
+        label=u'Комментарий',
+        required=True)
+
+    amount = forms.FloatField(
+        widget=forms.TextInput(attrs={'class': 'balance_add_form_amount'}),
+        label=u'Сумма',
+        required=True)

@@ -86,6 +86,7 @@ urlpatterns += patterns('manager.views',
     url(r'^manager/export_order/', 'export_order', name='manager_export_orders'),
     url(r'^manager/by_clients/$', 'by_clients', name="manager_by_clients"),
     url(r'^manager/order/$', 'order', name="manager_order"),
+    url(r'^manager/search/$', 'search', name="manager_search"),
     url(r'^manager/', 'index', name='manager_index'),
     url(r'^manager_admin/', include(manager_admin_site.urls)),
 )

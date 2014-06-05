@@ -4,40 +4,77 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
-from data.models import Client
-
-ct = ContentType.objects.get_for_model(Client)
-
-permissions = [
-    {
-        'name': u"Удаление клиентов",
-        'content_type': ct,
-        'codename': 'can_delete_clients',
-    },
-    {
-        'name': u"Создание клиентов",
-        'content_type': ct,
-        'codename': 'can_add_clients',
-    },
-    {
-        'name': u"Редактирование клиентов",
-        'content_type': ct,
-        'codename': 'can_change_clients',
-    },
-]
-
 
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        for perm in permissions:
-            Permission(**perm).save()
+        # Adding model 'ManagerGroupDiscount'
+        db.create_table('data_managergroupdiscount', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('manager_group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['data.ClientGroup'])),
+            ('brand_group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['data.BrandGroup'], null=True, blank=True)),
+            ('area', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['data.Area'])),
+            ('discount', self.gf('django.db.models.fields.FloatField')()),
+        ))
+        db.send_create_signal('data', ['ManagerGroupDiscount'])
+
+        # Adding unique constraint on 'ManagerGroupDiscount', fields ['manager_group', 'area', 'brand_group']
+        db.create_unique('data_managergroupdiscount', ['manager_group_id', 'area_id', 'brand_group_id'])
+
+        # Adding model 'BrandGroupManagerGroupDiscount'
+        db.create_table('data_brandgroupmanagergroupdiscount', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('manager_group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['data.ManagerGroup'])),
+            ('brand_group', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['data.BrandGroup'], null=True, blank=True)),
+            ('discount', self.gf('django.db.models.fields.FloatField')()),
+        ))
+        db.send_create_signal('data', ['BrandGroupManagerGroupDiscount'])
+
+        # Adding unique constraint on 'BrandGroupManagerGroupDiscount', fields ['manager_group', 'brand_group']
+        db.create_unique('data_brandgroupmanagergroupdiscount', ['manager_group_id', 'brand_group_id'])
+
+        # Adding model 'ManagerGroup'
+        db.create_table('data_managergroup', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('title', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('order_item_fields', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
+            ('is_default', self.gf('django.db.models.fields.BooleanField')(default=False)),
+        ))
+        db.send_create_signal('data', ['ManagerGroup'])
+
+        # Adding field 'OrderedItem.manager_price'
+        db.add_column('data_ordereditem', 'manager_price',
+                      self.gf('django.db.models.fields.FloatField')(null=True, blank=True),
+                      keep_default=False)
+
+        # Adding field 'OrderedItem.manager_weight'
+        db.add_column('data_ordereditem', 'manager_weight',
+                      self.gf('django.db.models.fields.FloatField')(null=True, blank=True),
+                      keep_default=False)
+
 
     def backwards(self, orm):
-        codenames = [x['codename'] for x in permissions]
-        Permission.objects.filter(codename__in=codenames).delete()
+        # Removing unique constraint on 'BrandGroupManagerGroupDiscount', fields ['manager_group', 'brand_group']
+        db.delete_unique('data_brandgroupmanagergroupdiscount', ['manager_group_id', 'brand_group_id'])
+
+        # Removing unique constraint on 'ManagerGroupDiscount', fields ['manager_group', 'area', 'brand_group']
+        db.delete_unique('data_managergroupdiscount', ['manager_group_id', 'area_id', 'brand_group_id'])
+
+        # Deleting model 'ManagerGroupDiscount'
+        db.delete_table('data_managergroupdiscount')
+
+        # Deleting model 'BrandGroupManagerGroupDiscount'
+        db.delete_table('data_brandgroupmanagergroupdiscount')
+
+        # Deleting model 'ManagerGroup'
+        db.delete_table('data_managergroup')
+
+        # Deleting field 'OrderedItem.manager_price'
+        db.delete_column('data_ordereditem', 'manager_price')
+
+        # Deleting field 'OrderedItem.manager_weight'
+        db.delete_column('data_ordereditem', 'manager_weight')
+
 
     models = {
         'auth.group': {
@@ -82,6 +119,18 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
+        'data.balanceitem': {
+            'Meta': {'object_name': 'BalanceItem'},
+            'amount': ('django.db.models.fields.FloatField', [], {'null': 'True'}),
+            'comment': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'invoice': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Invoice']", 'null': 'True', 'blank': 'True'}),
+            'item_type': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '1'}),
+            'modified_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'shipment': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Shipment']", 'null': 'True', 'blank': 'True'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
+        },
         'data.basket': {
             'Meta': {'object_name': 'Basket'},
             'area': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
@@ -103,12 +152,13 @@ class Migration(SchemaMigration):
         'data.brand': {
             'Meta': {'ordering': "['title']", 'object_name': 'Brand'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'title': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+            'title': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'})
         },
         'data.brandgroup': {
             'Meta': {'object_name': 'BrandGroup'},
             'add_brand_to_comment': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'area': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': "orm['data.Area']", 'null': 'True', 'blank': 'True'}),
+            'cost_margin': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'delivery': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'delivery_period': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
@@ -121,6 +171,7 @@ class Migration(SchemaMigration):
             'Meta': {'unique_together': "(('area', 'brand_group'),)", 'object_name': 'BrandGroupAreaSettings'},
             'area': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Area']"}),
             'brand_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.BrandGroup']"}),
+            'cost_margin': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'delivery': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'delivery_period': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -142,6 +193,13 @@ class Migration(SchemaMigration):
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']"})
         },
+        'data.brandgroupmanagergroupdiscount': {
+            'Meta': {'unique_together': "(('manager_group', 'brand_group'),)", 'object_name': 'BrandGroupManagerGroupDiscount'},
+            'brand_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.BrandGroup']", 'null': 'True', 'blank': 'True'}),
+            'discount': ('django.db.models.fields.FloatField', [], {}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'manager_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.ManagerGroup']"})
+        },
         'data.clientgroup': {
             'Meta': {'object_name': 'ClientGroup'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -159,6 +217,7 @@ class Migration(SchemaMigration):
         },
         'data.direction': {
             'Meta': {'object_name': 'Direction'},
+            'cost_margin': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'delivery': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'delivery_period': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -184,6 +243,21 @@ class Migration(SchemaMigration):
             'received_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'status': ('django.db.models.fields.IntegerField', [], {'default': '1'})
         },
+        'data.managergroup': {
+            'Meta': {'object_name': 'ManagerGroup'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_default': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'order_item_fields': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'title': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+        },
+        'data.managergroupdiscount': {
+            'Meta': {'unique_together': "(('manager_group', 'area', 'brand_group'),)", 'object_name': 'ManagerGroupDiscount'},
+            'area': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Area']"}),
+            'brand_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.BrandGroup']", 'null': 'True', 'blank': 'True'}),
+            'discount': ('django.db.models.fields.FloatField', [], {}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'manager_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.ClientGroup']"})
+        },
         'data.ordereditem': {
             'Meta': {'object_name': 'OrderedItem'},
             'area': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Area']"}),
@@ -200,10 +274,13 @@ class Migration(SchemaMigration):
             'delivery_coef': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'description_en': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'description_ru': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'editable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'invoice_code': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'issued_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'manager': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'manager'", 'to': "orm['auth.User']"}),
+            'manager_price': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
+            'manager_weight': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'modified': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'parent': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.OrderedItem']", 'null': 'True', 'blank': 'True'}),
             'part_number': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
@@ -216,7 +293,8 @@ class Migration(SchemaMigration):
             'price_sale': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'quantity': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True', 'blank': 'True'}),
             'received_office_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'status': ('django.db.models.fields.CharField', [], {'default': "'order'", 'max_length': '50'}),
+            'shipment': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Shipment']", 'null': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.CharField', [], {'default': "'moderation'", 'max_length': '50'}),
             'status_modified': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'total_cost': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'total_w_ship': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
@@ -229,18 +307,21 @@ class Migration(SchemaMigration):
             'delivery': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'delivery_coef': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'editable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'invoice': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Invoice']"}),
+            'issued_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
             'manager': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'manager_package'", 'to': "orm['auth.User']"}),
             'quantity': ('django.db.models.fields.PositiveIntegerField', [], {}),
             'received_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
-            'status': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'shipment': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Shipment']", 'null': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.IntegerField', [], {'default': '2'}),
             'total_cost': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'weight': ('django.db.models.fields.FloatField', [], {})
         },
         'data.part': {
             'MSRP': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
-            'Meta': {'unique_together': "(('area', 'partnumber', 'brandgroup'),)", 'object_name': 'Part'},
+            'Meta': {'object_name': 'Part'},
             'area': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Area']"}),
             'available': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'brand': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Brand']", 'null': 'True', 'blank': 'True'}),
@@ -255,10 +336,32 @@ class Migration(SchemaMigration):
             'party': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'substitution': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'null': 'True', 'blank': 'True'})
         },
+        'data.partanalog': {
+            'Meta': {'object_name': 'PartAnalog'},
+            'brand': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.Brand']"}),
+            'brand_analog': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'brand_analog'", 'to': "orm['data.Brand']"}),
+            'comment1': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'comment2': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'partnumber': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'partnumber_analog': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'})
+        },
+        'data.shipment': {
+            'Meta': {'unique_together': "(('code', 'number', 'client'),)", 'object_name': 'Shipment'},
+            'client': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'shipment_client'", 'to': "orm['auth.User']"}),
+            'code': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'manager': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'shipment_manager'", 'to': "orm['auth.User']"}),
+            'number': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'user'", 'to': "orm['auth.User']"})
+        },
         'data.userprofile': {
             'Meta': {'object_name': 'UserProfile'},
             'client_group': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['data.ClientGroup']", 'null': 'True', 'blank': 'True'}),
+            'client_manager': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'client_manager'", 'null': 'True', 'to': "orm['auth.User']"}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_manager': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'order_item_fields': ('django.db.models.fields.TextField', [], {'default': "''", 'blank': 'True'}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['auth.User']", 'unique': 'True'})
         }

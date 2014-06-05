@@ -20,13 +20,12 @@ from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from lib.collections import Counter
-
 from common.decorators import manager_required
 
 from data.models import (
     OrderedItem, ORDER_ITEM_STATUSES, UserProfile,
     Invoice, Package, Shipment, BalanceItem, BALANCEITEM_TYPE_INVOICE,
-    PACKAGE_STATUS_RECEIVED, BALANCEITEM_TYPE_PAYMENT
+    PACKAGE_STATUS_RECEIVED, BALANCEITEM_TYPE_PAYMENT, BrandGroup
 )
 
 from data.forms import (
@@ -34,10 +33,11 @@ from data.forms import (
     InvoicesFilterForm, INVOICES_FIELD_LIST,
     MANAGER_SHIPMENTS_FIELD_LIST, ShipmentsFilterForm,
     BalanceFilterForm, BALANCE_FIELD_LIST,
-    BalanceClientFilterForm, BALANCE_CLIENT_FIELD_LIST
+    BalanceClientFilterForm, BALANCE_CLIENT_FIELD_LIST, PackageItemForm,
+    BalanceAddForm
 )
 
-from cp.forms import PackageItemForm, BalanceAddForm
+from manager.forms import OrderItemForm
 
 import logging
 logger = logging.getLogger("manager.views")
@@ -365,14 +365,6 @@ def by_clients(request):
     return context
 
 
-@manager_required
-@render_to('manager/order.html')
-def order(request):
-    context = {}
-    return context
-
-
-
 class ManagerInvoices(ManagerOrderItems):
     filter_form = InvoicesFilterForm
     session_store_prefix = 'manager_invoices'
@@ -453,18 +445,30 @@ def invoice(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id)
     invoice.calculate_status()
 
+    client_choice = (
+        tuple(
+            UserProfile.objects
+                .filter(client_manager=request.user)
+                .order_by('user__username')
+                .values_list('user__id', 'user__username')
+        ) + (('', 'выбрать'),))
+
+    package_forms_is_valid = True
     if request.method == 'POST':
         redirect_url = reverse("manager_invoice", args=[invoice.id])
 
         if 'save_package' in request.POST:
-            package_forms = PackageItemForm.get_forms(request)
+            package_forms = PackageItemForm.get_forms(
+                request, kwargs=dict(client_choice=client_choice))
             context['package_forms'] = package_forms
 
             package_data = [
                 package_form.render_js('from_template')
                 for package_form in package_forms]
 
-            if package_forms.are_valid():
+            package_forms_is_valid = package_forms.are_valid()
+
+            if package_forms_is_valid:
                 for form in package_forms:
                     data = form.cleaned_data
                     data['manager'] = request.user
@@ -475,8 +479,10 @@ def invoice(request, invoice_id):
                 return _redirect_after_post(redirect_url)
 
     context['cl'] = ManagerInvoice(request, invoice=invoice)
-    context['package_template'] = PackageItemForm().render_js('from_template')
+    context['package_template'] = PackageItemForm(
+        client_choice=client_choice).render_js('from_template')
     context['package_data'] = package_data
+    context['package_forms_is_valid'] = package_forms_is_valid
     return context
 
 
@@ -875,6 +881,132 @@ def balanceitem_delete(request, item_id):
     messages.add_message(request, messages.SUCCESS, u'Запись баланса удалена.')
     return HttpResponseRedirect(reverse(
         'manager_balance_client', args=[user.id]))
+
+
+@manager_required
+@render_to('manager/order.html')
+def order(request):
+    context = {}
+
+    client_choice = (
+        tuple(
+            UserProfile.objects
+                .filter(client_manager=request.user)
+                .order_by('user__username')
+                .values_list('user__id', 'user__username')
+        ) + (('', 'выбрать'),))
+
+    if request.method == 'POST':
+        item_forms = OrderItemForm.get_forms(
+            request, kwargs=dict(client_choice=client_choice))
+        item_data = [
+            item_form.render_js('from_template')
+            for item_form in item_forms]
+
+        if item_forms.are_valid():
+            client_order_numbers = {}
+
+            for form in item_forms:
+                fdata = form.cleaned_data
+                supplier_id = fdata.pop('supplier')
+
+                if fdata['client'] not in client_order_numbers:
+                    client_order_numbers[fdata['client']] = \
+                        OrderedItem.objects.get_next_client_order_id(fdata['client'])
+
+                fdata['client_order_id'] = client_order_numbers[fdata['client']]
+                fdata['manager'] = request.user
+                fdata['brandgroup'] = BrandGroup.objects.get(id=supplier_id)
+                fdata['status'] = 'order'
+
+                OrderedItem(**fdata).save()
+
+                messages.add_message(
+                    request, messages.SUCCESS, u"Заказ отправлен")
+
+            return _redirect_after_post(reverse('manager_order'))
+
+    else:
+        item_data = [
+            OrderItemForm(
+                client_choice=client_choice
+            ).render_js('from_template')
+        ] * 3
+
+    context['form_template'] = OrderItemForm(
+        client_choice=client_choice).render_js('from_template')
+    context['form_data'] = item_data
+    return context
+
+
+from common.views import PartSearch
+from manager.forms import SearchForm
+from data.models import search_local, search_analogs, Basket
+from client.views import calc_parts
+import re
+
+@manager_required
+@render_to('manager/search.html')
+def search(request):
+    parts = []
+    analogs = []
+    msg = ''
+
+    search_external = PartSearch()
+    maker_choices = search_external.maker_choices()
+    show_maker_field = False
+
+    if request.method == 'POST':
+        _post = request.POST.copy()
+        _post['part_number'] = re.sub('[^\w]', '', _post['part_number']).strip().upper()
+        form = SearchForm(_post, maker_choices=maker_choices)
+        if form.is_valid():
+            maker = form.cleaned_data['maker']
+            part_number = form.cleaned_data['part_number']
+
+            founds = search_local(maker, part_number)
+            if founds:
+                makers = set(x['maker'] for x in founds)
+                if len(makers) > 1:
+                    show_maker_field = True
+                    form.fields['maker'].widget.choices = [
+                        ('', '----')] + list((x, x) for x in makers)
+                else:
+                    parts = calc_parts(founds, request.user)
+            else:
+                show_maker_field = True
+                if maker:
+                    founds = search_external.search(maker, part_number)
+                    if founds:
+                        parts = calc_parts(founds, request.user)
+                    else:
+                        msg = u"Ничего не найдено"
+
+            if founds:
+                analog_founds = search_analogs(founds)
+                analogs = calc_parts(analog_founds, request.user)
+                
+    else:
+        form = SearchForm(maker_choices=maker_choices)
+
+    context = {
+        'form': form,
+        'data': parts,
+        'analogs': analogs,
+        'msg': msg,
+        'show_maker_field': show_maker_field,
+    }
+
+    context['basket_items'] = Basket.objects\
+        .filter(user=request.user, order_item_id__isnull=True)\
+        .order_by('-id')
+
+    context['basket_price_sum'] = reduce(
+        lambda x, y: x + y,
+        [x.get_price_total() for x in context['basket_items']],
+        0
+    )
+    return context
 
 
 @manager_required

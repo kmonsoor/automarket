@@ -28,11 +28,10 @@ from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from lib import xlsreader
 
-from cp.forms import (
-    OrderItemForm, ImportXlsForm, PackageItemForm,
-    BalanceAddForm
-)
+from cp.forms import OrderItemForm, ImportXlsForm
+
 from client.forms import SearchForm
+
 from data.models import (
     BrandGroup, Brand, OrderedItem, ORDER_ITEM_STATUSES,
     Invoice, Package, INVOICE_STATUS_RECEIVED, INVOICE_STATUS_CLOSED,
@@ -45,6 +44,7 @@ from data.forms import (
     InvoicesFilterForm, INVOICES_FIELD_LIST, PackageForm,
     ShipmentsFilterForm, SHIPMENTS_FIELD_LIST, BalanceFilterForm,
     BALANCE_FIELD_LIST, BalanceClientFilterForm, BALANCE_CLIENT_FIELD_LIST,
+    PackageItemForm, BalanceAddForm
 )
 from common.views import PartSearch
 

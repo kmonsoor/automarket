@@ -63,3 +63,8 @@ def table_td_status(item):
         '%(opts)s'
         '</select>'
         '</td>' % dict(id=item.id, opts="".join(opts)))
+
+
+@register.inclusion_tag('manager/tags/founds.html')
+def founds(founds, delta_formid=0):
+    return {'founds': founds, 'delta': delta_formid}

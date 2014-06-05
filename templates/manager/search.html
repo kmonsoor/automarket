@@ -1,0 +1,70 @@
+{% extends 'manager_base.html' %}
+{% load manager_tags %}
+{% load i18n %}
+
+{% block menu_search %}<a class="menu-active" href="{% url manager_search %}">Поиск</a>{% endblock %}
+
+{% block page_title %}Поиск{% endblock %}
+
+{% block content %}
+<div id="divSearch" style="text-align: left; min-width: 850px;">
+  <div style="width:30%" class="aligned">
+    <form method="post" id="formSearch" action="">
+      <div class="form-row">
+        {{ form.part_number.errors }}
+        <label for="id_part_number">Введите номер* :</label> {{ form.part_number }}
+      </div>
+      {% if show_maker_field %}
+        <div class="form-row">
+          {{ form.maker.errors }}
+          <label for="id_maker">Выберите марку* :</label> {{ form.maker }}
+        </div>
+      {% endif %}
+      <div class="submit-row">
+        <input type="submit" value="Искать" class="default" style="width: 80px;"/>
+      </div>
+
+    </form>
+  </div>
+  <br/>
+  {% if msg or data %}<h3>Результаты поиска</h3>{% endif %}
+  {% if msg %}<h4>{{ msg|default:"" }}</h4>{% endif %}
+  {% if data %}
+    <table id="dataTable" class="dataTable">
+      <thead>
+        <tr class="row1">
+            <th><b>Брэнд</b></th>
+            <th><b>Артикул</b></th>
+            <th><b>Наименование</b></th>
+            <th><b>Аббревиатура</b></th>
+            <th><b>Стоимость доставки*</b></th>
+            <th><b>Цена</b></th>
+            <th><b>Ваша Цена</b></th>
+            <th><b>Цена невозвратной детали**</b></th>
+            <th><b>Вы экономите</b></th>
+            <th><b>Партия</b></th>
+            <th><b>Наличие</b></th>
+            <th><b>Срок доставки</b></th>
+            <th><b>Дата обновления</b></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% founds data %}
+        {% if analogs %}
+        <tr><td colspan=20>&nbsp;</td></tr>
+        <tr><td colspan=20 style="text-align: left;"><h3>Аналоги для искомого артикула</h3></td></tr>
+        {% founds analogs 100 %}
+        {% endif %}
+        <tr>
+          <td colspan=20 style="border: none; text-align: left;">
+            <b>*</b>за 1 кг физического веса, включая упаковку
+            <br/>
+            <b>**</b>будет добавлена к стоимости заказанной позиции
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}
+

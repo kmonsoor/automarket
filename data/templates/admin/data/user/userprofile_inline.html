@@ -20,8 +20,8 @@
 <label>Настройки отображения колонок:</label>
 <div>
 <ul class="plainlist">
-{% for val, label, checked in client_order_item_fields %}
-<li><input type="checkbox" {% if checked %}checked="checked"{% endif %} name="order_item_fields_selector" onclick="build_fields_string()" value="{{ val }}" id="{{ val }}_client_field"><label for="{{ val }}_client_field">&nbsp;{{ label }}</label></li>
+{% for val, label, checked in order_item_fields %}
+<li><input type="checkbox" {% if checked %}checked="checked"{% endif %} name="order_item_fields_selector" onclick="build_fields_string()" value="{{ val }}" id="{{ val }}_field"><label for="{{ val }}_field">&nbsp;{{ label }}</label></li>
 {% endfor %}
 </ul>
 </div>

@@ -29,13 +29,24 @@ class MyDashboard(Dashboard):
             ]))
 
         self.children.append(modules.ModelList(
-            u'Управление пользователями',
+            u'Управление администраторами',
             [
                 'data.models.Staff',
-                'django.contrib.auth.models.Group',
-                'data.models.CustomerAccount',
-                'data.models.ClientGroup',
+                # 'django.contrib.auth.models.Group',
+            ]))
+
+        self.children.append(modules.ModelList(
+            u'Управление менеджерами',
+            [
                 'data.models.Manager',
+                'data.models.ManagerGroup',
+            ]))
+
+        self.children.append(modules.ModelList(
+            u'Управление клиентами',
+            [
+                'data.models.Client',
+                'data.models.ClientGroup',
             ]))
 
         self.children.append(modules.RecentActions(
@@ -71,13 +82,24 @@ class CustomAppIndexDashboard(AppIndexDashboard):
                 ]))
         elif self.app_title.lower() == "auth":
             self.children.append(modules.ModelList(
-                u'Управление пользователями',
+                u'Управление администраторами',
                 [
                     'data.models.Staff',
-                    'django.contrib.auth.models.Group',
-                    'data.models.CustomerAccount',
-                    'data.models.ClientGroup',
+                    # 'django.contrib.auth.models.Group',
+                ]))
+
+            self.children.append(modules.ModelList(
+                u'Управление менеджерами',
+                [
                     'data.models.Manager',
+                    'data.models.ManagerGroup',
+                ]))
+
+            self.children.append(modules.ModelList(
+                u'Управление клиентами',
+                [
+                    'data.models.Client',
+                    'data.models.ClientGroup',
                 ]))
         else:
             self.children.append(modules.ModelList(
@@ -106,7 +128,7 @@ class ManagerDashboard(Dashboard):
         self.children.append(modules.ModelList(
             u'Управление пользователями',
             [
-                'data.models.CustomerAccount',
+                'data.models.Client',
                 'data.models.ClientGroup',
             ]))
 
@@ -123,7 +145,7 @@ class ManagerAppIndexDashboard(AppIndexDashboard):
             self.children.append(modules.ModelList(
                 u'Управление пользователями',
                 [
-                    'data.models.CustomerAccount',
+                    'data.models.Client',
                     'data.models.ClientGroup',
                 ]))
         else:

@@ -58,7 +58,7 @@
         <a class="add_link" href="javascript:void(0)" onclick="new PageForm(); jQuery('.save_packages_block').show();">Добавить упаковку</a>
     </p>
     <div id="package-forms"></div>
-    <div class="save_packages_block" style="text-align: right; {% if package_forms.are_valid %}display: none;{% endif %}">
+    <div class="save_packages_block" style="text-align: right; {% if package_forms_is_valid %}display: none;{% endif %}">
         <input type="submit" name="save_package" value="Сохранить" />
     </div>
     <br/>

@@ -1,0 +1,97 @@
+<table width="100%" id="tableOrderForm">
+<tr>
+
+<td {% if form.supplier.errors %}class="error"{% endif %}>
+{{ form.supplier.label }}*<br />
+{% if form.supplier.errors %}
+{{ form.supplier.errors }}
+{% endif %}
+{{ form.supplier }}
+</td>
+
+<td {% if form.area.errors %}class="error"{% endif %}>
+<br/>
+{{ form.area.label }}*<br />
+{% if form.area.errors %}
+{{ form.area.errors }}
+{% endif %}
+{{ form.area }}<br /><a class="help" rel="id_area" id="a.#" href="javascript:void(0);" onclick="showListArea(this)">Список</a><br />
+</td>
+
+<td {% if form.brand.errors %}class="error"{% endif %}>
+<br/>
+{{ form.brand.label }}*<br />
+{% if form.brand.errors %}
+{{ form.brand.errors }}
+{% endif %}
+{{ form.brand }}<br /><a class="help" rel="id_brand" id="c.#" href="javascript:void(0);" onclick="showListBrand(this)">Список</a><br />
+</td>
+
+<td {% if form.part_number.errors %}class="error"{% endif %}>
+{{ form.part_number.label }}*<br />
+{% if form.part_number.errors %}
+{{ form.part_number.errors }}
+{% endif %}
+{{ form.part_number }}
+</td>
+
+<td {% if form.comment_customer.errors %}class="error"{% endif %}>
+<div>
+{{ form.comment_customer.label }}<br />
+{% if form.comment_customer.errors %}
+{{ form.comment_customer.errors }}
+{% endif %}
+{{ form.comment_customer }}
+</div>
+</td>
+
+<td {% if form.quantity.errors %}class="error"{% endif %}>
+{{ form.quantity.label }}*<br />
+{% if form.quantity.errors %}
+{{ form.quantity.errors }}
+{% endif %}
+{{ form.quantity }}
+</td>
+
+<td {% if form.client.errors %}class="error"{% endif %}>
+{{ form.client.label }}*<br />
+{% if form.client.errors %}
+{{ form.client.errors }}
+{% endif %}
+{{ form.client }}
+</td>
+
+<td {% if form.description_ru.errors %}class="error"{% endif %}>
+{{ form.description_ru.label }}<br />
+{% if form.description_ru.errors %}
+{{ form.description_ru.errors }}
+{% endif %}
+{{ form.description_ru }}
+</td>
+
+<td {% if form.description_en.errors %}class="error"{% endif %}>
+{{ form.description_en.label }}<br />
+{% if form.description_en.errors %}
+{{ form.description_en.errors }}
+{% endif %}
+{{ form.description_en }}
+</td>
+
+<td {% if form.price_base.errors %}class="error"{% endif %}>
+{{ form.price_base.label }}*<br />
+{% if form.price_base.errors %}
+{{ form.price_base.errors }}
+{% endif %}
+{{ form.price_base }}
+</td>
+
+<td {% if form.price_sale.errors %}class="error"{% endif %}>
+{{ form.price_sale.label }}*<br />
+{% if form.price_sale.errors %}
+{{ form.price_sale.errors }}
+{% endif %}
+{{ form.price_sale }}
+</td>
+
+</tr>
+</table>

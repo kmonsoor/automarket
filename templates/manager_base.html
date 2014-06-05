@@ -72,7 +72,8 @@ function buildQueryFilter() {
 
 {% block global_menu %}
 <ul>
-    <!-- <li>{% block menu_order %}<a href="{% url manager_order %}">Новый заказ</a>{% endblock %}</li> -->
+    <li>{% block menu_search %}<a href="{% url manager_search %}">Поиск</a>{% endblock %}</li>
+    <li>{% block menu_order %}<a href="{% url manager_order %}">Новый заказ</a>{% endblock %}</li>
     <li>{% block menu_index %}<a href="{% url manager_index %}">Заказы</a>{% endblock %}</li>
     <li>{% block menu_by_clients %}<a href="{% url manager_by_clients %}">По клиентам</a>{% endblock %}</li>
     <li>{% block menu_invoices %}<a href="{% url manager_invoices %}">Инвойсы</a>{% endblock %}</li>

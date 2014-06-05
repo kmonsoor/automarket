@@ -132,7 +132,7 @@ tr.alt td {
 <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
 {% if issues_mode %}<td><input type="checkbox" onclick="toggleSelectAllRows(this);" name="select_all_rows" /></td>{% endif %}
 {% for f in list_filters %}
-<td>{% ifequal f.name 'ponumber' %}<div style="width: 60px;"><input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" style="width: 25%;">&nbsp;{{ f }}</div>{% else %}{{ f }}{% endifequal %}
+<td>{% ifequal f.name 'ponumber' %}<div style="width: 65px;"><input id="id_brandgroup__direction__po__icontains" type="text" class="qs_filter" name="brandgroup__direction__po__icontains" style="width: 25%;">&nbsp;{{ f }}</div>{% else %}{{ f }}{% endifequal %}
 </td>
 {% endfor %}
 {% if issues_mode %}<td>&nbsp;</td>{% endif %}

@@ -3,6 +3,8 @@
 
 {% block menu_by_clients %}<a class="menu-active" href="{% url manager_by_clients %}">По клиентам</a>{% endblock %}
 
+{% block page_title %}По клиентам{% endblock %}
+
 {% block extrahead %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}css/admin_table.css">

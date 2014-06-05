@@ -206,185 +206,6 @@ class OrderedItemAdmin(admin.ModelAdmin):
     po_number.short_description = u'PO'
 
 
-class StaffProfileInline(admin.StackedInline):
-    model = UserProfile
-    fk_name = 'user'
-    exclude = ['client_group', 'client_manager', 'is_manager',]
-    template = 'admin/data/user/userprofile_inline.html'
-    extra = 0
-
-
-class StaffAdmin(UserAdmin):
-    readonly_fields = ['is_staff']
-    inlines = [StaffProfileInline]
-    change_form_template = 'admin/data/user/change_form.html'
-    filter_horizontal = ['user_permissions', 'groups']
-    list_display = ('username', 'email', 'first_name', 'last_name', 'last_login',)
-    list_filter = []
-
-    def queryset(self, request):
-        qs = super(StaffAdmin, self).queryset(request)
-        qs = qs.filter(Q(is_staff=True) | Q(is_superuser=True))
-        return qs
-
-    def save_model(self, request, obj, form, change):
-        if not change:
-            obj.is_staff = True  # For new records only
-        obj.save()
-
-    def change_view(self, request, object_id, extra_context=None):
-        extra_context = {}
-        obj = get_object_or_404(User, pk=object_id)
-
-        try:
-            profile = obj.get_profile()
-        except Exception:
-            profile = None
-
-        if not profile:
-            profile = UserProfile.objects.create(user=obj)
-
-        extra_context['client_order_item_fields'] = []
-
-        fff = profile.order_item_fields
-
-        if fff:
-            extra_context['original_order_item_fields'] = fff.split(',')
-        else:
-            extra_context['original_order_item_fields'] = ""
-
-        if request.POST:
-            extra_context['original_order_item_fields'] = request.POST.get(
-                "order_item_fields", "").split(",")
-
-        for a in [(x[2], x[0]) for x in STAFF_FIELD_LIST]:
-            a = list(a)
-            if a[0] in extra_context['original_order_item_fields']:
-                a.append(True)
-            else:
-                a.append(False)
-            extra_context['client_order_item_fields'].append(a)
-
-        return super(StaffAdmin, self).change_view(
-            request, object_id, extra_context)
-
-
-class ManagerProfileInline(admin.StackedInline):
-    model = UserProfile
-    fk_name = 'user'
-    exclude = ['client_group', 'client_manager', 'is_manager',]
-    template = 'admin/data/user/userprofile_inline.html'
-    extra = 0
-
-
-class ManagerAdmin(UserAdmin):
-    inlines = [ManagerProfileInline]
-    change_form_template = 'admin/data/user/change_form.html'
-    list_display = ('username', 'email', 'first_name', 'last_name', 'last_login',)
-    list_filter = []
-    fieldsets = (
-        (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
-        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
-    )
-
-    def has_change_permission(self, request, obj=None):
-        if request.user.has_perm('auth.can_change_managers'):
-            return True
-        return False
-
-    def has_add_permission(self, request):
-        if request.user.has_perm('auth.can_add_managers'):
-            return True
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        if request.user.has_perm('auth.can_delete_managers'):
-            return True
-        return False
-
-    def queryset(self, request):
-        qs = super(UserAdmin, self).queryset(request)
-        ids = list(
-            UserProfile.objects
-            .filter(is_manager=True)
-            .values_list('user_id', flat=True))
-        qs = qs.filter(id__in=ids)
-        return qs
-
-    def save_model(self, request, obj, form, change):
-        if not change:
-            obj.is_staff = False
-        obj.save()
-
-    def change_view(self, request, object_id, extra_context=None):
-        extra_context = {}
-        obj = get_object_or_404(User, pk=object_id)
-
-        try:
-            profile = obj.get_profile()
-        except Exception:
-            profile = None
-
-        if not profile:
-            profile = UserProfile.objects.create(user=obj, is_manager=True)
-
-        extra_context['client_order_item_fields'] = []
-
-        fff = profile.order_item_fields
-
-        if fff:
-            extra_context['original_order_item_fields'] = fff.split(',')
-        else:
-            extra_context['original_order_item_fields'] = ""
-
-        if request.POST:
-            extra_context['original_order_item_fields'] = request.POST.get(
-                "order_item_fields", "").split(",")
-
-        for a in [(x[2], x[0]) for x in MANAGER_FIELD_LIST]:
-            a = list(a)
-            if a[0] in extra_context['original_order_item_fields']:
-                a.append(True)
-            else:
-                a.append(False)
-            extra_context['client_order_item_fields'].append(a)
-
-        return super(ManagerAdmin, self).change_view(
-            request, object_id, extra_context)
-
-
-class CUserCreationForm(UserCreationForm):
-    client_group = forms.ModelChoiceField(
-        queryset=ClientGroup.objects.all().order_by('title'),
-        label="Группа",
-        required=False)
-
-    creator = forms.IntegerField()
-
-    def save(self, *args, **kwargs):
-        user = super(CUserCreationForm, self).save(*args, **kwargs)
-        user.save()
-        try:
-            profile = user.get_profile()
-        except Exception:
-            profile = None
-
-        if not profile:
-            group = self.cleaned_data.get('client_group')
-            if not group:
-                group = ClientGroup.objects.get_default()
-
-            client_manager = None
-            creator = User.objects.get(id=self.cleaned_data['creator'])
-            if creator.get_profile().is_manager:
-                client_manager = creator
-
-            UserProfile.objects.create(
-                user=user, client_group=group, client_manager=client_manager)
-        return user
-
-
 class UserBrandGroupDiscountInline(admin.TabularInline):
     model = BrandGroupDiscount
     extra = 0
@@ -408,9 +229,261 @@ class DiscountInline(admin.TabularInline):
     form = UserDiscountInlineForm
 
 
+class GroupDiscountInlineForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super(GroupDiscountInlineForm, self).__init__(*args, **kwargs)
+        if self.instance.brand_group:
+            self.fields['area'].queryset = self.instance.brand_group.area.all()
+        else:
+            if not self.is_bound:
+                self.fields['area'].queryset = Area.objects.get_empty_query_set()
+            else:
+                self.fields['area'].queryset = Area.objects.all()
+
+
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
-    exclude = ['is_manager',]
+    fk_name = 'user'
+    exclude = []
+    template = 'admin/data/user/userprofile_inline.html'
+    extra = 0
+
+
+class StaffProfileInline(UserProfileInline):
+    exclude = [
+        'client_group', 'client_manager', 'is_manager',
+        'is_client', 'manager_group']
+
+
+class StaffAdmin(UserAdmin):
+    add_form = UserCreationForm
+    readonly_fields = ['is_staff']
+    inlines = [StaffProfileInline]
+    change_form_template = 'admin/data/user/change_form.html'
+    add_form_template = 'admin/data/user/change_form.html'
+    filter_horizontal = ['user_permissions', 'groups']
+    list_display = (
+        'username', 'email', 'first_name', 'last_name', 'last_login',)
+    list_filter = []
+
+    def queryset(self, request):
+        qs = super(StaffAdmin, self).queryset(request)
+        qs = qs.filter(Q(is_staff=True) | Q(is_superuser=True))
+        return qs
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.is_staff = True
+        obj.save()
+
+    def change_view(self, request, object_id, extra_context=None):
+        extra_context = {}
+        obj = get_object_or_404(User, pk=object_id)
+
+        try:
+            profile = obj.get_profile()
+        except Exception:
+            profile = None
+
+        if not profile:
+            profile = UserProfile.objects.create(user=obj)
+
+        extra_context['order_item_fields'] = []
+
+        fff = profile.order_item_fields
+
+        extra_context['original_order_item_fields'] = (fff and fff.split(',')) or ""
+
+        if request.POST:
+            extra_context['original_order_item_fields'] = request.POST.get(
+                "order_item_fields", "").split(",")
+
+        for a in [(x[2], x[0]) for x in STAFF_FIELD_LIST]:
+            a = list(a)
+            a.append(a[0] in extra_context['original_order_item_fields'])
+            extra_context['order_item_fields'].append(a)
+
+        return super(StaffAdmin, self).change_view(
+            request, object_id, extra_context)
+
+
+class ManagerProfileInline(UserProfileInline):
+    exclude = ['is_manager', 'is_client', 'client_group', 'client_manager',]
+
+    def formfield_for_foreignkey(self, db_field, *args, **kwargs):
+        if db_field.name == 'manager_group':
+            kwargs['queryset'] = ManagerGroup.objects.all().order_by('title')
+
+        return super(ManagerProfileInline, self).formfield_for_foreignkey(
+            db_field, *args, **kwargs)
+
+
+class ManagerCreationForm(UserCreationForm):
+    manager_group = forms.ModelChoiceField(
+        queryset=ManagerGroup.objects.all().order_by('title'),
+        label="Группа",
+        required=False)
+
+    def save(self, *args, **kwargs):
+        user = super(ManagerCreationForm, self).save(*args, **kwargs)
+        user.save()
+
+        try:
+            profile = user.get_profile()
+        except Exception:
+            profile = None
+
+        if not profile:
+            manager_group = self.cleaned_data.get('manager_group')
+            if not manager_group:
+                manager_group = ManagerGroup.objects.get_default()
+
+            UserProfile.objects.create(
+                user=user,
+                manager_group=manager_group,
+                is_manager=True)
+
+        return user
+
+
+class ManagerAdmin(UserAdmin):
+    add_form = ManagerCreationForm
+    inlines = [ManagerProfileInline, UserBrandGroupDiscountInline, DiscountInline]
+    change_form_template = 'admin/data/user/change_form.html'
+    add_form_template = 'admin/data/user/change_form.html'
+    list_display = ('username', 'email', 'first_name', 'last_name', 'last_login',)
+    list_filter = []
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+    )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': (
+                'username', 'password1',
+                'password2', 'manager_group')}
+        ),
+    )
+
+    def has_change_permission(self, request, obj=None):
+        if request.user.has_perm('auth.can_change_managers'):
+            return True
+        return False
+
+    def has_add_permission(self, request):
+        if request.user.has_perm('auth.can_add_managers'):
+            return True
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.has_perm('auth.can_delete_managers'):
+            return True
+        return False
+
+    def queryset(self, request):
+        qs = super(ManagerAdmin, self).queryset(request)
+        ids = list(
+            UserProfile.objects
+            .filter(is_manager=True)
+            .values_list('user_id', flat=True))
+        qs = qs.filter(id__in=ids)
+        return qs
+
+    def change_view(self, request, object_id, extra_context=None):
+        extra_context = {}
+        obj = get_object_or_404(User, pk=object_id)
+
+        try:
+            profile = obj.get_profile()
+        except Exception:
+            profile = None
+
+        if not profile:
+            profile = UserProfile.objects.create(
+                user=obj,
+                is_manager=True,
+                manager_group=ManagerGroup.objects.get_default())
+
+        extra_context['order_item_fields'] = []
+
+        fff = profile.order_item_fields or profile.manager_group.order_item_fields
+
+        extra_context['original_order_item_fields'] = (fff and fff.split(',')) or ""
+
+        if request.POST:
+            extra_context['original_order_item_fields'] = request.POST.get(
+                "order_item_fields", "").split(",")
+
+        for a in [(x[2], x[0]) for x in MANAGER_FIELD_LIST]:
+            a = list(a)
+            a.append(a[0] in extra_context['original_order_item_fields'])
+            extra_context['order_item_fields'].append(a)
+
+        return super(ManagerAdmin, self).change_view(
+            request, object_id, extra_context)
+
+
+class ManagerGroupAddForm(forms.ModelForm):
+    class Meta:
+        model = ManagerGroup
+        fields = ['title']
+
+
+class BrandGroupManagerGroupDiscountInline(admin.TabularInline):
+    model = BrandGroupManagerGroupDiscount
+    can_delete = False
+    extra = 0
+
+
+class ManagerGroupDiscountInlineForm(GroupDiscountInlineForm):
+    class Meta:
+        model = ManagerGroupDiscount
+
+
+class ManagerGroupDiscountInline(admin.TabularInline):
+    model = ManagerGroupDiscount
+    form = ManagerGroupDiscountInlineForm
+    extra = 0
+
+
+class ManagerGroupAdmin(admin.ModelAdmin):
+    list_display = ['title', 'is_default']
+    add_form = ManagerGroupAddForm
+    inlines = [BrandGroupManagerGroupDiscountInline, ManagerGroupDiscountInline]
+
+    def get_form(self, request, obj=None, **kwargs):
+        defaults = {}
+        if obj is None:
+            defaults.update({'form': self.add_form, 'fields': ['title']})
+        defaults.update(kwargs)
+        return super(ManagerGroupAdmin, self).get_form(request, obj, **defaults)
+
+    def change_view(self, request, object_id, extra_context=None):
+        extra_context = {}
+        obj = get_object_or_404(ClientGroup, id=object_id)
+        extra_context['order_item_fields'] = []
+        fff = obj.order_item_fields
+
+        extra_context['original_order_item_fields'] = (fff and fff.split(',')) or ""
+
+        if request.POST:
+            extra_context['original_order_item_fields'] = request.POST.get(
+                "order_item_fields", "").split(",")
+
+        for a in [(x[2], x[0]) for x in MANAGER_FIELD_LIST]:
+            a = list(a)
+            a.append(a[0] in extra_context['original_order_item_fields'])
+            extra_context['order_item_fields'].append(a)
+        return super(ManagerGroupAdmin, self).change_view(
+            request, object_id, extra_context)
+
+
+class ClientProfileInline(admin.StackedInline):
+    model = UserProfile
+    exclude = ['is_manager', 'is_client', 'manager_group',]
     fk_name = 'user'
     extra = 0
     template = 'admin/data/user/userprofile_inline.html'
@@ -423,20 +496,56 @@ class UserProfileInline(admin.StackedInline):
                 UserProfile.objects
                 .filter(is_manager=True)
                 .values_list('user_id', flat=True))
-            kwargs['queryset'] = User.objects.filter(id__in=ids).order_by('username')
+            kwargs['queryset'] = User.objects.filter(
+                id__in=ids).order_by('username')
 
-        return super(UserProfileInline, self).formfield_for_foreignkey(
+        return super(ClientProfileInline, self).formfield_for_foreignkey(
             db_field, *args, **kwargs)
 
 
-class CustomerAdmin(UserAdmin):
+class ClientCreationForm(UserCreationForm):
+    client_group = forms.ModelChoiceField(
+        queryset=ClientGroup.objects.all().order_by('title'),
+        label="Группа",
+        required=False)
+
+    creator = forms.IntegerField()
+
+    def save(self, *args, **kwargs):
+        user = super(ClientCreationForm, self).save(*args, **kwargs)
+        user.save()
+
+        try:
+            profile = user.get_profile()
+        except Exception:
+            profile = None
+
+        if not profile:
+            client_group = self.cleaned_data.get('client_group')
+            if not client_group:
+                client_group = ClientGroup.objects.get_default()
+
+            client_manager = None
+            creator = User.objects.get(id=self.cleaned_data['creator'])
+            if creator.get_profile().is_manager:
+                client_manager = creator
+
+            UserProfile.objects.create(
+                user=user,
+                client_group=client_group,
+                client_manager=client_manager,
+                is_client=True)
+
+        return user
+
+
+class ClientAdmin(UserAdmin):
     readonly_fields = ['is_staff', 'is_superuser', 'last_login', 'date_joined']
-    add_form = CUserCreationForm
-    inlines = [UserProfileInline, UserBrandGroupDiscountInline, DiscountInline]
+    add_form = ClientCreationForm
+    inlines = [ClientProfileInline, UserBrandGroupDiscountInline, DiscountInline]
     change_form_template = 'admin/data/user/change_form.html'
     add_form_template = 'admin/data/user/change_form.html'
-    list_display = [
-        'username', 'email', 'first_name', 'last_name', 'is_active']
+    list_display = ['username', 'email', 'first_name', 'last_name', 'is_active']
     list_filter = []
 
     fieldsets = (
@@ -447,7 +556,9 @@ class CustomerAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'password1', 'password2', 'client_group', 'creator')}
+            'fields': (
+                'username', 'password1',
+                'password2', 'client_group', 'creator')}
         ),
     )
 
@@ -467,8 +578,12 @@ class CustomerAdmin(UserAdmin):
         return is_manager(request.user)
 
     def queryset(self, request):
-        qs = super(UserAdmin, self).queryset(request)
-        qs = qs.exclude(Q(is_staff=True) | Q(is_superuser=True))
+        qs = super(ClientAdmin, self).queryset(request)
+        ids = list(
+            UserProfile.objects
+            .filter(is_client=True)
+            .values_list('user_id', flat=True))
+        qs = qs.filter(id__in=ids)
         if is_manager(request.user):
             client_ids = list(UserProfile.objects.filter(
                 client_manager=request.user
@@ -486,16 +601,14 @@ class CustomerAdmin(UserAdmin):
 
         if not profile:
             profile = UserProfile.objects.create(
-                user=obj, client_group=ClientGroup.objects.get_default())
+                user=obj, is_client=True,
+                client_group=ClientGroup.objects.get_default())
 
-        extra_context['client_order_item_fields'] = []
+        extra_context['order_item_fields'] = []
 
         fff = profile.order_item_fields or profile.client_group.order_item_fields
 
-        if fff:
-            extra_context['original_order_item_fields'] = fff.split(',')
-        else:
-            extra_context['original_order_item_fields'] = ""
+        extra_context['original_order_item_fields'] = (fff and fff.split(',')) or ""
 
         if request.POST:
             extra_context['original_order_item_fields'] = request.POST.get(
@@ -503,13 +616,10 @@ class CustomerAdmin(UserAdmin):
 
         for a in [(x[2], x[0]) for x in CLIENT_FIELD_LIST]:
             a = list(a)
-            if a[0] in extra_context['original_order_item_fields']:
-                a.append(True)
-            else:
-                a.append(False)
-            extra_context['client_order_item_fields'].append(a)
+            a.append(a[0] in extra_context['original_order_item_fields'])
+            extra_context['order_item_fields'].append(a)
 
-        return super(CustomerAdmin, self).change_view(
+        return super(ClientAdmin, self).change_view(
             request, object_id, extra_context)
 
 
@@ -520,31 +630,20 @@ class ClientGroupAddForm(forms.ModelForm):
 
 
 class BrandGroupClientGroupDiscountInline(admin.TabularInline):
-    extra = 0
     model = BrandGroupClientGroupDiscount
     can_delete = False
+    extra = 0
 
 
-class ClientGroupDiscountInlineForm(forms.ModelForm):
+class ClientGroupDiscountInlineForm(GroupDiscountInlineForm):
     class Meta:
         model = ClientGroupDiscount
 
-    def __init__(self, *args, **kwargs):
-        super(ClientGroupDiscountInlineForm, self).__init__(*args, **kwargs)
-
-        if self.instance.brand_group:
-            self.fields['area'].queryset = self.instance.brand_group.area.all()
-        else:
-            if not self.is_bound:
-                self.fields['area'].queryset = Area.objects.get_empty_query_set()
-            else:
-                self.fields['area'].queryset = Area.objects.all()
-
 
 class ClientGroupDiscountInline(admin.TabularInline):
-    extra = 0
     model = ClientGroupDiscount
     form = ClientGroupDiscountInlineForm
+    extra = 0
 
 
 class ClientGroupAdmin(admin.ModelAdmin):
@@ -568,46 +667,36 @@ class ClientGroupAdmin(admin.ModelAdmin):
         return super(ClientGroupAdmin, self).has_delete_permission(request, obj)
 
     def get_form(self, request, obj=None, **kwargs):
-        """
-        Use special form during user creation
-        """
         defaults = {}
         if obj is None:
-            defaults.update({
-                'form': self.add_form,
-                'fields': ['title'],
-            })
+            defaults.update({'form': self.add_form, 'fields': ['title']})
         defaults.update(kwargs)
         return super(ClientGroupAdmin, self).get_form(request, obj, **defaults)
 
     def change_view(self, request, object_id, extra_context=None):
         extra_context = {}
         obj = get_object_or_404(ClientGroup, id=object_id)
-        extra_context['client_order_item_fields'] = []
+        extra_context['order_item_fields'] = []
         fff = obj.order_item_fields
 
-        if fff:
-            extra_context['original_order_item_fields'] = fff.split(',')
-        else:
-            extra_context['original_order_item_fields'] = ""
+        extra_context['original_order_item_fields'] = (fff and fff.split(',')) or ""
+
         if request.POST:
             extra_context['original_order_item_fields'] = request.POST.get(
                 "order_item_fields", "").split(",")
 
         for a in [(x[2], x[0]) for x in CLIENT_FIELD_LIST]:
             a = list(a)
-            if a[0] in extra_context['original_order_item_fields']:
-                a.append(True)
-            else:
-                a.append(False)
-            extra_context['client_order_item_fields'].append(a)
+            a.append(a[0] in extra_context['original_order_item_fields'])
+            extra_context['order_item_fields'].append(a)
         return super(ClientGroupAdmin, self).change_view(
             request, object_id, extra_context)
 
 
 class PartAdmin(admin.ModelAdmin):
-    list_display = ('partnumber', 'area_link', 'MSRP', 'cost', 'description',
-                    'core_price',)
+    list_display = (
+        'partnumber', 'area_link', 'MSRP', 'cost',
+        'description', 'core_price',)
     search_fields = ('partnumber', 'substitution',)
     list_filter = ('area',)
 
@@ -626,8 +715,8 @@ class PartAdmin(admin.ModelAdmin):
     def substitution_link(self, obj):
         if obj.substitution:
             try:
-                part = self.model.objects\
-                    .get(partnumber=obj.substitution, area=obj.area)
+                part = self.model.objects.get(
+                    partnumber=obj.substitution, area=obj.area)
                 href = reverse("admin:data_part_change", args=[part.id])
             except self.model.DoesNotExist:
                 return unicode(obj.substitution)
@@ -748,20 +837,6 @@ class ShipmentAdmin(admin.ModelAdmin):
     _client.allow_tags = True
 
 
-class ManagerAdminSite(admin.sites.AdminSite):
-    def has_permission(self, request):
-        try:
-            user_profile = UserProfile.objects.get(user=request.user)
-        except:
-            return False
-        else:
-            return user_profile.is_manager
-
-manager_admin_site = ManagerAdminSite(name='manageradminsite')
-manager_admin_site.register(CustomerAccount, CustomerAdmin)
-manager_admin_site.register(ClientGroup, ClientGroupAdmin)
-
-
 admin.site.register(Brand, BrandAdmin)
 admin.site.register(Direction, DirectionAdmin)
 admin.site.register(BrandGroup, BrandGroupAdmin)
@@ -771,8 +846,25 @@ admin.site.register(Shipment, ShipmentAdmin)
 admin.site.register(Part, PartAdmin)
 admin.site.register(BalanceItem, BalanceItemAdmin)
 admin.site.register(PartAnalog, PartAnalogAdmin)
+
 admin.site.unregister(User)
-admin.site.register(Staff, StaffAdmin)
+admin.site.register(Client, ClientAdmin)
 admin.site.register(Manager, ManagerAdmin)
-admin.site.register(CustomerAccount, CustomerAdmin)
+admin.site.register(Staff, StaffAdmin)
 admin.site.register(ClientGroup, ClientGroupAdmin)
+admin.site.register(ManagerGroup, ManagerGroupAdmin)
+
+
+class ManagerAdminSite(admin.sites.AdminSite):
+    def has_permission(self, request):
+        try:
+            user_profile = UserProfile.objects.get(user=request.user)
+        except:
+            return False
+        else:
+            return user_profile.is_manager
+
+
+manager_admin_site = ManagerAdminSite(name='manageradminsite')
+manager_admin_site.register(Client, ClientAdmin)
+manager_admin_site.register(ClientGroup, ClientGroupAdmin)
