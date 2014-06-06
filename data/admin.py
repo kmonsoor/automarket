@@ -232,13 +232,14 @@ class DiscountInline(admin.TabularInline):
 class GroupDiscountInlineForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(GroupDiscountInlineForm, self).__init__(*args, **kwargs)
-        if self.instance.brand_group:
-            self.fields['area'].queryset = self.instance.brand_group.area.all()
-        else:
-            if not self.is_bound:
-                self.fields['area'].queryset = Area.objects.get_empty_query_set()
+        if 'area' in self.fields:
+            if self.instance.brand_group:
+                self.fields['area'].queryset = self.instance.brand_group.area.all()
             else:
-                self.fields['area'].queryset = Area.objects.all()
+                if not self.is_bound:
+                    self.fields['area'].queryset = Area.objects.get_empty_query_set()
+                else:
+                    self.fields['area'].queryset = Area.objects.all()
 
 
 class UserProfileInline(admin.StackedInline):
@@ -434,7 +435,6 @@ class ManagerGroupAddForm(forms.ModelForm):
 
 class BrandGroupManagerGroupDiscountInline(admin.TabularInline):
     model = BrandGroupManagerGroupDiscount
-    can_delete = False
     extra = 0
 
 
@@ -463,7 +463,7 @@ class ManagerGroupAdmin(admin.ModelAdmin):
 
     def change_view(self, request, object_id, extra_context=None):
         extra_context = {}
-        obj = get_object_or_404(ClientGroup, id=object_id)
+        obj = get_object_or_404(ManagerGroup, id=object_id)
         extra_context['order_item_fields'] = []
         fff = obj.order_item_fields
 
@@ -629,9 +629,31 @@ class ClientGroupAddForm(forms.ModelForm):
         fields = ['title']
 
 
-class BrandGroupClientGroupDiscountInline(admin.TabularInline):
+class ClientGroupDiscountInlineBase(admin.TabularInline):
+
+    def get_formset(self, request, obj=None, **kwargs):
+        if is_manager(request.user):
+            kwargs.update({
+                'can_delete': False,
+                'max_num': len(self.model.objects.filter(client_group=obj))})
+        return super(
+            ClientGroupDiscountInlineBase, self
+        ).get_formset(request, obj, **kwargs)
+
+    def get_readonly_fields(self, request, obj=None):
+        if is_manager(request.user):
+            fields = []
+            for field in self.model._meta.get_all_field_names():
+                if (not field == 'id'):
+                    fields.append(field)
+            return fields
+        return super(
+            ClientGroupDiscountInlineBase, self
+        ).get_readonly_fields(request, obj)
+
+
+class BrandGroupClientGroupDiscountInline(ClientGroupDiscountInlineBase):
     model = BrandGroupClientGroupDiscount
-    can_delete = False
     extra = 0
 
 
@@ -640,7 +662,7 @@ class ClientGroupDiscountInlineForm(GroupDiscountInlineForm):
         model = ClientGroupDiscount
 
 
-class ClientGroupDiscountInline(admin.TabularInline):
+class ClientGroupDiscountInline(ClientGroupDiscountInlineBase):
     model = ClientGroupDiscount
     form = ClientGroupDiscountInlineForm
     extra = 0
@@ -651,20 +673,20 @@ class ClientGroupAdmin(admin.ModelAdmin):
     add_form = ClientGroupAddForm
     inlines = [BrandGroupClientGroupDiscountInline, ClientGroupDiscountInline]
 
+    def get_actions(self, request):
+        if is_manager(request.user):
+            return []
+        return super(ClientGroupAdmin, self).get_actions(request)
+
+    def get_readonly_fields(self, request, obj=None):
+        if is_manager(request.user):
+            return ('title',)
+        return super(ClientGroupAdmin, self).get_readonly_fields(request, obj)
+
     def has_change_permission(self, request, obj=None):
         if is_manager(request.user):
             return True
         return super(ClientGroupAdmin, self).has_change_permission(request, obj)
-
-    def has_add_permission(self, request):
-        if is_manager(request.user):
-            return False
-        return super(ClientGroupAdmin, self).has_add_permission(request)
-
-    def has_delete_permission(self, request, obj=None):
-        if is_manager(request.user):
-            return False
-        return super(ClientGroupAdmin, self).has_delete_permission(request, obj)
 
     def get_form(self, request, obj=None, **kwargs):
         defaults = {}

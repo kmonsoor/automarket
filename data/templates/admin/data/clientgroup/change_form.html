@@ -53,6 +53,11 @@ $(document).ready(function(){
 
   {% endif %}
 
+  {% if request.user.get_profile.is_manager %}
+  $('ul.plainlist input').attr({'disabled': true});
+  $('.submit-row').remove();
+  {% endif %}
+
 
 
   $("select[id^=id_clientgroupdiscount_set]").live('change', populate_area_boxes);
