@@ -124,9 +124,11 @@ def basket_order(request):
     admin_default = User.objects.get(pk=1)
 
     try:
-        manager = request.user.get_profile().client_manager
+        user_profile = request.user.get_profile()
     except:
         manager = None
+    else:
+        manager = user_profile.client_manager or (user_profile.is_manager and request.user)
 
     brandgroup_default = BrandGroup.objects.get(title="OEM")
 
@@ -160,10 +162,12 @@ def basket_order(request):
         data['description_en'] = item.description
         data['description_ru'] = item.description_ru or u""
         data['comment_customer'] = item.comment1 or u""
-        data['client'] = request.user
+        data['client'] = item.user
         data['quantity'] = item.quantity
         data['part_number'] = item.part_number
         data['manager'] = manager or admin_default
+        if manager:
+            data['status'] = 'order'
         data['price_base'] = item.msrp
         data['price_sale'] = item.get_price()
         return (data, item)
