@@ -1296,7 +1296,7 @@ class UserProfile(models.Model):
                     manager_group=self.manager_group,
                     brand_group=brand_group,
                     area=area).discount
-            except ManagerGroupDiscount.DoesNotExist, AttributeError:
+            except (ManagerGroupDiscount.DoesNotExist, AttributeError):
                 pass
 
             try:
