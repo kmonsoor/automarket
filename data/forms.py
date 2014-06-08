@@ -33,6 +33,9 @@ STAFF_FIELD_LIST = (
     (u'LIST', 'price_base', 'price_base', None),
     (u'WEIGHT', 'weight', 'weight', None),
     (u'SHIPPING', 'delivery', 'delivery', None),
+    (u'PRICE M', 'price_manager', 'price_manager', None),
+    (u'WEIGHT M', 'weight_manager', 'weight_manager', None),
+    (u'TOTAL M', 'total_manager', 'total_manager', None),
     (u'PRICE', 'price_sale', 'price_sale', None),
     (u'NEW PRICE', 'price_discount', 'price_discount', None),
     (u'COST', 'cost', 'cost', None),
@@ -243,6 +246,7 @@ class OrderedItemForm(forms.Form):
     description_en = forms.CharField(required=False)
     price_base = forms.FloatField(required=False)
     weight = forms.FloatField(required=False)
+    weight_manager = forms.FloatField(required=False)
     price_discount = forms.FloatField(required=False)
     invoice_code = forms.CharField(required=False)
     status = forms.ChoiceField(choices=(('_return_','Прежний'),) + ORDER_ITEM_STATUSES, required=False)

@@ -169,6 +169,9 @@ def get_total(qs, fields):
         total['weight'] += (i.weight or 0) * i.quantity
         total['total_cost'] += (i.total_cost or 0)
         total['delivery'] += (i.delivery or 0)
+        total['price_manager'] += (i.price_manager or 0)
+        total['weight_manager'] += (i.weight_manager or 0)
+        total['total_manager'] += (i.total_manager or 0)
         total['price_sale'] += i.quantity * (
             (getattr(i, 'price_discount', 0) or 0)
             or

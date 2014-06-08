@@ -399,7 +399,10 @@ def shipment(request, shipment_id):
             SUM(%(p)s.weight*%(p)s.quantity),
             SUM(%(p)s.delivery),
             SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
-            SUM(%(p)s.price_invoice*%(p)s.quantity)
+            SUM(%(p)s.price_invoice*%(p)s.quantity),
+            SUM(%(p)s.price_manager),
+            SUM(%(p)s.price_weight),
+            SUM(%(p)s.price_total)
             FROM %(from)s %(where)s
     """ % {'p': td, 'from': from_clause, 'where': where}
     cursor = connection.cursor()
@@ -407,7 +410,10 @@ def shipment(request, shipment_id):
     res = cursor.fetchall()
     if len(res) > 0:
         total.update(dict(zip(
-            ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0])
+            (
+                'total_cost', 'weight', 'delivery', 'price_sale',
+                'price_invoice', 'price_manager', 'price_weight', 'price_total'
+            ), res[0])
         ))
 
     total_packages = {}
@@ -623,7 +629,10 @@ def invoice(request, invoice_id):
             SUM(%(p)s.weight*%(p)s.quantity),
             SUM(%(p)s.delivery),
             SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
-            SUM(%(p)s.price_invoice*%(p)s.quantity)
+            SUM(%(p)s.price_invoice*%(p)s.quantity),
+            SUM(%(p)s.price_manager),
+            SUM(%(p)s.price_weight),
+            SUM(%(p)s.price_total)
             FROM %(from)s %(where)s
     """ % {'p': td, 'from': from_clause, 'where': where}
     cursor = connection.cursor()
@@ -631,7 +640,9 @@ def invoice(request, invoice_id):
     res = cursor.fetchall()
     if len(res) > 0:
         total.update(dict(zip(
-            ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0])
+            (
+                'total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice',
+                'price_manager', 'weight_manager', 'total_manager'), res[0])
         ))
 
     total_packages = {}
@@ -843,6 +854,9 @@ def issues(request):
                 SUM(%(p)s.delivery),
                 SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
                 SUM(%(p)s.price_invoice*%(p)s.quantity)
+                SUM(%(p)s.price_manager),
+                SUM(%(p)s.price_weight),
+                SUM(%(p)s.price_total)
                 FROM %(from)s %(where)s
         """ % {'p': td, 'from': from_clause, 'where': where}
         cursor = connection.cursor()
@@ -850,7 +864,10 @@ def issues(request):
         res = cursor.fetchall()
         if len(res) > 0:
             total = dict(zip(
-                ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0])
+                (
+                    'total_cost', 'weight', 'delivery', 'price_sale',
+                    'price_invoice', 'price_manager', 'weight_manager',
+                    'total_manager'), res[0])
             )
 
             for f in STAFF_FIELDS:
@@ -1015,7 +1032,10 @@ def issues_client(request, client_id):
             SUM(%(p)s.weight*%(p)s.quantity),
             SUM(%(p)s.delivery),
             SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
-            SUM(%(p)s.price_invoice*%(p)s.quantity)
+            SUM(%(p)s.price_invoice*%(p)s.quantity),
+            SUM(%(p)s.price_manager),
+            SUM(%(p)s.price_weight),
+            SUM(%(p)s.price_total)
             FROM %(from)s %(where)s
     """ % {'p': td, 'from': from_clause, 'where': where}
     cursor = connection.cursor()
@@ -1023,7 +1043,10 @@ def issues_client(request, client_id):
     res = cursor.fetchall()
     if len(res) > 0:
         total.update(dict(zip(
-            ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0])
+            (
+                'total_cost', 'weight', 'delivery', 'price_sale',
+                'price_invoice', 'price_manager', 'weight_manager',
+                'total_manager'), res[0])
         ))
 
     total_packages = {}
@@ -1204,7 +1227,10 @@ def issues_manager(request, manager_id):
             SUM(%(p)s.weight*%(p)s.quantity),
             SUM(%(p)s.delivery),
             SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
-            SUM(%(p)s.price_invoice*%(p)s.quantity)
+            SUM(%(p)s.price_invoice*%(p)s.quantity),
+            SUM(%(p)s.price_manager),
+            SUM(%(p)s.price_weight),
+            SUM(%(p)s.price_total)
             FROM %(from)s %(where)s
     """ % {'p': td, 'from': from_clause, 'where': where}
     cursor = connection.cursor()
@@ -1212,7 +1238,10 @@ def issues_manager(request, manager_id):
     res = cursor.fetchall()
     if len(res) > 0:
         total.update(dict(zip(
-            ('total_cost', 'weight', 'delivery', 'price_sale', 'price_invoice'), res[0])
+            (
+                'total_cost', 'weight', 'delivery', 'price_sale',
+                'price_invoice', 'price_manager', 'weight_manager',
+                'total_manager'), res[0])
         ))
 
     total_packages = {}
@@ -1342,6 +1371,9 @@ def index(request):
             total['delivery'] += (i.delivery or 0)
             total['price_sale'] += i.quantity * (i.price_discount or i.price_sale or 0)
             total['price_invoice'] += (i.price_invoice or 0) * i.quantity
+            total['price_manager'] += (i.price_manager or 0)
+            total['weight_manager'] += (i.weight_manager or 0)
+            total['total_manager'] += (i.total_manager or 0)
 
         for f in fields:
             total_row.append(total.get(f[2], u""))
@@ -1726,6 +1758,27 @@ class OrderedItemSaver(object):
             logger.exception("save_invoice_code: %r" % e)
             pass
         return obj.invoice_code
+
+    def save_price_manager(self, obj, value):
+        try:
+            obj.price_manager = value
+            obj.save()
+        except Exception, e:
+            logger.exception("save_price_manager: %r" % e)
+            pass
+        return obj.price_manager
+
+    def save_weight_manager(self, obj, value):
+        try:
+            if not obj.weight and not obj.weight_manager:
+                obj.status = 'received_office'
+                obj.received_office_at = datetime.now()
+            obj.weight_manager = value
+            obj.save()
+        except Exception, e:
+            logger.exception("save_weight_manager: %r" % e)
+            pass
+        return obj.weight_manager
 
 
 class PackageSaver(object):

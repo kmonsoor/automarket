@@ -404,6 +404,8 @@ class OrderedItem(models.Model):
         verbose_name=u'Цена менеджера', null=True, blank=True)
     weight_manager = models.FloatField(
         verbose_name=u"Вес одной детали менеджера", null=True, blank=True)
+    total_manager = models.FloatField(
+        verbose_name=u"Окончательная цена для менелдера", null=True, blank=True)
 
     price_base = models.FloatField(
         verbose_name=u'Базовая Цена', null=True, blank=True)

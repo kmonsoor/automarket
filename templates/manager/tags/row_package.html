@@ -17,6 +17,9 @@
 {% if 'price_base' in cl.user_fields %}<td>&nbsp;</td>{% endif %}
 {% if 'weight' in cl.user_fields %}{% table_td p 'weight' p.editable 'editWeightPackage' 1 'package_' %}{% endif %}
 {% if 'delivery' in cl.user_fields %}{% table_td p 'delivery' 0 '' 0 %}{% endif %}
+{% if 'price_manager' in cl.user_fields %}{% table_td i 'price_manager' 0 '' 0 %}{% endif %}
+{% if 'weight_manager' in cl.user_fields %}{% table_td i 'weight_manager' i.editable 'editWeightManager' %}{% endif %}
+{% if 'total_manager' in cl.user_fields %}{% table_td i 'total_manager' 0 '' 0 %}{% endif %}
 {% if 'price_sale' in cl.user_fields %}<td>&nbsp;</td>{% endif %}
 {% if 'price_discount' in cl.user_fields %}<td>&nbsp;</td>{% endif %}
 {% if 'cost' in cl.user_fields %}<td>&nbsp;</td>{% endif %}
