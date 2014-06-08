@@ -402,8 +402,6 @@ class OrderedItem(models.Model):
 
     price_manager = models.FloatField(
         verbose_name=u'Цена менеджера', null=True, blank=True)
-    weight_manager = models.FloatField(
-        verbose_name=u"Вес одной детали менеджера", null=True, blank=True)
     total_manager = models.FloatField(
         verbose_name=u"Окончательная цена для менелдера", null=True, blank=True)
 
@@ -1270,6 +1268,8 @@ class UserProfile(models.Model):
         verbose_name=u"статус менеджера", blank=True, default=False)
     manager_group = models.ForeignKey(
         ManagerGroup, verbose_name=u"группа менеджера", blank=True, null=True)
+    can_edit_weight = models.BooleanField(
+        verbose_name=u"возможность редактирования веса", default=False)
 
     def get_discount(self, brand_group=None, area=None):
         if self.is_manager:

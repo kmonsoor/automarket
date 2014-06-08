@@ -312,19 +312,6 @@ function editDescriptionEn(id) {
 
 }
 
-function editWeightManager(id) {
-    if (return_check(id, 'weight_manager')) return;
-    if (current.id) close();
-    current.type = 'weight_manager';
-    current.value = jQuery('#weight_manager_'+id).html();
-    current.display_value = jQuery('#weight_manager_display_'+id).html();
-    current.id = id;
-
-    jQuery('#weight_manager_display_'+id).html('<input id="weight_manager_input_' + id + '" type="text" value="' + current.value + '">');
-    jQuery('#weight_manager_buttons_'+id).css("display","inline");
-
-}
-
 
 function editBrand(id) {
     if (return_check(id, 'brand')) return;

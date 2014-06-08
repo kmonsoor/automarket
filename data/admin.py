@@ -483,7 +483,7 @@ class ManagerGroupAdmin(admin.ModelAdmin):
 
 class ClientProfileInline(admin.StackedInline):
     model = UserProfile
-    exclude = ['is_manager', 'is_client', 'manager_group',]
+    exclude = ['is_manager', 'is_client', 'manager_group', 'can_edit_weight']
     fk_name = 'user'
     extra = 0
     template = 'admin/data/user/userprofile_inline.html'
