@@ -170,6 +170,7 @@ def basket_order(request):
             data['status'] = 'order'
         data['price_base'] = item.msrp
         data['price_sale'] = item.get_price()
+        data['core_price'] = item.core_price
         return (data, item)
 
     to_save = [x for x in map(get_orderitem_data, list(bi)) if x[0]]

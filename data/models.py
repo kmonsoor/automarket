@@ -407,6 +407,8 @@ class OrderedItem(models.Model):
 
     price_base = models.FloatField(
         verbose_name=u'Базовая Цена', null=True, blank=True)
+    core_price = models.FloatField(
+        verbose_name=u'Core price', null=True, blank=True)
     price_sale = models.FloatField(
         verbose_name=u"Цена продажи", null=True, blank=True)
     price_discount = models.FloatField(
@@ -500,6 +502,8 @@ class OrderedItem(models.Model):
                 # calculate cost and total cost
                 self.cost = cost
                 self.total_cost = total_cost
+                self.price_manager = self.calc_price_manager()
+                self.total_manager = self.calc_total_manager()
             if not self.weight and self.status == 'received_office':
                 # weight was removed and status is reseived:
                 self.switch_status()
@@ -509,11 +513,24 @@ class OrderedItem(models.Model):
             if self.do_calc_totals_by_status:
                 self.cost = cost
                 self.total_cost = total_cost
+                self.price_manager = self.calc_price_manager()
+                self.total_manager = self.calc_total_manager()
 
         if self.status == 'issued' and not self.issued_at:
             self.issued_at = datetime.datetime.now()
 
         super(OrderedItem, self).save(*args, **kwargs)
+
+    def calc_price_manager(self):
+        try:
+            discount = self.manager.get_profile().get_discount(
+                brand_group=self.brandgroup, area=self.area)
+        except:
+            discount = AREA_DISCOUNT_DEFAULT
+        return (self.price_base) * (100 - discount) / 100 + (self.core_price or 0)
+
+    def calc_total_manager(self):
+        return (self.price_manager + (self.delivery or 0)) * self.quantity
 
     def switch_status(self, new_status=None, save=False):
         if new_status:

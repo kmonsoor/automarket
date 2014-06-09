@@ -22,6 +22,9 @@ def table_td(context, item, field_name, editable, jscallback, show_if_failed=1, 
     if isinstance(value, datetime.datetime):
         value = mark_safe(value.strftime("%d.%m.%Y<br/>%H:%M"))
 
+    if isinstance(value, float):
+        value = "%.2f" % value
+
     return {
         'item': item,
         'editable': editable,

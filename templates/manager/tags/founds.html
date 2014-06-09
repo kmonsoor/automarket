@@ -1,3 +1,5 @@
+{% load common_tags %}
+
 {% for found in founds %}
 <form action="{% url basket_add %}?redirect_path={% url manager_search %}" method="post" id="foundsForm{{ forloop.counter|add:delta }}">
   {% if found.sub_chain %}
@@ -55,7 +57,7 @@
       </td>
 
       <td>
-        {{ found.your_economy}}$ или {{ found.your_economy_perc}}%
+        {% subtract_float found.client_your_price found.your_price %}$ или {% division_perc found.your_price found.client_your_price %}%
       </td>
 
       <td>
