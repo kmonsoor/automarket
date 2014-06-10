@@ -413,7 +413,9 @@ class ManagerAdmin(UserAdmin):
 
         extra_context['order_item_fields'] = []
 
-        fff = profile.order_item_fields or profile.manager_group.order_item_fields
+        fff = profile.order_item_fields
+        if not fff and profile.manager_group:
+            fff = profile.manager_group.order_item_fields
 
         extra_context['original_order_item_fields'] = (fff and fff.split(',')) or ""
 
@@ -496,7 +498,29 @@ class ClientProfileInline(UserProfileInline):
 
     def formfield_for_foreignkey(self, db_field, *args, **kwargs):
         if db_field.name == 'client_group':
-            kwargs['queryset'] = ClientGroup.objects.all().order_by('title')
+            request = args[0]
+            user_profile = request.user.get_profile()
+
+            # OMG FIXME
+            if not user_profile.is_manager or not user_profile.manager_group:
+                kwargs['queryset'] = ClientGroup.objects.all().order_by('title')
+            else:
+
+                try:
+                    level = int(user_profile.manager_group.title.split(" ")[1])
+
+                    cgs = []
+                    for cg in ClientGroup.objects.all():
+                        try:
+                            if level >= int(cg.title.split(" ")[1]):
+                                cgs.append(x.id)
+                        except:
+                            cgs.append(cg.id)
+
+                    kwargs['queryset'] = ClientGroup.objects.filter(
+                        id__in=cgs).order_by('title')
+                except:
+                    kwargs['queryset'] = ClientGroup.objects.all().order_by('title')
 
         if db_field.name == 'client_manager':
             ids = list(
@@ -546,10 +570,59 @@ class ClientCreationForm(UserCreationForm):
         return user
 
 
+class ClientBrandGroupDiscountInlineForm(forms.ModelForm):
+    class Meta:
+        model = BrandGroupDiscount
+
+    def clean_discount(self):
+        client_discount = self.cleaned_data['discount']
+        client = self.cleaned_data['user']
+        manager = client.get_profile().client_manager
+        brand_group = self.cleaned_data['brand_group']
+
+        if manager:
+            manager_discount = manager.get_profile(
+                ).get_discount(brand_group=brand_group)
+            if client_discount > manager_discount:
+                raise forms.ValidationError(
+                    u"Не более %s%%" % manager_discount)
+
+        return self.cleaned_data['discount']
+
+
+class ClientBrandGroupDiscountInline(UserBrandGroupDiscountInline):
+    form = ClientBrandGroupDiscountInlineForm
+
+
+class ClientDiscountInlineForm(forms.ModelForm):
+    class Meta:
+        model = Discount
+
+    def clean_discount(self):
+        client_discount = self.cleaned_data['discount']
+        client = self.cleaned_data['user']
+        manager = client.get_profile().client_manager
+        brand_group = self.cleaned_data['brand_group']
+        area = self.cleaned_data['area']
+
+        if manager:
+            manager_discount = manager.get_profile(
+                ).get_discount(brand_group=brand_group, area=area)
+            if client_discount > manager_discount:
+                raise forms.ValidationError(
+                    u"Не более %s%%" % manager_discount)
+
+        return self.cleaned_data['discount']
+
+
+class ClientDiscountInline(DiscountInline):
+    form = ClientDiscountInlineForm
+
+
 class ClientAdmin(UserAdmin):
     readonly_fields = ['is_staff', 'is_superuser', 'last_login', 'date_joined']
     add_form = ClientCreationForm
-    inlines = [ClientProfileInline, UserBrandGroupDiscountInline, DiscountInline]
+    inlines = [ClientProfileInline, ClientBrandGroupDiscountInline, ClientDiscountInline]
     change_form_template = 'admin/data/user/change_form.html'
     add_form_template = 'admin/data/user/change_form.html'
     list_display = ['username', 'email', 'first_name', 'last_name', 'is_active']

@@ -478,9 +478,7 @@ class OrderedItem(models.Model):
     def save(self, *args, **kwargs):
 
         if self.delivery_coef is None:
-            multiplier, delivery, delivery_period, price_updated_at, mc = \
-                self.area.get_brandgroup_settings(self.brandgroup)
-            self.delivery_coef = delivery
+            self.delivery_coef = self.area.get_brandgroup_settings(self.brandgroup)[1]
 
         if self.weight is not None and self.delivery_coef:
             self.delivery = self.delivery_coef * self.weight
@@ -930,6 +928,7 @@ def calc_parts_manager_client(parts, manager, client, render_for_template=True):
         mp.update(dict(
             ('client_%s' % k, v)
             for k, v in client_parts[index].items()))
+        mp.update({'client': client})
         data.append(mp)
     return data
 
@@ -1317,36 +1316,35 @@ class UserProfile(models.Model):
         brand_group_user_discount = None
         brand_group_discount = None
 
-        if brand_group and area:
-            try:
-                user_discount = Discount.objects.get(
-                    user=self.user,
-                    brand_group=brand_group,
-                    area=area).discount
-            except (Discount.DoesNotExist, AttributeError):
-                pass
+        try:
+            user_discount = Discount.objects.get(
+                user=self.user,
+                brand_group=brand_group,
+                area=area).discount
+        except (Discount.DoesNotExist, AttributeError):
+            pass
 
-            try:
-                group_discount = ManagerGroupDiscount.objects.get(
-                    manager_group=self.manager_group,
-                    brand_group=brand_group,
-                    area=area).discount
-            except (ManagerGroupDiscount.DoesNotExist, AttributeError):
-                pass
+        try:
+            group_discount = ManagerGroupDiscount.objects.get(
+                manager_group=self.manager_group,
+                brand_group=brand_group,
+                area=area).discount
+        except (ManagerGroupDiscount.DoesNotExist, AttributeError):
+            pass
 
-            try:
-                brand_group_user_discount = BrandGroupDiscount.objects.get(
-                    user=self.user,
-                    brand_group=brand_group).discount
-            except (BrandGroupDiscount.DoesNotExist, AttributeError):
-                pass
+        try:
+            brand_group_user_discount = BrandGroupDiscount.objects.get(
+                user=self.user,
+                brand_group=brand_group).discount
+        except (BrandGroupDiscount.DoesNotExist, AttributeError):
+            pass
 
-            try:
-                brand_group_discount = BrandGroupManagerGroupDiscount.objects.get(
-                    manager_group=self.manager_group,
-                    brand_group=brand_group).discount
-            except (BrandGroupManagerGroupDiscount.DoesNotExist, AttributeError):
-                pass
+        try:
+            brand_group_discount = BrandGroupManagerGroupDiscount.objects.get(
+                manager_group=self.manager_group,
+                brand_group=brand_group).discount
+        except (BrandGroupManagerGroupDiscount.DoesNotExist, AttributeError):
+            pass
 
         return [
             x for x in [
@@ -1360,37 +1358,35 @@ class UserProfile(models.Model):
         brand_group_user_discount = None
         brand_group_discount = None
 
-        if brand_group and area:
+        try:
+            user_discount = Discount.objects.get(
+                user=self.user,
+                brand_group=brand_group,
+                area=area).discount
+        except (Discount.DoesNotExist, AttributeError):
+            pass
 
-            try:
-                user_discount = Discount.objects.get(
-                    user=self.user,
-                    brand_group=brand_group,
-                    area=area).discount
-            except (Discount.DoesNotExist, AttributeError):
-                pass
+        try:
+            group_discount = ClientGroupDiscount.objects.get(
+                client_group=self.client_group,
+                brand_group=brand_group,
+                area=area).discount
+        except (ClientGroupDiscount.DoesNotExist, AttributeError):
+            pass
 
-            try:
-                group_discount = ClientGroupDiscount.objects.get(
-                    client_group=self.client_group,
-                    brand_group=brand_group,
-                    area=area).discount
-            except (ClientGroupDiscount.DoesNotExist, AttributeError):
-                pass
+        try:
+            brand_group_user_discount = BrandGroupDiscount.objects.get(
+                user=self.user,
+                brand_group=brand_group).discount
+        except (BrandGroupDiscount.DoesNotExist, AttributeError):
+            pass
 
-            try:
-                brand_group_user_discount = BrandGroupDiscount.objects.get(
-                    user=self.user,
-                    brand_group=brand_group).discount
-            except (BrandGroupDiscount.DoesNotExist, AttributeError):
-                pass
-
-            try:
-                brand_group_discount = BrandGroupClientGroupDiscount.objects.get(
-                    client_group=self.client_group,
-                    brand_group=brand_group).discount
-            except (BrandGroupClientGroupDiscount.DoesNotExist, AttributeError):
-                pass
+        try:
+            brand_group_discount = BrandGroupClientGroupDiscount.objects.get(
+                client_group=self.client_group,
+                brand_group=brand_group).discount
+        except (BrandGroupClientGroupDiscount.DoesNotExist, AttributeError):
+            pass
 
         return [
             x for x in [
