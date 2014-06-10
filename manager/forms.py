@@ -74,7 +74,7 @@ class OrderItemForm(Form):
 
     price_base = forms.FloatField(
         widget=forms.TextInput(),
-        label=u'LIST',
+        label=u'RETAIL',
         required=True)
 
     price_sale = forms.FloatField(

@@ -28,7 +28,7 @@ from data.models import (
     OrderedItem, UserProfile, Invoice, Package, Shipment, BalanceItem,
     BALANCEITEM_TYPE_INVOICE, PACKAGE_STATUS_RECEIVED,
     BALANCEITEM_TYPE_PAYMENT, BrandGroup,
-    search_local, search_analogs, Basket, calc_parts
+    search_local, search_analogs, Basket, calc_parts_manager_client
 )
 
 from data.forms import (
@@ -891,6 +891,10 @@ def order(request):
 
     client_choice = get_client_choice(request.user)
 
+    user_profile = request.user.get_profile()
+    if not user_profile or not user_profile.can_edit_price_base:
+        raise Http404
+
     if request.method == 'POST':
         item_forms = OrderItemForm.get_forms(
             request, kwargs=dict(client_choice=client_choice))
@@ -965,6 +969,10 @@ def search(request):
             except:
                 client = None
 
+            if client:
+                request.session['search_form_client'] = client.id
+                request.session.modified = True
+
             founds = search_local(maker, part_number)
 
             if founds:
@@ -974,23 +982,31 @@ def search(request):
                     form.fields['maker'].widget.choices = [
                         ('', '----')] + list((x, x) for x in makers)
                 else:
-                    parts = calc_parts(founds, request.user, client)
+                    parts = calc_parts_manager_client(
+                        founds, request.user, client)
             else:
                 show_maker_field = True
                 if maker:
                     founds = search_external.search(maker, part_number)
                     if founds:
-                        parts = calc_parts(founds, request.user, client)
+                        parts = calc_parts_manager_client(
+                            founds, request.user, client)
                     else:
                         msg = u"Ничего не найдено"
 
             if founds:
                 analog_founds = search_analogs(founds)
-                analogs = calc_parts(analog_founds, request.user, client)
-                
+                analogs = calc_parts_manager_client(
+                    analog_founds, request.user, client)
+
     else:
+        initial = {}
+        if not request.GET.get('new'):
+            initial = {'client': request.session.get('search_form_client')}
         form = SearchForm(
-            maker_choice=maker_choice, client_choice=client_choice)
+            maker_choice=maker_choice,
+            client_choice=client_choice,
+            initial=initial)
 
     context = {
         'form': form,

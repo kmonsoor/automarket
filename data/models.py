@@ -863,7 +863,7 @@ def calc_part(part, user, render_for_template=True):
     try:
         discount = user.get_profile().get_discount(
             brand_group=brand_group, area=area)
-    except Exception:
+    except:
         discount = AREA_DISCOUNT_DEFAULT
     discount = float(discount)
 
@@ -905,18 +905,32 @@ def calc_part(part, user, render_for_template=True):
     return res
 
 
-def calc_parts(parts, user, client=None, render_for_template=True):
+def calc_parts(parts, user, render_for_template=True):
     data = []
     for part in parts:
         if not part.get('MSRP'):
             continue
-        _part = calc_part(part, user, render_for_template)
-        if client:
-            _part.update(dict(
-                ('client_%s' % k, v)
-                for k, v in calc_part(part, client, render_for_template).items()))
-            _part['client'] = client
-        data.append(_part)
+        data.append(calc_part(part, user, render_for_template))
+    return data
+
+
+def calc_parts_client(parts, client, render_for_template=True):
+    profile = client.get_profile()
+    if profile.order_without_margin:
+        return calc_parts(parts, profile.client_manager, render_for_template)
+    return calc_parts(parts, client, render_for_template)
+
+
+def calc_parts_manager_client(parts, manager, client, render_for_template=True):
+    manager_parts = calc_parts(parts, manager, render_for_template)
+    client_parts = calc_parts_client(parts, client, render_for_template)
+
+    data = []
+    for index, mp in enumerate(manager_parts):
+        mp.update(dict(
+            ('client_%s' % k, v)
+            for k, v in client_parts[index].items()))
+        data.append(mp)
     return data
 
 
@@ -1280,6 +1294,8 @@ class UserProfile(models.Model):
     client_manager = models.ForeignKey(
         User, verbose_name='менеджер клиента',
         related_name='client_manager', null=True, blank=True)
+    order_without_margin = models.BooleanField(
+        verbose_name='возможность заказывать без наценки', default=False)
 
     is_manager = models.BooleanField(
         verbose_name=u"статус менеджера", blank=True, default=False)
@@ -1287,6 +1303,8 @@ class UserProfile(models.Model):
         ManagerGroup, verbose_name=u"группа менеджера", blank=True, null=True)
     can_edit_weight = models.BooleanField(
         verbose_name=u"возможность редактирования веса", default=False)
+    can_edit_price_base = models.BooleanField(
+        verbose_name=u"возможность редактирования retail", default=False)
 
     def get_discount(self, brand_group=None, area=None):
         if self.is_manager:

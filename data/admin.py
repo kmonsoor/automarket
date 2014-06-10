@@ -253,7 +253,8 @@ class UserProfileInline(admin.StackedInline):
 class StaffProfileInline(UserProfileInline):
     exclude = [
         'client_group', 'client_manager', 'is_manager',
-        'is_client', 'manager_group']
+        'is_client', 'manager_group', 'can_edit_weight',
+        'can_edit_price_base', 'order_without_margin',]
 
 
 class StaffAdmin(UserAdmin):
@@ -309,7 +310,9 @@ class StaffAdmin(UserAdmin):
 
 
 class ManagerProfileInline(UserProfileInline):
-    exclude = ['is_manager', 'is_client', 'client_group', 'client_manager',]
+    exclude = [
+        'is_manager', 'is_client', 'client_group', 'client_manager',
+        'order_without_margin',]
 
     def formfield_for_foreignkey(self, db_field, *args, **kwargs):
         if db_field.name == 'manager_group':
@@ -481,16 +484,20 @@ class ManagerGroupAdmin(admin.ModelAdmin):
             request, object_id, extra_context)
 
 
-class ClientProfileInline(admin.StackedInline):
-    model = UserProfile
-    exclude = ['is_manager', 'is_client', 'manager_group', 'can_edit_weight']
-    fk_name = 'user'
-    extra = 0
-    template = 'admin/data/user/userprofile_inline.html'
+class ClientProfileInline(UserProfileInline):
+    exclude = [
+        'is_manager', 'is_client', 'manager_group',
+        'can_edit_weight', 'can_edit_price_base',]
+
+    def get_formset(self, request, obj=None, **kwargs):
+        if request.user.get_profile().is_manager:
+            self.exclude = self.exclude + ['client_manager']
+        return super(ClientProfileInline, self).get_formset(request, obj, **kwargs)
 
     def formfield_for_foreignkey(self, db_field, *args, **kwargs):
         if db_field.name == 'client_group':
             kwargs['queryset'] = ClientGroup.objects.all().order_by('title')
+
         if db_field.name == 'client_manager':
             ids = list(
                 UserProfile.objects

@@ -37,6 +37,18 @@ function populate_area_boxes() {
   }
 }
 
+
+function orderWithoutMarginChange() {
+  if ($('.order_without_margin input').attr('checked')) {
+    $('div.client_group *').attr('disabled', true);
+    $('div#brandgroupdiscount_set-group, div#discount_set-group').css({'display': 'none'});
+  } else {
+    $('div.client_group *').attr('disabled', false);
+    $('div#brandgroupdiscount_set-group, div#discount_set-group').css({'display': 'block'});
+  }
+}
+
+
 $(document).ready(function(){
   $("input[name=_addanother]").remove();
   {% if add %}
@@ -64,6 +76,9 @@ $(document).ready(function(){
 
   $('#id_creator').val('{{request.user.id}}');
   $('.creator').css({'display': 'none'});
+
+  $('.order_without_margin input').change(orderWithoutMarginChange);
+  orderWithoutMarginChange();
 
 });
 </script>

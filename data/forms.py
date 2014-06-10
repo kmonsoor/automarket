@@ -30,7 +30,7 @@ STAFF_FIELD_LIST = (
     (u'RUS', 'description_ru', 'description_ru', 'description_ru__contains'),
     (u'ENG', 'description_en', 'description_en', 'description_en__contains'),
     (u'ORDER ID', 'id', 'id', 'id'),
-    (u'LIST', 'price_base', 'price_base', None),
+    (u'RETAIL', 'price_base', 'price_base', None),
     (u'WEIGHT', 'weight', 'weight', None),
     (u'SHIPPING', 'delivery', 'delivery', None),
     (u'PRICE M', 'price_manager', 'price_manager', None),

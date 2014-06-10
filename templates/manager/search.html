@@ -2,7 +2,7 @@
 {% load manager_tags %}
 {% load i18n %}
 
-{% block menu_search %}<a class="menu-active" href="{% url manager_search %}">Поиск</a>{% endblock %}
+{% block menu_search %}<a class="menu-active" href="{% url manager_search %}?new=1">Поиск</a>{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}

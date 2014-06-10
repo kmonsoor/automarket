@@ -11,7 +11,7 @@ from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from data.models import (
     OrderedItem, BrandGroup, Area, Basket,
-    Shipment, Package, BalanceItem, search_local, search_analogs, calc_parts,
+    Shipment, Package, BalanceItem, search_local, search_analogs, calc_parts_client,
     BALANCEITEM_TYPE_PREINVOICE
 )
 from data.forms import (
@@ -157,19 +157,19 @@ def search(request):
                     form.fields['maker'].widget.choices = [
                         ('', '----')] + list((x, x) for x in makers)
                 else:
-                    parts = calc_parts(founds, request.user)
+                    parts = calc_parts_client(founds, request.user)
             else:
                 show_maker_field = True
                 if maker:
                     founds = search_external.search(maker, part_number)
                     if founds:
-                        parts = calc_parts(founds, request.user)
+                        parts = calc_parts_client(founds, request.user)
                     else:
                         msg = u"Ничего не найдено"
 
             if founds:
                 analog_founds = search_analogs(founds)
-                analogs = calc_parts(analog_founds, request.user)
+                analogs = calc_parts_client(analog_founds, request.user)
                 
     else:
         form = SearchForm(maker_choices=maker_choices)

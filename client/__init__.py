@@ -6,7 +6,7 @@ from django.contrib.auth import authenticate
 
 from data.models import search_local, all_brands
 
-from client.views import calc_parts, search_analogs
+from client.views import calc_parts_client, search_analogs
 
 
 @rpcmethod(name='getBrands', signature=['array', 'string', 'string', 'string'])
@@ -87,8 +87,8 @@ def getParts(username, password, brand, partnumber):
 
     analog_founds = search_analogs(founds)
 
-    parts = calc_parts(founds, user, render_for_template=False)
-    analogs = calc_parts(analog_founds, user)
+    parts = calc_parts_client(founds, user, render_for_template=False)
+    analogs = calc_parts_client(analog_founds, user)
 
     data = {}
     fields_map = (

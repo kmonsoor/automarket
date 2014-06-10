@@ -32,7 +32,7 @@ class OrderItemForm(Form):
     client = forms.CharField(widget=forms.Select(choices=users()), label=u'CL', required=True)
     description_ru = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'RUS', required=False)
     description_en = forms.CharField(widget=forms.Textarea(attrs={'cols':15, 'rows':3}), label=u'ENG', required=False)
-    price_base = forms.FloatField(widget=forms.TextInput(attrs={'size':5}), label=u'LIST', required=True)
+    price_base = forms.FloatField(widget=forms.TextInput(attrs={'size':5}), label=u'RETAIL', required=True)
     price_sale = forms.FloatField(widget=forms.TextInput(attrs={'size':5, 'class': 'priceSale'}), label=u'PRICE', required=True)
 
     def __init__(self, *args, **kwargs):

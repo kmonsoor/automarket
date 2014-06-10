@@ -14,7 +14,7 @@
 {% if 'description_ru' in cl.user_fields %}{% table_td i 'description_ru' i.editable 'editDescriptionRu' %}{% endif %}
 {% if 'description_en' in cl.user_fields %}{% table_td i 'description_en' i.editable 'editDescriptionEn' %}{% endif %}
 {% if 'id' in cl.user_fields %}{% table_td i 'id' 0 '' %}{% endif %}
-{% if 'price_base' in cl.user_fields %}{% table_td i 'price_base' i.editable 'editPriceBase' 0 %}{% endif %}
+{% if 'price_base' in cl.user_fields %}{% if cl.request.user.get_profile.can_edit_price_base %}{% table_td i 'price_base' i.editable 'editPriceBase' 0 %}{% else %}{% table_td i 'price_base' 0 '' 0 %}{% endif %}{% endif %}
 {% if 'weight' in cl.user_fields %}{% if cl.request.user.get_profile.can_edit_weight %}{% table_td i 'weight' i.editable 'editWeight' %}{% else %}{% table_td i 'weight' 0 '' %}{% endif %}{% endif %}
 {% if 'delivery' in cl.user_fields %}{% table_td i 'delivery' 0 '' 0 %}{% endif %}
 {% if 'price_manager' in cl.user_fields %}{% table_td i 'price_manager' 0 '' 0 %}{% endif %}
