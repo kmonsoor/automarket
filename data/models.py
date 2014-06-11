@@ -9,6 +9,8 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils.html import mark_safe
 
+from lib.numparser import NumericStringParser
+
 from data.managers import OrderedItemManager
 from data.settings import (
     AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT,
@@ -500,8 +502,11 @@ class OrderedItem(models.Model):
                 # calculate cost and total cost
                 self.cost = cost
                 self.total_cost = total_cost
-                self.price_manager = self.calc_price_manager()
-                self.total_manager = self.calc_total_manager()
+                self.price_manager = calc_user_price(
+                    self.manager, self.price_base,
+                    self.price_invoice, self.brandgroup, self.area)
+                if self.price_manager:
+                    self.total_manager = self.calc_total_manager()
             if not self.weight and self.status == 'received_office':
                 # weight was removed and status is reseived:
                 self.switch_status()
@@ -511,21 +516,16 @@ class OrderedItem(models.Model):
             if self.do_calc_totals_by_status:
                 self.cost = cost
                 self.total_cost = total_cost
-                self.price_manager = self.calc_price_manager()
-                self.total_manager = self.calc_total_manager()
+                self.price_manager = calc_user_price(
+                    self.manager, self.price_base,
+                    self.price_invoice, self.brandgroup, self.area)
+                if self.price_manager:
+                    self.total_manager = self.calc_total_manager()
 
         if self.status == 'issued' and not self.issued_at:
             self.issued_at = datetime.datetime.now()
 
         super(OrderedItem, self).save(*args, **kwargs)
-
-    def calc_price_manager(self):
-        try:
-            discount = self.manager.get_profile().get_discount(
-                brand_group=self.brandgroup, area=self.area)
-        except:
-            discount = AREA_DISCOUNT_DEFAULT
-        return (self.price_base) * (100 - discount) / 100 + (self.core_price or 0)
 
     def calc_total_manager(self):
         return (self.price_manager + (self.delivery or 0)) * self.quantity
@@ -831,6 +831,27 @@ def normalize_sum(value):
     return value
 
 
+def calc_user_price_by_discount(user, retail, brand_group=None, area=None):
+    try:
+        discount = user.get_profile().get_discount(brand_group=brand_group, area=area)
+    except Exception:
+        discount = AREA_DISCOUNT_DEFAULT
+    return retail * (100 - float(discount)) / 100
+
+
+def calc_user_price(user, retail, pricein, brand_group=None, area=None):
+    expr = user.get_profile().get_price_expression(brand_group=brand_group, area=area)
+    if not expr:
+        return calc_user_price_by_discount(user, retail, brand_group, area)
+
+    try:
+        user_price = NumericStringParser().eval(expr.format(retail=retail, pricein=pricein))
+    except Exception:
+        user_price = None
+
+    return user_price
+
+
 def calc_part(part, user, render_for_template=True):
     if not part.get('MSRP'):
         return None
@@ -858,13 +879,6 @@ def calc_part(part, user, render_for_template=True):
     res['direction_id'] = brand_group and brand_group.direction.id or None
     res['brandgroup_id'] = brand_group and brand_group.id or None
 
-    try:
-        discount = user.get_profile().get_discount(
-            brand_group=brand_group, area=area)
-    except:
-        discount = AREA_DISCOUNT_DEFAULT
-    discount = float(discount)
-
     # we need to remove all "," as separators
     # only last dot should be saved
     value = float(normalize_sum(str(part['MSRP'])))
@@ -877,10 +891,11 @@ def calc_part(part, user, render_for_template=True):
 
     try:
         res['core_price'] = float(normalize_sum(str(part['core_price'])))
-    except:
+    except Exception:
         res['core_price'] = 0.00
 
-    res['your_price'] = res['MSRP'] * (100 - discount) / 100
+    res['your_price'] = calc_user_price(
+        user, res['MSRP'], part['cost'], brand_group, area)
     res['your_economy'] = res['MSRP'] - res['your_price']
     res['your_economy_perc'] = 100 - res['your_price'] / res['MSRP'] * 100
 
@@ -1151,7 +1166,11 @@ class BrandGroupDiscount(models.Model):
     user = models.ForeignKey(User, verbose_name=u"пользователь")
     brand_group = models.ForeignKey(
         BrandGroup, verbose_name=u"группа поставщиков")
-    discount = models.FloatField(verbose_name=u"скидка (%)")
+    discount = models.FloatField(
+        verbose_name=u"скидка (%)", null=True, blank=True)
+    expr = models.CharField(
+        verbose_name=u"Выражение для расчёта цены",
+        max_length=255, null=True, blank=True)
 
     class Meta:
         verbose_name = u"Скидка для группы поставщиков" 
@@ -1164,7 +1183,11 @@ class Discount(models.Model):
     brand_group = models.ForeignKey(
         BrandGroup, verbose_name=u"группа поставщиков", null=True)
     area = models.ForeignKey(Area, verbose_name=u"поставщик")
-    discount = models.FloatField(verbose_name=u"скидка (%)")
+    discount = models.FloatField(
+        verbose_name=u"скидка (%)", null=True, blank=True)
+    expr = models.CharField(
+        verbose_name=u"Выражение для расчёта цены",
+        max_length=255, null=True, blank=True)
 
     class Meta:
         verbose_name = u"Скидка для поставщика"
@@ -1309,6 +1332,27 @@ class UserProfile(models.Model):
         if self.is_manager:
             return self.get_manager_discount(brand_group, area)
         return self.get_client_discount(brand_group, area)
+
+    def get_price_expression(self, brand_group=None, area=None):
+        user_expr = None
+        brand_group_user_expr = None
+
+        try:
+            user_expr = Discount.objects.get(
+                user=self.user,
+                brand_group=brand_group,
+                area=area).expr
+        except (Discount.DoesNotExist, AttributeError):
+            pass
+
+        try:
+            brand_group_user_expr = BrandGroupDiscount.objects.get(
+                user=self.user,
+                brand_group=brand_group).expr
+        except (BrandGroupDiscount.DoesNotExist, AttributeError):
+            pass
+
+        return user_expr or brand_group_user_expr
 
     def get_manager_discount(self, brand_group=None, area=None):
         user_discount = None

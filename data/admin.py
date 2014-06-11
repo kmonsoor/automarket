@@ -206,8 +206,23 @@ class OrderedItemAdmin(admin.ModelAdmin):
     po_number.short_description = u'PO'
 
 
+from lib.numparser import NumericStringParser
+
+
+class UserBrandGroupDiscountInlineForm(forms.ModelForm):
+    def clean_expr(self):
+        expr = self.cleaned_data['expr']
+        if expr:
+            try:
+                float(NumericStringParser().eval(expr.format(retail=1, pricein=1)))
+            except Exception:
+                raise forms.ValidationError(u"Введите валидное выражение")
+        return expr
+
+
 class UserBrandGroupDiscountInline(admin.TabularInline):
     model = BrandGroupDiscount
+    form = UserBrandGroupDiscountInlineForm
     extra = 0
 
 
@@ -222,11 +237,20 @@ class UserDiscountInlineForm(forms.ModelForm):
         else:
             self.fields['area'].queryset = Area.objects.all()
 
+    def clean_expr(self):
+        expr = self.cleaned_data['expr']
+        if expr:
+            try:
+                float(NumericStringParser().eval(expr.format(retail=1, pricein=1)))
+            except Exception:
+                raise forms.ValidationError(u"Введите валидное выражение")
+        return expr
+
 
 class DiscountInline(admin.TabularInline):
     model = Discount
-    extra = 0
     form = UserDiscountInlineForm
+    extra = 0
 
 
 class GroupDiscountInlineForm(forms.ModelForm):
@@ -572,6 +596,7 @@ class ClientCreationForm(UserCreationForm):
 
 class ClientBrandGroupDiscountInlineForm(forms.ModelForm):
     class Meta:
+        exclude = ['expr']
         model = BrandGroupDiscount
 
     def clean_discount(self):
@@ -596,6 +621,7 @@ class ClientBrandGroupDiscountInline(UserBrandGroupDiscountInline):
 
 class ClientDiscountInlineForm(forms.ModelForm):
     class Meta:
+        exclude = ['expr']
         model = Discount
 
     def clean_discount(self):
