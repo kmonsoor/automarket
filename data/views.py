@@ -166,7 +166,7 @@ def basket_order(request):
         data['quantity'] = item.quantity
         data['part_number'] = item.part_number
         data['manager'] = manager or admin_default
-        if manager:
+        if user_profile.is_manager or request.user.is_staff:
             data['status'] = 'order'
         data['price_base'] = item.msrp
         data['price_sale'] = item.get_price()
