@@ -713,7 +713,6 @@ class ClientAdmin(UserAdmin):
         if is_manager(user):
             profile = user.get_profile()
             if not profile.can_set_delivery_coef:
-                print type(inlines[0])
                 inlines = filter(
                     lambda x: not x is ClientBrandGroupDeliveryInline, inlines)
             if not profile.can_set_discount:
