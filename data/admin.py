@@ -209,6 +209,12 @@ class OrderedItemAdmin(admin.ModelAdmin):
 from lib.numparser import NumericStringParser
 
 
+class UserBrandGroupDeliveryInline(admin.TabularInline):
+    model = BrandGroupDelivery
+    fk_name = 'user'
+    extra = 0
+
+
 class UserBrandGroupDiscountInlineForm(forms.ModelForm):
     def clean_expr(self):
         expr = self.cleaned_data['expr']
@@ -376,7 +382,9 @@ class ManagerCreationForm(UserCreationForm):
 
 class ManagerAdmin(UserAdmin):
     add_form = ManagerCreationForm
-    inlines = [ManagerProfileInline, UserBrandGroupDiscountInline, DiscountInline]
+    inlines = [
+        ManagerProfileInline, UserBrandGroupDiscountInline,
+        DiscountInline, UserBrandGroupDeliveryInline]
     change_form_template = 'admin/data/user/change_form.html'
     add_form_template = 'admin/data/user/change_form.html'
     list_display = ('username', 'email', 'first_name', 'last_name', 'last_login',)
@@ -600,10 +608,14 @@ class ClientBrandGroupDiscountInlineForm(forms.ModelForm):
         model = BrandGroupDiscount
 
     def clean_discount(self):
-        client_discount = self.cleaned_data['discount']
+
+        client_discount = self.cleaned_data.get('discount')
+        brand_group = self.cleaned_data.get('brand_group')
         client = self.cleaned_data['user']
         manager = client.get_profile().client_manager
-        brand_group = self.cleaned_data['brand_group']
+
+        if not all((manager, brand_group, client_discount)):
+            return client_discount
 
         if manager:
             manager_discount = manager.get_profile(
@@ -611,8 +623,7 @@ class ClientBrandGroupDiscountInlineForm(forms.ModelForm):
             if client_discount > manager_discount:
                 raise forms.ValidationError(
                     u"Не более %s%%" % manager_discount)
-
-        return self.cleaned_data['discount']
+        return client_discount
 
 
 class ClientBrandGroupDiscountInline(UserBrandGroupDiscountInline):
@@ -625,30 +636,51 @@ class ClientDiscountInlineForm(forms.ModelForm):
         model = Discount
 
     def clean_discount(self):
-        client_discount = self.cleaned_data['discount']
+
+        client_discount = self.cleaned_data.get('discount')
+        brand_group = self.cleaned_data.get('brand_group')
+        area = self.cleaned_data.get('area')
         client = self.cleaned_data['user']
         manager = client.get_profile().client_manager
-        brand_group = self.cleaned_data['brand_group']
-        area = self.cleaned_data['area']
 
-        if manager:
-            manager_discount = manager.get_profile(
-                ).get_discount(brand_group=brand_group, area=area)
-            if client_discount > manager_discount:
-                raise forms.ValidationError(
-                    u"Не более %s%%" % manager_discount)
+        if not all((manager, brand_group, area, client_discount)):
+            return client_discount
 
-        return self.cleaned_data['discount']
+        manager_discount = manager.get_profile(
+            ).get_discount(brand_group=brand_group, area=area)
+        if client_discount > manager_discount:
+            raise forms.ValidationError(
+                u"Не более %s%%" % manager_discount)
+        return client_discount
 
 
 class ClientDiscountInline(DiscountInline):
     form = ClientDiscountInlineForm
 
 
+class ClientBrandGroupDeliveryInlineForm(forms.ModelForm):
+    def clean_delivery_coef(self):
+        cdf = self.cleaned_data.get('delivery_coef')
+        brand_group = self.cleaned_data.get('brand_group')
+        client = self.cleaned_data['user']
+        manager = client.get_profile().client_manager
+
+        if not all((brand_group, manager, cdf)):
+            return cdf
+
+        mdf = manager.get_profile().get_delivery_coef(brand_group)
+        if cdf < mdf:
+            raise forms.ValidationError("Не менее %r$" % mdf)
+        return cdf
+
+
+class ClientBrandGroupDeliveryInline(UserBrandGroupDeliveryInline):
+    form = ClientBrandGroupDeliveryInlineForm
+
+
 class ClientAdmin(UserAdmin):
     readonly_fields = ['is_staff', 'is_superuser', 'last_login', 'date_joined']
     add_form = ClientCreationForm
-    inlines = [ClientProfileInline, ClientBrandGroupDiscountInline, ClientDiscountInline]
     change_form_template = 'admin/data/user/change_form.html'
     add_form_template = 'admin/data/user/change_form.html'
     list_display = ['username', 'email', 'first_name', 'last_name', 'is_active']
@@ -667,6 +699,33 @@ class ClientAdmin(UserAdmin):
                 'password2', 'client_group', 'creator')}
         ),
     )
+
+    all_inlines = [
+        ClientProfileInline, ClientBrandGroupDiscountInline,
+        ClientDiscountInline, ClientBrandGroupDeliveryInline]
+    inlines = all_inlines
+
+    def get_formsets(self, request, obj=None):
+        user = request.user
+        inlines = self.all_inlines
+        if is_manager(user):
+            profile = user.get_profile()
+            if not profile.can_set_delivery_coef:
+                print type(inlines[0])
+                inlines = filter(
+                    lambda x: not x is ClientBrandGroupDeliveryInline, inlines)
+            if not profile.can_set_discount:
+                inlines = filter(
+                    lambda x: not x in (
+                        ClientBrandGroupDiscountInline, ClientDiscountInline),
+                    inlines)
+
+        self.inline_instances = []
+        for inline_class in inlines:
+            inline_instance = inline_class(self.model, self.admin_site)
+            self.inline_instances.append(inline_instance)
+
+        return super(ClientAdmin, self).get_formsets(request, obj)
 
     def has_change_permission(self, request, obj=None):
         if request.user.has_perm('auth.can_change_clients'):
@@ -712,7 +771,9 @@ class ClientAdmin(UserAdmin):
 
         extra_context['order_item_fields'] = []
 
-        fff = profile.order_item_fields or profile.client_group.order_item_fields
+        fff = profile.order_item_fields
+        if not fff and profile.client_group:
+            fff = profile.client_group.order_item_fields
 
         extra_context['original_order_item_fields'] = (fff and fff.split(',')) or ""
 
@@ -720,7 +781,14 @@ class ClientAdmin(UserAdmin):
             extra_context['original_order_item_fields'] = request.POST.get(
                 "order_item_fields", "").split(",")
 
-        for a in [(x[2], x[0]) for x in CLIENT_FIELD_LIST]:
+        fields = CLIENT_FIELD_LIST
+        if is_manager(request.user):
+            fields = tuple(
+                filter(
+                    lambda f: f[2] not in ('po_verbose', 'brandgroup', 'area',),
+                    CLIENT_FIELD_LIST))
+
+        for a in [(x[2], x[0]) for x in fields]:
             a = list(a)
             a.append(a[0] in extra_context['original_order_item_fields'])
             extra_context['order_item_fields'].append(a)

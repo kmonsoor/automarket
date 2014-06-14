@@ -56,13 +56,8 @@ $(document).ready(function(){
   $("input[name=_continue]").addClass("default");
   {% endif %}
 
-
-
   {% if add %}
-  $("#discount_set-group").css("border", "none").children("h2, div").css("display",'none');
-  $("#brandgroupdiscount_set-group").css("border", "none").children("h2, div").css("display",'none');
   $("div[id^=userprofile_set]").css("border", "none").children("h2, div").remove();
-
   {% endif %}
 
   {% if change %}

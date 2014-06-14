@@ -23,7 +23,7 @@ class Direction(models.Model):
     title = models.CharField(max_length=255, verbose_name=u"Название")
     po = models.CharField(max_length=255, verbose_name=u"PO")
     delivery = models.FloatField(
-        verbose_name=u"доставка", blank=True, null=True)
+        verbose_name=u"доставка (за кг)", blank=True, null=True)
     multiplier = models.DecimalField(
         u'множитель', max_digits=7, decimal_places=3, blank=True, null=True)
     cost_margin = models.FloatField(
@@ -45,7 +45,7 @@ class BrandGroup(models.Model):
     description = models.TextField(
         verbose_name=u"Описание", null=True, blank=True)
     delivery = models.FloatField(
-        verbose_name=u"доставка", blank=True, null=True)
+        verbose_name=u"доставка (за кг)", blank=True, null=True)
     multiplier = models.DecimalField(
         u'множитель', max_digits=7, decimal_places=3, blank=True, null=True)
     cost_margin = models.FloatField(
@@ -64,25 +64,6 @@ class BrandGroup(models.Model):
 
     def __unicode__(self):
         return u"%s::%s" % (self.direction, self.title)
-
-    def price_settings(self):
-        class ps(dict):
-            __slots__ = ['area', 'multiplier', 'delivery']
-
-        current_settings = dict(
-            (x.area.id, x)
-            for x in BrandGroupAreaSettings.objects.select_related().filter(
-                brand_group=self))
-
-        for area in self.area.all():
-            if area.id in current_settings:
-                multiplier, delivery = (
-                    getattr(current_settings.get(area.id), x)
-                    for x in ['multiplier', 'delivery'])
-            else:
-                multiplier = delivery = None
-
-            yield ps(area=area, multiplier=multiplier, delivery=delivery)
 
     def get_settings(self):
         m = [
@@ -833,19 +814,22 @@ def normalize_sum(value):
 
 def calc_user_price_by_discount(user, retail, brand_group=None, area=None):
     try:
-        discount = user.get_profile().get_discount(brand_group=brand_group, area=area)
+        discount = user.get_profile().get_discount(
+            brand_group=brand_group, area=area)
     except Exception:
         discount = AREA_DISCOUNT_DEFAULT
     return retail * (100 - float(discount)) / 100
 
 
 def calc_user_price(user, retail, pricein, brand_group=None, area=None):
-    expr = user.get_profile().get_price_expression(brand_group=brand_group, area=area)
+    expr = user.get_profile().get_price_expression(
+        brand_group=brand_group, area=area)
     if not expr:
         return calc_user_price_by_discount(user, retail, brand_group, area)
 
     try:
-        user_price = NumericStringParser().eval(expr.format(retail=retail, pricein=pricein))
+        user_price = NumericStringParser().eval(
+            expr.format(retail=retail, pricein=pricein))
     except Exception:
         user_price = None
 
@@ -1162,6 +1146,19 @@ class ManagerGroup(UserGroup):
         verbose_name_plural = u"Группы менеджеров"
 
 
+class BrandGroupDelivery(models.Model):
+    user = models.ForeignKey(User, verbose_name=u"пользователь")
+    brand_group = models.ForeignKey(
+        BrandGroup, verbose_name=u"группа поставщиков")
+    delivery_coef = models.FloatField(
+        verbose_name=u"стоимость (за кг)")
+
+    class Meta:
+        verbose_name = u"Доставка для группы поставщиков" 
+        verbose_name_plural = u"Доставка для групп поставщиков"
+        unique_together = ('user', 'brand_group',)
+
+
 class BrandGroupDiscount(models.Model):
     user = models.ForeignKey(User, verbose_name=u"пользователь")
     brand_group = models.ForeignKey(
@@ -1169,7 +1166,7 @@ class BrandGroupDiscount(models.Model):
     discount = models.FloatField(
         verbose_name=u"скидка (%)", null=True, blank=True)
     expr = models.CharField(
-        verbose_name=u"Выражение для расчёта цены",
+        verbose_name=u"Выражение для расчёта цены (приоритет)",
         max_length=255, null=True, blank=True)
 
     class Meta:
@@ -1186,7 +1183,7 @@ class Discount(models.Model):
     discount = models.FloatField(
         verbose_name=u"скидка (%)", null=True, blank=True)
     expr = models.CharField(
-        verbose_name=u"Выражение для расчёта цены",
+        verbose_name=u"Выражение для расчёта цены (приоритет)",
         max_length=255, null=True, blank=True)
 
     class Meta:
@@ -1326,7 +1323,25 @@ class UserProfile(models.Model):
     can_edit_weight = models.BooleanField(
         verbose_name=u"возможность редактирования веса", default=False)
     can_edit_price_base = models.BooleanField(
-        verbose_name=u"возможность редактирования retail", default=False)
+        verbose_name=u"возможность ручного заказа", default=False)
+    can_set_discount = models.BooleanField(
+        verbose_name=u"возможность выставления скидки своим клиентам")
+    can_set_delivery_coef = models.BooleanField(
+        verbose_name=u"возможность выставления стоимости доставки своим клиентам")
+
+    def get_delivery_coef(self, brand_group):
+
+        try:
+            delivery_coef = BrandGroupDelivery.objects.get(
+                user=self.user, brand_group=brand_group
+            ).delivery_coef
+        except (BrandGroupDelivery.DoesNotExist, AttributeError):
+            delivery_coef = None
+
+        if not delivery_coef:
+            delivery_coef = brand_group.get_settings()[1]
+
+        return delivery_coef
 
     def get_discount(self, brand_group=None, area=None):
         if self.is_manager:
