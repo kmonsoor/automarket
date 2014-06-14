@@ -461,7 +461,8 @@ class OrderedItem(models.Model):
     def save(self, *args, **kwargs):
 
         if self.delivery_coef is None:
-            self.delivery_coef = self.area.get_brandgroup_settings(self.brandgroup)[1]
+            self.delivery_coef = self.client.get_profile(
+                ).get_delivery_coef(self.brandgroup)
 
         if self.weight is not None and self.delivery_coef:
             self.delivery = self.delivery_coef * self.weight
@@ -856,7 +857,7 @@ def calc_part(part, user, render_for_template=True):
     else:
         m, d, dp, pu, cm = area.get_brandgroup_settings(brand_group)
 
-    res['delivery_coef'] = d
+    res['delivery_coef'] = user.get_profile().get_delivery_coef(brand_group)
     res['delivery_period'] = dp
     res['updated_at'] = pu
     res['area_id'] = area and area.id or None
@@ -1329,19 +1330,27 @@ class UserProfile(models.Model):
     can_set_delivery_coef = models.BooleanField(
         verbose_name=u"возможность выставления стоимости доставки своим клиентам")
 
-    def get_delivery_coef(self, brand_group):
+    def get_delivery_coef(self, brand_group=None):
 
         try:
             delivery_coef = BrandGroupDelivery.objects.get(
-                user=self.user, brand_group=brand_group
+                user=self.user,
+                brand_group=brand_group
             ).delivery_coef
         except (BrandGroupDelivery.DoesNotExist, AttributeError):
             delivery_coef = None
 
-        if not delivery_coef:
-            delivery_coef = brand_group.get_settings()[1]
+        try:
+            manager_delivery_coef = BrandGroupDelivery.objects.get(
+                user=self.client_manager,
+                brand_group=brand_group
+            ).delivery_coef
+        except:
+            manager_delivery_coef = None
 
-        return delivery_coef
+        brandgroup_delivery_coef = brand_group.get_settings()[1]
+
+        return delivery_coef or manager_delivery_coef or brandgroup_delivery_coef
 
     def get_discount(self, brand_group=None, area=None):
         if self.is_manager:
