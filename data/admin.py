@@ -284,7 +284,8 @@ class StaffProfileInline(UserProfileInline):
     exclude = [
         'client_group', 'client_manager', 'is_manager',
         'is_client', 'manager_group', 'can_edit_weight',
-        'can_edit_price_base', 'order_without_margin',]
+        'can_edit_price_base', 'order_without_margin',
+        'can_set_discount', 'can_set_delivery_coef',]
 
 
 class StaffAdmin(UserAdmin):
@@ -521,7 +522,8 @@ class ManagerGroupAdmin(admin.ModelAdmin):
 class ClientProfileInline(UserProfileInline):
     exclude = [
         'is_manager', 'is_client', 'manager_group',
-        'can_edit_weight', 'can_edit_price_base',]
+        'can_edit_weight', 'can_edit_price_base', 'can_set_discount',
+        'can_set_delivery_coef',]
 
     def get_formset(self, request, obj=None, **kwargs):
         if request.user.get_profile().is_manager:
