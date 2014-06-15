@@ -871,7 +871,7 @@ def calc_part(part, user, render_for_template=True):
     res['MSRP'] = value * float(m)
     if 'cost' in part and part['cost']:
         _msrp = part['cost'] * cm
-        if _msrp > part['MSRP']:
+        if _msrp > res['MSRP']:
             res['MSRP'] = _msrp
 
     try:
