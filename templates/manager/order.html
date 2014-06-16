@@ -162,23 +162,23 @@
 {% endblock %}
 
 {% block content %}
-    <!-- <a href="{% url import_to_csv %}">Импорт</a>
-    <br/>
-    <br/> -->
-    <form action="" method="post">
-        <div id="page-forms"></div>
-        <p align="right" id="pTotalPrice" class="totalPrice">
-            <b>Total: </b>
-            <span id="spanTotalPrice">0</span><span> $</span>
-        </p>
-        <p align="right">
-            <a class="add_link" href="javascript:void(0)" onclick="new PageForm();">
-                Добавить позицию
-            </a>
-        </p>
-        <div class="submit-row">
-            <input type="submit" name="save_order" value="Заказать" />
-        </div>
-    </form>
+<a href="{% url manager_import_order %}">Импорт</a>
+<br/>
+<br/>
+<form action="" method="post">
+    <div id="page-forms"></div>
+    <p align="right" id="pTotalPrice" class="totalPrice">
+        <b>Total: </b>
+        <span id="spanTotalPrice">0</span><span> $</span>
+    </p>
+    <p align="right">
+        <a class="add_link" href="javascript:void(0)" onclick="new PageForm();">
+            Добавить позицию
+        </a>
+    </p>
+    <div class="submit-row">
+        <input type="submit" name="save_order" value="Заказать" />
+    </div>
+</form>
 {% endblock %}
 

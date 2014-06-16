@@ -380,3 +380,7 @@ class BasketForm(forms.Form):
         b = Basket(**cd)
         b.save()
         return b
+
+
+class ImportOrderXlsForm(forms.Form):
+    xls_file = forms.Field(widget=forms.FileInput(), label="Файл")

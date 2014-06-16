@@ -1,0 +1,23 @@
+{% extends 'manager/order.html' %}
+
+{% block content %}
+<form action="" method="post" enctype="multipart/form-data">
+    <div class="error">{{ message }}</div>
+    {{ form }}
+    <div class="submit-row">
+        <input type="submit" name="save_order" value="Загрузить файл" />
+    </div>
+</form>
+{% if form_data %}
+    <form action="{% url manager_order %}" method="post">
+        <div id="page-forms"></div>
+        <p align="right">
+            <a class="add_link" href="javascript:void(0)" onclick="new PageForm();">Добавить позицию</a>
+        </p>
+        <div class="submit-row">
+            <input type="submit" name="save_order" value="Заказать" />
+        </div>
+    </form>
+{% endif %}
+
+{% endblock %}

@@ -15,12 +15,15 @@ from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils.datastructures import MultiValueDict
 
 from lib.decorators import render_to
 from lib.paginator import SimplePaginator
 from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from lib.collections import Counter
+from lib.xlsreader import readexcel
+
 from common.decorators import manager_required
 from common.views import PartSearch
 
@@ -37,7 +40,7 @@ from data.forms import (
     MANAGER_SHIPMENTS_FIELD_LIST, ShipmentsFilterForm,
     BalanceFilterForm, BALANCE_FIELD_LIST,
     BalanceClientFilterForm, BALANCE_CLIENT_FIELD_LIST, PackageItemForm,
-    BalanceAddForm
+    BalanceAddForm, ImportOrderXlsForm
 )
 
 from manager.forms import OrderItemForm, SearchForm
@@ -1086,4 +1089,105 @@ def export_order(request):
     name = '%s-%s.xls' % ('orders', datetime.datetime.now().strftime('%m-%d-%Y-%H-%M'))
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
+    return response
+
+
+@manager_required
+@render_to('manager/import_order.html')
+def import_order(request):
+
+    user_profile = request.user.get_profile()
+    if not user_profile or not user_profile.can_edit_price_base:
+        raise Http404
+    
+    CELLS = (
+       (0, 'supplier', 'DIR'),
+       (1, 'area', 'AREA'),
+       (2, 'brand', 'BRAND'),
+       (3, 'part_number', 'PART#'),
+       (4, 'comment_customer', 'COMENT 1'),
+       (5, 'comment_supplier', 'COMENT 2'),
+       (6, 'quantity', 'Q'),
+       (7, 'client', 'CL'),
+       (8, 'description_ru', 'RUS'),
+       (9, 'description_en', 'ENG'),
+       (10, 'price_base', 'LIST'),
+       (11, 'price_sale', 'PRICE'),
+    )
+
+    def get_field_name(cell_title):
+        for i in CELLS:
+            if i[2] == cell_title:
+                return i[1]
+
+    def swap_keys(row, num):
+
+        res = {}
+        for k, v in row.items():
+            k = k.strip().upper()
+
+            if k == 'DIR':
+                try:
+                    res[get_field_name(k) + '.%d' % num] = [
+                        BrandGroup.objects.get(title__iexact=v[0]).id]
+                except BrandGroup.DoesNotExist:
+                    res[get_field_name(k) + '.%d' % num] = ''
+
+            elif k in ('BRAND', 'AREA',):
+                res[get_field_name(k) + '.%d' % num] = [v[0].capitalize()]
+
+            elif k == 'CL':
+                try:
+                    res[get_field_name(k) + '.%d' % num] = [
+                        User.objects.get(username__iexact=v[0].lower()).id]
+                except User.DoesNotExist:
+                    res[get_field_name(k) + '.%d' % num] = ''
+
+            elif k == 'COMENT 2':
+                res[get_field_name(k) + '.%d' % num] = ''
+
+            else:
+                res[get_field_name(k) + '.%d' % num] = v
+
+        res['id' + '.%d' % num] = ''
+
+        return res
+
+    response = {}
+    client_choice = get_client_choice(request.user)
+
+    if request.method == 'POST':
+        form = ImportOrderXlsForm(request.POST, request.FILES)
+        if form.is_valid():
+            data = {}
+            f = form.cleaned_data['xls_file']
+            try:
+                xls = readexcel(file_contents=f.read())
+                sheet = xls.book.sheet_names()[0]
+                for i, row in enumerate(xls.iter_dict(sheet), 1):
+                    row = dict((x, [y]) for x, y in row.iteritems())
+                    data.update(swap_keys(row, i))
+            except Exception as e:
+                logger.error("%r", e)
+                messages.add_message(
+                    request, messages.ERROR,
+                    u"При импорте произошла ошибка %s-ой(-ей) строке." % i)
+            else:
+                if data:
+                    request.POST = MultiValueDict(data)
+                    item_forms = OrderItemForm.get_forms(
+                        request, kwargs=dict(client_choice=client_choice))
+                    form_list = [
+                        item_form.render_js('from_template')
+                        for item_form in item_forms]
+                    response['form_data'] = form_list
+            finally:
+                f.close()
+    else:
+        form = ImportOrderXlsForm()
+
+    response['form'] = form
+    response['form_template'] = OrderItemForm(
+        client_choice=client_choice
+    ).render_js('from_template')
     return response

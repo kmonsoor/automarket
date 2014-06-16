@@ -28,7 +28,7 @@ from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
 from lib import xlsreader
 
-from cp.forms import OrderItemForm, ImportXlsForm
+from cp.forms import OrderItemForm
 
 from client.forms import SearchForm
 
@@ -44,7 +44,7 @@ from data.forms import (
     InvoicesFilterForm, INVOICES_FIELD_LIST, PackageForm,
     ShipmentsFilterForm, SHIPMENTS_FIELD_LIST, BalanceFilterForm,
     BALANCE_FIELD_LIST, BalanceClientFilterForm, BALANCE_CLIENT_FIELD_LIST,
-    PackageItemForm, BalanceAddForm
+    PackageItemForm, BalanceAddForm, ImportOrderXlsForm
 )
 from common.views import PartSearch
 
@@ -2162,8 +2162,8 @@ def export(request, group_id):
 def import_order(request):
     CELLS = (
        (0, 'supplier', 'DIR'),
-       (1, 'brand', 'BRAND'),
-       (2, 'area', 'AREA'),
+       (1, 'area', 'AREA'),
+       (2, 'brand', 'BRAND'),
        (3, 'part_number', 'PART#'),
        (4, 'comment_customer', 'COMENT 1'),
        (5, 'comment_supplier', 'COMENT 2'),
@@ -2201,31 +2201,34 @@ def import_order(request):
         return _data
 
     response = {}
-    data = {}
     if request.method == 'POST':
-        form = ImportXlsForm()
-        f = request.FILES.get('xls_file', None)
-        if f:
-            i = 1
+        form = ImportOrderXlsForm(request.POST, request.FILES)
+        if form.is_valid():
+            data = {}
+            f = form.cleaned_data['xls_file']
             try:
                 xls = xlsreader.readexcel(file_contents=f.read())
-                for row in xls.iter_dict(xls.book.sheet_names()[0]):
-                    row = dict([(x, [y]) for x, y in list(row.iteritems())])
+                sheet = xls.book.sheet_names()[0]
+                for i, row in enumerate(xls.iter_dict(sheet), 1):
+                    row = dict((x, [y]) for x, y in row.iteritems())
                     data.update(swap_keys(row, i))
-                    i = i + 1
-            except Exception, mess:
-                logger.error("%r" % mess)
-                messages.add_message(request, messages.ERROR, u"При импорте произошла критическая ошибка %s-ой(-ей) строке." % i)
+            except Exception as e:
+                logger.error("%r", e)
+                messages.add_message(
+                    request, messages.ERROR,
+                    u"При импорте произошла ошибка %s-ой(-ей) строке." % i)
             else:
                 if data:
                     request.POST = MultiValueDict(data)
                     item_forms = OrderItemForm.get_forms(request)
-                    form_list = [item_form.render_js('from_template') for item_form in item_forms]
+                    form_list = [
+                        item_form.render_js('from_template')
+                        for item_form in item_forms]
                     response['page_data'] = form_list
             finally:
                 f.close()
     else:
-        form = ImportXlsForm()
+        form = ImportOrderXlsForm()
     response['form'] = form
     response['page_template'] = OrderItemForm().render_js('from_template')
     return response
