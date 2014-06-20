@@ -7,27 +7,31 @@
 {% block content %}
 <div id="changelist">
     <form method="{{ filter.method }}" action="{% url invoices %}">
-        <input type="hidden" name="qs_filter" value="1">
-        <input type="submit" value="Фильтр">
-        <input type="submit" name="qs_filter_clear" value="Очистить">
-        &nbsp;
-        Количество записей на странице:
-        <select onchange="buildQueryFilter();" id="items-per-page-filter-select">
-            <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
-            <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
-            <option value="all"{% ifequal items_per_page 10000 %} selected {% endifequal %}>все</option>
-        </select>&nbsp;&nbsp;
-        За период:
-        <select onchange="buildQueryFilter();" id="period-filter-select">
-            <option value="w"{% ifequal period 'w' %} selected {% endifequal %}>неделя</option>
-            <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
-            <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
-            <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>
-        </select><br/><br/>
-
         <div class="module" id="changelist">
             <table>
                 <thead>
+                    <tr>
+                        <td style="padding: 5px; font-size: 100%;" align="left" colspan={{ headers|length }}>
+                            Количество записей на странице:
+                            <select onchange="buildQueryFilter();" id="items-per-page-filter-select">
+                                <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+                                <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+                                <option value="all"{% ifequal items_per_page 10000 %} selected {% endifequal %}>все</option>
+                            </select>&nbsp;&nbsp;
+                            За период:
+                            <select onchange="buildQueryFilter();" id="period-filter-select">
+                                <option value="w"{% ifequal period 'w' %} selected {% endifequal %}>неделя</option>
+                                <option value="m"{% ifequal period 'm' %} selected {% endifequal %}>месяц</option>
+                                <option value="y"{% ifequal period 'y' %} selected {% endifequal %}>год</option>
+                                <option value="a"{% ifequal period 'a' %} selected {% endifequal %}>все</option>
+                            </select>
+                            <div style="float: right;">
+                                <input type="hidden" name="qs_filter" value="1">
+                                <input type="submit" value="Фильтр">
+                                <input type="submit" name="qs_filter_clear" value="Очистить">
+                            </div>
+                        </td>
+                    </tr>
                     <tr>{% table_header_sort headers %}</tr>
                     <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
                     {% for f in list_filters %}

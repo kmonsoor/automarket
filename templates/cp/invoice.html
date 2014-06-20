@@ -57,23 +57,28 @@
 
 {% block content %}
 {% include "common/password.html" %}
-{% block export_link %}<a href="/cp/export_order/?qs_filter=1&invoice_code__contains={{ invoice.code|urlencode }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a><br/>{% endblock %}
+{% block export_link %}<a href="/cp/export_order/?qs_filter=1&invoice_code__contains={{ invoice.code|urlencode }}{% for k, v in qs_filter_param.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}">Экспорт</a>{% endblock %}
 <h3>Инвойс: {{ invoice.code }} {{ invoice.received_at|date:"d.m.Y"|default:"---" }} {{ invoice.get_status_display }}</h3><br/>
 <div class="" id="changelist">
     <form method="{{ filter.method }}" action="{% url invoice invoice.id %}{% if items_per_page %}?items_per_page={{ items_per_page }}{% endif %}">
-        <input type="hidden" name="qs_filter" value="1">
-        <input type="submit" value="Фильтр">
-        <input type="submit" name="qs_filter_clear" value="Очистить">
-        &nbsp;
-        Количество записей на странице:
-        <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
-            <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
-            <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
-            <option value="all"{% ifequal items_per_page 10000 %} selected {% endifequal %}>Все</option>
-        </select><br/><br/>
         <div class="module" id="changelist">
             <table>
                 <thead>
+                    <tr>
+                        <td style="padding: 5px; font-size: 100%;" align="left" colspan={{ headers|length|add:"1" }}>
+                            Количество записей на странице:
+                            <select onchange="location.href='{{ request.path }}?items_per_page=' + this.value">
+                                <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+                                <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+                                <option value="all"{% ifequal items_per_page 10000 %} selected {% endifequal %}>Все</option>
+                            </select>
+                            <div style="float: right;">
+                                <input type="hidden" name="qs_filter" value="1">
+                                <input type="submit" value="Фильтр">
+                                <input type="submit" name="qs_filter_clear" value="Очистить">
+                            </div>
+                        </td>
+                    </tr>
                     <tr>{% table_header_sort headers %}<th><!-- delete column --></th></tr>
                     <tr {% if filter.is_set %}style="border: solid 2px green;"{% endif %}>
                         {% for f in list_filters %}

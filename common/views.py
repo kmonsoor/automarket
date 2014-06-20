@@ -119,7 +119,7 @@ class PartSearchBase(object):
 
     def get_maker_name(self, maker_id):
         try:
-            return [x[1].lower() for x in self.get_make_options() \
+            return [x[1] for x in self.get_make_options() \
                      if x[0] == str(maker_id)][0]
         except IndexError:
             return None
@@ -367,7 +367,9 @@ class PartSearchAutopartspeople(PartSearchBase):
 
         def find_description():
             d, p = "", ""
-            s1 = bs.find("span", {'class': "vb10b"}, text=re.compile("Part#"))
+            s1 = bs.find("span", {'class': "vb10b"}, text=re.compile("\\[Part#"))
+            if not s1:
+                s1 = bs.find("span", {'class': "vb10b"}, text=re.compile("\\[New Part#"))
             if s1:
                 dr = re.compile(r'^(.*)\[(?:New\s)?Part\#\s?([\w\d]+)\]$')
                 try:
@@ -543,12 +545,12 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
 class PartSearch(object):
 
     _search_registry = [
-        # PartSearchLocal,
         PartSearchAutopartspeople,
-        PartSearchTradeMotionCom,
-        PartSearchInfinitiPartsOnlineCom,
-        PartSearchPorscheOEMPartsCom,
-    ]  # PartSearchPartsCom - temporary disabled
+        # PartSearchTradeMotionCom,
+        # PartSearchInfinitiPartsOnlineCom,
+        # PartSearchPorscheOEMPartsCom,
+        # PartSearchPartsCom,
+    ]
 
     makers = [
         "Acura",

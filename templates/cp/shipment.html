@@ -17,20 +17,24 @@ function deleteShipment() {
 <br/>
 <div class="" id="changelist">
     <form method="{{ filter.method }}" action="{{ request.path }}">
-        <input type="hidden" name="qs_filter" value="1">
-        <input type="submit" value="Фильтр">
-        <input type="submit" name="qs_filter_clear" value="Очистить">
-        &nbsp;
-        Количество записей на странице:
-        <select onchange="buildQueryFilter();" id="items-per-page-filter-select">
-            <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
-            <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
-            <option value="200"{% ifequal items_per_page 200 %} selected {% endifequal %}>200</option>
-        </select>&nbsp;&nbsp;
-        <br/><br/>
         <div class="module" id="changelist">
             <table>
                 <thead>
+                    <tr>
+                        <td style="padding: 5px; font-size: 100%;" align="left" colspan={{ headers|length|add:"2" }}>
+                            Количество записей на странице:
+                            <select onchange="buildQueryFilter();" id="items-per-page-filter-select">
+                                <option value="50"{% ifequal items_per_page 50 %} selected {% endifequal %}>50</option>
+                                <option value="100"{% ifequal items_per_page 100 %} selected {% endifequal %}>100</option>
+                                <option value="200"{% ifequal items_per_page 200 %} selected {% endifequal %}>200</option>
+                            </select>
+                            <div style="float: right;">
+                                <input type="hidden" name="qs_filter" value="1">
+                                <input type="submit" value="Фильтр">
+                                <input type="submit" name="qs_filter_clear" value="Очистить">
+                            </div>
+                        </td>
+                    </tr>
                     <tr>{% table_header_sort headers %}<th><!-- xxx --></th></tr>
                     <tr{% if filter.is_set %} style="border: solid 2px green;"{% endif %}>
                         {% for f in list_filters %}

@@ -850,7 +850,7 @@ def issues(request):
                 SUM(%(p)s.weight*%(p)s.quantity),
                 SUM(%(p)s.delivery),
                 SUM(%(p)s.quantity*COALESCE(%(p)s.price_discount, %(p)s.price_sale, 0)),
-                SUM(%(p)s.price_invoice*%(p)s.quantity)
+                SUM(%(p)s.price_invoice*%(p)s.quantity),
                 SUM(%(p)s.price_manager),
                 SUM(%(p)s.total_manager)
                 FROM %(from)s %(where)s

@@ -188,7 +188,7 @@ class OrderedItemForm(forms.ModelForm):
 
 class OrderedItemAdmin(admin.ModelAdmin):
     list_display = ('po_number', 'created', 'manager', 'client', 'area',
-        'brand', 'part_number', 'quantity')
+        'brand', 'part_number', 'quantity', 'status',)
     list_filter = ('created',)
     search_fields = ('part_number', 'ponumber', 'brandgroup__direction__po')
     valid_lookups = ('id',)
