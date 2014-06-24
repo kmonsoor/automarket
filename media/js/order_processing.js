@@ -2,7 +2,7 @@ var current = null;
 var backend_url = null;
 
 jQuery(document).keypress(function(e) {
-    if (e.which == 13 && current) {
+    if (e.which == 13 && current.id) {
         save();
     }
 });
