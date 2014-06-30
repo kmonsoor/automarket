@@ -54,7 +54,11 @@ class MyDashboard(Dashboard):
             limit=5))
 
         self.children.append(modules.ModelList(
-            u'Боты', ['common.models.Bot1']))
+            u'Боты',
+            [
+                'common.models.Bot1',
+                'common.models.Bot2',
+            ]))
 
 
 class CustomAppIndexDashboard(AppIndexDashboard):

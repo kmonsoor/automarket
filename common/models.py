@@ -20,3 +20,25 @@ class Bot1(models.Model):
 
     def __unicode__(self):
         return u"%s: %s" % (self.area, self.partnumber)
+
+
+class Bot2(models.Model):
+    year = models.IntegerField(verbose_name=u"Year", null=True, blank=True)
+    maker = models.CharField(max_length=255, verbose_name=u"Maker")
+    model = models.CharField(max_length=255, verbose_name=u"Model")
+    refoenumber = models.CharField(max_length=255, verbose_name=u"Ref OE #", db_index=True)
+    itemnumber = models.CharField(max_length=255, verbose_name=u"Item #", db_index=True)
+    description = models.TextField(max_length=255, verbose_name=u"Description", null=True, blank=True)
+    quality = models.CharField(max_length=255, verbose_name=u"Quality", null=True, blank=True)
+    listprice = models.FloatField(verbose_name=u"List $", null=True, blank=True)
+    yourprice = models.FloatField(verbose_name=u"Your $", null=True, blank=True)
+    images = models.TextField(verbose_name=u"Images", null=True, blank=True)
+    note = models.TextField(verbose_name=u"Note", null=True, blank=True)
+    assembly = models.TextField(verbose_name=u"Assembly", null=True, blank=True)
+
+    class Meta:
+        verbose_name = u'2'
+        verbose_name_plural = u'2'
+
+    def __unicode__(self):
+        return u"%s %s: %s" % (self.maker, self.model, self.refoenumber)
