@@ -20,7 +20,7 @@ class Bot1Admin(admin.ModelAdmin):
 class Bot2Admin(admin.ModelAdmin):
     list_display = ('maker', 'year', 'model', 'refoenumber', 'itemnumber', 'listprice', 'yourprice',)
     search_fields = ('refoenumber', 'itemnumber',)
-    list_filter = ('maker',)
+    list_filter = ('maker', 'year',)
 
     def has_add_permission(self, request):
         return False
