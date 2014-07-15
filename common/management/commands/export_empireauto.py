@@ -2,6 +2,8 @@
 
 import json
 
+
+
 from django.db import connection
 from django.core.management.base import BaseCommand
 
@@ -89,10 +91,16 @@ class Command(BaseCommand):
                     continue
                 for assembly in assemblies:
                     if assembly[0] == 'OEM #':
-                        ws.append((obrand, assembly[1], fnumber, fbrand,))
+                        row = (obrand, assembly[1], fbrand, fnumber,)
+                        if all(row):
+                            ws.append(row)
             else:
-                ws.append((obrand, onumber, fbrand, fnumber,))
-                ws.append((fbrand, fnumber, obrand, onumber,))
+                row1 = (obrand, onumber, fbrand, fnumber,)
+                if all(row1):
+                    ws.append(row1)
+                row2 = (fbrand, fnumber, obrand, onumber,)
+                if all(row2):
+                    ws.append(row2)
 
             i += 1
             print i
