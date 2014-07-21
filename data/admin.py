@@ -958,7 +958,7 @@ class BalanceItemAdmin(admin.ModelAdmin):
 
 class PartAnalogAdmin(admin.ModelAdmin):
     list_display = ('partnumber', 'brand', 'partnumber_analog', 'brand_analog',)
-    search_fields = ('partnumber_original', 'partnumber_analog',)
+    search_fields = ('partnumber', 'partnumber_analog',)
 
     def get_urls(self):
         from django.conf.urls.defaults import patterns, url
