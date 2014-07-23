@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 {% load i18n admin_tools_menu_tags %}
 
-{% block title %}{{ title }} | {% trans 'Newparts-online.com' %}{% endblock %}
+{% block title %}{{ title }} | {{ request.META.SERVER_NAME }}{% endblock %}
 
 {% block extrastyle %}
 {{ block.super }}
