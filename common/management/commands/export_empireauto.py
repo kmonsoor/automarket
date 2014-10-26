@@ -17,11 +17,11 @@ MAP = {
     'CHEVROLET-GMC':'Gm',
     'CHRYSLER-DODGE-PLYM':'Mopar',
     'DAEWOO': 'Daewoo',
-    'EAGLE': 'Eagle',
+    'EAGLE': 'Mopar',
     'FIAT': 'Fiat',
     'FORD-MERCURY':'Ford',
     'GEO':'Gm',
-    'HUMMER': 'Hummer',
+    'HUMMER': 'Gm',
     'HONDA':'Honda',
     'HYUNDAI':'Hyundai',
     'INFINITI': 'Infiniti',
@@ -33,7 +33,7 @@ MAP = {
     'LEXUS': 'Lexus',
     'LINCOLN':'Ford',
     'MAZDA':'Mazda',
-    'MINI': 'Mini',
+    'MINI': 'Bmw',
     'MERCEDES BENZ':'Mercedes-benz',
     'MITSUBISHI':'Mitsubishi',
     'NISSAN':'Nissan',
@@ -41,8 +41,8 @@ MAP = {
     'PONTIAC':'Gm',
     'PORSCHE': 'Porsche',
     'SAAB':'Gm',
-    'SATURN': 'Saturn',
-    'SCION': 'Scion',
+    'SATURN': 'Gm',
+    'SCION': 'Toyota',
     'SUBARU':'Subaru',
     'SUZUKI':'Suzuki',
     'TOYOTA':'Toyota',
@@ -60,8 +60,10 @@ class Command(BaseCommand):
 
         import openpyxl
 
+        sheet = 1
+
         wb = openpyxl.Workbook(optimized_write=True)
-        ws = wb.create_sheet()
+        ws = wb.create_sheet(sheet)
 
         ws.append((u'Брэнд1', u'Артикул1', u'Брэнд2', u'Артикул2',))
 
@@ -75,7 +77,7 @@ class Command(BaseCommand):
 
         cur.execute(sql)
 
-        i = 0
+        i = 1
         for item in cur:
             maker, refoenumber, itemnumber, assemblies = item
 
@@ -94,15 +96,23 @@ class Command(BaseCommand):
                         row = (obrand, assembly[1], fbrand, fnumber,)
                         if all(row):
                             ws.append(row)
+                            i += 1
             else:
                 row1 = (obrand, onumber, fbrand, fnumber,)
                 if all(row1):
                     ws.append(row1)
+                    i += 1
                 row2 = (fbrand, fnumber, obrand, onumber,)
                 if all(row2):
                     ws.append(row2)
+                    i += 1
 
-            i += 1
+            if i == 65000:
+                sheet += 1
+                ws = wb.create_sheet(sheet)
+                ws.append((u'Брэнд1', u'Артикул1', u'Брэнд2', u'Артикул2',))
+                i = 1
+
             print i
 
         wb.save('export1.xlsx')
