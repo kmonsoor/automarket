@@ -977,6 +977,7 @@ def search(request):
                 request.session.modified = True
 
             founds = search_local(maker, part_number)
+            analog_founds = search_analogs(part_number, maker)
 
             if founds:
                 makers = set(x['maker'] for x in founds)
@@ -985,23 +986,21 @@ def search(request):
                     form.fields['maker'].widget.choices = [
                         ('', '----')] + list((x, x) for x in makers)
                 else:
-                    parts = calc_parts_manager_client(
-                        founds, request.user, client)
-            else:
-                show_maker_field = True
-                if maker:
-                    founds = search_external.search(maker, part_number)
-                    if founds:
-                        parts = calc_parts_manager_client(
-                            founds, request.user, client)
-                    else:
-                        msg = u"Ничего не найдено"
+                    parts = calc_parts_manager_client(founds, request.user, client)
+                    analogs = calc_parts_manager_client(analog_founds, request.user, client)
 
-            if founds:
-                analog_founds = search_analogs(founds)
-                analogs = calc_parts_manager_client(
-                    analog_founds, request.user, client)
-
+            if not founds:
+                if analog_founds:
+                    analogs = calc_parts_manager_client(analog_founds, request.user, client)
+                else:
+                    show_maker_field = True
+                    if maker:
+                        founds = search_external.search(maker, part_number)
+                        if founds:
+                            parts = calc_parts_manager_client(
+                                founds, request.user, client)
+                        else:
+                            msg = u"Ничего не найдено"
     else:
         initial = {}
         if not request.GET.get('new'):

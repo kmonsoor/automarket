@@ -150,6 +150,8 @@ def search(request):
             part_number = form.cleaned_data['part_number']
 
             founds = search_local(maker, part_number)
+            analog_founds = search_analogs(part_number, maker)
+
             if founds:
                 makers = set(x['maker'] for x in founds)
                 if len(makers) > 1:
@@ -158,19 +160,20 @@ def search(request):
                         ('', '----')] + list((x, x) for x in makers)
                 else:
                     parts = calc_parts_client(founds, request.user)
-            else:
-                show_maker_field = True
-                if maker:
-                    founds = search_external.search(maker, part_number)
-                    if founds:
-                        parts = calc_parts_client(founds, request.user)
-                    else:
-                        msg = u"Ничего не найдено"
+                    analogs = calc_parts_client(analog_founds, request.user)
 
-            if founds:
-                analog_founds = search_analogs(founds)
-                analogs = calc_parts_client(analog_founds, request.user)
-                
+            if not founds:
+                if analog_founds:
+                    analogs = calc_parts_client(analog_founds, request.user)
+                else:
+                    show_maker_field = True
+                    if maker:
+                        founds = search_external.search(maker, part_number)
+                        if founds:
+                            parts = calc_parts_client(founds, request.user)
+                            analogs = calc_parts_client(analog_founds, request.user)
+                        else:
+                            msg = u"Ничего не найдено"
     else:
         form = SearchForm(maker_choices=maker_choices)
 

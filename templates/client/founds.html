@@ -72,9 +72,11 @@
       </td>
 
       <td class="order-button-wrapper" style="width: 80px;">
+        {% if found.your_price %}
         <a class="add_link" href="javascript: void(0);" onclick="jQuery('#foundsForm{{ forloop.counter|add:delta }}').submit();">
           В корзину
         </a>
+        {% endif %}
       </td>
 
     {% else %}

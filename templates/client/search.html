@@ -45,7 +45,7 @@ function onsubmit_basket_form() {
   <br/>
   {% if msg or data %}<h3>Результаты поиска</h3>{% endif %}
   {% if msg %}<h4>{{ msg|default:"" }}</h4>{% endif %}
-  {% if data %}
+  {% if data or analogs %}
     <table id="dataTable" class="dataTable">
       <thead>
         <tr class="row1">
@@ -66,7 +66,9 @@ function onsubmit_basket_form() {
         </tr>
       </thead>
       <tbody>
+        {% if data %}
         {% founds data %}
+        {% endif %}
         {% if analogs %}
         <tr><td colspan=20>&nbsp;</td></tr>
         <tr><td colspan=20 style="text-align: left;"><h3>Аналоги для искомого артикула</h3></td></tr>

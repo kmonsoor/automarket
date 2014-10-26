@@ -85,7 +85,7 @@ def getParts(username, password, brand, partnumber):
     if not founds:
         return {}
 
-    analog_founds = search_analogs(founds)
+    analog_founds = search_analogs(partnumber)
 
     parts = calc_parts_client(founds, user, render_for_template=False)
     analogs = calc_parts_client(analog_founds, user)

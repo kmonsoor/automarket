@@ -751,8 +751,7 @@ class Part(models.Model):
         for part in parts:
             data.append(part.get_data(sub_chain=[]))
         if maker:
-            return filter(
-                lambda part: part['maker'].lower() == maker.lower(), data)
+            return filter(lambda part: part['maker'].lower() == maker.lower(), data)
         return data
 
     def get_data(self, sub_chain=[]):
@@ -895,7 +894,7 @@ def calc_part(part, user, render_for_template=True):
             last = part['sub_chain'][-1]
             res['sub_chain'] = mark_safe(
                 u"Номер заменён: "
-                + " -> ".join(part['sub_chain'])
+                + " -> ".join(part['sub_chain'][:-1])
                 + " -> <b>%s</b>" % last)
         else:
             res.pop('sub_chain', None)
@@ -1075,9 +1074,35 @@ class PartAnalog(models.Model):
         verbose_name_plural = u"аналоги"
 
 
-def search_analogs(parts):
-    analogs = list(PartAnalog.objects.filter(
-        partnumber__in=set(x['partnumber'] for x in parts)))
+def part_children(partnumber, maker, chain=[]):
+    chain.append(partnumber)
+    parts = Part.objects.filter(partnumber=partnumber)
+    for p in parts:
+        for s in Part.objects.filter(substitution=p.partnumber):
+            smaker = (s.brand and s.brand.title) or s.area.title
+            if not maker or (maker and maker.lower() == smaker.lower()):
+                part_parents(p.substitution, chain)
+    return chain
+
+
+def part_parents(partnumber, maker, chain=[]):
+    chain.append(partnumber)
+    parts = Part.objects.filter(partnumber=partnumber)
+    for p in parts:
+        if p.substitution:
+            pmaker = (p.brand and p.brand.title) or p.area.title
+            if not maker or (maker and maker.lower() == pmaker.lower()):
+                part_parents(p.substitution, chain)
+    return chain
+
+
+def search_analogs(partnumber, maker=None):
+
+    related_partnumbers = part_children(partnumber, maker)[1:] + part_parents(partnumber, maker)[1:]
+
+    from django.db.models import Q
+
+    analogs = PartAnalog.objects.filter(Q(partnumber=partnumber) | Q(partnumber__in=related_partnumbers))
 
     data = []
     for a in analogs:
