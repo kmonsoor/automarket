@@ -327,6 +327,16 @@ def index(request):
 def by_clients(request):
     context = {}
 
+    client_ids = list(
+        UserProfile.objects.filter(
+            client_manager=request.user
+        ).values_list('user', flat=True))
+
+    qs = OrderedItem.objects.select_related().filter(
+        client__id__in=client_ids,
+        status__in=('moderation',))
+    ids = list(qs.values_list('id', flat=True))
+
     if request.method == 'POST':
         redirect_url = reverse("manager_by_clients")
         if request.POST.get('order_items'):
@@ -344,16 +354,6 @@ def by_clients(request):
                 msg = u"Заказаны <b>%i</b> позиций." % len(orders)
                 messages.add_message(request, messages.SUCCESS, msg)
                 return _redirect_after_post(redirect_url)
-
-    client_ids = list(
-        UserProfile.objects.filter(
-            client_manager=request.user
-        ).values_list('user', flat=True))
-
-    qs = OrderedItem.objects.select_related().filter(
-        client__id__in=client_ids,
-        status__in=('moderation',))
-    ids = list(qs.values_list('id', flat=True))
 
     show_fields = (
         'brandgroup', 'area', 'brand', 'part_number', 'comment',
