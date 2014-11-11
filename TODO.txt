@@ -1,0 +1,13 @@
+1. Сделать везде title
+2. Вынести get_profile в middleware
+1. cp/views.py refactor
+2. вынести общее в data
+3. шаблоны в приложения
+2. Move price files from uploads
+2. start/stop/restart/status fcgi
+3. https
+4. requirements.txt
+5. logging
+6. Fabric
+7. git
+8. unit tests

@@ -1075,30 +1075,32 @@ class PartAnalog(models.Model):
 
 
 def part_children(partnumber, maker, chain=[]):
-    chain.append(partnumber)
+    if partnumber not in chain:
+        chain.append(partnumber)
     parts = Part.objects.filter(partnumber=partnumber)
     for p in parts:
         for s in Part.objects.filter(substitution=p.partnumber):
             smaker = (s.brand and s.brand.title) or s.area.title
             if not maker or (maker and maker.lower() == smaker.lower()):
-                part_parents(p.substitution, chain)
+                part_parents(p.substitution, smaker, chain)
     return chain
 
 
 def part_parents(partnumber, maker, chain=[]):
-    chain.append(partnumber)
+    if partnumber not in chain:
+        chain.append(partnumber)
     parts = Part.objects.filter(partnumber=partnumber)
     for p in parts:
         if p.substitution:
             pmaker = (p.brand and p.brand.title) or p.area.title
             if not maker or (maker and maker.lower() == pmaker.lower()):
-                part_parents(p.substitution, chain)
+                part_parents(p.substitution, pmaker, chain)
     return chain
 
 
 def search_analogs(partnumber, maker=None):
 
-    related_partnumbers = part_children(partnumber, maker)[1:] + part_parents(partnumber, maker)[1:]
+    related_partnumbers = part_children(partnumber, maker, [])[1:] + part_parents(partnumber, maker, [])[1:]
 
     from django.db.models import Q
 
@@ -1373,7 +1375,10 @@ class UserProfile(models.Model):
         except:
             manager_delivery_coef = None
 
-        brandgroup_delivery_coef = brand_group.get_settings()[1]
+        try:
+            brandgroup_delivery_coef = brand_group.get_settings()[1]
+        except:
+            brandgroup_delivery_coef = None
 
         return delivery_coef or manager_delivery_coef or brandgroup_delivery_coef
 
