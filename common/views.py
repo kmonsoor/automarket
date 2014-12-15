@@ -547,9 +547,9 @@ class PartSearchRockAuto(object):
 
         analogs = []
         root = et.fromstring(resp.content)
-        for part in root.iter('part'):
+        for part in root.getiterator('part'):
 
-            for option in part.iter('option'):
+            for option in part.getiterator('option'):
                 if option.attrib.get('warehouse'):
                     break
 
@@ -582,10 +582,10 @@ class PartSearchRockAuto(object):
             resp.raise_for_status()
 
             basket = et.fromstring(resp.content)
-            bpart = list(basket.iter('part'))[0]
+            bpart = list(basket.getiterator('part'))[0]
 
-            total = list(basket.iter('total'))[0]
-            parttype = list(basket.iter('parttype'))[0]
+            total = list(basket.getiterator('total'))[0]
+            parttype = list(basket.getiterator('parttype'))[0]
 
             analogs.append({
                 'partnumber': str(bpart.attrib['pn']),
@@ -602,7 +602,7 @@ class PartSearchRockAuto(object):
                 'maker': str(bpart.attrib['cat']),
             })
 
-            for el in basket.iter('othercart'):
+            for el in basket.getiterator('othercart'):
                 data = {
                     'func': 'delcart',
                     'cartid': el.attrib['id'],
