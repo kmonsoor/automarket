@@ -5,6 +5,7 @@ import logging
 logger = logging.getLogger('data.models')
 
 from django.db import models, transaction
+from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils.html import mark_safe
@@ -822,8 +823,7 @@ def calc_user_price_by_discount(user, retail, brand_group=None, area=None):
 
 
 def calc_user_price(user, retail, pricein, brand_group=None, area=None):
-    expr = user.get_profile().get_price_expression(
-        brand_group=brand_group, area=area)
+    expr = user.get_profile().get_price_expression(brand_group=brand_group, area=area)
     if not expr:
         return calc_user_price_by_discount(user, retail, brand_group, area)
 
@@ -842,15 +842,10 @@ def calc_part(part, user, render_for_template=True):
 
     res = part.copy()
 
-    # try to find area and get multiplier
     try:
-        # find an area by title
         area = Area.objects.get(title__iexact=part['brandname'])
         brand_group = BrandGroup.objects.get(title=part['brandgroup'])
-        # we need to find a valid multiplier for this area
-        # TODO - hardcoded 'OEM', we need do more sofisticated algo
     except (BrandGroup.DoesNotExist, Area.DoesNotExist, Area.MultipleObjectsReturned, ValueError):
-        # not price_setings for OEM and this area
         m, d, dp, pu, cm, brand_group, area = (
             AREA_MULTIPLIER_DEFAULT, None, None, None, COST_MARGIN_DEFAULT, None, None)
     else:
@@ -1074,7 +1069,7 @@ class PartAnalog(models.Model):
         verbose_name_plural = u"аналоги"
 
 
-def part_children(partnumber, maker, chain=[]):
+def part_children(maker, partnumber, chain=[]):
     if partnumber not in chain:
         chain.append(partnumber)
     parts = Part.objects.filter(partnumber=partnumber)
@@ -1082,11 +1077,11 @@ def part_children(partnumber, maker, chain=[]):
         for s in Part.objects.filter(substitution=p.partnumber):
             smaker = (s.brand and s.brand.title) or s.area.title
             if not maker or (maker and maker.lower() == smaker.lower()):
-                part_parents(p.substitution, smaker, chain)
+                part_parents(smaker, p.substitution, chain)
     return chain
 
 
-def part_parents(partnumber, maker, chain=[]):
+def part_parents(maker, partnumber, chain=[]):
     if partnumber not in chain:
         chain.append(partnumber)
     parts = Part.objects.filter(partnumber=partnumber)
@@ -1094,24 +1089,58 @@ def part_parents(partnumber, maker, chain=[]):
         if p.substitution:
             pmaker = (p.brand and p.brand.title) or p.area.title
             if not maker or (maker and maker.lower() == pmaker.lower()):
-                part_parents(p.substitution, pmaker, chain)
+                part_parents(pmaker, p.substitution, chain)
     return chain
 
 
-def search_analogs(partnumber, maker=None):
+def search_analogs_local(maker, partnumber):
 
-    related_partnumbers = part_children(partnumber, maker, [])[1:] + part_parents(partnumber, maker, [])[1:]
-
-    from django.db.models import Q
-
+    related_partnumbers = part_children(maker, partnumber, [])[1:] + part_parents(maker, partnumber, [])[1:]
     analogs = PartAnalog.objects.filter(Q(partnumber=partnumber) | Q(partnumber__in=related_partnumbers))
 
-    data = []
+    data = list()
     for a in analogs:
         founds = Part.get_data_parts(a.partnumber_analog, a.brand_analog.title)
         if founds:
             data.extend(founds)
     return data
+
+
+def search_analogs_external(maker, partnumber):
+    from common.views import PartSearchRockAuto
+    resources = [
+        PartSearchRockAuto
+    ]
+    founds = list()
+    for r in resources:
+        founds.extend(r.search(maker, partnumber))
+    return founds
+
+
+def search_oem(maker, partnumber):
+    founds_local = search_local(maker, partnumber)
+    analog_founds = search_analogs_local(maker, partnumber)
+    return founds_local, analog_founds
+
+
+def search_aftermarket(maker, partnumber):
+    founds = search_analogs_external(maker, partnumber)
+    founds_local = search_analogs_local(maker, partnumber)
+    return list(), founds + founds_local
+
+
+def search_moto(maker, partnumber):
+    founds = search_local(maker, partnumber)
+    analog_founds = search_analogs_local(maker, partnumber)
+    return founds, analog_founds
+
+
+def get_search_func(search_type):
+    return dict(
+        oem=search_oem,
+        aftermarket=search_aftermarket,
+        moto=search_moto,
+    )[search_type]
 
 
 class Client(User):

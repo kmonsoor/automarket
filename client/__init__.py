@@ -4,23 +4,18 @@ import re
 from rpc4django import rpcmethod
 from django.contrib.auth import authenticate
 
-from data.models import search_local, all_brands
-
-from client.views import calc_parts_client, search_analogs
+from data.models import (
+    search_local, all_brands, calc_parts_client, search_analogs_local
+)
 
 
 @rpcmethod(name='getBrands', signature=['array', 'string', 'string', 'string'])
 def getBrands(username, password, partnumber):
     '''
     Возвращает список брендов.
-
-    <br/><br/>Python XML-RPC:
-    <pre class="prettyprint lang-python">
     from xmlrpclib import ServerProxy
     server = ServerProxy('http://newparts-online.com/rpc/')
     response = server.getBrands('username', 'password', 'YOK93209')
-    </pre>
-    <br/>
     '''
 
     if not isinstance(username, basestring):
@@ -51,14 +46,9 @@ def getBrands(username, password, partnumber):
 def getParts(username, password, brand, partnumber):
     '''
     Возвращает найденные детали и их аналоги с подробной информацией.
-
-    <br/><br/>Python XML-RPC:
-    <pre class="prettyprint lang-python">
     from xmlrpclib import ServerProxy
     server = ServerProxy('http://newparts-online.com/rpc/')
     response = server.getParts('username', 'password', 'VOLVO', 'YOK93209')
-    </pre>
-    <br/>
     '''
 
     if not isinstance(brand, basestring):
@@ -85,7 +75,7 @@ def getParts(username, password, brand, partnumber):
     if not founds:
         return {}
 
-    analog_founds = search_analogs(partnumber)
+    analog_founds = search_analogs_local(None, partnumber)
 
     parts = calc_parts_client(founds, user, render_for_template=False)
     analogs = calc_parts_client(analog_founds, user)

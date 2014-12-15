@@ -31,7 +31,7 @@ from data.models import (
     OrderedItem, UserProfile, Invoice, Package, Shipment, BalanceItem,
     BALANCEITEM_TYPE_INVOICE, PACKAGE_STATUS_RECEIVED,
     BALANCEITEM_TYPE_PAYMENT, BrandGroup,
-    search_local, search_analogs, Basket, calc_parts_manager_client
+    search_local, search_analogs_local, Basket, calc_parts_manager_client
 )
 
 from data.forms import (

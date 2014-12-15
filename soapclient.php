@@ -29,10 +29,6 @@ function get_client() {
          array('encoding'=>'cp1251','connection_timeout' => 3));    
 }
 
-
-define("LOGIN", 'SP');
-define("PASSWD",'newmotors');
-
 function utf2cp($utf_string) {
     return iconv('utf8','windows-1251', $utf_string);
 }
@@ -41,8 +37,17 @@ function cp2utf($cp_string) {
     return iconv('windows-1251', 'utf8', $cp_string);
 }
 
+function cp2utf8_array($array) {
+    array_walk_recursive($array, function(&$item, $key){
+        if(!mb_detect_encoding($item, 'utf-8', true)){
+                $item = cp2utf($item);
+        }
+    });
+    return $array;
+}
+
 function to_json($var) {
-    return json_encode($var);
+    return json_encode(cp2utf8_array($var));
 }
 
 function from_json($json_string) {

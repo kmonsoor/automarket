@@ -1,13 +1,15 @@
 # -*- coding=UTF-8 -*-
 
 from django import forms
-from common.views import PartSearch
 from data.models import Basket
 
-def makers():
-    l = PartSearch().get_make_options()
-    l.insert(0, ('', '----------'))
-    return l
+
+SEARCH_TYPE_CHOICES = (
+    ('oem', u'OEM'),
+    ('aftermarket', u'AFTMARKET'),
+    ('moto', u'MOTO'),
+)
+
 
 class SearchForm(forms.Form):
 
@@ -16,8 +18,21 @@ class SearchForm(forms.Form):
         super(SearchForm, self).__init__(*args, **kwargs)
         self.fields['maker'].widget.choices = maker_choices
 
-    maker = forms.CharField(widget=forms.Select(choices=[], attrs={'style':'width: 200px'}), label=u'MAKE', required=False)
-    part_number = forms.CharField(widget=forms.TextInput(attrs={'style':'width: 192px'}), label=u'Part Number', required=True)
+    maker = forms.CharField(
+        widget=forms.Select(choices=[], attrs={'style':'width: 310px'}),
+        label=u'MAKE',
+        required=False)
+
+    part_number = forms.CharField(
+        widget=forms.TextInput(attrs={'style':'width: 302px'}),
+        label=u'Part Number',
+        required=True)
+
+    search_type = forms.ChoiceField(
+        required=True,
+        widget=forms.RadioSelect,
+        choices=SEARCH_TYPE_CHOICES,
+        initial='oem')
 
 
 class BasketForm(forms.Form):

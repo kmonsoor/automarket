@@ -1,36 +1,34 @@
 # -*- coding=UTF-8 -*-
-import os
-import re
-import pyExcelerator as xl
-from datetime import datetime
+
+import datetime
 import dateutil
+import os
+import pyExcelerator
+import re
+
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db import connection
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+
 from lib.decorators import render_to
 from lib.paginator import SimplePaginator
-from lib.sort import SortHeaders
 from lib.qs_filter import QSFilter
+from lib.sort import SortHeaders
+
+from common.views import PartSearch
 from data.models import (
-    OrderedItem, BrandGroup, Area, Basket,
-    Shipment, Package, BalanceItem, search_local, search_analogs, calc_parts_client,
-    BALANCEITEM_TYPE_PREINVOICE
+    OrderedItem, BrandGroup, Area, Basket, Shipment, Package, BalanceItem,
+    calc_parts_client, get_search_func, BALANCEITEM_TYPE_PREINVOICE
 )
 from data.forms import (
-    OrderedItemsFilterForm, ShipmentsFilterForm, BalanceClientFilterForm
+    OrderedItemsFilterForm, ShipmentsFilterForm, BalanceClientFilterForm,
+    CLIENT_FIELD_LIST, CLIENT_SHIPMENTS_FIELD_LIST,
+    BALANCE_CLIENT_FIELD_LIST_CLIENT
 )
 
 from client.forms import SearchForm
-from common.views import PartSearch
-from django.shortcuts import get_object_or_404
-
-from data.forms import (
-    CLIENT_FIELD_LIST,
-    CLIENT_SHIPMENTS_FIELD_LIST,
-    BALANCE_CLIENT_FIELD_LIST_CLIENT
-)
-from django.http import HttpResponse
-from django.conf import settings
-
-from django.db import connection
 
 
 def get_period(request, prefix, field, default_period=None):
@@ -61,7 +59,7 @@ def get_period(request, prefix, field, default_period=None):
 
     rated_period = None
     if period:
-        now = datetime.now()
+        now = datetime.datetime.now()
         if period == 'w':
             rated_period = now + dateutil.relativedelta.relativedelta(
                 weeks=-1, weekday=dateutil.relativedelta.calendar.SATURDAY,
@@ -145,12 +143,15 @@ def search(request):
         _post = request.POST.copy()
         _post['part_number'] = re.sub('[^\w]', '', _post['part_number']).strip().upper()
         form = SearchForm(_post, maker_choices=maker_choices)
+
         if form.is_valid():
+
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
+            search_type = form.cleaned_data['search_type']
 
-            founds = search_local(maker, part_number)
-            analog_founds = search_analogs(part_number, maker)
+            search_func = get_search_func(search_type)
+            founds, analog_founds = search_func(maker, part_number)
 
             if founds:
                 makers = set(x['maker'] for x in founds)
@@ -162,18 +163,12 @@ def search(request):
                     parts = calc_parts_client(founds, request.user)
                     analogs = calc_parts_client(analog_founds, request.user)
 
-            if not founds:
-                if analog_founds:
-                    analogs = calc_parts_client(analog_founds, request.user)
-                else:
-                    show_maker_field = True
-                    if maker:
-                        founds = search_external.search(maker, part_number)
-                        if founds:
-                            parts = calc_parts_client(founds, request.user)
-                            analogs = calc_parts_client(analog_founds, request.user)
-                        else:
-                            msg = u"Ничего не найдено"
+            elif not founds and analog_founds:
+                analogs = calc_parts_client(analog_founds, request.user)
+
+            else:
+                msg = u"Ничего не найдено"
+
     else:
         form = SearchForm(maker_choices=maker_choices)
 
@@ -711,7 +706,7 @@ def export_order(request):
                         .order_by('brandgroup__direction__po', 'ponumber')
 
     filename = os.path.join(settings.MEDIA_ROOT, 'temp.xls')
-    book = xl.Workbook()
+    book = pyExcelerator.Workbook()
     sheet = book.add_sheet('ORDERS')
 
     i = 0
@@ -737,7 +732,7 @@ def export_order(request):
     os.chmod(filename, 0777)
     content = open(filename, 'rb').read()
     response = HttpResponse(content, mimetype='application/vnd.ms-excel')
-    name = '%s-%s.xls' % ('orders', datetime.now().strftime('%m-%d-%Y-%H-%M'))
+    name = '%s-%s.xls' % ('orders', datetime.datetime.now().strftime('%m-%d-%Y-%H-%M'))
     response['Content-Disposition'] = 'inline; filename=%s' % name
     os.remove(filename)
     return response

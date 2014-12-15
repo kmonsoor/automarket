@@ -138,7 +138,13 @@ def basket_order(request):
         if all([item.brandgroup, item.area, item.brand_name]):
             data['brandgroup'] = BrandGroup.objects.get(title__iexact=item.brandgroup)
             data['area'] = Area.objects.get(title__iexact=item.area)
-            data['brand'] = Brand.objects.get(title__iexact=item.brand_name)
+            try:
+                data['brand'] = Brand.objects.get(title__iexact=item.brand_name)
+            except Brand.DoesNotExist:
+                b = Brand(title=item.brand_name)
+                b.save()
+                b.area_set.add(data['area'])
+                data['brand'] = b
         else:  # remove it
             sql = """
             select a.area_id, a.brand_id from data_area_brands a

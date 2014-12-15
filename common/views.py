@@ -1,27 +1,26 @@
 # -*- coding=UTF-8 -*-
-import logging
-log = logging.getLogger("common.views")
 
-import datetime
-import SOAPpy
-import re
-import urllib
 import mechanize
+import re
+import requests
+import urllib
 import urllib2
-from SOAPpy import WSDL
+import xml.etree.ElementTree as et
+from BeautifulSoup import BeautifulSoup, NavigableString
 
 from django.http import HttpResponseRedirect
 from django.contrib.auth import login, logout, authenticate
-from django.conf import settings
 from django.core.urlresolvers import reverse
 
 from lib.decorators import render_to
-from common.forms import UserAuthForm
-from data.models import *
-from BeautifulSoup import BeautifulSoup, NavigableString
+
+
+import logging
+log = logging.getLogger("common.views")
 
 
 def is_manager(user):
+    from data.models import UserProfile
     try:
         user_profile = UserProfile.objects.get(user=user)
     except UserProfile.DoesNotExist:
@@ -32,6 +31,8 @@ def is_manager(user):
 
 @render_to('common/start.html')
 def start(request):
+
+    from common.forms import UserAuthForm
     message = ''
 
     if request.user.is_active and request.user.is_authenticated():
@@ -72,55 +73,29 @@ def exit(request):
     return HttpResponseRedirect('/accounts/login/')
 
 
-def show_balance(request, user=None):
-    from common.forms import Selectperiod
-    if not user:
-        user = request.user
-    if request.method == 'POST':
-        # From / to form
-        form = Selectperiod(request.POST.copy())
-        if form.is_valid():
-            start = form.cleaned_data['from_date']
-            finish = form.cleaned_data['to_date']
-    else:
-        form = Selectperiod()
-        start = form.fields['from_date'].initial
-        finish = form.fields['to_date'].initial
-    finish += datetime.timedelta(hours=24)
-    pitems = Invoice.objects.get_for_period(user, start, finish)
-    bills = Bill.objects.get_for_period(user, start, finish)
-
-    from lib.lists import sort_by_attr
-    debet = sort_by_attr(pitems + bills, 'date')
-
-    credit = Payment.objects.get_for_period(user, start, finish)
-
-    #period_custom_bills
-    return {'select_period_form': form, 'user': user, 'debet': debet, 'credit': credit}
-
-
 class PartSearchBase(object):
     BRAND_GROUP_TITLE = 'OEM'
     SEARCH_URL = None
     FORM_NAME = None
 
     def get_make_options(self):
-        """
-        Returns makers in form [(id, name), ]
-        """
         return []
 
     def get_maker_id(self, maker_string):
         try:
-            return [x[0] for x in self.get_make_options() \
-                     if x[1].lower() == maker_string.lower()][0]
+            return [
+                x[0] for x in self.get_make_options()
+                if x[1].lower() == maker_string.lower()
+            ][0]
         except IndexError:
             return None
 
     def get_maker_name(self, maker_id):
         try:
-            return [x[1] for x in self.get_make_options() \
-                     if x[0] == str(maker_id)][0]
+            return [
+                x[1] for x in self.get_make_options()
+                if x[0] == str(maker_id)
+            ][0]
         except IndexError:
             return None
 
@@ -277,8 +252,9 @@ class PartSearchPartsCom(PartSearchBase):
                 fields = ['partnumber', 'MSRP', 'core_price', 'price']
                 data = dict(zip(fields, _data))
                 td_descr = trs[1].find('td', {'colspan': 3})
-                description = " ".join([t for t in td_descr.contents \
-                    if type(t) is NavigableString])
+                description = " ".join(
+                    t for t in td_descr.contents
+                    if type(t) is NavigableString)
                 data['description'] = description
                 for k, v in data.items():
                     if v.startswith('$'):
@@ -542,10 +518,100 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
         return None
 
 
+class PartSearchRockAuto(object):
+
+    @classmethod
+    def search(cls, maker, partnumber):
+
+        session = requests.Session()
+        uri = 'http://www.rockauto.com/catalog/catalogxml.php'
+        headers = {
+            'X-Requested-With': 'XMLHttpRequest',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/31.0.1650.63 Chrome/31.0.1650.63 Safari/537.36',
+            'Referer': 'http://www.rockauto.com/catalog/searchresults.php',
+            'Origin': 'http://www.rockauto.com',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'Connection': 'keep-alive',
+            'Accept-Language': 'en-US,en;q=0.8,ru;q=0.6,pl;q=0.4,de;q=0.2',
+            'Accept': '*/*',
+            'Accept-Encoding': 'gzip,deflate,sdch',
+            'Host': 'www.rockauto.com',
+        }
+        data = {
+            'func': 'partsearch',
+            'searchtext': partnumber,
+            '': '',
+        }
+        resp = session.post(uri, data=data, headers=headers)
+        resp.raise_for_status()
+
+        analogs = []
+        root = et.fromstring(resp.content)
+        for part in root.iter('part'):
+            option = list(part.iter('option'))[0]
+            data = {
+                'func': 'add',
+                'parttype': part.attrib['parttype'],
+                'partkey[0]': part.attrib['partkey'],
+                'carcode': '0',
+                'warehouse[0]': option.attrib['warehouse'],
+                'whpartnum[0]': option.attrib['whpartnum'],
+                'notekey[0]': '0',
+                'multiple[0]': '1',
+                'optionlist[0]': 0,
+                'optionchoice[0]': 0,
+                '': '',
+            }
+            resp = session.post(uri, data=data, headers=headers)
+            resp.raise_for_status()
+
+            data = {
+                'func': 'setdest',
+                'country': 'US',
+                'zipcode': '10004',
+                '': '',
+            }
+            resp = session.post(uri, data=data, headers=headers)
+            resp.raise_for_status()
+
+            basket = et.fromstring(resp.content)
+            bpart = list(basket.iter('part'))[0]
+
+            total = list(basket.iter('total'))[0]
+            parttype = list(basket.iter('parttype'))[0]
+
+            analogs.append({
+                'partnumber': str(bpart.attrib['pn']),
+                'MSRP': float(total.attrib['cost']),
+                'core_price': float(bpart.attrib['core']),
+                'description': str(parttype.attrib['description']),
+                'description_ru': '',
+                'sub_chain': '',
+                'cost': float(total.attrib['cost']),
+                'brandname': 'Rockauto',
+                'brandgroup': 'AFTMARK',
+                'party': 1,
+                'available': None,
+                'maker': str(bpart.attrib['cat']),
+            })
+
+            for el in basket.iter('othercart'):
+                data = {
+                    'func': 'delcart',
+                    'cartid': el.attrib['id'],
+                    '': '',
+                }
+                resp = session.post(uri, data=data, headers=headers)
+                resp.raise_for_status()
+
+        return analogs
+                
+
 class PartSearch(object):
 
     _search_registry = [
         PartSearchAutopartspeople,
+        # PartSearchRockAuto,
         # PartSearchTradeMotionCom,
         # PartSearchInfinitiPartsOnlineCom,
         # PartSearchPorscheOEMPartsCom,
@@ -594,7 +660,7 @@ class PartSearch(object):
         "Toyota",
         "Volkswagen",
         "Volvo"
-        ]
+    ]
 
     def maker_choices(self):
         return [('', '----')] + [(x, x) for x in self.makers]
@@ -630,68 +696,3 @@ class PartSearch(object):
 
         found = _make_search()
         return found
-
-
-class SoapClient(object):
-    login = settings.SOAP_LOGIN
-    pwd = settings.SOAP_PASSWORD
-    wsdl = settings.WSDL_URL
-    user_param = {'login': login, 'passwd': pwd}
-
-    def __init__(self, *args, **kwargs):
-        if 'login' in kwargs and kwargs['login']\
-           and 'pwd' in kwargs and kwargs['pwd']:
-            self.login = kwargs['login']
-            self.pwd = kwargs['pwd']
-
-        self.server = WSDL.Proxy(self.wsdl)
-        SOAPpy.Config.debug = 1
-        #SOAPpy.Config.dict_encoding = 'cp1251'
-
-    # test function
-    def get_invoice_list(self):
-        print self.server.getInvoiceList(self.user_param)
-
-    def insert_in_basket(self, orders):
-        data = []
-        for order in orders:
-            if order.brandgroup.add_brand_to_comment\
-                   and order.brandgroup.direction.title == 'US':
-                comment_supplier = u'%s  %s' % (order.comment_supplier, order.brand.title)
-            else:
-                comment_supplier = order.comment_supplier
-
-            detail = {
-                'Brand': order.area.title,
-                'Coment': comment_supplier,
-                'Description': order.description_ru,
-                'DescriptionEng': order.description_en,
-                'Qty': order.quantity,
-                'OemCode': order.part_number,
-                'CustomerId': int(order.id),
-                'Weight': order.weight if order.weight else '',
-            }
-            data.append(detail)
-
-        try:
-            code, res = 0, self.server.insertBasket(PartsArray=data, UserParam=self.user_param)
-        except:
-            code, res = 500, None
-
-        return [code, res]
-
-    def get_client_id(self):
-        try:
-            code, res = 0, self.server.getClientId(Login=self.login, Passwd=self.pwd)
-        except:
-            code, res = 500, None
-
-        return [code, res]
-
-    def send_order(self):
-        try:
-            code, res = 0, self.server.sendOrder(self.user_param)
-        except:
-            code, res = 500, None
-
-        return [code, res]
