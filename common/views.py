@@ -548,7 +548,14 @@ class PartSearchRockAuto(object):
         analogs = []
         root = et.fromstring(resp.content)
         for part in root.iter('part'):
-            option = list(part.iter('option'))[0]
+
+            for option in part.iter('option'):
+                if option.attrib.get('warehouse'):
+                    break
+
+            if maker and part.attrib['cat'].lower() != maker.lower():
+                continue
+
             data = {
                 'func': 'add',
                 'parttype': part.attrib['parttype'],
@@ -556,8 +563,8 @@ class PartSearchRockAuto(object):
                 'carcode': '0',
                 'warehouse[0]': option.attrib['warehouse'],
                 'whpartnum[0]': option.attrib['whpartnum'],
-                'notekey[0]': '0',
-                'multiple[0]': '1',
+                'notekey[0]': option.attrib['notekey'],
+                'multiple[0]': option.attrib['multiple'],
                 'optionlist[0]': 0,
                 'optionchoice[0]': 0,
                 '': '',
@@ -568,7 +575,7 @@ class PartSearchRockAuto(object):
             data = {
                 'func': 'setdest',
                 'country': 'US',
-                'zipcode': '10004',
+                'zipcode': '11220',
                 '': '',
             }
             resp = session.post(uri, data=data, headers=headers)

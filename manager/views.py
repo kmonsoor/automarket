@@ -977,7 +977,7 @@ def search(request):
                 request.session.modified = True
 
             founds = search_local(maker, part_number)
-            analog_founds = search_analogs(part_number, maker)
+            analog_founds = search_analogs_local(part_number, maker)
 
             if founds:
                 makers = set(x['maker'] for x in founds)

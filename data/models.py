@@ -1106,10 +1106,37 @@ def search_analogs_local(maker, partnumber):
     return data
 
 
-def search_analogs_external(maker, partnumber):
+default_areas = {
+    'oem': [
+        'Acura', 'Box', 'Ford', 'Gm', 'Honda', 'Hyundai', 'Infiniti', 
+        'Jaguar', 'Kia', 'Land rover', 'Lexus', 'Mazda', 'Mercedes-benz',
+        'Mitsubishi', 'Mopar', 'Nissan', 'Porsche', 'Saab', 'Subaru',
+        'Suzuki', 'Toyota', 'Volkswagen', 'Volvo',
+    ],
+    'moto': [
+        'Brp', 'Honda moto', 'Kawasaki', 'Other', 'Polaris', 'Pu',
+        'Ronayers', 'Suzuki moto', 'Tr', 'Wop', 'Yamaha',
+    ],
+    'aftmark': [
+        'Ekeystone', 'Empire', 'Magnum', 'Nexpart', 'Other', 'Rockauto',
+        'Tonza', 'Turboii', 'Uniselect', 'Weathertech',
+    ],
+}
+
+
+def get_brandgroup_areas(title):
+    try:
+        bg = BrandGroup.objects.select_related().get(title__iexact=title)
+        areas = list(bg.area.values_list('title', flat=True))
+    except BrandGroup.DoesNotExist:
+        areas = default_areas[title]
+    return areas
+
+
+def search_aftmark_external(maker, partnumber):
     from common.views import PartSearchRockAuto
     resources = [
-        PartSearchRockAuto
+        PartSearchRockAuto,
     ]
     founds = list()
     for r in resources:
@@ -1118,27 +1145,38 @@ def search_analogs_external(maker, partnumber):
 
 
 def search_oem(maker, partnumber):
-    founds_local = search_local(maker, partnumber)
-    analog_founds = search_analogs_local(maker, partnumber)
-    return founds_local, analog_founds
+    founds_local = search_local(maker, partnumber) or list()
+    oem_areas = get_brandgroup_areas('oem')
+    oem_parts = list(
+        part for part in founds_local
+        if part['brandname'] in oem_areas)
+    founds_analog = search_analogs_local(maker, partnumber)
+    return oem_parts, founds_analog
 
 
-def search_aftermarket(maker, partnumber):
-    founds = search_analogs_external(maker, partnumber)
-    founds_local = search_analogs_local(maker, partnumber)
-    return list(), founds + founds_local
+def search_aftmark(maker, partnumber):
+    founds_external = search_aftmark_external(maker, partnumber) or list()
+    founds_local = search_analogs_local(maker, partnumber) or list()
+    aftmark_areas = get_brandgroup_areas('aftmark')
+    aftmark_parts = list(
+        part for part in (founds_external + founds_local)
+        if part['brandname'] in aftmark_areas)
+    return aftmark_parts, list()
 
 
 def search_moto(maker, partnumber):
-    founds = search_local(maker, partnumber)
-    analog_founds = search_analogs_local(maker, partnumber)
-    return founds, analog_founds
+    founds = search_local(maker, partnumber) or list()
+    moto_areas = get_brandgroup_areas('moto')
+    moto_parts = list(
+        part for part in founds
+        if part['brandname'] in moto_areas)
+    return moto_parts, list()
 
 
 def get_search_func(search_type):
     return dict(
         oem=search_oem,
-        aftermarket=search_aftermarket,
+        aftermarket=search_aftmark,
         moto=search_moto,
     )[search_type]
 

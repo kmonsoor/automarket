@@ -38,11 +38,9 @@ function onsubmit_basket_form() {
   <div style="width: 450px;" class="aligned">
     <form method="post" id="formSearch" action="">
       <div class="form-row">
-        {{ form.search_type.errors }}
         {{ form.search_type }}
       </div>
       <div class="form-row">
-        {{ form.part_number.errors }}
         <label for="id_part_number">Введите номер* :</label> {{ form.part_number }}
       </div>
       {% if show_maker_field %}
