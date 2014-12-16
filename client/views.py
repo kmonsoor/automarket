@@ -149,9 +149,11 @@ def search(request):
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
             search_type = form.cleaned_data['search_type']
+            search_in_analogs = form.cleaned_data['search_in_analogs']
 
             search_func = get_search_func(search_type)
-            founds, analog_founds = search_func(maker, part_number)
+            founds, analog_founds = search_func(
+                maker, part_number, search_in_analogs=search_in_analogs)
 
             if founds:
                 makers = set(x['maker'] for x in founds)

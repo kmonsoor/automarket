@@ -521,9 +521,8 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
 class PartSearchRockAuto(object):
 
     @classmethod
-    def search(cls, maker, partnumber):
+    def search(cls, maker, partnumber, only_coincedences=True):
 
-        session = requests.Session()
         uri = 'http://www.rockauto.com/catalog/catalogxml.php'
         headers = {
             'X-Requested-With': 'XMLHttpRequest',
@@ -542,19 +541,41 @@ class PartSearchRockAuto(object):
             'searchtext': partnumber,
             '': '',
         }
-        resp = session.post(uri, data=data, headers=headers)
+        resp = requests.post(uri, data=data, headers=headers)
         resp.raise_for_status()
 
-        analogs = []
+        analogs = list()
         root = et.fromstring(resp.content)
-        for part in root.getiterator('part'):
+        parts = list(root.getiterator('part'))
+
+        makers = set()
+        for part in parts:
+            makers.add(part.attrib['cat'].capitalize())
+
+        if not maker and only_coincedences and len(makers) > 1:
+            for m in makers:
+                analogs.append({
+                    'brandname': 'Rockauto',
+                    'brandgroup': 'AFTMARK',
+                    'maker': m,
+                })
+            return analogs
+
+        session = requests.Session()
+        for part in parts:
+
+            if only_coincedences and part.attrib['pn'] != partnumber:
+                continue
+
+            if maker and part.attrib['cat'].lower() != maker.lower():
+                continue
+
+            if int(list(part.getiterator('partoptions'))[0].attrib['type']) != 0:
+                continue
 
             for option in part.getiterator('option'):
                 if option.attrib.get('warehouse'):
                     break
-
-            if maker and part.attrib['cat'].lower() != maker.lower():
-                continue
 
             data = {
                 'func': 'add',
@@ -591,7 +612,7 @@ class PartSearchRockAuto(object):
                 'partnumber': str(bpart.attrib['pn']),
                 'MSRP': float(total.attrib['cost']),
                 'core_price': float(bpart.attrib['core']),
-                'description': str(parttype.attrib['description']),
+                'description': str(parttype.attrib['description'].split(':')[-1].strip()),
                 'description_ru': '',
                 'sub_chain': '',
                 'cost': float(total.attrib['cost']),
@@ -599,7 +620,7 @@ class PartSearchRockAuto(object):
                 'brandgroup': 'AFTMARK',
                 'party': 1,
                 'available': None,
-                'maker': str(bpart.attrib['cat']),
+                'maker': str(bpart.attrib['cat'].capitalize()),
             })
 
             for el in basket.getiterator('othercart'):

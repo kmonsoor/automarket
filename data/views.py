@@ -141,7 +141,7 @@ def basket_order(request):
             try:
                 data['brand'] = Brand.objects.get(title__iexact=item.brand_name)
             except Brand.DoesNotExist:
-                b = Brand(title=item.brand_name)
+                b = Brand(title=item.brand_name.capitalize())
                 b.save()
                 b.area_set.add(data['area'])
                 data['brand'] = b

@@ -1133,28 +1133,32 @@ def get_brandgroup_areas(title):
     return areas
 
 
-def search_aftmark_external(maker, partnumber):
+def search_aftmark_external(maker, partnumber, full_coincedences=True):
     from common.views import PartSearchRockAuto
     resources = [
         PartSearchRockAuto,
     ]
     founds = list()
     for r in resources:
-        founds.extend(r.search(maker, partnumber))
+        founds.extend(r.search(maker, partnumber, full_coincedences))
     return founds
 
 
-def search_oem(maker, partnumber):
+def search_oem(maker, partnumber, **kwargs):
     founds_local = search_local(maker, partnumber) or list()
     oem_areas = get_brandgroup_areas('oem')
     oem_parts = list(
         part for part in founds_local
         if part['brandname'] in oem_areas)
     founds_analog = search_analogs_local(maker, partnumber)
+
+    if kwargs.get('search_in_analogs'):
+        founds_analog += search_aftmark_external(
+            maker, partnumber, full_coincedences=False)
     return oem_parts, founds_analog
 
 
-def search_aftmark(maker, partnumber):
+def search_aftmark(maker, partnumber, **kwargs):
     founds_external = search_aftmark_external(maker, partnumber) or list()
     founds_local = search_analogs_local(maker, partnumber) or list()
     aftmark_areas = get_brandgroup_areas('aftmark')
@@ -1164,7 +1168,7 @@ def search_aftmark(maker, partnumber):
     return aftmark_parts, list()
 
 
-def search_moto(maker, partnumber):
+def search_moto(maker, partnumber, **kwargs):
     founds = search_local(maker, partnumber) or list()
     moto_areas = get_brandgroup_areas('moto')
     moto_parts = list(

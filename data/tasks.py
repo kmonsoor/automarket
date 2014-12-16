@@ -47,7 +47,7 @@ class SavePriceFileBase(Task):
             data.get('cost'),
             data.get('core_price'),
             data.get('substitution'),
-            data.get('description'),
+            (data.get('description') or '').replace('\\', '\b'),
             datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             data.get('brand'),
             data.get('party'),
