@@ -1150,9 +1150,10 @@ def search_oem(maker, partnumber, **kwargs):
     oem_parts = list(
         part for part in founds_local
         if part['brandname'] in oem_areas)
-    founds_analog = search_analogs_local(maker, partnumber)
 
+    founds_analog = list()
     if kwargs.get('search_in_analogs'):
+        founds_analog = search_analogs_local(maker, partnumber)
         founds_analog += search_aftmark_external(
             maker, partnumber, full_coincedences=False)
     return oem_parts, founds_analog
