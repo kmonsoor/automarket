@@ -801,7 +801,7 @@ def all_brands():
 
 
 def search_local(maker_id, partnumber):
-    return Part.get_data_parts(partnumber, maker_id) or None
+    return Part.get_data_parts(partnumber, maker_id)
 
 
 def normalize_sum(value):
@@ -1069,113 +1069,83 @@ class PartAnalog(models.Model):
         verbose_name_plural = u"аналоги"
 
 
-def part_children(maker, partnumber, chain=[]):
-    if partnumber not in chain:
-        chain.append(partnumber)
-    parts = Part.objects.filter(partnumber=partnumber)
-    for p in parts:
-        for s in Part.objects.filter(substitution=p.partnumber):
-            smaker = (s.brand and s.brand.title) or s.area.title
-            if not maker or (maker and maker.lower() == smaker.lower()):
-                part_parents(smaker, p.substitution, chain)
-    return chain
+AUTO_ORIGINALS_AREAS = [
+    'acura', 'audi', 'bmw', 'box', 'buick', 'cadillac', 'chevrolet',
+    'chrysler', 'dodge', 'eagle', 'ford', 'gm', 'geo', 'gmc', 'honda',
+    'hummer', 'hyundai', 'infiniti', 'isuzu', 'jaguar', 'jeep', 'kia',
+    'land rover', 'lexus', 'lincoln', 'mazda', 'mercedes-benz', 'mercury',
+    'mini', 'mitsubishi', 'mopar', 'nissan', 'oldsmobile', 'plymouth',
+    'pontiac', 'porsche', 'saab', 'saturn', 'scion', 'subaru', 'suzuki',
+    'toyota', 'volkswagen', 'volvo',
+]
 
 
-def part_parents(maker, partnumber, chain=[]):
-    if partnumber not in chain:
-        chain.append(partnumber)
-    parts = Part.objects.filter(partnumber=partnumber)
-    for p in parts:
-        if p.substitution:
-            pmaker = (p.brand and p.brand.title) or p.area.title
-            if not maker or (maker and maker.lower() == pmaker.lower()):
-                part_parents(pmaker, p.substitution, chain)
-    return chain
+MOTO_AREAS = [
+    'brp', 'honda moto', 'kawasaki', 'other', 'polaris', 'pu',
+    'ronayers', 'suzuki moto', 'tr', 'wop', 'yamaha',
+]
 
 
-def search_analogs_local(maker, partnumber):
+def search_local_moto(maker, partnumber):
+    founds = search_local(maker, partnumber)
+    return list(
+        part for part in founds
+        if part['brandname'].lower() in MOTO_AREAS)
 
-    related_partnumbers = part_children(maker, partnumber, [])[1:] + part_parents(maker, partnumber, [])[1:]
-    analogs = PartAnalog.objects.filter(Q(partnumber=partnumber) | Q(partnumber__in=related_partnumbers))
 
+def search_local_auto(maker, partnumber):
+    originals = []
+    analogs = []
+
+    for part in search_local(maker, partnumber):
+        if part['brandname'].lower() in AUTO_ORIGINALS_AREAS:
+            originals.append(part)
+        else:
+            analogs.append(part)
+    return originals, analogs
+
+
+def search_local_auto_analogs_for_original(maker, partnumber):
     data = list()
+    analogs = PartAnalog.objects.filter(partnumber=partnumber)
     for a in analogs:
         founds = Part.get_data_parts(a.partnumber_analog, a.brand_analog.title)
-        if founds:
-            data.extend(founds)
+        for part in founds:
+            if part['brandname'] not in AUTO_ORIGINALS_AREAS:
+                data.append(part)
     return data
 
 
-default_areas = {
-    'oem': [
-        'Acura', 'Box', 'Ford', 'Gm', 'Honda', 'Hyundai', 'Infiniti', 
-        'Jaguar', 'Kia', 'Land rover', 'Lexus', 'Mazda', 'Mercedes-benz',
-        'Mitsubishi', 'Mopar', 'Nissan', 'Porsche', 'Saab', 'Subaru',
-        'Suzuki', 'Toyota', 'Volkswagen', 'Volvo',
-    ],
-    'moto': [
-        'Brp', 'Honda moto', 'Kawasaki', 'Other', 'Polaris', 'Pu',
-        'Ronayers', 'Suzuki moto', 'Tr', 'Wop', 'Yamaha',
-    ],
-    'aftmark': [
-        'Ekeystone', 'Empire', 'Magnum', 'Nexpart', 'Other', 'Rockauto',
-        'Tonza', 'Turboii', 'Uniselect', 'Weathertech',
-    ],
-}
-
-
-def get_brandgroup_areas(title):
-    try:
-        bg = BrandGroup.objects.select_related().get(title__iexact=title)
-        areas = list(bg.area.values_list('title', flat=True))
-    except BrandGroup.DoesNotExist:
-        areas = default_areas[title]
-    return areas
-
-
-def search_aftmark_external(maker, partnumber, full_coincedences=True):
+def search_external_auto_analogs(maker, partnumber, full_coincedences=True):
     from common.views import PartSearchRockAuto
     resources = [
         PartSearchRockAuto,
     ]
-    founds = list()
+    founds = []
     for r in resources:
         founds.extend(r.search(maker, partnumber, full_coincedences))
     return founds
 
 
 def search_oem(maker, partnumber, **kwargs):
-    founds_local = search_local(maker, partnumber) or list()
-    oem_areas = get_brandgroup_areas('oem')
-    oem_parts = list(
-        part for part in founds_local
-        if part['brandname'] in oem_areas)
-
-    founds_analog = list()
+    originals = search_local_auto(maker, partnumber)[0]
+    analogs = []
     if kwargs.get('search_in_analogs'):
-        founds_analog = search_analogs_local(maker, partnumber)
-        founds_analog += search_aftmark_external(
+        analogs = search_local_auto_analogs_for_original(maker, partnumber)
+        analogs += search_external_auto_analogs(
             maker, partnumber, full_coincedences=False)
-    return oem_parts, founds_analog
+    return originals, analogs
 
 
 def search_aftmark(maker, partnumber, **kwargs):
-    founds_external = search_aftmark_external(maker, partnumber) or list()
-    founds_local = search_analogs_local(maker, partnumber) or list()
-    aftmark_areas = get_brandgroup_areas('aftmark')
-    aftmark_parts = list(
-        part for part in (founds_external + founds_local)
-        if part['brandname'] in aftmark_areas)
-    return aftmark_parts, list()
+    analogs = search_external_auto_analogs(maker, partnumber)
+    analogs += search_local_auto(maker, partnumber)[1]
+    return analogs, []
 
 
 def search_moto(maker, partnumber, **kwargs):
-    founds = search_local(maker, partnumber) or list()
-    moto_areas = get_brandgroup_areas('moto')
-    moto_parts = list(
-        part for part in founds
-        if part['brandname'] in moto_areas)
-    return moto_parts, list()
+    founds = search_local_moto(maker, partnumber)
+    return founds, []
 
 
 def get_search_func(search_type):

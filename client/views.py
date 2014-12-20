@@ -17,10 +17,10 @@ from lib.paginator import SimplePaginator
 from lib.qs_filter import QSFilter
 from lib.sort import SortHeaders
 
-from common.views import PartSearch
 from data.models import (
     OrderedItem, BrandGroup, Area, Basket, Shipment, Package, BalanceItem,
-    calc_parts_client, get_search_func, BALANCEITEM_TYPE_PREINVOICE
+    calc_parts_client, get_search_func, BALANCEITEM_TYPE_PREINVOICE,
+    AUTO_ORIGINALS_AREAS
 )
 from data.forms import (
     OrderedItemsFilterForm, ShipmentsFilterForm, BalanceClientFilterForm,
@@ -131,17 +131,16 @@ def get_show_preinvoices(request, prefix):
 @login_required
 @render_to('client/search.html')
 def search(request):
-    parts = []
+    originals = []
     analogs = []
     msg = ''
 
-    search_external = PartSearch()
-    maker_choices = search_external.maker_choices()
+    maker_choices = [('', '----')] + [(x, x) for x in AUTO_ORIGINALS_AREAS]
     show_maker_field = False
 
     if request.method == 'POST':
         _post = request.POST.copy()
-        _post['part_number'] = re.sub('[^\w]', '', _post['part_number']).strip().upper()
+        _post['part_number'] = re.sub('^[\w]$', '', _post['part_number']).strip().upper()
         form = SearchForm(_post, maker_choices=maker_choices)
 
         if form.is_valid():
@@ -152,22 +151,20 @@ def search(request):
             search_in_analogs = form.cleaned_data['search_in_analogs']
 
             search_func = get_search_func(search_type)
-            founds, analog_founds = search_func(
+            original_founds, analog_founds = search_func(
                 maker, part_number, search_in_analogs=search_in_analogs)
 
-            if founds:
-                makers = set(x['maker'] for x in founds)
+            if original_founds:
+                makers = set(x['maker'] for x in original_founds)
                 if len(makers) > 1:
                     show_maker_field = True
                     form.fields['maker'].widget.choices = [
-                        ('', '----')] + list((x, x) for x in makers)
+                        ('', '----')] + [(x, x) for x in sorted(makers)]
                 else:
-                    parts = calc_parts_client(founds, request.user)
+                    originals = calc_parts_client(original_founds, request.user)
                     analogs = calc_parts_client(analog_founds, request.user)
-
-            elif not founds and analog_founds:
+            elif not original_founds and analog_founds:
                 analogs = calc_parts_client(analog_founds, request.user)
-
             else:
                 msg = u"Ничего не найдено"
 
@@ -176,7 +173,7 @@ def search(request):
 
     context = {
         'form': form,
-        'data': parts,
+        'data': originals,
         'analogs': analogs,
         'msg': msg,
         'show_maker_field': show_maker_field,

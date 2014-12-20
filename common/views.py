@@ -550,10 +550,12 @@ class PartSearchRockAuto(object):
 
         makers = set()
         for part in parts:
+            if only_coincedences and part.attrib['pn'] != partnumber:
+                continue
             makers.add(part.attrib['cat'].capitalize())
 
         if not maker and only_coincedences and len(makers) > 1:
-            for m in makers:
+            for m in sorted(makers):
                 analogs.append({
                     'brandname': 'Rockauto',
                     'brandgroup': 'AFTMARK',
@@ -562,20 +564,29 @@ class PartSearchRockAuto(object):
             return analogs
 
         session = requests.Session()
+
         for part in parts:
 
             if only_coincedences and part.attrib['pn'] != partnumber:
+                print partnumber
+                print part.attrib['pn']
                 continue
 
             if maker and part.attrib['cat'].lower() != maker.lower():
                 continue
 
-            if int(list(part.getiterator('partoptions'))[0].attrib['type']) != 0:
+            if int(list(part.getiterator('partoptions'))[0].attrib['type']) == 1:
+                # need choose color, size etc.
                 continue
 
             for option in part.getiterator('option'):
                 if option.attrib.get('warehouse'):
                     break
+
+            if float(part.attrib['total']) == 0:
+                # out of stock
+                # need choose size, color etc.
+                continue
 
             data = {
                 'func': 'add',
@@ -586,8 +597,8 @@ class PartSearchRockAuto(object):
                 'whpartnum[0]': option.attrib['whpartnum'],
                 'notekey[0]': option.attrib['notekey'],
                 'multiple[0]': option.attrib['multiple'],
-                'optionlist[0]': 0,
-                'optionchoice[0]': 0,
+                'optionlist[0]': option.attrib['type'],
+                'optionchoice[0]': option.attrib['value'],
                 '': '',
             }
             resp = session.post(uri, data=data, headers=headers)
@@ -601,6 +612,8 @@ class PartSearchRockAuto(object):
             }
             resp = session.post(uri, data=data, headers=headers)
             resp.raise_for_status()
+
+            print resp.content
 
             basket = et.fromstring(resp.content)
             bpart = list(basket.getiterator('part'))[0]
