@@ -6,7 +6,7 @@ from data.models import Basket
 
 SEARCH_TYPE_CHOICES = (
     ('oem', u'OEM (AUTO)'),
-    ('aftermarket', u'AFTERMARKET (тестирование)'),
+    ('aftermarket', u'AFTERMARKET'),
     ('moto', u'OEM (MOTO)'),
 )
 
