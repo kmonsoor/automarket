@@ -568,8 +568,6 @@ class PartSearchRockAuto(object):
         for part in parts:
 
             if only_coincedences and part.attrib['pn'] != partnumber:
-                print partnumber
-                print part.attrib['pn']
                 continue
 
             if maker and part.attrib['cat'].lower() != maker.lower():
@@ -612,8 +610,6 @@ class PartSearchRockAuto(object):
             }
             resp = session.post(uri, data=data, headers=headers)
             resp.raise_for_status()
-
-            print resp.content
 
             basket = et.fromstring(resp.content)
             bpart = list(basket.getiterator('part'))[0]

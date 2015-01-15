@@ -140,7 +140,7 @@ def search(request):
 
     if request.method == 'POST':
         _post = request.POST.copy()
-        _post['part_number'] = re.sub('^[\w]$', '', _post['part_number']).strip().upper()
+        _post['part_number'] = re.sub('[\W]+', '', _post['part_number']).strip().upper()
         form = SearchForm(_post, maker_choices=maker_choices)
 
         if form.is_valid():
