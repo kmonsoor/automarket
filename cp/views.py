@@ -1,13 +1,14 @@
 # -*- coding=utf-8 -*-
 import os
-import mechanize
 import cjson
 import pyExcelerator as xl
 from datetime import datetime
 import string
 import random
 import dateutil
+import requests
 from itertools import groupby
+from BeautifulSoup import BeautifulSoup
 
 from django.core import serializers
 from django.core.mail import send_mail
@@ -1587,15 +1588,16 @@ def groups(request):
 
 
 def automototrade_basket_filled():
+
+    s = requests.session()
+    data = {'login': settings.SOAP_LOGIN, 'password': settings.SOAP_PASSWORD}
+
     try:
-        br = mechanize.Browser()
-        br.open("http://automototrade.com/", timeout=5.0)
-        br.select_form(nr=0)
-        br["login"] = settings.SOAP_LOGIN
-        br["password"] = settings.SOAP_PASSWORD
-        br.submit()
-        link = list(br.links(url="./?key=personal&basket2"))[0]
-        count = int(link.text.decode('cp1251').lower().split(" ")[2].strip())
+        r = s.post('http://automototrade.com/', data)
+        bs = BeautifulSoup(r.content)
+        for a in bs.findAll('a'):
+            if a['href'] == '?key=personal&basket2':
+                count = int(a.findAll('b')[0].text)
     except:
         return True, u'Произошла ошибка при проверке корзины. Проверьте, пожалуйста, вручную.'
     else:

@@ -5,7 +5,6 @@ import logging
 logger = logging.getLogger('data.models')
 
 from django.db import models, transaction
-from django.db.models import Q
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils.html import mark_safe
