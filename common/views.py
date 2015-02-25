@@ -581,7 +581,7 @@ class PartSearchRockAuto(object):
                 if option.attrib.get('warehouse'):
                     break
 
-            if float(part.attrib['total']) == 0:
+            if float(option.attrib['total']) == 0:
                 # out of stock
                 # need choose size, color etc.
                 continue
@@ -617,10 +617,14 @@ class PartSearchRockAuto(object):
             total = list(basket.getiterator('total'))[0]
             parttype = list(basket.getiterator('parttype'))[0]
 
+            core_price = float(bpart.attrib['core'])
+            if core_price > 0.0:
+                total -= core_price
+
             analogs.append({
                 'partnumber': str(bpart.attrib['pn']),
                 'MSRP': float(total.attrib['cost']),
-                'core_price': float(bpart.attrib['core']),
+                'core_price': core_price,
                 'description': str(parttype.attrib['description'].split(':')[-1].strip()),
                 'description_ru': '',
                 'sub_chain': '',
