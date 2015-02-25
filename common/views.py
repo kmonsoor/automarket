@@ -618,12 +618,11 @@ class PartSearchRockAuto(object):
             parttype = list(basket.getiterator('parttype'))[0]
 
             core_price = float(bpart.attrib['core'])
-            if core_price > 0.0:
-                total -= core_price
+            msrp = float(total.attrib['cost']) - core_price
 
             analogs.append({
                 'partnumber': str(bpart.attrib['pn']),
-                'MSRP': float(total.attrib['cost']),
+                'MSRP': msrp,
                 'core_price': core_price,
                 'description': str(parttype.attrib['description'].split(':')[-1].strip()),
                 'description_ru': '',
