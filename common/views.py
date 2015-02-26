@@ -627,7 +627,7 @@ class PartSearchRockAuto(object):
                 'description': str(parttype.attrib['description'].split(':')[-1].strip()),
                 'description_ru': '',
                 'sub_chain': '',
-                'cost': float(total.attrib['cost']),
+                'cost': msrp,
                 'brandname': 'Rockauto',
                 'brandgroup': 'AFTMARK',
                 'party': 1,
