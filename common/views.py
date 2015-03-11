@@ -1,5 +1,5 @@
 # -*- coding=UTF-8 -*-
-
+import suds
 import mechanize
 import re
 import requests
@@ -11,6 +11,7 @@ from BeautifulSoup import BeautifulSoup, NavigableString
 from django.http import HttpResponseRedirect
 from django.contrib.auth import login, logout, authenticate
 from django.core.urlresolvers import reverse
+from django.conf import settings
 
 from lib.decorators import render_to
 
@@ -516,6 +517,27 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
             }
         # If something goes wrong
         return None
+
+
+class PartSearchFroza(object):
+
+    @classmethod
+    def search(cls, maker, partnumber):
+        import suds
+
+        url = 'http://froza.ru/webservice/search.php?WSDL'
+        client = suds.client.Client(url)
+
+        client.service.getFindByDetail(
+            login=settings.FROZA_SOAP_LOGIN,
+            password=settings.FROZA_SOAP_PASSWD,
+            make_logo='',
+            detail_num=partnumber,
+            find_subs='1',
+            sort='',
+            currency='RUR')
+
+
 
 
 class PartSearchRockAuto(object):
