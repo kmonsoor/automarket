@@ -522,28 +522,71 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
 class PartSearchFroza(object):
 
     @classmethod
-    def search(cls, maker, partnumber):
-        import suds
+    def search(cls, maker, partnumber, full_coincedences=True):
 
+
+        from data.models import Direction, Area, BrandGroup, Brand
+
+        parts = list()
+        analogs = list()
         url = 'http://froza.ru/webservice/search.php?WSDL'
         client = suds.client.Client(url)
 
-        client.service.getFindByDetail(
-            login=settings.FROZA_SOAP_LOGIN,
-            password=settings.FROZA_SOAP_PASSWD,
+        res = client.service.getFindByDetail(
+            login='PSN7',
+            password='xdGxuIvtjd',
             make_logo='',
             detail_num=partnumber,
             find_subs='1',
             sort='',
-            currency='RUR')
+            currency='USD',
+        )
 
+        direction = Direction.objects.get(title='FR')
 
+        for part in res.FindByDetail:
+
+            maker_name = part.make_name.capitalize()
+            brand = Brand.objects.get_or_create(title=maker_name)
+
+            area = Area.objects.get_or_create(title=part.direction)
+            area.brands.add(brand)
+
+            brandgroup = part.supplier_code.split(' ')[0]
+            BrandGroup.objects.get_or_create(
+                title=brandgroup,
+                direction=direction)
+
+            if full_coincedences and part.detail_num.lower() != partnumber:
+                continue
+
+            data = {
+                'partnumber': part.detail_num,
+                'MSRP': part.price,
+                'core_price': 0.0,
+                'description': None,
+                'description_ru': part.description_rus,
+                'sub_chain': '',
+                'cost': part.price,
+                'brandname': part.direction,  # area
+                'brandgroup': brandgroup,
+                'party': 1,
+                'available': part.quantity,
+                'maker': maker_name,
+            }
+
+            if int(part.type_subs) == 100:
+                parts.append(data)
+            else:
+                analogs.append(data)
+
+        return parts, analogs
 
 
 class PartSearchRockAuto(object):
 
     @classmethod
-    def search(cls, maker, partnumber, only_coincedences=True):
+    def search(cls, maker, partnumber, full_coincedences=True):
 
         uri = 'http://www.rockauto.com/catalog/catalogxml.php'
         headers = {
@@ -572,11 +615,11 @@ class PartSearchRockAuto(object):
 
         makers = set()
         for part in parts:
-            if only_coincedences and part.attrib['pn'] != partnumber:
+            if full_coincedences and part.attrib['pn'] != partnumber:
                 continue
             makers.add(part.attrib['cat'].capitalize())
 
-        if not maker and only_coincedences and len(makers) > 1:
+        if not maker and full_coincedences and len(makers) > 1:
             for m in sorted(makers):
                 analogs.append({
                     'brandname': 'Rockauto',
@@ -589,7 +632,7 @@ class PartSearchRockAuto(object):
 
         for part in parts:
 
-            if only_coincedences and part.attrib['pn'] != partnumber:
+            if full_coincedences and part.attrib['pn'] != partnumber:
                 continue
 
             if maker and part.attrib['cat'].lower() != maker.lower():

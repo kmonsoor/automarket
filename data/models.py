@@ -1110,7 +1110,7 @@ def search_local_auto_analogs_for_original(maker, partnumber):
     for a in analogs:
         founds = Part.get_data_parts(a.partnumber_analog, a.brand_analog.title)
         for part in founds:
-            if part['brandname'] not in AUTO_ORIGINALS_AREAS:
+            if part['brandname'].lower() not in AUTO_ORIGINALS_AREAS:
                 data.append(part)
     return data
 
@@ -1127,24 +1127,36 @@ def search_external_auto_analogs(maker, partnumber, full_coincedences=True):
 
 
 def search_oem(maker, partnumber, **kwargs):
-    originals = search_local_auto(maker, partnumber)[0]
-    analogs = []
+
+    from common.views import PartSearchFroza
+
+    parts = search_local_auto(maker, partnumber)[0]
+    fparts, fanalogs = PartSearchFroza.search(
+        maker, partnumber, full_coincedences=False)
+    parts += fparts
+
     if kwargs.get('search_in_analogs'):
         analogs = search_local_auto_analogs_for_original(maker, partnumber)
         analogs += search_external_auto_analogs(
             maker, partnumber, full_coincedences=False)
-    return originals, analogs
+        analogs += fanalogs
+
+    return parts, analogs
 
 
 def search_aftmark(maker, partnumber, **kwargs):
-    analogs = search_external_auto_analogs(maker, partnumber)
-    analogs += search_local_auto(maker, partnumber)[1]
-    return analogs, []
+    from common.views import PartSearchFroza
+    parts = search_external_auto_analogs(maker, partnumber)
+    parts += search_local_auto(maker, partnumber)[1]
+    _, fparts = PartSearchFroza.search(
+        maker, partnumber, full_coincedences=False)
+    parts += fparts
+    return parts, []
 
 
 def search_moto(maker, partnumber, **kwargs):
-    founds = search_local_moto(maker, partnumber)
-    return founds, []
+    parts = search_local_moto(maker, partnumber)
+    return parts, []
 
 
 def get_search_func(search_type):
