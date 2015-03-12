@@ -13,11 +13,6 @@ SEARCH_TYPE_CHOICES = (
 
 class SearchForm(forms.Form):
 
-    def __init__(self, *args, **kwargs):
-        maker_choices = kwargs.pop("maker_choices")
-        super(SearchForm, self).__init__(*args, **kwargs)
-        self.fields['maker'].widget.choices = maker_choices
-
     maker = forms.CharField(
         widget=forms.Select(choices=[], attrs={'style':'width: 278px'}),
         label=u'MAKE',

@@ -522,8 +522,10 @@ class PartSearchPorscheOEMPartsCom(PartSearchTradeMotionCom):
 class PartSearchFroza(object):
 
     @classmethod
-    def search(cls, maker, partnumber, full_coincedences=True):
-
+    def search(
+        cls, maker, partnumber,
+        parts_full_coincedences=True, analogs_full_coincedences=True
+    ):
 
         from data.models import Direction, Area, BrandGroup, Brand
 
@@ -547,27 +549,24 @@ class PartSearchFroza(object):
         for part in res.FindByDetail:
 
             maker_name = part.make_name.capitalize()
-            brand = Brand.objects.get_or_create(title=maker_name)
+            brand, _ = Brand.objects.get_or_create(title=maker_name)
 
-            area = Area.objects.get_or_create(title=part.direction)
+            area, _ = Area.objects.get_or_create(title=part.direction)
             area.brands.add(brand)
 
             brandgroup = part.supplier_code.split(' ')[0]
-            BrandGroup.objects.get_or_create(
+            bg, _ = BrandGroup.objects.get_or_create(
                 title=brandgroup,
                 direction=direction)
 
-            if full_coincedences and part.detail_num.lower() != partnumber:
-                continue
-
             data = {
                 'partnumber': part.detail_num,
-                'MSRP': part.price,
+                'MSRP': float(part.price),
                 'core_price': 0.0,
                 'description': None,
                 'description_ru': part.description_rus,
                 'sub_chain': '',
-                'cost': part.price,
+                'cost': float(part.price),
                 'brandname': part.direction,  # area
                 'brandgroup': brandgroup,
                 'party': 1,
@@ -576,9 +575,17 @@ class PartSearchFroza(object):
             }
 
             if int(part.type_subs) == 100:
-                parts.append(data)
-            else:
-                analogs.append(data)
+                if maker and maker.lower() != maker_name.lower():
+                    continue
+                if parts_full_coincedences and part.detail_num.lower() != partnumber.lower():
+                    continue
+                if data not in parts:
+                    parts.append(data)
+            elif int(part.type_subs) == 99:
+                if analogs_full_coincedences and part.detail_num.lower() != partnumber.lower():
+                    continue
+                if data not in analogs:
+                    analogs.append(data)
 
         return parts, analogs
 

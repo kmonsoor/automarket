@@ -1130,9 +1130,13 @@ def search_oem(maker, partnumber, **kwargs):
 
     from common.views import PartSearchFroza
 
+    analogs = list()
     parts = search_local_auto(maker, partnumber)[0]
     fparts, fanalogs = PartSearchFroza.search(
-        maker, partnumber, full_coincedences=False)
+        maker,
+        partnumber,
+        parts_full_coincedences=True,
+        analogs_full_coincedences=False)
     parts += fparts
 
     if kwargs.get('search_in_analogs'):
@@ -1148,8 +1152,7 @@ def search_aftmark(maker, partnumber, **kwargs):
     from common.views import PartSearchFroza
     parts = search_external_auto_analogs(maker, partnumber)
     parts += search_local_auto(maker, partnumber)[1]
-    _, fparts = PartSearchFroza.search(
-        maker, partnumber, full_coincedences=False)
+    _, fparts = PartSearchFroza.search(maker, partnumber)
     parts += fparts
     return parts, []
 
