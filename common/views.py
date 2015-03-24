@@ -10,6 +10,7 @@ from BeautifulSoup import BeautifulSoup, NavigableString
 
 from django.http import HttpResponseRedirect
 from django.contrib.auth import login, logout, authenticate
+from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.conf import settings
 
@@ -527,84 +528,94 @@ class PartSearchFroza(object):
         parts_full_coincedences=True, analogs_full_coincedences=True
     ):
 
-        from data.models import Direction, Area, BrandGroup, Brand
+        try:
+            from data.models import Direction, Area, BrandGroup, Brand
 
-        parts = list()
-        analogs = list()
-        url = 'http://froza.ru/webservice/search.php?WSDL'
-        client = suds.client.Client(url)
+            parts = list()
+            analogs = list()
+            url = 'http://froza.ru/webservice/search.php?WSDL'
+            client = suds.client.Client(url)
 
-        res = client.service.getFindByDetail(
-            login='PSN7',
-            password='xdGxuIvtjd',
-            make_logo='',
-            detail_num=partnumber,
-            find_subs='1',
-            sort='',
-            currency='USD',
-        )
+            res = client.service.getFindByDetail(
+                login='PSN7',
+                password='xdGxuIvtjd',
+                make_logo='',
+                detail_num=partnumber,
+                find_subs='1',
+                sort='',
+                currency='USD',
+            )
 
-        direction = Direction.objects.get(title='FR')
+            direction = Direction.objects.get(title='FR')
 
-        for part in res.FindByDetail:
+            for part in res.FindByDetail:
 
-            maker_name = part.make_name.capitalize()
-            brand, _ = Brand.objects.get_or_create(title=maker_name)
+                maker_name = part.make_name.capitalize()
+                brand, _ = Brand.objects.get_or_create(title=maker_name)
 
-            area, _ = Area.objects.get_or_create(title=part.direction)
-            area.brands.add(brand)
+                area, _ = Area.objects.get_or_create(title=part.direction)
+                area.brands.add(brand)
 
-            brandgroup = part.supplier_code.split(' ')[0]
-            bg, _ = BrandGroup.objects.get_or_create(
-                title=brandgroup,
-                direction=direction)
+                brandgroup = part.supplier_code.split(' ')[0]
+                bg, _ = BrandGroup.objects.get_or_create(
+                    title=brandgroup,
+                    direction=direction)
 
-            try:
-                quantity = int(part.quantity)
-                if quantity < 0:
-                    raise ValueError
-            except (ValueError, TypeError):
-                quantity = None
+                try:
+                    quantity = int(part.quantity)
+                    if quantity < 0:
+                        raise ValueError
+                except (ValueError, TypeError):
+                    quantity = None
 
-            try:
-                delivery_period = int(part.delivery_time)
-            except (ValueError, TypeError):
-                delivery_period = None
+                try:
+                    delivery_period = int(part.delivery_time)
+                except (ValueError, TypeError):
+                    delivery_period = None
 
-            data = {
-                'partnumber': part.detail_num,
-                'MSRP': float(part.price),
-                'core_price': 0.0,
-                'description': None,
-                'description_ru': part.description_rus,
-                'sub_chain': '',
-                'cost': float(part.price),
-                'brandname': part.direction,  # area
-                'brandgroup': brandgroup,
-                'party': 1,
-                'available': quantity,
-                'maker': maker_name,
-                'delivery_period': delivery_period,
-            }
+                data = {
+                    'partnumber': part.detail_num,
+                    'MSRP': float(part.price),
+                    'core_price': 0.0,
+                    'description': None,
+                    'description_ru': part.description_rus,
+                    'sub_chain': '',
+                    'cost': float(part.price),
+                    'brandname': part.direction,  # area
+                    'brandgroup': brandgroup,
+                    'party': 1,
+                    'available': quantity,
+                    'maker': maker_name,
+                    'delivery_period': delivery_period,
+                }
 
-            if int(part.type_subs) == 100:
-                if maker and maker.lower() != maker_name.lower():
-                    continue
-                if parts_full_coincedences and part.detail_num.lower() != partnumber.lower():
-                    continue
-                if data not in parts:
-                    parts.append(data)
-            elif int(part.type_subs) == 99:
-                if maker and maker.lower() != maker_name.lower():
-                    continue
-                if analogs_full_coincedences and maker and maker.lower() != maker_name.lower():
-                    continue
-                if analogs_full_coincedences and part.detail_num.lower() != partnumber.lower():
-                    continue
-                if data not in analogs:
-                    analogs.append(data)
+                if int(part.type_subs) == 100:
+                    if maker and maker.lower() != maker_name.lower():
+                        continue
+                    if parts_full_coincedences and part.detail_num.lower() != partnumber.lower():
+                        continue
+                    if data not in parts:
+                        parts.append(data)
+                elif int(part.type_subs) == 99:
+                    if maker and maker.lower() != maker_name.lower():
+                        continue
+                    if analogs_full_coincedences and maker and maker.lower() != maker_name.lower():
+                        continue
+                    if analogs_full_coincedences and part.detail_num.lower() != partnumber.lower():
+                        continue
+                    if data not in analogs:
+                        analogs.append(data)
 
-        return parts, analogs
+            return parts, analogs
+        except Exception, e:
+            log.error(e)
+            send_mail(
+                'Froza search failed',
+                'Exception: {}'.format(e),
+                settings.EMAIL_FROM,
+                settings.EMAILS,
+                fail_silently=False)
+            return list(), list()
 
 
 class PartSearchRockAuto(object):
@@ -612,129 +623,139 @@ class PartSearchRockAuto(object):
     @classmethod
     def search(cls, maker, partnumber, full_coincedences=True):
 
-        uri = 'http://www.rockauto.com/catalog/catalogxml.php'
-        headers = {
-            'X-Requested-With': 'XMLHttpRequest',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/31.0.1650.63 Chrome/31.0.1650.63 Safari/537.36',
-            'Referer': 'http://www.rockauto.com/catalog/searchresults.php',
-            'Origin': 'http://www.rockauto.com',
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'Connection': 'keep-alive',
-            'Accept-Language': 'en-US,en;q=0.8,ru;q=0.6,pl;q=0.4,de;q=0.2',
-            'Accept': '*/*',
-            'Accept-Encoding': 'gzip,deflate,sdch',
-            'Host': 'www.rockauto.com',
-        }
-        data = {
-            'func': 'partsearch',
-            'searchtext': partnumber,
-            '': '',
-        }
-        resp = requests.post(uri, data=data, headers=headers)
-        resp.raise_for_status()
-
-        analogs = list()
-        root = et.fromstring(resp.content)
-        parts = list(root.getiterator('part'))
-
-        makers = set()
-        for part in parts:
-            if full_coincedences and part.attrib['pn'] != partnumber:
-                continue
-            makers.add(part.attrib['cat'].capitalize())
-
-        if not maker and full_coincedences and len(makers) > 1:
-            for m in sorted(makers):
-                analogs.append({
-                    'brandname': 'Rockauto',
-                    'brandgroup': 'AFTMARK',
-                    'maker': m,
-                })
-            return analogs
-
-        session = requests.Session()
-
-        for part in parts:
-
-            if full_coincedences and part.attrib['pn'] != partnumber:
-                continue
-
-            if maker and part.attrib['cat'].lower() != maker.lower():
-                continue
-
-            if int(list(part.getiterator('partoptions'))[0].attrib['type']) == 1:
-                # need choose color, size etc.
-                continue
-
-            for option in part.getiterator('option'):
-                if option.attrib.get('warehouse'):
-                    break
-
-            if float(option.attrib['total']) == 0:
-                # out of stock
-                # need choose size, color etc.
-                continue
-
+        try:
+            uri = 'http://www.rockauto.com/catalog/catalogxml.php'
+            headers = {
+                'X-Requested-With': 'XMLHttpRequest',
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/31.0.1650.63 Chrome/31.0.1650.63 Safari/537.36',
+                'Referer': 'http://www.rockauto.com/catalog/searchresults.php',
+                'Origin': 'http://www.rockauto.com',
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Connection': 'keep-alive',
+                'Accept-Language': 'en-US,en;q=0.8,ru;q=0.6,pl;q=0.4,de;q=0.2',
+                'Accept': '*/*',
+                'Accept-Encoding': 'gzip,deflate,sdch',
+                'Host': 'www.rockauto.com',
+            }
             data = {
-                'func': 'add',
-                'parttype': part.attrib['parttype'],
-                'partkey[0]': part.attrib['partkey'],
-                'carcode': '0',
-                'warehouse[0]': option.attrib['warehouse'],
-                'whpartnum[0]': option.attrib['whpartnum'],
-                'notekey[0]': option.attrib['notekey'],
-                'multiple[0]': option.attrib['multiple'],
-                'optionlist[0]': option.attrib['type'],
-                'optionchoice[0]': option.attrib['value'],
+                'func': 'partsearch',
+                'searchtext': partnumber,
                 '': '',
             }
-            resp = session.post(uri, data=data, headers=headers)
+            resp = requests.post(uri, data=data, headers=headers)
             resp.raise_for_status()
 
-            data = {
-                'func': 'setdest',
-                'country': 'US',
-                'zipcode': '11220',
-                '': '',
-            }
-            resp = session.post(uri, data=data, headers=headers)
-            resp.raise_for_status()
+            analogs = list()
+            root = et.fromstring(resp.content)
+            parts = list(root.getiterator('part'))
 
-            basket = et.fromstring(resp.content)
-            bpart = list(basket.getiterator('part'))[0]
+            makers = set()
+            for part in parts:
+                if full_coincedences and part.attrib['pn'] != partnumber:
+                    continue
+                makers.add(part.attrib['cat'].capitalize())
 
-            total = list(basket.getiterator('total'))[0]
-            parttype = list(basket.getiterator('parttype'))[0]
+            if not maker and full_coincedences and len(makers) > 1:
+                for m in sorted(makers):
+                    analogs.append({
+                        'brandname': 'Rockauto',
+                        'brandgroup': 'AFTMARK',
+                        'maker': m,
+                    })
+                return analogs
 
-            core_price = float(bpart.attrib['core'])
-            msrp = float(total.attrib['cost']) - core_price
+            session = requests.Session()
 
-            analogs.append({
-                'partnumber': str(bpart.attrib['pn']),
-                'MSRP': msrp,
-                'core_price': core_price,
-                'description': str(parttype.attrib['description'].split(':')[-1].strip()),
-                'description_ru': '',
-                'sub_chain': '',
-                'cost': msrp,
-                'brandname': 'Rockauto',
-                'brandgroup': 'AFTMARK',
-                'party': 1,
-                'available': None,
-                'maker': str(bpart.attrib['cat'].capitalize()),
-            })
+            for part in parts:
 
-            for el in basket.getiterator('othercart'):
+                if full_coincedences and part.attrib['pn'] != partnumber:
+                    continue
+
+                if maker and part.attrib['cat'].lower() != maker.lower():
+                    continue
+
+                if int(list(part.getiterator('partoptions'))[0].attrib['type']) == 1:
+                    # need choose color, size etc.
+                    continue
+
+                for option in part.getiterator('option'):
+                    if option.attrib.get('warehouse'):
+                        break
+
+                if float(option.attrib['total']) == 0:
+                    # out of stock
+                    # need choose size, color etc.
+                    continue
+
                 data = {
-                    'func': 'delcart',
-                    'cartid': el.attrib['id'],
+                    'func': 'add',
+                    'parttype': part.attrib['parttype'],
+                    'partkey[0]': part.attrib['partkey'],
+                    'carcode': '0',
+                    'warehouse[0]': option.attrib['warehouse'],
+                    'whpartnum[0]': option.attrib['whpartnum'],
+                    'notekey[0]': option.attrib['notekey'],
+                    'multiple[0]': option.attrib['multiple'],
+                    'optionlist[0]': option.attrib['type'],
+                    'optionchoice[0]': option.attrib['value'],
                     '': '',
                 }
                 resp = session.post(uri, data=data, headers=headers)
                 resp.raise_for_status()
 
-        return analogs
-                
+                data = {
+                    'func': 'setdest',
+                    'country': 'US',
+                    'zipcode': '11220',
+                    '': '',
+                }
+                resp = session.post(uri, data=data, headers=headers)
+                resp.raise_for_status()
+
+                basket = et.fromstring(resp.content)
+                bpart = list(basket.getiterator('part'))[0]
+
+                total = list(basket.getiterator('total'))[0]
+                parttype = list(basket.getiterator('parttype'))[0]
+
+                core_price = float(bpart.attrib['core'])
+                msrp = float(total.attrib['cost']) - core_price
+
+                analogs.append({
+                    'partnumber': str(bpart.attrib['pn']),
+                    'MSRP': msrp,
+                    'core_price': core_price,
+                    'description': str(parttype.attrib['description'].split(':')[-1].strip()),
+                    'description_ru': '',
+                    'sub_chain': '',
+                    'cost': msrp,
+                    'brandname': 'Rockauto',
+                    'brandgroup': 'AFTMARK',
+                    'party': 1,
+                    'available': None,
+                    'maker': str(bpart.attrib['cat'].capitalize()),
+                })
+
+                for el in basket.getiterator('othercart'):
+                    data = {
+                        'func': 'delcart',
+                        'cartid': el.attrib['id'],
+                        '': '',
+                    }
+                    resp = session.post(uri, data=data, headers=headers)
+                    resp.raise_for_status()
+
+            return analogs
+        except Exception, e:
+            log.error(e)
+            send_mail(
+                'Rockauto search failed',
+                'Exception: {}'.format(e),
+                settings.EMAIL_FROM,
+                settings.EMAILS,
+                fail_silently=False)
+            return list()
+
 
 class PartSearch(object):
 
