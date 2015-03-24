@@ -854,7 +854,6 @@ def calc_part(part, user, render_for_template=True):
         res['delivery_period'] = dp
 
     res['delivery_coef'] = user.get_profile().get_delivery_coef(brand_group)
-    res['delivery_period'] = dp
     res['updated_at'] = pu
     res['area_id'] = area and area.id or None
     res['direction_id'] = brand_group and brand_group.direction.id or None
