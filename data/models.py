@@ -14,7 +14,7 @@ from lib.numparser import NumericStringParser
 from data.managers import OrderedItemManager
 from data.settings import (
     AREA_MULTIPLIER_DEFAULT, AREA_DISCOUNT_DEFAULT,
-    DELIVERY_DEFAULT, DELIVERY_PERIOD_DEFAULT,
+    DELIVERY_PERIOD_DEFAULT,
     COST_MARGIN_DEFAULT
 )
 
@@ -74,19 +74,21 @@ class BrandGroup(models.Model):
         d = [
             self.delivery,
             self.direction.delivery,
-            DELIVERY_DEFAULT]
+        ]
 
         dp = [
             self.delivery_period,
             self.direction.delivery_period,
-            DELIVERY_PERIOD_DEFAULT]
+            DELIVERY_PERIOD_DEFAULT,
+        ]
 
         cm = [
             self.cost_margin,
             self.direction.cost_margin,
-            COST_MARGIN_DEFAULT]
+            COST_MARGIN_DEFAULT,
+        ]
 
-        first = lambda xs: [x for x in xs if x is not None][0]
+        first = lambda xs: ([x for x in xs if x is not None] + [None])[0]
         return first(m), first(d), first(dp), None, first(cm)
 
 
@@ -114,19 +116,21 @@ class Area(models.Model):
                 s.multiplier,
                 brand_group.multiplier,
                 brand_group.direction.multiplier,
-                AREA_MULTIPLIER_DEFAULT]
+                AREA_MULTIPLIER_DEFAULT,
+            ]
 
             d = [
                 s.delivery,
                 brand_group.delivery,
                 brand_group.direction.delivery,
-                DELIVERY_DEFAULT]
+            ]
 
             dp = [
                 s.delivery_period,
                 brand_group.delivery_period,
                 brand_group.direction.delivery_period,
-                DELIVERY_PERIOD_DEFAULT]
+                DELIVERY_PERIOD_DEFAULT,
+            ]
 
             pu = s.price_updated_at
 
@@ -134,9 +138,10 @@ class Area(models.Model):
                 s.cost_margin,
                 brand_group.cost_margin,
                 brand_group.direction.cost_margin,
-                COST_MARGIN_DEFAULT]
+                COST_MARGIN_DEFAULT,
+            ]
 
-            first = lambda xs: [x for x in xs if x is not None][0]
+            first = lambda xs: ([x for x in xs if x is not None] + [None])[0]
             return first(m), first(d), first(dp), pu, first(cm)
 
 
