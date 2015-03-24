@@ -19,8 +19,7 @@ from lib.sort import SortHeaders
 
 from data.models import (
     OrderedItem, BrandGroup, Area, Basket, Shipment, Package, BalanceItem,
-    calc_parts_client, get_search_func, BALANCEITEM_TYPE_PREINVOICE,
-    AUTO_ORIGINALS_AREAS
+    calc_parts_client, get_search_func, BALANCEITEM_TYPE_PREINVOICE
 )
 from data.forms import (
     OrderedItemsFilterForm, ShipmentsFilterForm, BalanceClientFilterForm,

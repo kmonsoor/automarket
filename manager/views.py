@@ -25,13 +25,12 @@ from lib.collections import Counter
 from lib.xlsreader import readexcel
 
 from common.decorators import manager_required
-from common.views import PartSearch
 
 from data.models import (
     OrderedItem, UserProfile, Invoice, Package, Shipment, BalanceItem,
     BALANCEITEM_TYPE_INVOICE, PACKAGE_STATUS_RECEIVED,
-    BALANCEITEM_TYPE_PAYMENT, BrandGroup,
-    search_local, Basket, calc_parts_manager_client
+    BALANCEITEM_TYPE_PAYMENT, BrandGroup, get_search_func,
+    Basket, calc_parts_manager_client
 )
 
 from data.forms import (
@@ -948,24 +947,23 @@ def search(request):
     analogs = []
     msg = ''
 
-    search_external = PartSearch()
-    maker_choice = search_external.maker_choices()
     client_choice = get_client_choice(request.user)
     show_maker_field = False
     client = None
 
     if request.method == 'POST':
+
         _post = request.POST.copy()
+        _post['part_number'] = re.sub('[\W]+', '', _post['part_number']).strip().upper()
 
-        _post['part_number'] = re.sub(
-            '[^\w]', '', _post['part_number']).strip().upper()
-
-        form = SearchForm(
-            _post, maker_choice=maker_choice, client_choice=client_choice)
+        form = SearchForm(_post, client_choice=client_choice)
 
         if form.is_valid():
+            
             maker = form.cleaned_data['maker']
             part_number = form.cleaned_data['part_number']
+            search_type = form.cleaned_data['search_type']
+            search_in_analogs = form.cleaned_data['search_in_analogs']
 
             try:
                 client = User.objects.get(id=form.cleaned_data['client'])
@@ -976,39 +974,32 @@ def search(request):
                 request.session['search_form_client'] = client.id
                 request.session.modified = True
 
-            founds = search_local(maker, part_number)
-            analog_founds = search_analogs_local(part_number, maker)
+            search_func = get_search_func(search_type)
+            part_founds, analog_founds = search_func(
+                maker, part_number, search_in_analogs=search_in_analogs)
 
-            if founds:
-                makers = set(x['maker'] for x in founds)
+            if part_founds:
+                makers = set(x['maker'] for x in part_founds)
                 if len(makers) > 1:
                     show_maker_field = True
                     form.fields['maker'].widget.choices = [
                         ('', '----')] + list((x, x) for x in makers)
                 else:
-                    parts = calc_parts_manager_client(founds, request.user, client)
-                    analogs = calc_parts_manager_client(analog_founds, request.user, client)
+                    parts = calc_parts_manager_client(
+                        part_founds, request.user, client)
 
-            if not founds:
-                if analog_founds:
-                    analogs = calc_parts_manager_client(analog_founds, request.user, client)
-                else:
-                    show_maker_field = True
-                    if maker:
-                        founds = search_external.search(maker, part_number)
-                        if founds:
-                            parts = calc_parts_manager_client(
-                                founds, request.user, client)
-                        else:
-                            msg = u"Ничего не найдено"
+                    analogs = calc_parts_manager_client(
+                        analog_founds, request.user, client)
+            elif not part_founds and analog_founds:
+                analogs = calc_parts_manager_client(
+                    analog_founds, request.user, client)
+            else:
+                msg = u"Ничего не найдено"
     else:
         initial = {}
         if not request.GET.get('new'):
             initial = {'client': request.session.get('search_form_client')}
-        form = SearchForm(
-            maker_choice=maker_choice,
-            client_choice=client_choice,
-            initial=initial)
+        form = SearchForm(initial=initial, client_choice=client_choice)
 
     context = {
         'form': form,

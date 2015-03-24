@@ -16,16 +16,42 @@
     }
     return true;
   }
+
+function onchange_search_type() {
+  var stype = document.getElementsByName('search_type');
+  var rvalue;
+
+  for (var i=0, len=stype.length; i<len; ++i) {
+    if (stype[i].checked) {
+      rvalue = stype[i].value;
+      break;
+    }
+  }
+
+  var sia = document.getElementsByClassName('search_in_analogs')[0];
+  if (rvalue == 'oem') {
+    sia.style.display = 'block';
+  } else {
+    sia.style.display = 'none';
+  }
+}
+
+window.onload = function() {onchange_search_type();}
 </script>
+
 <style>
-  #id_part_number {
-    width: 40%;
-    font-size: 12px;
-  }
-  #id_client, #id_maker {
-    width: 42%;
-    font-size: 12px;
-  }
+#divSearch li {
+  float: left;
+  list-style-type: none;
+}
+#divSearch ul {
+  list-style-type: none;
+  padding: 0;
+}
+.aligned label {
+  width: 110px;
+  padding-top: 4px;
+}
 </style>
 {% endblock %}
 
@@ -34,9 +60,17 @@
 {% block content %}
 
 <div id="divSearch" style="text-align: left; min-width: 850px;">
-  <div style="width:30%" class="aligned">
+  <div style="width: 425px;" class="aligned">
     <form method="post" id="formSearch" action="">
-      <div class="form-row">
+      <div class="form-row search_type">
+        {{ form.search_type.errors }}
+        {{ form.search_type }}
+      </div>
+      <div class="form-row search_in_analogs">
+        {{ form.search_in_analogs.errors }}
+        {{ form.search_in_analogs }} <label for="id_search_in_analogs" style="font-size: 90%;">Искать аналоги</label>
+      </div>
+      <div class="form-row part_number">
         {{ form.part_number.errors }}
         <label for="id_part_number">{{ form.part_number.label }}*</label> {{ form.part_number }}
       </div>

@@ -133,6 +133,13 @@ class OrderItemForm(Form):
             return client
 
 
+SEARCH_TYPE_CHOICES = (
+    ('oem', u'OEM (AUTO)'),
+    ('aftermarket', u'AFTERMARKET'),
+    ('moto', u'OEM (MOTO)'),
+)
+
+
 class SearchForm(forms.Form):
 
     maker = forms.CharField(
@@ -146,13 +153,22 @@ class SearchForm(forms.Form):
         required=True)
 
     part_number = forms.CharField(
-        widget=forms.TextInput(),
+        widget=forms.TextInput(attrs={'style':'width: 269px;'}),
         label=u'Введите номер',
         required=True)
 
+    search_type = forms.ChoiceField(
+        required=True,
+        widget=forms.RadioSelect(attrs={'onchange': 'onchange_search_type()'}),
+        choices=SEARCH_TYPE_CHOICES,
+        initial='oem')
+
+    search_in_analogs = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput,
+        initial=False)
+
     def __init__(self, *args, **kwargs):
-        self.maker_choice = kwargs.pop("maker_choice")
         self.client_choice = kwargs.pop('client_choice')
         super(SearchForm, self).__init__(*args, **kwargs)
-        self.fields['maker'].widget.choices = self.maker_choice
         self.fields['client'].widget.choices = self.client_choice

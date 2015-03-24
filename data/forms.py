@@ -118,6 +118,9 @@ class OrderedItemsFilterForm(forms.Form):
     shipment__isnull = forms.IntegerField(
         required=False, widget=forms.TextInput(attrs={'class':'qs_filter'}))
 
+    created__gte = forms.DateTimeField(
+        required=False, input_formats=['%Y-%m-%d %H:%M:%S'])
+
 
 INVOICES_FIELD_LIST = (
     (u'Код инвойса', 'code', 'code', 'code__contains'),

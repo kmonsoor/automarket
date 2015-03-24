@@ -103,7 +103,7 @@ tr.alt td {
 {% block content %}
 <div class="" id="changelist">
 <form method="{{ filter.method }}" action="{{ request.path }}">
-{% block export_link %}<a href="/cp/export_order/">Экспорт</a><br/><br/>{% endblock %}
+{% block export_link %}<a href="{% url export_to_csv %}{% if qs_filter.items %}?qs_filter=1{% for k, v in qs_filter.items %}&{{ k|urlencode }}={{ v|urlencode }}{% endfor %}{% endif %}">Экспорт</a><br/><br/>{% endblock %}
 <div class="module" id="changelist">
 
 <table>

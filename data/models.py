@@ -850,6 +850,9 @@ def calc_part(part, user, render_for_template=True):
     else:
         m, d, dp, pu, cm = area.get_brandgroup_settings(brand_group)
 
+    if not part.get('delivery_period'):
+        res['delivery_period'] = dp
+
     res['delivery_coef'] = user.get_profile().get_delivery_coef(brand_group)
     res['delivery_period'] = dp
     res['updated_at'] = pu

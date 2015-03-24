@@ -559,6 +559,18 @@ class PartSearchFroza(object):
                 title=brandgroup,
                 direction=direction)
 
+            try:
+                quantity = int(part.quantity)
+                if quantity < 0:
+                    raise ValueError
+            except (ValueError, TypeError):
+                quantity = None
+
+            try:
+                delivery_period = int(part.delivery_time)
+            except (ValueError, TypeError):
+                delivery_period = None
+
             data = {
                 'partnumber': part.detail_num,
                 'MSRP': float(part.price),
@@ -570,8 +582,9 @@ class PartSearchFroza(object):
                 'brandname': part.direction,  # area
                 'brandgroup': brandgroup,
                 'party': 1,
-                'available': part.quantity,
+                'available': quantity,
                 'maker': maker_name,
+                'delivery_period': delivery_period,
             }
 
             if int(part.type_subs) == 100:
@@ -582,6 +595,10 @@ class PartSearchFroza(object):
                 if data not in parts:
                     parts.append(data)
             elif int(part.type_subs) == 99:
+                if maker and maker.lower() != maker_name.lower():
+                    continue
+                if analogs_full_coincedences and maker and maker.lower() != maker_name.lower():
+                    continue
                 if analogs_full_coincedences and part.detail_num.lower() != partnumber.lower():
                     continue
                 if data not in analogs:

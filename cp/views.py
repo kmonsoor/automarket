@@ -1390,6 +1390,7 @@ def index(request):
     context['paginator'] = paginator
     context['brands'] = ','.join(['{"id":%s,"name":"%s"}' % (brand.id, brand.title) for brand in Brand.objects.all()])
     context['edit_mode'] = 1
+    context['qs_filter'] = qs_filter
     return context
 
 
