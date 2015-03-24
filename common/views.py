@@ -611,7 +611,7 @@ class PartSearchFroza(object):
             log.error(e)
             send_mail(
                 'Froza search failed',
-                'Exception: {}'.format(e),
+                'Exception: %r'% e,
                 settings.EMAIL_FROM,
                 settings.EMAILS,
                 fail_silently=False)
@@ -750,7 +750,7 @@ class PartSearchRockAuto(object):
             log.error(e)
             send_mail(
                 'Rockauto search failed',
-                'Exception: {}'.format(e),
+                'Exception: %r' % e,
                 settings.EMAIL_FROM,
                 settings.EMAILS,
                 fail_silently=False)
